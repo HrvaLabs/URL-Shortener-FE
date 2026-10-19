@@ -288,3 +288,10 @@ export interface ConnectApproval {
 export interface ConnectDenial {
   redirectTo: string
 }
+
+export interface ConnectedApp {
+  clientId: string
+  clientName: string
+  firstConnected: string
+  lastUsed: string | null
+}

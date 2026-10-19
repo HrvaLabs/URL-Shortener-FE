@@ -79,3 +79,8 @@ export function getShortBaseUrl(): string {
 export function formatShortUrl(short: string): string {
   return `${getShortBaseUrl()}/${short}`
 }
+
+export function safeNext(next: string | null): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || /[\\\t\n\r]/.test(next)) return "/dashboard"
+  return next
+}

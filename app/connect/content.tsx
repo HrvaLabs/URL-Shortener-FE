@@ -43,8 +43,12 @@ export function ConnectLoading() {
   )
 }
 
-function toBackendUrl(url: string) {
-  return url.startsWith("/") ? getBackendOrigin() + url : url
+const blockedProtocols = ["javascript:", "data:", "vbscript:", "blob:", "file:"]
+
+function toNavigableUrl(url: string) {
+  const parsed = new URL(url, getBackendOrigin() || window.location.origin)
+  if (blockedProtocols.includes(parsed.protocol)) throw new Error(`Refused to navigate to a ${parsed.protocol} URL`)
+  return parsed.href
 }
 
 export function ConnectContent() {
@@ -95,7 +99,7 @@ export function ConnectContent() {
         ? connectApi.approve(handle).then(({ continueUrl }) => continueUrl)
         : connectApi.deny(handle).then(({ redirectTo }) => redirectTo)
     destination
-      .then((url) => window.location.assign(toBackendUrl(url)))
+      .then((url) => window.location.assign(toNavigableUrl(url)))
       .catch((error) => {
         busy.current = false
         setPending(null)

@@ -175,7 +175,7 @@ export default function McpPage() {
                     {toolGroups.map((group) => (
                       <Fragment key={group.url}>
                         <TableRow className="bg-muted/40 hover:bg-muted/40">
-                          <TableHead colSpan={2} scope="colgroup" className="h-9 text-foreground">
+                          <TableHead colSpan={2} className="h-9 text-foreground">
                             {group.name}
                             <span className="ml-2 font-mono font-normal text-muted-foreground">{group.url}</span>
                           </TableHead>

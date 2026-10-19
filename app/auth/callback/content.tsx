@@ -54,6 +54,7 @@ export function AuthCallbackContent() {
         })
         .catch(() => setError("Authentication failed."))
     } else if (err) {
+      sessionStorage.removeItem("post-login-next")
       const messages: Record<string, string> = {
         no_email: "Could not retrieve email from provider.",
         account_inactive: "Your account is deactivated. Contact an administrator.",

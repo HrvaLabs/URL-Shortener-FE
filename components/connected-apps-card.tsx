@@ -78,7 +78,13 @@ export function ConnectedAppsCard() {
                   </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" disabled={disconnectApp.isPending} className="shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={disconnectApp.isPending}
+                        className="shrink-0"
+                        aria-label={`Disconnect ${app.clientName}`}
+                      >
                         {disconnecting ? "Disconnecting…" : "Disconnect"}
                       </Button>
                     </AlertDialogTrigger>

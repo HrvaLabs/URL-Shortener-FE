@@ -115,7 +115,7 @@ export default function McpPage() {
 
             <Section title="Set it up">
               <Paragraph>
-                It works in any MCP client that supports remote servers with OAuth. Here is how to add it to the common
+                It works with MCP clients that support remote servers with OAuth. Here is how to add it to the common
                 ones.
               </Paragraph>
 

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "June 10, 2026"
+const LAST_UPDATED = "October 20, 2026"
 
 export default function PrivacyPage() {
   return (
@@ -107,9 +107,13 @@ export default function PrivacyPage() {
               <p>
                 If you connect an AI app to your account through the hrva.cc MCP server, we store the
                 app&apos;s registration and your authorization of it (token records) in the hrva.cc
-                database until you disconnect the app in Settings → Connected apps or the
-                authorization lapses. We don&apos;t store the URLs and messages the app sends us
+                database until you disconnect the app in Settings → Connected apps or it goes
+                unused for 30 days. We don&apos;t store the URLs and messages the app sends us
                 beyond the links it creates.
+              </p>
+              <p>
+                Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this is required to
+                provide the connection you requested.
               </p>
 
               <h2>Who else receives data</h2>
@@ -137,15 +141,15 @@ export default function PrivacyPage() {
                   <strong>Backend hosting</strong> — the API and database are hosted by
                   [hosting provider] in [location].
                 </li>
-                <li>
-                  <strong>AI apps you connect</strong> — an AI app you connect to your account
-                  receives the results of the tools it uses (short links, link lists and visit stats)
-                  and handles them under its own terms.
-                </li>
               </ul>
               <p>
                 We do not sell personal data and we do not share it with anyone beyond the
                 processors listed above.
+              </p>
+              <p>
+                Separately, if you connect an AI app to your account, that app receives the results
+                of the tools it uses (short links, link lists and visit stats). It is not our
+                processor; it handles that data under its own terms.
               </p>
 
               <h2>How long we keep data</h2>
@@ -163,6 +167,11 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Your links and their statistics</strong> — kept while your account exists;
                   deleting a link also deletes its visit records.
+                </li>
+                <li>
+                  <strong>Connected-app token records</strong>{" "}
+                  — deleted when you disconnect the app in Settings → Connected apps, or automatically
+                  once the app&apos;s refresh token has gone unused for 30 days.
                 </li>
                 {/* TODO: confirm email/audit log retention period with the backend */}
                 <li>

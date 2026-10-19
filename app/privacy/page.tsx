@@ -103,6 +103,15 @@ export default function PrivacyPage() {
                 legitimate interest (Art. 6(1)(f) GDPR).
               </p>
 
+              <h3>AI connectors</h3>
+              <p>
+                If you connect an AI app to your account through the hrva.cc MCP server, we store the
+                app&apos;s registration and your authorization of it (token records) in the hrva.cc
+                database until you disconnect the app in Settings → Connected apps or the
+                authorization lapses. We don&apos;t store the URLs and messages the app sends us
+                beyond the links it creates.
+              </p>
+
               <h2>Who else receives data</h2>
               <ul>
                 <li>
@@ -127,6 +136,11 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Backend hosting</strong> — the API and database are hosted by
                   [hosting provider] in [location].
+                </li>
+                <li>
+                  <strong>AI apps you connect</strong> — an AI app you connect to your account
+                  receives the results of the tools it uses (short links, link lists and visit stats)
+                  and handles them under its own terms.
                 </li>
               </ul>
               <p>

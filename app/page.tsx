@@ -484,6 +484,12 @@ function DevelopersSection() {
               </a>
             </Button>
           </div>
+          <p className="mt-6 text-sm text-muted-foreground">
+            Or let your AI assistant do it:{" "}
+            <Link href="/mcp" className="font-medium text-brand hover:underline">
+              connect hrva.cc/mcp
+            </Link>
+          </p>
         </div>
 
         <div className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.4)]">

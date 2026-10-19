@@ -1,7 +1,7 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial } from "./types"
 
-class ApiError extends Error {
+export class ApiError extends Error {
   status: number
   constructor(message: string, status: number) {
     super(message)
@@ -206,6 +206,15 @@ export const userApi = {
     a.click()
     URL.revokeObjectURL(url)
   },
+}
+
+export const connectApi = {
+  getRequest: (handle: string) =>
+    request<ConnectRequestView>("GET", `/connect/requests/${encodeURIComponent(handle)}`),
+  approve: (handle: string) =>
+    request<ConnectApproval>("POST", `/connect/requests/${encodeURIComponent(handle)}/approve`),
+  deny: (handle: string) =>
+    request<ConnectDenial>("POST", `/connect/requests/${encodeURIComponent(handle)}/deny`),
 }
 
 // Analytics

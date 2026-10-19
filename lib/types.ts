@@ -276,3 +276,15 @@ export interface EmailLog {
   sentAt: string | null
   createdAt: string
 }
+
+export interface ConnectRequestView {
+  clientName: string
+}
+
+export interface ConnectApproval {
+  continueUrl: string
+}
+
+export interface ConnectDenial {
+  redirectTo: string
+}

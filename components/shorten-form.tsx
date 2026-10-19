@@ -1,0 +1,166 @@
+"use client"
+
+import { useState } from "react"
+import { QRCodeSVG } from "qrcode.react"
+import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useCreateUrl } from "@/lib/hooks/useUrls"
+import type { UrlResponse } from "@/lib/types"
+import { cn, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+
+interface ShortenFormProps {
+  withOptions?: boolean
+  size?: "default" | "lg"
+  className?: string
+}
+
+export function ShortenForm({ withOptions = false, size = "default", className }: ShortenFormProps) {
+  const [longUrl, setLongUrl] = useState("")
+  const [customAlias, setCustomAlias] = useState("")
+  const [visitLimit, setVisitLimit] = useState("")
+  const [expirationDate, setExpirationDate] = useState("")
+  const [result, setResult] = useState<UrlResponse | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const createUrl = useCreateUrl()
+  const isLarge = size === "lg"
+  const shortBase = getShortBaseUrl().replace(/^https?:\/\//, "")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!longUrl) return
+
+    const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
+
+    try {
+      const url = await createUrl.mutateAsync({
+        longUrl,
+        shortUrl: customAlias || undefined,
+        visitLimit: visitLimit ? parseInt(visitLimit) : undefined,
+        expirationDate: expDate,
+      })
+      setResult(url)
+      setCopied(false)
+      toast.success("Link shortened")
+    } catch (err: any) {
+      toast.error(err.message || "Could not shorten that URL. Check it and try again.")
+    }
+  }
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("Copy failed. Select the link and copy it manually.")
+    }
+  }
+
+  const shortUrl = result ? formatShortUrl(result.shortUrl) : ""
+
+  return (
+    <div className={cn("w-full", className)}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative min-w-0 flex-1">
+            <Link2
+              aria-hidden="true"
+              className={cn(
+                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted-foreground",
+                isLarge ? "left-4 h-5 w-5" : "left-3 h-4 w-4",
+              )}
+            />
+            <Input
+              type="text"
+              inputMode="url"
+              autoComplete="off"
+              spellCheck={false}
+              aria-label="Long URL"
+              placeholder="https://example.com/a-very-long-link"
+              value={longUrl}
+              onChange={(e) => setLongUrl(e.target.value)}
+              className={cn(isLarge ? "h-14 rounded-xl pl-12 text-base" : "h-11 pl-9")}
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={createUrl.isPending}
+            className={cn("shrink-0", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
+          >
+            {createUrl.isPending ? "Shortening…" : "Shorten"}
+          </Button>
+        </div>
+
+        {withOptions && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>
+              <div className="flex h-9 items-center overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+                <span className="select-none border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground">{shortBase}/</span>
+                <input
+                  id="alias"
+                  placeholder="my-link"
+                  value={customAlias}
+                  onChange={(e) => setCustomAlias(e.target.value)}
+                  className="h-full min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-none placeholder:text-muted-foreground"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="visit-limit" className="text-xs text-muted-foreground">Visit limit</Label>
+              <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="expires" className="text-xs text-muted-foreground">Expires</Label>
+              <Input id="expires" type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className={cn("h-9", !expirationDate && "text-muted-foreground")} />
+            </div>
+          </div>
+        )}
+      </form>
+
+      {result && (
+        <div
+          key={result.shortUrl}
+          className="animate-result-in mt-4 flex items-center gap-4 rounded-xl border bg-card p-3 pr-4 text-left shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]"
+          aria-live="polite"
+        >
+          <div className="hidden shrink-0 rounded-lg border bg-white p-1.5 sm:block">
+            <QRCodeSVG value={shortUrl} size={64} fgColor="#0e0e11" bgColor="#ffffff" level="M" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <a
+              href={shortUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block truncate font-mono text-base font-medium text-brand hover:underline"
+            >
+              {shortUrl.replace(/^https?:\/\//, "")}
+            </a>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{result.longUrl}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => copyToClipboard(shortUrl)}
+              className={cn("gap-1.5", copied && "animate-copy-pulse")}
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+            <Button asChild type="button" size="icon" variant="outline" className="h-9 w-9">
+              <a href={result.longUrl} target="_blank" rel="noopener noreferrer" aria-label="Open destination">
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

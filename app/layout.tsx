@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next"
-import { DM_Serif_Display, Plus_Jakarta_Sans } from "next/font/google"
+import { Host_Grotesk, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "sonner"
 import "./globals.css"
 import { Providers } from "./providers"
 import { JsonLd } from "@/components/json-ld"
 
-const display = DM_Serif_Display({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-display",
+const sans = Host_Grotesk({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sans",
 })
 
-const sans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
+const mono = JetBrains_Mono({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
 })
 
 const baseUrl = "https://app.hrva.cc"
@@ -75,24 +75,25 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "hrva.cc",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
   category: "technology",
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0b",
-  colorScheme: "dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
+  colorScheme: "light dark",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${display.variable} ${sans.variable} font-sans antialiased`}>
-        <div className="noise-bg" />
+      <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
         <Toaster
-          richColors
           closeButton
           position="bottom-right"
           toastOptions={{
@@ -100,6 +101,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               background: "hsl(var(--card))",
               color: "hsl(var(--foreground))",
               border: "1px solid hsl(var(--border))",
+              borderRadius: "var(--radius)",
+              boxShadow: "0 4px 12px -2px rgb(0 0 0 / 0.08)",
             },
           }}
         />

@@ -2,8 +2,10 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { Badge } from "@/components/ui/badge"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
 import { blogPosts } from "@/content/blog/posts"
-import { ArrowLeft, Calendar, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 
 export async function generateStaticParams() {
   return blogPosts.map((post) => ({
@@ -40,91 +42,85 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const nextPost = currentIndex > 0 ? blogPosts[currentIndex - 1] : null
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <header className="fixed top-0 inset-x-0 z-50 h-16 border-b border-border/50 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
-        <div className="container mx-auto px-4 h-full flex items-center justify-between">
-          <Link href="/" className="font-display text-lg tracking-tight text-foreground hover:text-primary transition-colors">
-            hrva.cc
-          </Link>
-          <div className="flex items-center gap-4">
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+
+      <main className="flex-1">
+        <div className="container py-12 sm:py-16">
+          <article className="mx-auto max-w-3xl">
             <Link
               href="/blog"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              <ArrowLeft className="h-3 w-3" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               All posts
             </Link>
-          </div>
+
+            <header className="mt-8 border-b pb-8">
+              <h1 className="font-display text-3xl leading-tight sm:text-4xl">{post.title}</h1>
+
+              <p className="mt-4 text-sm text-muted-foreground">
+                <time dateTime={post.date} className="tabular-nums">
+                  {new Date(post.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </time>
+                <span aria-hidden="true"> · </span>
+                <span>{post.author}</span>
+              </p>
+
+              <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>
+
+              <div className="mt-5 flex flex-wrap gap-1.5">
+                {post.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="font-normal text-muted-foreground">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </header>
+
+            <div className="prose-custom mt-10">
+              <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            </div>
+
+            <nav aria-label="More posts" className="mt-16 grid gap-6 border-t pt-8 sm:grid-cols-2">
+              {prevPost ? (
+                <Link
+                  href={`/blog/${prevPost.slug}`}
+                  className="group flex items-start gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <ArrowLeft className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Previous</span>
+                    <span className="text-sm font-medium text-foreground transition-colors group-hover:text-brand">
+                      {prevPost.title}
+                    </span>
+                  </span>
+                </Link>
+              ) : <div className="hidden sm:block" />}
+              {nextPost ? (
+                <Link
+                  href={`/blog/${nextPost.slug}`}
+                  className="group flex items-start justify-end gap-2 text-right text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Next</span>
+                    <span className="text-sm font-medium text-foreground transition-colors group-hover:text-brand">
+                      {nextPost.title}
+                    </span>
+                  </span>
+                  <ArrowRight className="mt-0.5 h-4 w-4 shrink-0" />
+                </Link>
+              ) : <div className="hidden sm:block" />}
+            </nav>
+          </article>
         </div>
-      </header>
-
-      <main className="pt-24 pb-20">
-        <article className="container mx-auto px-4 max-w-2xl">
-          {/* Header */}
-          <div className="mb-10 space-y-4 animate-fade-up">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Calendar className="h-3 w-3" />
-              {new Date(post.date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-              <span className="text-border/50">·</span>
-              <span>{post.author}</span>
-            </div>
-
-            <h1 className="font-display text-3xl md:text-4xl tracking-tight leading-tight">
-              {post.title}
-            </h1>
-
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {post.excerpt}
-            </p>
-
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {post.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-[10px] px-2 py-0.5 border-border/30 text-muted-foreground">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="prose-custom animate-fade-up delay-100">
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
-          </div>
-
-          {/* Pagination */}
-          <nav className="mt-16 pt-8 border-t border-border/30 flex items-center justify-between gap-4">
-            {prevPost ? (
-              <Link
-                href={`/blog/${prevPost.slug}`}
-                className="group flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                <span className="flex flex-col">
-                  <span className="text-[10px] text-muted-foreground/60">Previous</span>
-                  <span className="text-sm font-medium group-hover:text-primary transition-colors">{prevPost.title}</span>
-                </span>
-              </Link>
-            ) : <div />}
-            {nextPost ? (
-              <Link
-                href={`/blog/${nextPost.slug}`}
-                className="group flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors text-right"
-              >
-                <span className="flex flex-col">
-                  <span className="text-[10px] text-muted-foreground/60">Next</span>
-                  <span className="text-sm font-medium group-hover:text-primary transition-colors">{nextPost.title}</span>
-                </span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            ) : <div />}
-          </nav>
-        </article>
       </main>
+
+      <SiteFooter />
     </div>
   )
 }

@@ -3,8 +3,35 @@
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { CircleAlert } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
+
+function AuthCallbackShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <header className="container flex h-16 items-center justify-between">
+        <Logo />
+        <ThemeToggle />
+      </header>
+      <main className="flex flex-1 items-center justify-center px-5 pb-16 pt-6">{children}</main>
+    </div>
+  )
+}
+
+export function AuthCallbackLoading() {
+  return (
+    <AuthCallbackShell>
+      <div className="flex flex-col items-center gap-4" role="status">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+        <span className="text-sm text-muted-foreground">Signing you in…</span>
+      </div>
+    </AuthCallbackShell>
+  )
+}
 
 export function AuthCallbackContent() {
   const router = useRouter()
@@ -34,30 +61,20 @@ export function AuthCallbackContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-sm text-center space-y-6">
-          <Logo />
-          <div className="space-y-2">
-            <h1 className="font-display text-2xl tracking-tight">Authentication failed</h1>
-            <p className="text-sm text-muted-foreground">{error}</p>
+      <AuthCallbackShell>
+        <Card className="w-full max-w-sm p-8 text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+            <CircleAlert className="h-5 w-5 text-destructive" />
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center h-10 px-6 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:brightness-110 transition-all"
-          >
-            Try again
-          </Link>
-        </div>
-      </div>
+          <h1 className="mt-4 font-display text-2xl">Authentication failed</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">{error}</p>
+          <Button asChild className="mt-8 w-full">
+            <Link href="/login">Try again</Link>
+          </Button>
+        </Card>
+      </AuthCallbackShell>
     )
   }
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-7 w-7 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-        <span className="text-sm text-muted-foreground">Signing you in…</span>
-      </div>
-    </div>
-  )
+  return <AuthCallbackLoading />
 }

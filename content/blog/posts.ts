@@ -15,7 +15,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-05-15",
     excerpt:
       "Long URLs are ugly, hard to share, and easy to mistype. A URL shortener solves these problems — but modern tools go far beyond just shrinking links.",
-    author: "hrva.cc Team",
+    author: "Karlo Hrvačić",
     tags: ["URL shortener", "link management", "productivity"],
     content: `
       <p class="lead">
@@ -69,7 +69,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-05-12",
     excerpt:
       "Knowing how many people clicked your link is just the beginning. Here's what link analytics can tell you — and why it matters for your marketing.",
-    author: "hrva.cc Team",
+    author: "Karlo Hrvačić",
     tags: ["analytics", "marketing", "link tracking"],
     content: `
       <p class="lead">
@@ -130,7 +130,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-05-10",
     excerpt:
       "Set it and forget it — expiration dates and visit limits give you full control over your links, even after you've shared them.",
-    author: "hrva.cc Team",
+    author: "Karlo Hrvačić",
     tags: ["features", "expiration", "control"],
     content: `
       <p class="lead">
@@ -187,7 +187,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-05-08",
     excerpt:
       "URL shorteners are everywhere — but not all short links are created equal. Follow these best practices to keep your links trustworthy, trackable, and effective.",
-    author: "hrva.cc Team",
+    author: "Karlo Hrvačić",
     tags: ["best practices", "tips", "SEO"],
     content: `
       <p class="lead">
@@ -248,7 +248,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-05-05",
     excerpt:
       "How Google Safe Browsing keeps your short links safe — and why every URL shortener should check destinations before sharing them.",
-    author: "hrva.cc Team",
+    author: "Karlo Hrvačić",
     tags: ["security", "safe browsing", "privacy"],
     content: `
       <p class="lead">

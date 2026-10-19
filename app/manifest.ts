@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Shorten URLs, track visits, and manage your links with control and clarity.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0a0b",
-    theme_color: "#a67c00",
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     icons: [
       {
         src: "/favicon.svg",

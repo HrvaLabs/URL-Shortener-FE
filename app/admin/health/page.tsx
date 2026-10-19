@@ -2,11 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { adminApi } from "@/lib/api-client"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageMeta } from "@/components/page-meta"
-import { CheckCircle2, AlertCircle, Database, Zap, Mail, Shield, Activity } from "lucide-react"
+import { Database, Zap, Mail, Shield } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function AdminHealthPage() {
   const { data: stats, isLoading } = useQuery({
@@ -51,69 +51,62 @@ export default function AdminHealthPage() {
     },
   ]
 
+  const operational = !!stats && stats.databaseActive && stats.cacheActive
+
   return (
     <div className="space-y-6">
       <PageMeta title="Admin — Health" description="Real-time status of all system services." />
       <div>
-        <h1 className="text-2xl font-display tracking-tight">System Health</h1>
-        <p className="text-sm text-muted-foreground">Real-time status of all system services</p>
+        <h1 className="font-display text-2xl">System Health</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Real-time status of all system services</p>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <ul className="divide-y rounded-xl border bg-card">
           {[...Array(4)].map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <li key={i} className="flex items-center gap-4 px-5 py-4">
+              <Skeleton className="h-4 w-4" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3.5 w-48" />
+              </div>
+              <Skeleton className="h-6 w-24" />
+            </li>
           ))}
-        </div>
+        </ul>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <ul className="divide-y rounded-xl border bg-card">
           {services.map((svc) => {
             const Icon = svc.icon
             return (
-              <Card key={svc.name} className={`border-border/50 ${svc.ok ? "border-l-emerald-500 border-l-4" : "border-l-red-500 border-l-4"}`}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold tracking-tight">{svc.name}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{svc.description}</p>
-                      {svc.extra && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Activity className="h-3 w-3" /> {svc.extra}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant={svc.ok ? "default" : "destructive"} className="text-[10px] px-2 py-0.5">
-                      <span className="flex items-center gap-1">
-                        {svc.ok ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                        {svc.ok ? svc.okLabel : svc.failLabel}
-                      </span>
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+              <li key={svc.name} className="flex items-center gap-4 px-5 py-4">
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-medium">{svc.name}</h2>
+                  <p className="text-sm text-muted-foreground">{svc.description}</p>
+                  {svc.extra && <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{svc.extra}</p>}
+                </div>
+                <Badge variant={svc.ok ? "success" : "destructive"} className="shrink-0 gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className={cn("h-2 w-2 rounded-full", svc.ok ? "bg-success" : "bg-destructive")}
+                  />
+                  {svc.ok ? svc.okLabel : svc.failLabel}
+                </Badge>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
 
       {stats && (
-        <Card className="border-border/50">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Activity className="h-4 w-4 shrink-0" />
-              <span>
-                All core services are{" "}
-                <span className={stats.databaseActive && stats.cacheActive ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}>
-                  {stats.databaseActive && stats.cacheActive ? "operational" : "experiencing issues"}
-                </span>
-                . &middot; {stats.recentUrls.length} recent URLs &middot; Java {stats.javaVersion}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+        <p className="text-sm text-muted-foreground">
+          All core services are{" "}
+          <span className={cn("font-medium", operational ? "text-success" : "text-destructive")}>
+            {operational ? "operational" : "experiencing issues"}
+          </span>
+          . &middot; <span className="tabular-nums">{stats.recentUrls.length}</span> recent URLs &middot; Java {stats.javaVersion}
+        </p>
       )}
     </div>
   )

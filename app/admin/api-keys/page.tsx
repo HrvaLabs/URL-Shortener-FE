@@ -5,8 +5,6 @@ import { usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import type { ApiKeyResponse } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ToggleRight, ToggleLeft, Key, Shield, Edit, RefreshCw } from "lucide-react"
+import { ToggleRight, ToggleLeft, Edit } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatDateTime, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
@@ -68,8 +66,8 @@ export default function AdminApiKeysPage() {
     <div className="space-y-6">
       <PageMeta title="Admin — API Keys" description="View all API keys in the hrva.cc system." />
       <div>
-        <h1 className="text-2xl font-display tracking-tight">All API Keys</h1>
-        <p className="text-sm text-muted-foreground">View all API keys in the system</p>
+        <h1 className="font-display text-2xl">All API Keys</h1>
+        <p className="mt-1 text-sm text-muted-foreground">View all API keys in the system</p>
       </div>
 
       <Dialog open={!!editKey} onOpenChange={(open) => { if (!open) setEditKey(null) }}>
@@ -92,101 +90,94 @@ export default function AdminApiKeysPage() {
       </Dialog>
 
       {isLoading ? (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </CardContent>
-        </Card>
+        <div className="space-y-3 rounded-xl border bg-card p-5">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
       ) : error ? (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-destructive">Failed to load API keys</p>
-            <Button variant="outline" className="mt-2" onClick={() => window.location.reload()}>Retry</Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-12 text-center">
+          <p className="text-sm font-medium text-destructive">Failed to load API keys</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
+        </div>
       ) : !apiKeys || !apiKeys.content || apiKeys.content.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No API keys</h3>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-16 text-center">
+          <p className="font-semibold">No API keys</p>
+          <p className="mt-1 text-sm text-muted-foreground">Keys created by users will be listed here.</p>
+        </div>
       ) : (
-        <Card className="border-border/40 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Key</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10 hidden lg:table-cell">Owner</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10 hidden lg:table-cell">Created</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Usage</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Status</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apiKeys.content.map((key: ApiKeyResponse, i: number) => (
-                  <TableRow key={key.id} className="border-border/20 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-                    <TableCell><span className="text-xs font-mono">{maskApiKey(key.key)}</span></TableCell>
-                    <TableCell className="text-sm hidden lg:table-cell">{key.ownerEmail || "\u2014"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground hidden lg:table-cell" title={formatDateTime(key.createDate)}>{formatDate(key.createDate)}</TableCell>
-                    <TableCell className="text-sm">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={key.status} active={key.active} className="text-[10px] px-2 py-0.5" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5">
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Key</TableHead>
+                <TableHead className="hidden lg:table-cell">Owner</TableHead>
+                <TableHead className="hidden lg:table-cell">Created</TableHead>
+                <TableHead>Usage</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.content.map((key: ApiKeyResponse) => (
+                <TableRow key={key.id}>
+                  <TableCell><span className="whitespace-nowrap font-mono text-[13px]">{maskApiKey(key.key)}</span></TableCell>
+                  <TableCell className="hidden lg:table-cell">{key.ownerEmail || "\u2014"}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(key.createDate)}>{formatDate(key.createDate)}</TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={key.status} active={key.active} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
+                            aria-label="Edit API key"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Edit API key</TooltipContent>
+                      </Tooltip>
+                      {key.active ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <button onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
-                              className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground">
-                              <Edit className="h-3.5 w-3.5" />
+                            <button onClick={() => handleRevoke(key.id)} disabled={revokeKey.isPending}
+                              aria-label="Revoke API key"
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                              <ToggleRight className="h-3.5 w-3.5 text-success" />
                             </button>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="text-[11px]">Edit API key</TooltipContent>
+                          <TooltipContent side="top">Revoke API key</TooltipContent>
                         </Tooltip>
-                        {key.active ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button onClick={() => handleRevoke(key.id)} disabled={revokeKey.isPending}
-                                className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground">
-                                <ToggleRight className="h-3.5 w-3.5 text-success" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[11px]">Revoke API key</TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button onClick={() => handleActivate(key.id)} disabled={activateKey.isPending}
-                                className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground">
-                                <ToggleLeft className="h-3.5 w-3.5 text-destructive" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[11px]">Activate API key</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
-            <Pagination
-              page={page}
-              totalPages={apiKeys?.totalPages ?? 0}
-              totalElements={apiKeys?.totalElements}
-              size={size}
-              onPageChange={setPage}
-              onSizeChange={setSize}
-            />
-          </CardContent>
-        </Card>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button onClick={() => handleActivate(key.id)} disabled={activateKey.isPending}
+                              aria-label="Activate API key"
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                              <ToggleLeft className="h-3.5 w-3.5 text-destructive" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Activate API key</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination
+            page={page}
+            totalPages={apiKeys?.totalPages ?? 0}
+            totalElements={apiKeys?.totalElements}
+            size={size}
+            onPageChange={setPage}
+            onSizeChange={setSize}
+          />
+        </div>
       )}
     </div>
   )

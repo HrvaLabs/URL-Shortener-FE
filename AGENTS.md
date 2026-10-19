@@ -90,11 +90,12 @@ lib/          — Shared logic
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0
 
 ### Styling
-- Tailwind CSS with custom amber/brown CSS variable theme (`--primary: 38 92% 50%`)
-- **Dark by default** with `.light` class override via `next-themes`
-- Custom utility classes: `.glass`, `.glass-strong`, `.glow-amber`, `.text-gradient-amber`, `.divider-amber`, `.noise-bg`
-- Animation utilities: `.animate-fade-up`, `.animate-fade-in`, `.animate-scale-in`, `.delay-{100,200,300,400,500}`
-- Fonts: DM Serif Display (display) + Plus Jakarta Sans (body) via `next/font`
+- Tailwind CSS with shadcn-style HSL CSS variables in `app/globals.css`; visual rules live in `DESIGN.md`
+- Light by default (follows the system); `.dark` class via `next-themes` (`attribute="class"`)
+- `primary` is near-black (white in dark mode) and is for primary buttons; `brand` (electric blue) is the single accent for links, short URLs, focus and charts; `success` / `warning` / `destructive` for status
+- Fonts: Host Grotesk (`font-sans`, and `font-display` = same family at weight 650) + JetBrains Mono (`font-mono`, short codes and code) via `next/font`
+- Motion: one entrance, `.animate-result-in`, for a freshly shortened link; `.animate-copy-pulse` for copy feedback
+- Public pages share `components/site-header.tsx` and `components/site-footer.tsx`
 
 ### UI Components
 - shadcn/ui style: compose Radix primitives + `class-variance-authority` + `tailwind-merge` (via `cn()`)

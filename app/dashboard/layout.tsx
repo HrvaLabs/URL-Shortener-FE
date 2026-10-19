@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
           <span className="text-xs text-muted-foreground">Loading…</span>
         </div>
       </div>
@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-background">
       <TooltipProvider delayDuration={300}>
         <DashboardNav />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container py-8">
           {children}
         </main>
       </TooltipProvider>

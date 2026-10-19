@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis } from "recharts"
 import { analyticsApi } from "@/lib/api-client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/status-badge"
@@ -27,43 +27,60 @@ export function UrlStatsDialog({ urlId, onClose }: UrlStatsDialogProps) {
     <Dialog open={urlId != null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display tracking-tight">
+          <DialogTitle className={data ? "font-mono text-base text-brand" : undefined}>
             {data ? `/${data.shortUrl}` : "URL analytics"}
           </DialogTitle>
         </DialogHeader>
 
         {isLoading || !data ? (
           <div className="h-48 flex items-center justify-center">
-            <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
           </div>
         ) : (
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <StatusBadge status={data.status} className="text-[11px] px-2 py-0.5" />
-              <span className="text-xs text-muted-foreground truncate" title={data.longUrl}>{data.longUrl}</span>
+          <div className="min-w-0 space-y-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <StatusBadge status={data.status} className="shrink-0" />
+              <span className="truncate text-sm text-muted-foreground" title={data.longUrl}>{data.longUrl}</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <dl className="grid grid-cols-3 divide-x rounded-lg border">
               <Stat label="Total visits" value={data.visits} />
               <Stat label="Unique (recent)" value={data.uniqueRecentVisitors} />
               <Stat label="Clicks (recent)" value={data.totalRecentClicks} />
-            </div>
+            </dl>
 
             <div>
-              <p className="text-xs text-muted-foreground mb-2">New visitors · last 30 days</p>
+              <p className="mb-3 text-sm font-medium">New visitors · last 30 days</p>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-                    <XAxis dataKey="day" tick={{ fontSize: 10 }} interval={6} tickLine={false} axisLine={false} />
-                    <Tooltip
-                      cursor={{ fill: "rgba(255,255,255,0.05)" }}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "#0f0f0f" }}
+                  <BarChart data={chartData} margin={{ top: 4, right: 12, left: 12, bottom: 0 }}>
+                    <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="day"
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      interval={6}
+                      tickLine={false}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+                    <Tooltip
+                      cursor={{ fill: "hsl(var(--muted))" }}
+                      contentStyle={{
+                        fontSize: 12,
+                        borderRadius: 8,
+                        border: "1px solid hsl(var(--border))",
+                        background: "hsl(var(--popover))",
+                        color: "hsl(var(--popover-foreground))",
+                        boxShadow: "0 4px 12px -2px rgb(0 0 0 / 0.12)",
+                        padding: "6px 10px",
+                      }}
+                      labelStyle={{ color: "hsl(var(--muted-foreground))", marginBottom: 2 }}
+                      itemStyle={{ color: "hsl(var(--popover-foreground))", padding: 0 }}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--brand))" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Recent-visitor data is retained for a limited window; total visits is cumulative.
               </p>
             </div>
@@ -76,9 +93,9 @@ export function UrlStatsDialog({ urlId, onClose }: UrlStatsDialogProps) {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-border/40 p-3">
-      <p className="font-display text-xl text-primary">{value.toLocaleString()}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+    <div className="min-w-0 px-3 py-3 sm:px-4">
+      <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-xl font-semibold tabular-nums">{value.toLocaleString()}</dd>
     </div>
   )
 }

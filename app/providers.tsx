@@ -21,7 +21,7 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log(
       "%c🦆 hrva.cc — shaped by you.%c\n🔮 try /fortune  🥚 try /egg",
-      "color: #a67c00; font-size: 16px; font-weight: bold;",
+      "color: #2251ff; font-size: 16px; font-weight: bold;",
       "color: #6b7280; font-size: 12px;"
     )
   }, [])

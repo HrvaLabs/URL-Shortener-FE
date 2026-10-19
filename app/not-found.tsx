@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -8,22 +11,19 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center space-y-6">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-secondary">
-          <span className="font-display text-3xl text-primary">404</span>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex flex-1 items-center justify-center px-5 py-24">
+        <div className="text-center">
+          <p className="font-mono text-sm text-muted-foreground">404</p>
+          <h1 className="mt-3 font-display text-3xl sm:text-4xl">Page not found</h1>
+          <p className="mt-3 text-muted-foreground">This page doesn&apos;t exist or has been moved.</p>
+          <Button asChild className="mt-8">
+            <Link href="/">Go home</Link>
+          </Button>
         </div>
-        <div className="space-y-1">
-          <h1 className="font-display text-2xl tracking-tight">Page not found</h1>
-          <p className="text-sm text-muted-foreground">This page doesn&apos;t exist or has been moved.</p>
-        </div>
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center h-9 px-5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:brightness-110 transition-all"
-        >
-          Go home
-        </Link>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
   )
 }

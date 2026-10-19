@@ -8,7 +8,7 @@ interface StatusDisplay {
 const STATUS_MAP: Record<string, StatusDisplay> = {
   ACTIVE: { label: "Active", variant: "success" },
   LIMIT_REACHED: { label: "Limit reached", variant: "warning" },
-  EXPIRED: { label: "Expired", variant: "warning" },
+  EXPIRED: { label: "Expired", variant: "secondary" },
   BLOCKED: { label: "Blocked", variant: "destructive" },
   REVOKED: { label: "Revoked", variant: "destructive" },
   DEACTIVATED: { label: "Deactivated", variant: "destructive" },

@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { ShieldCheck } from "lucide-react"
 
 export function TwoFactorCard() {
   const { user, refreshUser } = useAuth()
@@ -25,17 +24,10 @@ export function TwoFactorCard() {
 
   if (!isLocal) {
     return (
-      <Card className="border-border/40">
+      <Card>
         <CardHeader>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-              <ShieldCheck className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-display tracking-tight">Two-factor authentication</CardTitle>
-              <CardDescription className="text-xs">Managed by your login provider for social accounts.</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-base">Two-factor authentication</CardTitle>
+          <CardDescription>Managed by your login provider for social accounts.</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -83,66 +75,59 @@ export function TwoFactorCard() {
   }
 
   return (
-    <Card className="border-border/40">
+    <Card>
       <CardHeader>
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-            <ShieldCheck className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-base font-display tracking-tight flex items-center gap-2">
-              Two-factor authentication
-              {enabled && <Badge variant="success" className="text-[10px] px-1.5 py-0">On</Badge>}
-            </CardTitle>
-            <CardDescription className="text-xs">Add a TOTP authenticator app as a second login step.</CardDescription>
-          </div>
-        </div>
+        <CardTitle className="flex items-center gap-2 text-base">
+          Two-factor authentication
+          {enabled && <Badge variant="success">On</Badge>}
+        </CardTitle>
+        <CardDescription>Add a TOTP authenticator app as a second login step.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {recoveryCodes && (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Save these recovery codes. Each works once if you lose your authenticator. They won't be shown again.</p>
-            <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-border/40 p-3 font-mono text-sm">
+            <p className="text-sm text-muted-foreground">Save these recovery codes. Each works once if you lose your authenticator. They won't be shown again.</p>
+            <div className="grid grid-cols-2 gap-1.5 rounded-lg border bg-muted/40 p-3 font-mono text-sm">
               {recoveryCodes.map((c) => <span key={c}>{c}</span>)}
             </div>
-            <Button size="sm" variant="outline" className="h-9 text-xs border-border/50" onClick={() => setRecoveryCodes(null)}>Done</Button>
+            <Button size="sm" variant="outline" onClick={() => setRecoveryCodes(null)}>Done</Button>
           </div>
         )}
 
         {!recoveryCodes && enabled && (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="disableCode" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Code to disable</Label>
-              <Input id="disableCode" inputMode="numeric" placeholder="123456 or recovery code" value={disableCode} onChange={(e) => setDisableCode(e.target.value)} className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="disableCode">Code to disable</Label>
+              <Input id="disableCode" inputMode="numeric" placeholder="123456 or recovery code" value={disableCode} onChange={(e) => setDisableCode(e.target.value)} className="h-10 max-w-sm" />
             </div>
-            <Button variant="destructive" size="sm" className="h-9 text-xs" disabled={loading || !disableCode} onClick={disable}>
+            <Button variant="destructive" size="sm" disabled={loading || !disableCode} onClick={disable}>
               {loading ? "Disabling…" : "Disable 2FA"}
             </Button>
           </div>
         )}
 
         {!recoveryCodes && !enabled && !setupData && (
-          <Button size="sm" className="h-9 text-xs bg-primary text-primary-foreground hover:brightness-110" disabled={loading} onClick={startSetup}>
+          <Button size="sm" disabled={loading} onClick={startSetup}>
             {loading ? "Starting…" : "Enable 2FA"}
           </Button>
         )}
 
         {!recoveryCodes && !enabled && setupData && (
           <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">Scan with your authenticator app, then enter the 6-digit code.</p>
-            <div className="inline-block rounded-lg bg-white p-3">
-              <QRCodeSVG value={setupData.otpauthUri} size={160} />
+            <p className="text-sm text-muted-foreground">Scan with your authenticator app, then enter the 6-digit code.</p>
+            <div className="inline-block rounded-lg border bg-white p-2">
+              <QRCodeSVG value={setupData.otpauthUri} size={160} fgColor="#0e0e11" bgColor="#ffffff" />
             </div>
-            <p className="text-[11px] text-muted-foreground break-all">Secret: <span className="font-mono">{setupData.secret}</span></p>
+            <p className="break-all text-xs text-muted-foreground">Secret: <span className="font-mono text-foreground">{setupData.secret}</span></p>
             <div className="space-y-1.5">
-              <Label htmlFor="enableCode" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Verification code</Label>
-              <Input id="enableCode" inputMode="numeric" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} className="h-10 bg-background/50 border-border/50" autoFocus />
+              <Label htmlFor="enableCode">Verification code</Label>
+              <Input id="enableCode" inputMode="numeric" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} className="h-10 max-w-sm" autoFocus />
             </div>
             <div className="flex gap-2">
-              <Button size="sm" className="h-9 text-xs bg-primary text-primary-foreground hover:brightness-110" disabled={loading || !code} onClick={confirmEnable}>
+              <Button size="sm" disabled={loading || !code} onClick={confirmEnable}>
                 {loading ? "Verifying…" : "Verify & enable"}
               </Button>
-              <Button size="sm" variant="outline" className="h-9 text-xs border-border/50" onClick={() => { setSetupData(null); setCode("") }}>Cancel</Button>
+              <Button size="sm" variant="outline" onClick={() => { setSetupData(null); setCode("") }}>Cancel</Button>
             </div>
           </div>
         )}

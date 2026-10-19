@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDate(date: string | Date | null | undefined): string {
-  if (!date) return "N/A"
+  if (!date) return "—"
   const d = new Date(date)
   return d.toLocaleDateString(undefined, {
     year: "numeric",
@@ -16,7 +16,7 @@ export function formatDate(date: string | Date | null | undefined): string {
 }
 
 export function formatDateTime(date: string | Date | null | undefined): string {
-  if (!date) return "N/A"
+  if (!date) return "—"
   const d = new Date(date)
   return d.toLocaleDateString(undefined, {
     year: "numeric",
@@ -28,7 +28,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 export function formatRelativeDate(date: string | Date | null | undefined): string {
-  if (!date) return "N/A"
+  if (!date) return "—"
   const d = new Date(date)
   const now = new Date()
   const diffMs = d.getTime() - now.getTime()
@@ -38,7 +38,10 @@ export function formatRelativeDate(date: string | Date | null | undefined): stri
   if (diffDays === 0) return "Today"
   if (diffDays === 1) return "Tomorrow"
   if (diffDays < 7) return `${diffDays} days`
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7)
+    return `${weeks} ${weeks === 1 ? "week" : "weeks"}`
+  }
   return formatDate(date)
 }
 

@@ -99,9 +99,9 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
           </form>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <span className="text-sm font-medium">/{result.shortUrl}</span>
-              <Button variant="ghost" size="icon" onClick={() => {
+            <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
+              <span className="min-w-0 truncate font-mono text-sm font-medium text-brand">/{result.shortUrl}</span>
+              <Button variant="ghost" size="icon" aria-label="Copy short URL" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => {
                 navigator.clipboard.writeText(`${getShortBaseUrl()}/${result.shortUrl}`)
                 setCopied(true)
                 setTimeout(() => setCopied(false), 2000)
@@ -111,8 +111,8 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
               </Button>
             </div>
             <div className="flex justify-center">
-              <div className="p-3 bg-white dark:bg-gray-800 rounded-lg inline-block">
-                <QRCodeSVG value={`${getShortBaseUrl()}/${result.shortUrl}`} size={150} />
+              <div className="inline-block rounded-lg border bg-white p-2">
+                <QRCodeSVG value={`${getShortBaseUrl()}/${result.shortUrl}`} size={150} fgColor="#0e0e11" bgColor="#ffffff" />
               </div>
             </div>
             <Button variant="outline" className="w-full" onClick={handleClose}>Done</Button>

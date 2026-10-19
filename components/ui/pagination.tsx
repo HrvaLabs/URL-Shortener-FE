@@ -19,19 +19,19 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
   const lastItem = totalElements ? Math.min((page + 1) * size, totalElements) : 0
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border/30">
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {totalElements != null && (
           <span className="tabular-nums">
             {firstItem}–{lastItem} of {totalElements}
           </span>
         )}
-        <span className="text-muted-foreground/40">|</span>
-        <span>Rows per page:</span>
+        <span className="ml-2 hidden sm:inline">Rows per page</span>
         <select
+          aria-label="Rows per page"
           value={size}
           onChange={(e) => onSizeChange(Number(e.target.value))}
-          className="h-7 rounded border border-input bg-background px-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/15"
         >
           {PAGE_SIZES.map((s) => (
             <option key={s} value={s}>{s}</option>
@@ -48,7 +48,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
         <Button
           variant="outline"
           size="icon"
-          className="h-7 w-7"
+          className="h-8 w-8"
           disabled={page <= 0}
           onClick={() => onPageChange(page - 1)}
         >
@@ -57,7 +57,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
         <Button
           variant="outline"
           size="icon"
-          className="h-7 w-7"
+          className="h-8 w-8"
           disabled={page >= totalPages - 1}
           onClick={() => onPageChange(page + 1)}
         >

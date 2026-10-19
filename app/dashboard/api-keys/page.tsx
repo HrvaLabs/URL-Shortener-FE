@@ -3,9 +3,7 @@
 import { useState } from "react"
 import { useMyApiKeys, useGenerateApiKey, useRevokeApiKey, useUpdateApiKey } from "@/lib/hooks/useApiKeys"
 import type { ApiKeyResponse } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Key, Copy, Check, Plus, ShieldAlert, Pencil, Trash2, Eye, EyeOff } from "lucide-react"
+import { Copy, Check, Plus, ShieldAlert, Pencil, Trash2, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
@@ -89,56 +87,52 @@ export default function ApiKeysPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageMeta title="Dashboard — API Keys" description="Manage API keys for programmatic URL shortening on hrva.cc." />
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-display tracking-tight">API Keys</h1>
-          <p className="text-sm text-muted-foreground">Manage your API keys for programmatic access</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl">API Keys</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your API keys for programmatic access</p>
         </div>
-      </div>
-
-      {/* Generate key dialog */}
-      <Dialog open={showGenerate} onOpenChange={(open) => { setShowGenerate(open); if (!open) setNewKey(null) }}>
-        <Button
-          onClick={() => setShowGenerate(true)}
-          className="h-9 gap-1.5 bg-primary text-primary-foreground hover:brightness-110 text-xs font-medium"
-        >
-          <Plus className="h-3.5 w-3.5" />
+        <Button onClick={() => setShowGenerate(true)} size="sm" className="gap-1.5 self-start sm:self-auto">
+          <Plus className="h-4 w-4" />
           Generate Key
         </Button>
-        <DialogContent className="bg-card border-border/50">
+      </div>
+
+      <Dialog open={showGenerate} onOpenChange={(open) => { setShowGenerate(open); if (!open) setNewKey(null) }}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-display text-lg">{newKey ? "API Key Generated" : "Generate New API Key"}</DialogTitle>
-            {!newKey && <DialogDescription className="text-muted-foreground text-sm">Create a new API key for programmatic URL shortening.</DialogDescription>}
+            <DialogTitle>{newKey ? "API Key Generated" : "Generate New API Key"}</DialogTitle>
+            {!newKey && <DialogDescription>Create a new API key for programmatic URL shortening.</DialogDescription>}
           </DialogHeader>
           {!newKey ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">This will create a new API key associated with your account.</p>
-              <Button onClick={handleGenerate} className="w-full h-9 bg-primary text-primary-foreground hover:brightness-110 text-xs" disabled={generateKey.isPending}>
+              <Button onClick={handleGenerate} className="w-full" disabled={generateKey.isPending}>
                 {generateKey.isPending ? "Generating…" : "Generate"}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <p className="text-sm font-medium text-amber-400 mb-2 flex items-center gap-1.5">
-                  <ShieldAlert className="h-4 w-4" />
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-warning">
+                  <ShieldAlert className="h-4 w-4 shrink-0" />
                   Copy this key now. You won&apos;t be able to see it again!
                 </p>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-background/80 border border-border/40">
-                  <code className="text-xs font-mono truncate text-foreground">{newKey}</code>
-                  <Button variant="ghost" size="icon" onClick={() => {
+                <div className="flex items-center justify-between gap-2 rounded-md border bg-background py-1.5 pl-3 pr-1.5">
+                  <code className="min-w-0 truncate font-mono text-xs text-foreground">{newKey}</code>
+                  <Button variant="ghost" size="icon" aria-label="Copy key" onClick={() => {
                     navigator.clipboard.writeText(newKey)
                     setNewKeyCopied(true)
                     setTimeout(() => setNewKeyCopied(false), 2000)
                     toast.success("Copied!")
-                  }} className="h-7 w-7 shrink-0 ml-2">
-                    {newKeyCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  }} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
+                    {newKeyCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
-              <Button variant="outline" className="w-full h-9 text-xs border-border/50" onClick={() => { setShowGenerate(false); setNewKey(null) }}>
+              <Button variant="outline" className="w-full" onClick={() => { setShowGenerate(false); setNewKey(null) }}>
                 Done
               </Button>
             </div>
@@ -146,18 +140,17 @@ export default function ApiKeysPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit dialog */}
       <Dialog open={!!editKey} onOpenChange={(open) => { if (!open) setEditKey(null) }}>
-        <DialogContent className="bg-card border-border/50">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-display text-lg">Edit API Key</DialogTitle>
+            <DialogTitle>Edit API Key</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground tracking-wide uppercase">API Call Limit</Label>
-              <Input type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder={editKey?.apiCallsLimit.toString()} className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="apiCallsLimit">API Call Limit</Label>
+              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder={editKey?.apiCallsLimit.toString()} className="h-10" />
             </div>
-            <Button onClick={handleEditSave} disabled={updateKey.isPending} className="h-9 text-xs bg-primary text-primary-foreground hover:brightness-110">
+            <Button onClick={handleEditSave} disabled={updateKey.isPending}>
               {updateKey.isPending ? "Saving…" : "Save"}
             </Button>
           </div>
@@ -165,146 +158,151 @@ export default function ApiKeysPage() {
       </Dialog>
 
       {isLoading ? (
-        <Card className="border-border/40">
-          <CardContent className="p-6 space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full bg-muted/50" />
-            ))}
-          </CardContent>
-        </Card>
+        <div className="space-y-3 rounded-xl border bg-card p-5">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
       ) : error ? (
-        <Card className="border-border/40">
-          <CardContent className="p-8 text-center space-y-3">
-            <p className="text-sm text-destructive">Failed to load API keys</p>
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="border-border/50">Retry</Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-12 text-center">
+          <p className="text-sm text-destructive">Failed to load API keys</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-4">Retry</Button>
+        </div>
       ) : !apiKeys || apiKeys.length === 0 ? (
-        <Card className="border-border/40">
-          <CardContent className="p-16 text-center space-y-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-secondary mx-auto">
-              <Key className="h-6 w-6 text-primary" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-display text-lg tracking-tight">No API keys</h3>
-              <p className="text-sm text-muted-foreground">Generate an API key to use the URL shortener programmatically.</p>
-            </div>
-            <Button onClick={() => setShowGenerate(true)} size="sm" className="bg-primary text-primary-foreground hover:brightness-110">
-              Generate Key
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-16 text-center">
+          <h2 className="font-semibold">No API keys</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Generate an API key to use the URL shortener programmatically.</p>
+          <Button onClick={() => setShowGenerate(true)} size="sm" className="mt-6 gap-1.5">
+            <Plus className="h-4 w-4" />
+            Generate Key
+          </Button>
+        </div>
       ) : (
-        <Card className="border-border/40 overflow-hidden">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/30 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Key</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10 hidden md:table-cell">Created</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10 hidden lg:table-cell">Expires</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Usage</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Status</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {apiKeys.map((key: ApiKeyResponse) => {
-                  const isVisible = visibleKeys.has(key.id)
-                  const displayKey = isVisible ? key.key : maskApiKey(key.key)
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Key</TableHead>
+                <TableHead className="hidden md:table-cell">Created</TableHead>
+                <TableHead className="hidden lg:table-cell">Expires</TableHead>
+                <TableHead>Usage</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.map((key: ApiKeyResponse) => {
+                const isVisible = visibleKeys.has(key.id)
+                const displayKey = isVisible ? key.key : maskApiKey(key.key)
 
-                  return (
-                    <TableRow key={key.id} className="border-border/20 hover:bg-muted/30 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <code className="text-sm font-mono bg-muted/30 px-2 py-0.5 rounded text-muted-foreground">
-                            {displayKey}
-                          </code>
+                return (
+                  <TableRow key={key.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <code className="mr-1 rounded-md border bg-muted/40 px-2 py-0.5 font-mono text-[13px] text-foreground">
+                          {displayKey}
+                        </code>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={isVisible ? "Hide key" : "Reveal key"}
+                              onClick={() => toggleKeyVisibility(key.id)}
+                              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                            >
+                              {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {isVisible ? "Hide key" : "Reveal key"}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Copy key"
+                              onClick={() => copyKeyToClipboard(key.key, key.id)}
+                              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                            >
+                              {copiedKeyId === key.id
+                                ? <Check className="h-3.5 w-3.5 text-success" />
+                                : <Copy className="h-3.5 w-3.5" />
+                              }
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Copy key</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden text-sm tabular-nums text-muted-foreground md:table-cell">{formatDate(key.createDate)}</TableCell>
+                    <TableCell className="hidden text-sm tabular-nums lg:table-cell">{key.expirationDate ? formatDate(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm tabular-nums">
+                      <span className="font-medium">{key.apiCallsUsed}</span>
+                      <span className="text-muted-foreground"> / {key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</span>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={key.status} active={key.active} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Edit limit"
+                              onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Edit limit</TooltipContent>
+                        </Tooltip>
+                        {key.active && (
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() => toggleKeyVisibility(key.id)}
-                                className="p-1 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground shrink-0"
-                              >
-                                {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[11px]">
-                              {isVisible ? "Hide key" : "Reveal key"}
-                            </TooltipContent>
+                            <AlertDialog>
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label="Revoke key"
+                                    className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Revoke key</TooltipContent>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently revoke this API key. Any services using it will stop working.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleRevoke(key.id)} className={buttonVariants({ variant: "destructive" })}>
+                                    Revoke
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() => copyKeyToClipboard(key.key, key.id)}
-                                className="p-1 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground shrink-0"
-                              >
-                                {copiedKeyId === key.id
-                                  ? <Check className="h-3.5 w-3.5 text-success" />
-                                  : <Copy className="h-3.5 w-3.5" />
-                                }
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[11px]">Copy key</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{formatDate(key.createDate)}</TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm">{key.expirationDate ? formatDate(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
-                      <TableCell className="text-sm">{key.apiCallsUsed} / {key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={key.status} active={key.active} className="text-[11px] px-2 py-0.5 font-medium" />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-0.5">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
-                                className="p-1.5 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-foreground"
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="text-[11px]">Edit limit</TooltipContent>
-                          </Tooltip>
-                          {key.active && (
-                            <Tooltip>
-                              <AlertDialog>
-                                <TooltipTrigger asChild>
-                                  <AlertDialogTrigger asChild>
-                                    <button className="p-1.5 hover:bg-muted rounded-md transition-colors text-destructive/60 hover:text-destructive">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
-                                  </AlertDialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-[11px]">Revoke key</TooltipContent>
-                                <AlertDialogContent className="bg-card border-border/50">
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle className="font-display text-lg">Revoke API Key?</AlertDialogTitle>
-                                    <AlertDialogDescription className="text-muted-foreground">
-                                      This will permanently revoke this API key. Any services using it will stop working.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel className="border-border/40">Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleRevoke(key.id)} className="bg-destructive text-destructive-foreground">
-                                      Revoke
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   )

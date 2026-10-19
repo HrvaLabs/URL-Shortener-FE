@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { User, Lock, Trash2, Download } from "lucide-react"
+import { Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
 import { TwoFactorCard } from "@/components/two-factor-card"
@@ -95,66 +95,52 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="max-w-2xl space-y-6">
       <PageMeta title="Dashboard — Settings" description="Manage your hrva.cc account settings and password." />
-      <div className="space-y-1">
-        <h1 className="text-2xl font-display tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Manage your account settings</p>
+      <div>
+        <h1 className="font-display text-2xl">Settings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your account settings</p>
       </div>
 
-      <Card className="border-border/40">
+      <Card>
         <CardHeader>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-              <User className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-display tracking-tight">Profile</CardTitle>
-              <CardDescription className="text-xs">Update your email address</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-base">Profile</CardTitle>
+          <CardDescription>Update your email address</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileUpdate} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 max-w-sm" />
             </div>
-            <Button type="submit" disabled={profileLoading} className="h-9 text-xs bg-primary text-primary-foreground hover:brightness-110" size="sm">
+            <Button type="submit" disabled={profileLoading} size="sm">
               {profileLoading ? "Saving…" : "Save changes"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      <Card className="border-border/40">
+      <Card>
         <CardHeader>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-              <Lock className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-display tracking-tight">Change Password</CardTitle>
-              <CardDescription className="text-xs">Update your account password</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-base">Change Password</CardTitle>
+          <CardDescription>Update your account password</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="oldPassword" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Current Password</Label>
-              <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="oldPassword">Current Password</Label>
+              <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="h-10 max-w-sm" />
             </div>
-            <Separator className="bg-border/30" />
+            <Separator />
             <div className="space-y-1.5">
-              <Label htmlFor="newPassword" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">New Password</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="h-10 max-w-sm" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 max-w-sm" />
             </div>
-            <Button type="submit" disabled={passwordLoading} className="h-9 text-xs bg-primary text-primary-foreground hover:brightness-110" size="sm">
+            <Button type="submit" disabled={passwordLoading} size="sm">
               {passwordLoading ? "Changing…" : "Change password"}
             </Button>
           </form>
@@ -163,44 +149,30 @@ export default function SettingsPage() {
 
       <TwoFactorCard />
 
-      <Card className="border-border/40">
+      <Card>
         <CardHeader>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary">
-              <Download className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-display tracking-tight">Your data</CardTitle>
-              <CardDescription className="text-xs">Download all your data (profile, URLs, API keys, emails) as JSON</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-base">Your data</CardTitle>
+          <CardDescription>Download all your data (profile, URLs, API keys, emails) as JSON</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button type="button" variant="outline" size="sm" disabled={exportLoading} onClick={handleExport} className="h-9 text-xs border-border/50">
-            <Download className="h-4 w-4 mr-2" />
+          <Button type="button" variant="outline" size="sm" disabled={exportLoading} onClick={handleExport} className="gap-1.5">
+            <Download className="h-4 w-4" />
             {exportLoading ? "Preparing…" : "Download my data"}
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/40">
+      <Card className="border-destructive/30">
         <CardHeader>
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10">
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-display tracking-tight">Delete account</CardTitle>
-              <CardDescription className="text-xs">Permanently delete your account, URLs and API keys. This cannot be undone.</CardDescription>
-            </div>
-          </div>
+          <CardTitle className="text-base text-destructive">Delete account</CardTitle>
+          <CardDescription>Permanently delete your account, URLs and API keys. This cannot be undone.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {isLocalAccount && (
               <div className="space-y-1.5">
-                <Label htmlFor="deletePassword" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Confirm with your password</Label>
-                <Input id="deletePassword" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="h-10 bg-background/50 border-border/50" />
+                <Label htmlFor="deletePassword">Confirm with your password</Label>
+                <Input id="deletePassword" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="h-10 max-w-sm" />
               </div>
             )}
             <Button
@@ -209,7 +181,6 @@ export default function SettingsPage() {
               size="sm"
               disabled={deleteLoading || (isLocalAccount && !deletePassword)}
               onClick={handleDeleteAccount}
-              className="h-9 text-xs"
             >
               {deleteLoading ? "Deleting…" : "Delete my account"}
             </Button>

@@ -1,10 +1,9 @@
 "use client"
 
 import type { UrlResponse } from "@/lib/types"
-import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { formatDate } from "@/lib/utils"
-import { Eye, Target, Calendar, LinkIcon, ExternalLink } from "lucide-react"
+import { ExternalLink } from "lucide-react"
 
 interface UrlAnalyticsProps {
   url: UrlResponse
@@ -18,64 +17,52 @@ export function UrlAnalytics({ url }: UrlAnalyticsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Eye className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-2xl font-bold">{url.visits}</p>
-              <p className="text-xs text-muted-foreground">Total Visits</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Target className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-2xl font-bold">{url.visitLimit > 0 ? `${url.visitLimit}` : "\u221E"}</p>
-              <p className="text-xs text-muted-foreground">Visit Limit</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-primary" />
-            <div>
-              <p className="text-sm font-medium">{formatDate(url.createDate)}</p>
-              <p className="text-xs text-muted-foreground">Created</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3 min-w-0">
-            <LinkIcon className="h-8 w-8 text-primary shrink-0" />
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate" title={url.longUrl}>
-                {url.longUrl}
-              </p>
-              <p className="text-xs text-muted-foreground">Destination</p>
-            </div>
-            <a href={url.longUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 ml-auto">
-              <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+      <dl className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl border bg-card p-5">
+          <dt className="text-sm text-muted-foreground">Total Visits</dt>
+          <dd className="mt-1 text-2xl font-semibold tabular-nums">{url.visits}</dd>
+        </div>
+        <div className="rounded-xl border bg-card p-5">
+          <dt className="text-sm text-muted-foreground">Visit Limit</dt>
+          <dd className="mt-1 text-2xl font-semibold tabular-nums">{url.visitLimit > 0 ? `${url.visitLimit}` : "∞"}</dd>
+        </div>
+        <div className="rounded-xl border bg-card p-5">
+          <dt className="text-sm text-muted-foreground">Created</dt>
+          <dd className="mt-1 text-sm font-medium tabular-nums">{formatDate(url.createDate)}</dd>
+        </div>
+        <div className="min-w-0 rounded-xl border bg-card p-5">
+          <dt className="text-sm text-muted-foreground">Destination</dt>
+          <dd className="mt-1 flex min-w-0 items-center gap-2">
+            <span className="truncate text-sm font-medium" title={url.longUrl}>
+              {url.longUrl}
+            </span>
+            <a
+              href={url.longUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open destination"
+              className="ml-auto shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <ExternalLink className="h-4 w-4" />
             </a>
-          </CardContent>
-        </Card>
-      </div>
+          </dd>
+        </div>
+      </dl>
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Visit limit usage</span>
-          <span>
-            {url.visits} / {url.visitLimit > 0 ? url.visitLimit : "\u221E"}
+          <span className="text-muted-foreground">Visit limit usage</span>
+          <span className="tabular-nums">
+            {url.visits} / {url.visitLimit > 0 ? url.visitLimit : "∞"}
             {url.visitLimit > 0 ? ` (${Math.round(visitPercent)}%)` : ""}
           </span>
         </div>
-        <Progress value={url.visitLimit > 0 ? visitPercent : 0} />
+        <Progress value={url.visitLimit > 0 ? visitPercent : 0} className="h-1.5" />
       </div>
 
       {url.visits > 0 && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="tabular-nums">{dailyAvg}</span>
+          <span className="font-medium tabular-nums text-foreground">{dailyAvg}</span>
           <span>visits/day over {daysSinceCreation} day{daysSinceCreation > 1 ? "s" : ""}</span>
         </div>
       )}

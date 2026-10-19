@@ -4,119 +4,123 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { BarChart3, Key, Settings, Users, LinkIcon, Shield, LogOut, Activity, History, Mail, LineChart } from "lucide-react"
+import { Users, LinkIcon, Shield, LogOut, Activity, History, Mail, LayoutDashboard, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+const navItems = [
+  { href: "/dashboard", label: "URLs" },
+  { href: "/dashboard/analytics", label: "Analytics" },
+  { href: "/dashboard/api-keys", label: "API Keys" },
+  { href: "/dashboard/settings", label: "Settings" },
+]
+
+const adminItems = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin", label: "Users", icon: Users },
+  { href: "/admin/urls", label: "All URLs", icon: LinkIcon },
+  { href: "/admin/api-keys", label: "All API Keys", icon: Shield },
+  { href: "/admin/health", label: "Health", icon: Activity },
+  { href: "/admin/audit-log", label: "Audit Log", icon: History },
+  { href: "/admin/email-log", label: "Email Log", icon: Mail },
+]
+
+const navItemClass = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm transition-colors"
+
+function navItemState(isActive: boolean) {
+  return isActive
+    ? "bg-accent font-medium text-foreground"
+    : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+}
+
+function AdminMenu({ pathname }: { pathname: string }) {
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={cn(navItemClass, navItemState(isAdminRoute), "outline-none data-[state=open]:bg-accent data-[state=open]:text-foreground")}>
+        Admin
+        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48 focus-visible:ring-0 focus-visible:ring-offset-0">
+        {adminItems.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+          return (
+            <DropdownMenuItem
+              key={item.href}
+              asChild
+              className={cn("cursor-pointer gap-2", isActive ? "bg-accent font-medium text-foreground" : "text-muted-foreground focus:text-foreground")}
+            >
+              <Link href={item.href}>
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            </DropdownMenuItem>
+          )
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export function DashboardNav() {
   const pathname = usePathname()
   const { user, logout, isAdmin } = useAuth()
 
-  const navItems = [
-    { href: "/dashboard", label: "URLs", icon: BarChart3 },
-    { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-    { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
-  ]
-
-  const adminItems = [
-    { href: "/admin/dashboard", label: "Dashboard", icon: Activity },
-    { href: "/admin", label: "Users", icon: Users },
-    { href: "/admin/urls", label: "All URLs", icon: LinkIcon },
-    { href: "/admin/api-keys", label: "All API Keys", icon: Shield },
-    { href: "/admin/health", label: "Health", icon: Activity },
-    { href: "/admin/audit-log", label: "Audit Log", icon: History },
-    { href: "/admin/email-log", label: "Email Log", icon: Mail },
-  ]
+  const links = navItems.map((item) => {
+    const isActive = pathname === item.href
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        aria-current={isActive ? "page" : undefined}
+        className={cn(navItemClass, navItemState(isActive))}
+      >
+        {item.label}
+      </Link>
+    )
+  })
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-14">
-          <div className="flex items-center gap-8">
+    <header className="sticky top-0 z-40 border-b bg-background">
+      <div className="container">
+        <div className="flex h-14 items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-6">
             <Logo showText className="shrink-0" />
-
-            <div className="hidden md:flex items-center gap-0.5">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = pathname === item.href
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "h-8 gap-1.5 text-xs font-medium",
-                        isActive
-                          ? "bg-primary/10 text-primary hover:bg-primary/15"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                )
-              })}
-              {isAdmin && (
-                <div className="flex items-center gap-0.5 ml-3 pl-3 border-l border-border/50">
-                  {adminItems.map((item) => {
-                    const Icon = item.icon
-                    const isActive = pathname === item.href
-                    return (
-                      <Link key={item.href} href={item.href}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "h-8 gap-1.5 text-xs font-medium",
-                            isActive
-                              ? "bg-primary/10 text-primary hover:bg-primary/15"
-                              : "text-muted-foreground hover:text-foreground",
-                          )}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                          {item.label}
-                        </Button>
-                      </Link>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+            <nav aria-label="Dashboard" className="hidden items-center gap-1 md:flex">
+              {links}
+              {isAdmin && <AdminMenu pathname={pathname} />}
+            </nav>
           </div>
 
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <span className="hidden md:block text-xs text-muted-foreground max-w-[140px] truncate">
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="mr-2 hidden max-w-[180px] truncate text-sm text-muted-foreground lg:block">
               {user?.email}
             </span>
-            <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 text-muted-foreground hover:text-foreground">
-              <LogOut className="h-3.5 w-3.5" />
+            <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={logout}
+              aria-label="Log out"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Mobile nav */}
-        <div className="flex md:hidden items-center justify-start gap-1 pb-2 overflow-x-auto scrollbar-none">
-          {[...navItems, ...(isAdmin ? adminItems : [])].map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            return (
-              <Link key={item.href} href={item.href} className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}>
-                <Icon className="h-3.5 w-3.5" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </div>
+        <nav
+          aria-label="Dashboard"
+          className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+        >
+          {links}
+          {isAdmin && <AdminMenu pathname={pathname} />}
+        </nav>
       </div>
-    </nav>
+    </header>
   )
 }

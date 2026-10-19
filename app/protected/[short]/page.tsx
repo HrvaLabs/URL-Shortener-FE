@@ -6,8 +6,9 @@ import { urlApi } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { PageMeta } from "@/components/page-meta"
 import { Lock } from "lucide-react"
 
@@ -32,30 +33,42 @@ export default function ProtectedLinkPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col bg-muted/40">
       <PageMeta title="Protected link" description="This link is password protected." />
-      <Card className="w-full max-w-sm relative glass border-border/40 animate-scale-in">
-        <CardHeader className="text-center pb-2 pt-8">
-          <div className="flex justify-center mb-4"><Logo /></div>
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-secondary mx-auto mb-2">
-            <Lock className="h-4 w-4 text-primary" />
+      <header className="container flex h-16 items-center justify-between">
+        <Logo />
+        <ThemeToggle />
+      </header>
+
+      <main className="flex flex-1 items-center justify-center px-5 pb-16 pt-6">
+        <Card className="w-full max-w-sm p-8">
+          <div className="text-center">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <h1 className="mt-4 font-display text-2xl">Protected link</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">Enter the password to continue</p>
           </div>
-          <h1 className="font-display text-xl tracking-tight">Protected link</h1>
-          <p className="text-sm text-muted-foreground mt-1">Enter the password to continue</p>
-        </CardHeader>
-        <CardContent className="pb-8 px-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus className="h-10 bg-background/50 border-border/50" />
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                required
+                autoFocus
+              />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full h-10 bg-primary text-primary-foreground hover:brightness-110" disabled={loading || !password}>
+            <Button type="submit" className="w-full" disabled={loading || !password}>
               {loading ? "Unlocking…" : "Unlock & continue"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </Card>
+      </main>
     </div>
   )
 }

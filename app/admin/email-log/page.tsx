@@ -3,12 +3,10 @@
 import { useQuery } from "@tanstack/react-query"
 import { usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
-import { Mail } from "lucide-react"
 import { formatDateTime } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import type { EmailLog, Page } from "@/lib/types"
@@ -17,6 +15,12 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "su
   SENT: "success",
   FAILED: "destructive",
   SENDING: "secondary",
+}
+
+const statusLabels: Record<string, string> = {
+  SENT: "Sent",
+  FAILED: "Failed",
+  SENDING: "Sending",
 }
 
 export default function AdminEmailLogPage() {
@@ -30,74 +34,64 @@ export default function AdminEmailLogPage() {
     <div className="space-y-6">
       <PageMeta title="Admin — Email Log" description="View email delivery status." />
       <div>
-        <h1 className="text-2xl font-display tracking-tight">Email Log</h1>
-        <p className="text-sm text-muted-foreground">View email delivery status</p>
+        <h1 className="font-display text-2xl">Email Log</h1>
+        <p className="mt-1 text-sm text-muted-foreground">View email delivery status</p>
       </div>
 
       {isLoading ? (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </CardContent>
-        </Card>
+        <div className="space-y-3 rounded-xl border bg-card p-5">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-9 w-full" />
+          ))}
+        </div>
       ) : error ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-sm text-destructive">Failed to load email log</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-12 text-center">
+          <p className="text-sm font-medium text-destructive">Failed to load email log</p>
+        </div>
       ) : !data || data.content.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No emails sent yet</h3>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card px-6 py-16 text-center">
+          <p className="font-semibold">No emails sent yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Outgoing emails will be listed here with their delivery status.</p>
+        </div>
       ) : (
-        <Card className="border-border/40 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Time</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Recipient</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Subject</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-muted-foreground tracking-wide uppercase h-10 hidden lg:table-cell">Error</TableHead>
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Time</TableHead>
+                <TableHead>Recipient</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden lg:table-cell">Error</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.content.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.createdAt)}</TableCell>
+                  <TableCell className="max-w-[220px] truncate font-medium" title={entry.recipient}>{entry.recipient}</TableCell>
+                  <TableCell className="max-w-[260px] truncate" title={entry.subject}>{entry.subject}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusColors[entry.status] ?? "secondary"}>
+                      {statusLabels[entry.status] ?? entry.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground lg:table-cell" title={entry.errorMessage || undefined}>
+                    {entry.errorMessage || "—"}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.content.map((entry) => (
-                  <TableRow key={entry.id} className="border-border/20">
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{formatDateTime(entry.createdAt)}</TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate">{entry.recipient}</TableCell>
-                    <TableCell className="text-xs max-w-[250px] truncate">{entry.subject}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusColors[entry.status] ?? "secondary"} className="text-[10px] px-2 py-0.5">
-                        {entry.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate hidden lg:table-cell">
-                      {entry.errorMessage || "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
-            <Pagination
-              page={page}
-              totalPages={data?.totalPages ?? 0}
-              totalElements={data?.totalElements}
-              size={size}
-              onPageChange={setPage}
-              onSizeChange={setSize}
-            />
-          </CardContent>
-        </Card>
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination
+            page={page}
+            totalPages={data?.totalPages ?? 0}
+            totalElements={data?.totalElements}
+            size={size}
+            onPageChange={setPage}
+            onSizeChange={setSize}
+          />
+        </div>
       )}
     </div>
   )

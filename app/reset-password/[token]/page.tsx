@@ -5,9 +5,8 @@ import { authApi } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
-import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
@@ -41,42 +40,38 @@ export default function SetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col bg-muted/40">
       <PageMeta title="Set new password" description="Set a new password for your hrva.cc account." />
-      <header className="fixed top-0 inset-x-0 z-50 h-16 border-b border-border/50 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
-        <div className="container mx-auto px-4 h-full flex items-center justify-between">
-          <Logo />
-          <ThemeToggle />
-        </div>
+      <header className="container flex h-16 items-center justify-between">
+        <Logo />
+        <ThemeToggle />
       </header>
-      <div className="flex-1 flex items-center justify-center p-4 pt-24 relative">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/4 blur-[100px] pointer-events-none" />
-        <Card className="w-full max-w-sm relative glass border-border/40 animate-scale-in">
-          <CardHeader className="text-center pb-2 pt-8">
-            <h1 className="font-display text-2xl tracking-tight">Set new password</h1>
-            <p className="text-sm text-muted-foreground mt-1">Enter your email and new password</p>
-          </CardHeader>
-          <CardContent className="pb-8 px-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">New Password</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="text-xs font-medium text-muted-foreground tracking-wide uppercase">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 bg-background/50 border-border/50" />
-              </div>
-              <Button type="submit" className="w-full h-10 bg-primary text-primary-foreground hover:brightness-110" disabled={loading}>
-                {loading ? "Resetting…" : "Reset password"}
-              </Button>
-            </form>
-          </CardContent>
+
+      <main className="flex flex-1 items-center justify-center px-5 pb-16 pt-6">
+        <Card className="w-full max-w-sm p-8">
+          <div className="text-center">
+            <h1 className="font-display text-2xl">Set new password</h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">Enter your email and new password</p>
+          </div>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">New password</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Resetting…" : "Reset password"}
+            </Button>
+          </form>
         </Card>
-      </div>
+      </main>
     </div>
   )
 }

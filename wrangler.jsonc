@@ -2,6 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
   "name": "url-shortener",
+  "keep_names": false,
   "compatibility_date": "2026-05-13",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {

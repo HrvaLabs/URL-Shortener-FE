@@ -1,0 +1,286 @@
+import { Fragment } from "react"
+import Link from "next/link"
+import type { Metadata } from "next"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { cn } from "@/lib/utils"
+import { CopyButton } from "./copy-button"
+
+const description =
+  "Connect Claude, ChatGPT, Cursor or VS Code to the hrva.cc MCP server and let your AI assistant shorten links into your account."
+
+export const metadata: Metadata = {
+  title: "MCP server",
+  description,
+  alternates: { canonical: "https://app.hrva.cc/mcp" },
+  openGraph: {
+    url: "https://app.hrva.cc/mcp",
+    title: "MCP server — hrva.cc",
+    description,
+  },
+}
+
+const accountUrl = "https://hrva.cc/mcp"
+const anonymousUrl = "https://hrva.cc/mcp/anon"
+
+const claudeCodeCommand = `claude mcp add --transport http hrva ${accountUrl}`
+const cursorConfig = JSON.stringify({ mcpServers: { hrva: { url: accountUrl } } }, null, 2)
+const vsCodeConfig = JSON.stringify({ servers: { hrva: { type: "http", url: accountUrl } } }, null, 2)
+
+const endpoints = [
+  {
+    name: "Your account",
+    url: accountUrl,
+    description: "You sign in with your hrva.cc account. Links go into it, and your assistant can list them and read their visits.",
+  },
+  {
+    name: "Anonymous",
+    url: anonymousUrl,
+    description: "No account needed. It can only shorten URLs, up to 10 links per minute per network.",
+  },
+]
+
+const toolGroups = [
+  {
+    name: "Your account",
+    url: accountUrl,
+    tools: [
+      {
+        name: "shorten_url",
+        description: (
+          <>
+            Shortens a URL into your account, with an optional alias, visit limit, expiry and tags. Links it creates
+            are tagged <InlineCode>claude</InlineCode>.
+          </>
+        ),
+      },
+      { name: "list_links", description: "Lists your links, newest first, with search and a tag filter." },
+      {
+        name: "link_stats",
+        description:
+          "Shows a link's total visits plus its visits in roughly the last 48 hours. hrva.cc keeps visitor details for only about 48 hours.",
+      },
+    ],
+  },
+  {
+    name: "Anonymous",
+    url: anonymousUrl,
+    tools: [
+      {
+        name: "shorten_url",
+        description: "Shortens a URL without an account. URL only, up to 10 links per minute per network.",
+      },
+    ],
+  },
+]
+
+export default function McpPage() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+
+      <main className="flex-1">
+        <div className="container py-16 sm:py-20">
+          <article className="mx-auto max-w-3xl">
+            <h1 className="font-display text-3xl leading-tight sm:text-4xl">Use hrva.cc from your AI assistant</h1>
+            <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
+              Connect the hrva.cc MCP server, and your assistant can shorten links into your account, list them and
+              check their visits.
+            </p>
+
+            <Section title="Server URLs">
+              <ul className="divide-y rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+                {endpoints.map((endpoint) => (
+                  <li key={endpoint.url} className="p-5">
+                    <h3 className="text-sm font-semibold">{endpoint.name}</h3>
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
+                      <code className="min-w-0 truncate font-mono text-[13px] font-medium text-foreground">{endpoint.url}</code>
+                      <CopyButton
+                        text={endpoint.url}
+                        label={`${endpoint.name.toLowerCase()} URL`}
+                        className="text-muted-foreground hover:bg-accent hover:text-foreground"
+                      />
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{endpoint.description}</p>
+                  </li>
+                ))}
+              </ul>
+              <Paragraph className="mt-5">
+                When you add the account URL, your app opens the hrva.cc sign-in page. Sign in as usual, with your
+                password and two-factor code or with Google, then allow the app on the consent screen at{" "}
+                <InlineCode>app.hrva.cc/connect</InlineCode>.
+              </Paragraph>
+            </Section>
+
+            <Section title="Set it up">
+              <Paragraph>
+                It works with MCP clients that support remote servers with OAuth. Here is how to add it to the common
+                ones.
+              </Paragraph>
+
+              <Client title="Claude app (web, desktop, phone)">
+                <Paragraph>
+                  In Claude on the web or desktop, open <MenuPath>Customize → Connectors</MenuPath>, add a custom
+                  connector and paste this URL. Once it is connected, it works in the Claude phone app too. On Team and
+                  Enterprise plans, an owner adds it first under <MenuPath>Organization settings → Connectors</MenuPath>.
+                </Paragraph>
+                <CodeBlock label="Connector URL" code={accountUrl} copyLabel="Claude connector URL" />
+              </Client>
+
+              <Client title="Claude Code">
+                <Paragraph>
+                  Run this in a terminal, then run <InlineCode>/mcp</InlineCode> inside Claude Code to sign in.
+                </Paragraph>
+                <CodeBlock label="Terminal" code={claudeCodeCommand} copyLabel="Claude Code command" prompt />
+              </Client>
+
+              <Client title="Cursor">
+                <Paragraph>
+                  Add this to <InlineCode>~/.cursor/mcp.json</InlineCode> to use it in every project, or to{" "}
+                  <InlineCode>.cursor/mcp.json</InlineCode> for one project. If the file already lists servers, add the{" "}
+                  <InlineCode>hrva</InlineCode> entry next to them.
+                </Paragraph>
+                <CodeBlock label="~/.cursor/mcp.json" code={cursorConfig} copyLabel="Cursor configuration" mono />
+              </Client>
+
+              <Client title="VS Code">
+                <Paragraph>
+                  Run <MenuPath>MCP: Add Server</MenuPath> from the Command Palette, choose HTTP and paste the account
+                  URL. Or add this to <InlineCode>.vscode/mcp.json</InlineCode> in your project.
+                </Paragraph>
+                <CodeBlock label=".vscode/mcp.json" code={vsCodeConfig} copyLabel="VS Code configuration" mono />
+              </Client>
+
+              <Client title="ChatGPT">
+                <Paragraph>
+                  In ChatGPT on the web, go to <MenuPath>Plugins</MenuPath>, select +, then{" "}
+                  <MenuPath>Add custom MCP server</MenuPath>, and enter this URL. Whether you can add custom servers,
+                  and use tools that create links, depends on your ChatGPT plan and workspace settings.
+                </Paragraph>
+                <CodeBlock label="Server URL" code={accountUrl} copyLabel="ChatGPT server URL" />
+              </Client>
+            </Section>
+
+            <Section title="Tools">
+              <div className="overflow-hidden rounded-xl border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sm:w-40">Tool</TableHead>
+                      <TableHead>What it does</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {toolGroups.map((group) => (
+                      <Fragment key={group.url}>
+                        <TableRow className="bg-muted/40 hover:bg-muted/40">
+                          <TableHead colSpan={2} className="h-9 text-foreground">
+                            {group.name}
+                            <span className="ml-2 font-mono font-normal text-muted-foreground">{group.url}</span>
+                          </TableHead>
+                        </TableRow>
+                        {group.tools.map((tool) => (
+                          <TableRow key={tool.name}>
+                            <TableCell className="whitespace-nowrap align-top font-mono text-[13px] font-medium">
+                              {tool.name}
+                            </TableCell>
+                            <TableCell className="align-top leading-relaxed text-muted-foreground">
+                              {tool.description}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Section>
+
+            <Section title="What it can't do">
+              <Paragraph>
+                It can&apos;t edit, deactivate or delete links, and it can&apos;t change your account settings. Do those in
+                your{" "}
+                <Link href="/dashboard" className="text-brand-link">
+                  dashboard
+                </Link>
+                .
+              </Paragraph>
+            </Section>
+
+            <Section title="Disconnecting">
+              <Paragraph>
+                Open{" "}
+                <Link href="/dashboard/settings" className="text-brand-link">
+                  Settings → Connected apps
+                </Link>{" "}
+                and choose Disconnect next to the app. It will need to sign in again to use hrva.cc.
+              </Paragraph>
+            </Section>
+          </article>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-14">
+      <h2 className="mb-4 font-display text-2xl leading-tight">{title}</h2>
+      {children}
+    </section>
+  )
+}
+
+function Client({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-10">
+      <h3 className="mb-2 font-display text-lg leading-snug">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function Paragraph({ className, children }: { className?: string; children: React.ReactNode }) {
+  return <p className={cn("leading-7 text-foreground/80", className)}>{children}</p>
+}
+
+function InlineCode({ children }: { children: React.ReactNode }) {
+  return (
+    <code className="whitespace-nowrap rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
+      {children}
+    </code>
+  )
+}
+
+function MenuPath({ children }: { children: React.ReactNode }) {
+  return <span className="font-medium text-foreground">{children}</span>
+}
+
+interface CodeBlockProps {
+  label: string
+  code: string
+  copyLabel: string
+  mono?: boolean
+  prompt?: boolean
+}
+
+function CodeBlock({ label, code, copyLabel, mono, prompt }: CodeBlockProps) {
+  return (
+    <div className="mt-4 min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-800 py-1.5 pl-4 pr-2">
+        <span className={cn("truncate text-xs text-zinc-400", mono ? "font-mono" : "font-medium")}>{label}</span>
+        <CopyButton text={code} label={copyLabel} className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100" />
+      </div>
+      <pre className="whitespace-pre-wrap break-words p-4 font-mono text-[12.5px] leading-relaxed">
+        <code>
+          {prompt && <span className="select-none text-zinc-500">$ </span>}
+          {code}
+        </code>
+      </pre>
+    </div>
+  )
+}

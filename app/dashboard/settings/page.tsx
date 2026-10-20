@@ -13,6 +13,7 @@ import { Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
 import { TwoFactorCard } from "@/components/two-factor-card"
+import { ConnectedAppsCard } from "@/components/connected-apps-card"
 
 export default function SettingsPage() {
   const { user, refreshUser, logout } = useAuth()
@@ -148,6 +149,8 @@ export default function SettingsPage() {
       </Card>
 
       <TwoFactorCard />
+
+      <ConnectedAppsCard />
 
       <Card>
         <CardHeader>

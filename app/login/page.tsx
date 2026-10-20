@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,14 +8,14 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
 import { PageMeta } from "@/components/page-meta"
-import { getBackendOrigin } from "@/lib/utils"
+import { getBackendOrigin, safeNext } from "@/lib/utils"
 import { ArrowLeft } from "lucide-react"
 
-export default function LoginPage() {
+function LoginForm({ next }: { next: string | null }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -37,7 +37,7 @@ export default function LoginPage() {
         return
       }
       toast.success("Welcome back!")
-      router.push("/dashboard")
+      router.push(safeNext(next))
     } catch (err: any) {
       const message = err.message || "Invalid credentials"
       if (message.toLowerCase().includes("verify")) {
@@ -142,7 +142,13 @@ export default function LoginPage() {
               </div>
             </div>
             <Button asChild variant="outline" className="w-full gap-2">
-              <a href={`${getBackendOrigin()}/oauth2/authorization/google`}>
+              <a
+                href={`${getBackendOrigin()}/oauth2/authorization/google`}
+                onClick={() => {
+                  if (next) sessionStorage.setItem("post-login-next", next)
+                  else sessionStorage.removeItem("post-login-next")
+                }}
+              >
                 <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -162,5 +168,18 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+function LoginFormWithNext() {
+  const searchParams = useSearchParams()
+  return <LoginForm next={searchParams.get("next")} />
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginForm next={null} />}>
+      <LoginFormWithNext />
+    </Suspense>
   )
 }

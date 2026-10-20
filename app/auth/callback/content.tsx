@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
+import { safeNext } from "@/lib/utils"
 
 function AuthCallbackShell({ children }: { children: React.ReactNode }) {
   return (
@@ -44,11 +45,16 @@ export function AuthCallbackContent() {
     const err = searchParams.get("error")
 
     if (token) {
+      const next = sessionStorage.getItem("post-login-next")
       localStorage.setItem("auth-token", `Bearer ${token}`)
       refreshUser()
-        .then(() => router.push("/dashboard"))
+        .then(() => {
+          router.push(safeNext(next))
+          sessionStorage.removeItem("post-login-next")
+        })
         .catch(() => setError("Authentication failed."))
     } else if (err) {
+      sessionStorage.removeItem("post-login-next")
       const messages: Record<string, string> = {
         no_email: "Could not retrieve email from provider.",
         account_inactive: "Your account is deactivated. Contact an administrator.",

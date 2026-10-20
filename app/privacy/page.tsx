@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "June 10, 2026"
+const LAST_UPDATED = "October 20, 2026"
 
 export default function PrivacyPage() {
   return (
@@ -103,6 +103,25 @@ export default function PrivacyPage() {
                 legitimate interest (Art. 6(1)(f) GDPR).
               </p>
 
+              <h3>AI connectors</h3>
+              <p>
+                If you connect an AI app to your account through the hrva.cc MCP server, we store the
+                app&apos;s registration and your authorization of it (token records) in the hrva.cc
+                database until you disconnect the app in Settings → Connected apps or it goes
+                unused for 30 days. We don&apos;t store the URLs and messages the app sends us
+                beyond the links it creates.
+              </p>
+              <p>
+                To limit abuse, anonymous links created through the MCP server and new AI app
+                registrations are rate-limited per network. For this we keep a hash of your IP
+                address (for IPv6, of its network prefix) in our cache for at most an hour. The
+                plain IP address is not stored.
+              </p>
+              <p>
+                Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this is required to
+                provide the connection you requested.
+              </p>
+
               <h2>Who else receives data</h2>
               <ul>
                 <li>
@@ -133,11 +152,20 @@ export default function PrivacyPage() {
                 We do not sell personal data and we do not share it with anyone beyond the
                 processors listed above.
               </p>
+              <p>
+                Separately, if you connect an AI app to your account, that app receives the results
+                of the tools it uses (short links, link lists and visit stats). It is not our
+                processor; it handles that data under its own terms.
+              </p>
 
               <h2>How long we keep data</h2>
               <ul>
                 <li>
                   <strong>Hashed visitor IPs</strong> — deleted within 48 hours of the visit.
+                </li>
+                <li>
+                  <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within
+                  an hour.
                 </li>
                 <li>
                   <strong>Account data</strong> — kept until you delete your account; unused
@@ -149,6 +177,11 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Your links and their statistics</strong> — kept while your account exists;
                   deleting a link also deletes its visit records.
+                </li>
+                <li>
+                  <strong>Connected-app token records</strong>{" "}
+                  — deleted when you disconnect the app in Settings → Connected apps, or automatically
+                  once the app&apos;s refresh token has gone unused for 30 days.
                 </li>
                 {/* TODO: confirm email/audit log retention period with the backend */}
                 <li>

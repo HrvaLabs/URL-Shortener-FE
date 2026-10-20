@@ -14,6 +14,7 @@ const columns = [
   {
     title: "Developers",
     links: [
+      { href: "/mcp", label: "MCP server" },
       { href: "https://hrva.cc/swagger-ui/index.html", label: "API docs", external: true },
       { href: "/dashboard/api-keys", label: "API keys" },
       { href: "https://github.com/karlohrvacic/url-shortener", label: "Source on GitHub", external: true },

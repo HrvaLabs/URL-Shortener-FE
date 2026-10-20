@@ -112,6 +112,12 @@ export default function PrivacyPage() {
                 beyond the links it creates.
               </p>
               <p>
+                To limit abuse, anonymous links created through the MCP server and new AI app
+                registrations are rate-limited per network. For this we keep a hash of your IP
+                address (for IPv6, of its network prefix) in our cache for at most an hour. The
+                plain IP address is not stored.
+              </p>
+              <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this is required to
                 provide the connection you requested.
               </p>
@@ -156,6 +162,10 @@ export default function PrivacyPage() {
               <ul>
                 <li>
                   <strong>Hashed visitor IPs</strong> — deleted within 48 hours of the visit.
+                </li>
+                <li>
+                  <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within
+                  an hour.
                 </li>
                 <li>
                   <strong>Account data</strong> — kept until you delete your account; unused

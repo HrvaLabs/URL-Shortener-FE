@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
@@ -20,18 +20,24 @@ import { PageMeta } from "@/components/page-meta"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
 
 const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(shortHost)}/`, "i")
+
+const searchTerm = (input: string) => input.trim().replace(shortLinkPrefix, "")
 
 export default function AdminUrlsPage() {
   const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
-  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter])
-  const filterKey = `${search}-${activeFilter}-${expiredFilter}`
+  const [anonymousFilter, setAnonymousFilter] = useState(false)
+  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter, anonymousFilter])
+  const filterKey = `${search}-${activeFilter}-${expiredFilter}-${anonymousFilter}`
   const filters: UrlFilters = {
-    search: search || undefined,
+    search: searchTerm(search) || undefined,
     active: activeFilter === "all" ? undefined : activeFilter === "active",
     expired: expiredFilter || undefined,
+    anonymous: anonymousFilter || undefined,
   }
   const { data: urls, isLoading, error } = useAllUrls(filters, page, size, sort, order)
   const deactivateUrl = useDeactivateUrl()
@@ -163,7 +169,8 @@ export default function AdminUrlsPage() {
         <div className="relative min-w-[200px] max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search URLs..."
+            placeholder="Search link, destination or owner..."
+            aria-label="Search by short link, destination or owner email"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 pl-9"
@@ -177,7 +184,7 @@ export default function AdminUrlsPage() {
         >
           <option value="all">All status</option>
           <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
+          <option value="inactive">Deactivated</option>
         </select>
         <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
           <input
@@ -187,6 +194,15 @@ export default function AdminUrlsPage() {
             className="h-4 w-4 rounded border-input accent-brand"
           />
           Expired only
+        </label>
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={anonymousFilter}
+            onChange={(e) => setAnonymousFilter(e.target.checked)}
+            className="h-4 w-4 rounded border-input accent-brand"
+          />
+          Anonymous only
         </label>
       </div>
 
@@ -249,7 +265,12 @@ export default function AdminUrlsPage() {
                 </TableHead>
                 <TableHead>Short URL</TableHead>
                 <TableHead className="hidden lg:table-cell">Long URL</TableHead>
-                <TableHead className="hidden lg:table-cell">Owner</TableHead>
+                <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort("owner.email")}>
+                  <div className="flex items-center gap-1">
+                    Owner
+                    {sortDir("owner.email") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("owner.email") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
+                  </div>
+                </TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("visits")}>
                   <div className="flex items-center gap-1">
                     Visits
@@ -263,12 +284,12 @@ export default function AdminUrlsPage() {
                   </div>
                 </TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {urls.content.map((url: UrlResponse) => (
-                <TableRow key={url.id} data-state={selectedIds.has(url.id) ? "selected" : undefined}>
+                <TableRow key={url.id} className="group" data-state={selectedIds.has(url.id) ? "selected" : undefined}>
                   <TableCell className="w-10">
                     <input
                       type="checkbox"
@@ -286,13 +307,31 @@ export default function AdminUrlsPage() {
                   <TableCell className="hidden max-w-[200px] text-muted-foreground lg:table-cell">
                     <span className="block truncate" title={url.longUrl}>{truncateUrl(url.longUrl, 40)}</span>
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">{url.ownerEmail || "\u2014"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <span className="block max-w-[14rem] truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
+                  </TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
                   <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
                   <TableCell>
-                    <StatusBadge status={url.status} active={url.active} />
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={url.status} active={url.active} />
+                      {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              tabIndex={0}
+                              aria-label={`Suspicious: ${url.suspiciousReasons.join(", ")}`}
+                              className="inline-flex items-center rounded-md bg-warning/10 p-1 text-warning"
+                            >
+                              <TriangleAlert className="h-3.5 w-3.5" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">Suspicious: {url.suspiciousReasons.join(" · ")}</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="sticky right-0 bg-card text-right transition-colors group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))] group-data-[state=selected]:bg-brand-soft">
                     <div className="flex items-center justify-end gap-0.5">
                       {url.active ? (
                         <Tooltip>
@@ -336,16 +375,16 @@ export default function AdminUrlsPage() {
                         <TooltipContent side="top">Edit URL</TooltipContent>
                       </Tooltip>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertDialogTrigger asChild>
                               <button aria-label="Delete" className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive">
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">Delete</TooltipContent>
-                          </Tooltip>
-                        </AlertDialogTrigger>
+                            </AlertDialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Delete</TooltipContent>
+                        </Tooltip>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete URL?</AlertDialogTitle>

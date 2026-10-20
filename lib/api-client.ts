@@ -114,6 +114,7 @@ export const urlApi = {
     if (filters.search) params.set("search", filters.search)
     if (filters.active != null) params.set("active", String(filters.active))
     if (filters.expired) params.set("expired", "true")
+    if (filters.anonymous) params.set("anonymous", "true")
     if (filters.dateFrom) params.set("dateFrom", filters.dateFrom)
     if (filters.dateTo) params.set("dateTo", filters.dateTo)
     return request<Page<UrlResponse>>("GET", `/urls/all?${params}`)
@@ -240,6 +241,8 @@ export const adminApi = {
     request<Page<AuditLog>>("GET", `/admin/audit-log?page=${page}&size=${size}`),
   getEmailLog: (page = 0, size = 50) =>
     request<Page<EmailLog>>("GET", `/admin/email-log?page=${page}&size=${size}`),
+  resendEmail: (id: number) =>
+    request<EmailLog>("POST", `/admin/email-log/${id}/resend`),
   getLoginAttempts: () =>
     request<Record<string, number>>("GET", "/admin/login-attempts"),
   clearLoginAttempts: () =>

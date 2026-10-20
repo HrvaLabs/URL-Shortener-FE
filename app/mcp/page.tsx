@@ -51,7 +51,7 @@ const toolGroups = [
         description: (
           <>
             Shortens a URL into your account, with an optional alias, visit limit, expiry and tags. Links it creates
-            are tagged <InlineCode>claude</InlineCode>.
+            are tagged <InlineCode>ai</InlineCode>.
           </>
         ),
       },

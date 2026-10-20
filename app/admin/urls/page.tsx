@@ -39,6 +39,7 @@ export default function AdminUrlsPage() {
   const deleteUrl = useDeleteUrl()
   const updateUrl = useUpdateUrl()
   const [editUrl, setEditUrl] = useState<UrlResponse | null>(null)
+  const [editLongUrl, setEditLongUrl] = useState("")
   const [editVisitLimit, setEditVisitLimit] = useState("")
   const [editExpiration, setEditExpiration] = useState("")
   const [editTags, setEditTags] = useState("")
@@ -105,6 +106,7 @@ export default function AdminUrlsPage() {
 
   const handleEditOpen = (url: UrlResponse) => {
     setEditUrl(url)
+    setEditLongUrl(url.longUrl)
     setEditVisitLimit(url.visitLimit?.toString() || "")
     setEditExpiration(url.expirationDate ? url.expirationDate.slice(0, 16) : "")
     setEditTags(url.tags?.join(", ") || "")
@@ -114,11 +116,17 @@ export default function AdminUrlsPage() {
 
   const handleEditSave = async () => {
     if (!editUrl) return
+    const longUrl = editLongUrl.trim()
+    if (!longUrl) {
+      toast.error("Destination URL is required")
+      return
+    }
     try {
       await updateUrl.mutateAsync({
         id: editUrl.id,
         data: {
           id: editUrl.id,
+          longUrl: longUrl !== editUrl.longUrl ? longUrl : undefined,
           visitLimit: editVisitLimit ? parseInt(editVisitLimit) : 0,
           expirationDate: editExpiration ? new Date(editExpiration).toISOString() : undefined,
           tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -373,6 +381,18 @@ export default function AdminUrlsPage() {
           </DialogHeader>
           {editUrl && (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="edit-long-url" className="text-sm font-medium">Destination URL</label>
+                <Input
+                  id="edit-long-url"
+                  type="url"
+                  inputMode="url"
+                  spellCheck={false}
+                  placeholder="https://example.com/page"
+                  value={editLongUrl}
+                  onChange={(e) => setEditLongUrl(e.target.value)}
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Visit Limit</label>
                 <Input

@@ -153,6 +153,7 @@ export interface CreateUrlDto {
 
 export interface UrlUpdateDto {
   id: number
+  longUrl?: string
   visitLimit?: number
   expirationDate?: string
   tags?: string[]

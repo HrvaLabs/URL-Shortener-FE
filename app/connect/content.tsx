@@ -166,7 +166,7 @@ export function ConnectContent() {
         </li>
       </ul>
       <p className="mt-3 text-xs text-muted-foreground">
-        Links it creates are tagged <span className="rounded-md border px-1.5 py-px">claude</span>.
+        Links it creates are tagged <span className="rounded-md border px-1.5 py-px">ai</span>.
       </p>
       <div className="mt-8 grid select-none grid-cols-2 gap-3">
         <Button

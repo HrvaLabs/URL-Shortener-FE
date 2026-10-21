@@ -31,7 +31,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           aria-label="Rows per page"
           value={size}
           onChange={(e) => onSizeChange(Number(e.target.value))}
-          className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/15"
+          className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-hidden focus:ring-4 focus:ring-ring/15"
         >
           {PAGE_SIZES.map((s) => (
             <option key={s} value={s}>{s}</option>

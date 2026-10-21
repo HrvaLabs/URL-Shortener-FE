@@ -77,9 +77,9 @@ export default function AdminApiKeysPage() {
           </DialogHeader>
           {editKey && (
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="apiCallsLimit">API Call Limit</Label>
-                <Input id="apiCallsLimit" type="number" min={0} value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" />
+                <Input id="apiCallsLimit" type="number" min={0} value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-2" />
               </div>
               <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
                 {updateKey.isPending ? "Saving..." : "Save"}

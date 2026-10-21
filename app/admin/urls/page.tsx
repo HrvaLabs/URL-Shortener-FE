@@ -188,7 +188,7 @@ export default function AdminUrlsPage() {
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
           aria-label="Filter by status"
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
         >
           <option value="all">All status</option>
           <option value="active">Active</option>
@@ -308,7 +308,7 @@ export default function AdminUrlsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="block max-w-[13rem] truncate font-mono text-[13px] font-medium text-brand" title={`${shortHost}/${url.shortUrl}`}>
+                    <span className="block max-w-52 truncate font-mono text-[13px] font-medium text-brand" title={`${shortHost}/${url.shortUrl}`}>
                       <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                     </span>
                   </TableCell>
@@ -316,7 +316,7 @@ export default function AdminUrlsPage() {
                     <span className="block truncate" title={url.longUrl}>{truncateUrl(url.longUrl, 40)}</span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <span className="block max-w-[14rem] truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
+                    <span className="block max-w-56 truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
                   </TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
                   <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
@@ -429,7 +429,7 @@ export default function AdminUrlsPage() {
           </DialogHeader>
           {editUrl && (
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div>
                 <label htmlFor="edit-long-url" className="text-sm font-medium">Destination URL</label>
                 <Input
                   id="edit-long-url"
@@ -439,34 +439,38 @@ export default function AdminUrlsPage() {
                   placeholder="https://example.com/page"
                   value={editLongUrl}
                   onChange={(e) => setEditLongUrl(e.target.value)}
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium">Visit Limit</label>
                 <Input
                   type="number"
                   placeholder="e.g. 100 (0 = unlimited)"
                   value={editVisitLimit}
                   onChange={(e) => setEditVisitLimit(e.target.value)}
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium">Expiration Date</label>
                 <Input
                   type="datetime-local"
                   value={editExpiration}
                   onChange={(e) => setEditExpiration(e.target.value)}
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium">Tags (comma-separated)</label>
                 <Input
                   placeholder="work, campaign"
                   value={editTags}
                   onChange={(e) => setEditTags(e.target.value)}
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium">
                   Password {editUrl?.passwordProtected && <span className="font-normal text-muted-foreground">(currently set)</span>}
                 </label>
@@ -477,9 +481,10 @@ export default function AdminUrlsPage() {
                   onChange={(e) => setEditPassword(e.target.value)}
                   disabled={removePassword}
                   autoComplete="new-password"
+                  className="mt-2"
                 />
                 {editUrl?.passwordProtected && (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
                     <input type="checkbox" checked={removePassword} onChange={(e) => setRemovePassword(e.target.checked)} className="h-4 w-4 accent-brand" />
                     Remove password protection
                   </label>

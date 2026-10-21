@@ -92,7 +92,8 @@ lib/          — Shared logic
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0
 
 ### Styling
-- Tailwind CSS with shadcn-style HSL CSS variables in `app/globals.css`; visual rules live in `DESIGN.md`
+- Tailwind CSS 4 with shadcn-style HSL CSS variables in `app/globals.css`, which also holds the theme (`@theme`; there is no `tailwind.config.js`); visual rules live in `DESIGN.md`
+- `space-y-*` puts its margin on the bottom of each child, which an inline first child (a `<label>`, a `<Link>`) ignores; a label above an input uses `mt-*` on the input instead
 - Light by default (follows the system); `.dark` class via `next-themes` (`attribute="class"`)
 - `primary` is near-black (white in dark mode) and is for primary buttons; `brand` (electric blue) is the single accent for links, short URLs, focus and charts; `success` / `warning` / `destructive` for status
 - Fonts: Host Grotesk (`font-sans`, and `font-display` = same family at weight 650) + JetBrains Mono (`font-mono`, short codes and code) via `next/font`

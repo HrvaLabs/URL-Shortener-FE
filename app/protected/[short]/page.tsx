@@ -50,7 +50,7 @@ export default function ProtectedLinkPage() {
             <p className="mt-1.5 text-sm text-muted-foreground">Enter the password to continue</p>
           </div>
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -60,6 +60,7 @@ export default function ProtectedLinkPage() {
                 aria-invalid={error ? true : undefined}
                 required
                 autoFocus
+                className="mt-2"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}

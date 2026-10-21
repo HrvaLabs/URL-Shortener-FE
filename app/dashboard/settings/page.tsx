@@ -112,9 +112,9 @@ export default function SettingsPage() {
         <CardContent>
           {canEditEmail ? (
             <form onSubmit={handleProfileUpdate} className="space-y-4">
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 max-w-sm" />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
               <Button type="submit" disabled={profileLoading} size="sm">
                 {profileLoading ? "Saving…" : "Save changes"}
@@ -139,18 +139,18 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordChange} className="space-y-4">
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="oldPassword">Current Password</Label>
-                <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="h-10 max-w-sm" />
+                <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
               <Separator />
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="h-10 max-w-sm" />
+                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 max-w-sm" />
+                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
               <Button type="submit" disabled={passwordLoading} size="sm">
                 {passwordLoading ? "Changing…" : "Change password"}
@@ -185,9 +185,9 @@ export default function SettingsPage() {
         <CardContent>
           <div className="space-y-4">
             {isLocalAccount && (
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="deletePassword">Confirm with your password</Label>
-                <Input id="deletePassword" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="h-10 max-w-sm" />
+                <Input id="deletePassword" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
               </div>
             )}
             <Button

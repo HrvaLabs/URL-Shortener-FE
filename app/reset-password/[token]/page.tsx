@@ -54,17 +54,17 @@ export default function SetPasswordPage() {
             <p className="mt-1.5 text-sm text-muted-foreground">Enter your email and new password</p>
           </div>
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="password">New password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-2" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Resetting…" : "Reset password"}

@@ -98,26 +98,26 @@ export function ShortenForm({ withOptions = false, size = "default", className }
 
         {withOptions && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>
-              <div className="flex h-9 items-center overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+              <div className="mt-1.5 flex h-9 items-center overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
                 <span className="select-none border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground">{shortBase}/</span>
                 <input
                   id="alias"
                   placeholder="my-link"
                   value={customAlias}
                   onChange={(e) => setCustomAlias(e.target.value)}
-                  className="h-full min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-none placeholder:text-muted-foreground"
+                  className="h-full min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-hidden placeholder:text-muted-foreground"
                 />
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="visit-limit" className="text-xs text-muted-foreground">Visit limit</Label>
-              <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="h-9" />
+              <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-1.5 h-9" />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="expires" className="text-xs text-muted-foreground">Expires</Label>
-              <Input id="expires" type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className={cn("h-9", !expirationDate && "text-muted-foreground")} />
+              <Input id="expires" type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className={cn("mt-1.5 h-9", !expirationDate && "text-muted-foreground")} />
             </div>
           </div>
         )}

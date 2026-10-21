@@ -64,7 +64,7 @@ export default function RegisterPage() {
               <p className="mt-1.5 text-sm text-muted-foreground">Start managing your links</p>
             </div>
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -73,9 +73,10 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -83,9 +84,10 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="mt-2"
                 />
               </div>
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="confirmPassword">Confirm password</Label>
                 <Input
                   id="confirmPassword"
@@ -93,6 +95,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
+                  className="mt-2"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

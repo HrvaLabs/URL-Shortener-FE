@@ -275,7 +275,7 @@ function CodeBlock({ label, code, copyLabel, mono, prompt }: CodeBlockProps) {
         <span className={cn("truncate text-xs text-zinc-400", mono ? "font-mono" : "font-medium")}>{label}</span>
         <CopyButton text={code} label={copyLabel} className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100" />
       </div>
-      <pre className="whitespace-pre-wrap break-words p-4 font-mono text-[12.5px] leading-relaxed">
+      <pre className="whitespace-pre-wrap wrap-break-word p-4 font-mono text-[12.5px] leading-relaxed">
         <code>
           {prompt && <span className="select-none text-zinc-500">$ </span>}
           {code}

@@ -1,21 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge, badgeVariants } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
+import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert, GlobeLock } from "lucide-react"
 import { toast } from "sonner"
-import { formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
+import { cn, formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
+import { blockReasonLabels } from "@/lib/labels"
 import { PageMeta } from "@/components/page-meta"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
 
@@ -24,6 +28,15 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\
 const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(shortHost)}/`, "i")
 
 const searchTerm = (input: string) => input.trim().replace(shortLinkPrefix, "")
+
+const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
+  if (!finalUrl) return null
+  try {
+    return new URL(finalUrl).href === new URL(longUrl).href ? null : finalUrl
+  } catch {
+    return finalUrl === longUrl ? null : finalUrl
+  }
+}
 
 export default function AdminUrlsPage() {
   const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
@@ -52,6 +65,8 @@ export default function AdminUrlsPage() {
   const [editTags, setEditTags] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [removePassword, setRemovePassword] = useState(false)
+  const [blockTarget, setBlockTarget] = useState<UrlResponse | null>(null)
+  const [blockOpen, setBlockOpen] = useState(false)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
   const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
   const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
@@ -95,8 +110,8 @@ export default function AdminUrlsPage() {
     try {
       await deactivateUrl.mutateAsync(id)
       toast.success("URL deactivated")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to deactivate")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to deactivate")
     }
   }
 
@@ -104,8 +119,8 @@ export default function AdminUrlsPage() {
     try {
       await activateUrl.mutateAsync(id)
       toast.success("URL activated")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to activate")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to activate")
     }
   }
 
@@ -113,9 +128,14 @@ export default function AdminUrlsPage() {
     try {
       await deleteUrl.mutateAsync(id)
       toast.success("URL deleted permanently")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to delete")
     }
+  }
+
+  const openBlockDomain = (url: UrlResponse) => {
+    setBlockTarget(url)
+    setBlockOpen(true)
   }
 
   const handleEditOpen = (url: UrlResponse) => {
@@ -149,8 +169,8 @@ export default function AdminUrlsPage() {
       })
       toast.success("URL updated")
       setEditUrl(null)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update URL")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to update URL")
     }
   }
 
@@ -313,30 +333,52 @@ export default function AdminUrlsPage() {
                     </span>
                   </TableCell>
                   <TableCell className="hidden max-w-[200px] text-muted-foreground lg:table-cell">
-                    <span className="block truncate" title={url.longUrl}>{truncateUrl(url.longUrl, 40)}</span>
+                    <DestinationTooltip url={url} />
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <span className="block max-w-56 truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
+                    <span className="block max-w-52 truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
+                    {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
                   </TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
                   <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      <StatusBadge status={url.status} active={url.active} />
-                      {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              role="img"
-                              tabIndex={0}
-                              aria-label={`Suspicious: ${url.suspiciousReasons.join(", ")}`}
-                              className="inline-flex items-center rounded-md bg-warning/10 p-1 text-warning"
-                            >
-                              <TriangleAlert className="h-3.5 w-3.5" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">Suspicious: {url.suspiciousReasons.join(" · ")}</TooltipContent>
-                        </Tooltip>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <div className="flex items-center gap-1.5">
+                        {url.status === "BLOCKED" && url.blockReason ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0} className="inline-flex rounded-md">
+                                <StatusBadge status={url.status} active={url.active} />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">{blockReasonLabels[url.blockReason] ?? url.blockReason}</TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <StatusBadge status={url.status} active={url.active} />
+                        )}
+                        {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                role="img"
+                                tabIndex={0}
+                                aria-label={`Suspicious: ${url.suspiciousReasons.join(", ")}`}
+                                className="inline-flex items-center rounded-md bg-warning/10 p-1 text-warning"
+                              >
+                                <TriangleAlert className="h-3.5 w-3.5" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">Suspicious: {url.suspiciousReasons.join(" · ")}</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      {url.reviewOpen && (
+                        <Link
+                          href={`/admin/review?entry=${url.id}`}
+                          className={cn(badgeVariants({ variant: "warning" }), "whitespace-nowrap hover:bg-warning/15")}
+                        >
+                          In review
+                        </Link>
                       )}
                     </div>
                   </TableCell>
@@ -383,6 +425,18 @@ export default function AdminUrlsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="top">Edit URL</TooltipContent>
                       </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => openBlockDomain(url)}
+                            aria-label="Block domain"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                          >
+                            <GlobeLock className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Block domain</TooltipContent>
+                      </Tooltip>
                       <AlertDialog>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -421,6 +475,13 @@ export default function AdminUrlsPage() {
           />
         </div>
       )}
+
+      <BlockDomainDialog
+        longUrl={blockTarget?.longUrl ?? ""}
+        open={blockOpen}
+        onOpenChange={setBlockOpen}
+        onBlocked={() => undefined}
+      />
 
       <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>
         <DialogContent>
@@ -498,5 +559,20 @@ export default function AdminUrlsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function DestinationTooltip({ url }: { url: UrlResponse }) {
+  const endsAt = endUrl(url)
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0} className="block truncate">{truncateUrl(url.longUrl, 40)}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-sm">
+        <span className="block break-all">{url.longUrl}</span>
+        {endsAt && <span className="mt-1 block text-primary-foreground/70">Ends at <span className="break-all">{endsAt}</span></span>}
+      </TooltipContent>
+    </Tooltip>
   )
 }

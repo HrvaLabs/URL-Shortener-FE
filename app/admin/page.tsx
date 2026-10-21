@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
@@ -13,9 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Trash2, ToggleLeft, ToggleRight, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Edit, Trash2, ToggleLeft, ToggleRight, Search, ArrowUpDown, ArrowUp, ArrowDown, UserX, UserCheck } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatDateTime } from "@/lib/utils"
+import { adminApi, ApiError } from "@/lib/api-client"
 import { PageMeta } from "@/components/page-meta"
 
 export default function AdminUsersPage() {
@@ -30,6 +32,16 @@ export default function AdminUsersPage() {
   }
   const { data: users, isLoading, error } = useAllUsers(filters, page, size, sort, order)
   useClampedPage(page, users?.totalPages, setPage)
+  const [scammersOnly, setScammersOnly] = useState(false)
+  const possibleScammers = useQuery({
+    queryKey: ["admin", "possible-scammers"],
+    queryFn: () => adminApi.getPossibleScammers(),
+    enabled: scammersOnly,
+  })
+  const scammerIds = new Set(possibleScammers.data ?? [])
+  const rows = scammersOnly ? (users?.content ?? []).filter((user) => scammerIds.has(user.id)) : users?.content ?? []
+  const queryClient = useQueryClient()
+  const [busyIds, setBusyIds] = useState<Set<number>>(new Set())
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const [editUser, setEditUser] = useState<User | null>(null)
@@ -56,8 +68,8 @@ export default function AdminUsersPage() {
       })
       toast.success("User updated")
       setEditUser(null)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update user")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to update user")
     }
   }
 
@@ -71,8 +83,8 @@ export default function AdminUsersPage() {
         },
       })
       toast.success(user.active ? "User deactivated" : "User activated")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to toggle user status")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to toggle user status")
     }
   }
 
@@ -80,8 +92,36 @@ export default function AdminUsersPage() {
     try {
       await deleteUser.mutateAsync(id)
       toast.success("User deleted permanently")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete user")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to delete user")
+    }
+  }
+
+  const setBusy = (id: number, busy: boolean) =>
+    setBusyIds((prev) => {
+      const next = new Set(prev)
+      if (busy) next.add(id)
+      else next.delete(id)
+      return next
+    })
+
+  const handleBlock = async (user: User, block: boolean) => {
+    if (busyIds.has(user.id)) return
+    setBusy(user.id, true)
+    try {
+      const result = await (block ? adminApi.blockUser(user.id) : adminApi.unblockUser(user.id))
+      const count = result?.linksAffected ?? 0
+      toast.success(`${block ? "Blocked" : "Restored"} ${count.toLocaleString()} link${count === 1 ? "" : "s"}`)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["users"] }),
+        queryClient.invalidateQueries({ queryKey: ["urls"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "possible-scammers"] }),
+      ])
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message ? err.message : block ? "Failed to block the user" : "Failed to unblock the user")
+    } finally {
+      setBusy(user.id, false)
     }
   }
 
@@ -146,9 +186,18 @@ export default function AdminUsersPage() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={scammersOnly}
+            onChange={(e) => setScammersOnly(e.target.checked)}
+            className="h-4 w-4 rounded border-input accent-brand"
+          />
+          Possible scammers only
+        </label>
       </div>
 
-      {isLoading ? (
+      {isLoading || (scammersOnly && possibleScammers.isLoading) ? (
         <div className="space-y-3 rounded-xl border bg-card p-5">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
@@ -158,6 +207,11 @@ export default function AdminUsersPage() {
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load users</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      ) : scammersOnly && possibleScammers.isError && !possibleScammers.data ? (
+        <div className="rounded-xl border bg-card px-6 py-12 text-center">
+          <p className="text-sm font-medium text-destructive">Failed to load possible scammers</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => possibleScammers.refetch()} disabled={possibleScammers.isFetching}>Retry</Button>
         </div>
       ) : !users || !users.content || users.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
@@ -200,10 +254,20 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.content?.map((user: User) => (
+              {scammersOnly && rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">No possible scammers on this page.</TableCell>
+                </TableRow>
+              )}
+              {rows.map((user: User) => (
                 <TableRow key={user.id}>
                   <TableCell className="hidden tabular-nums text-muted-foreground lg:table-cell">{user.id}</TableCell>
-                  <TableCell className="font-medium">{user.email}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span>{user.email}</span>
+                      {(user.possibleScammer || scammerIds.has(user.id)) && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={user.authProvider && user.authProvider !== "local" ? "secondary" : "outline"}>
                       {user.authProvider === "google" ? "Google" : user.authProvider === "github" ? "GitHub" : "Email"}
@@ -236,6 +300,45 @@ export default function AdminUsersPage() {
                           : <ToggleLeft className="h-4 w-4 text-destructive" />
                         }
                       </Button>
+                      {user.active ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                              onClick={(e) => { if (busyIds.has(user.id)) e.preventDefault() }}
+                              aria-disabled={busyIds.has(user.id)}
+                              aria-label="Block user"
+                              title="Block user"
+                            >
+                              <UserX className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Block <span className="break-all">{user.email}</span>?</AlertDialogTitle>
+                              <AlertDialogDescription>Deactivates the account, revokes its API keys and blocks all its links.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleBlock(user, true)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Block user</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                          onClick={() => handleBlock(user, false)}
+                          aria-disabled={busyIds.has(user.id)}
+                          aria-label="Unblock user"
+                          title="Unblock user"
+                        >
+                          <UserCheck className="h-4 w-4 text-success" />
+                        </Button>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Delete user" title="Delete user">

@@ -15,10 +15,10 @@ export const outcomeVariants: Record<UrlCheckOutcome, "success" | "destructive" 
 }
 
 export const blockReasonLabels: Record<BlockReason, string> = {
-  SAFE_BROWSING: "Safe Browsing",
-  BLOCKLIST: "Blocklist",
-  DOMAIN_RULE: "Domain rule",
-  ADMIN: "Admin",
-  USER_BLOCKED: "Blocked user",
+  SAFE_BROWSING: "Google Safe Browsing",
+  BLOCKLIST: "On a blocklist",
+  DOMAIN_RULE: "Blocked domain",
+  ADMIN: "Blocked by an admin",
+  USER_BLOCKED: "Owner blocked",
   SCAM_SIGNALS: "Scam signals",
 }

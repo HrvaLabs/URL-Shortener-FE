@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
-import { usePagination } from "@/lib/hooks/usePagination"
+import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -40,6 +40,7 @@ export default function AdminUrlsPage() {
     anonymous: anonymousFilter || undefined,
   }
   const { data: urls, isLoading, error } = useAllUrls(filters, page, size, sort, order)
+  useClampedPage(page, urls?.totalPages, setPage)
   const deactivateUrl = useDeactivateUrl()
   const activateUrl = useActivateUrl()
   const deleteUrl = useDeleteUrl()
@@ -51,7 +52,14 @@ export default function AdminUrlsPage() {
   const [editTags, setEditTags] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [removePassword, setRemovePassword] = useState(false)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
+  const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
+  const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
+  const setSelectedIds = (update: Set<number> | ((prev: Set<number>) => Set<number>)) =>
+    setSelection((prev) => {
+      const current = prev.key === selectionKey ? prev.ids : new Set<number>()
+      return { key: selectionKey, ids: typeof update === "function" ? update(current) : update }
+    })
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -63,7 +71,7 @@ export default function AdminUrlsPage() {
   }
 
   const selectAll = () => {
-    if (selectedIds.size === (urls?.content?.length ?? 0)) {
+    if (urls?.content?.length && urls.content.every((u) => selectedIds.has(u.id))) {
       setSelectedIds(new Set())
     } else {
       setSelectedIds(new Set(urls?.content?.map((u) => u.id) ?? []))
@@ -81,7 +89,7 @@ export default function AdminUrlsPage() {
     setSelectedIds(new Set())
   }
 
-  const allSelected = urls?.content?.length === selectedIds.size && selectedIds.size > 0
+  const allSelected = !!urls?.content?.length && urls.content.every((u) => selectedIds.has(u.id))
 
   const handleDeactivate = async (id: number) => {
     try {
@@ -319,6 +327,7 @@ export default function AdminUrlsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
+                              role="img"
                               tabIndex={0}
                               aria-label={`Suspicious: ${url.suspiciousReasons.join(", ")}`}
                               className="inline-flex items-center rounded-md bg-warning/10 p-1 text-warning"

@@ -121,9 +121,10 @@ export interface UrlAnalytics {
 }
 
 export interface PeekUrl {
-  longUrl: string
+  longUrl: string | null
   shortUrl: string
   createDate: string
+  passwordProtected?: boolean
 }
 
 export interface JWTTokenDto {

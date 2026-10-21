@@ -67,6 +67,8 @@ lib/          — Shared logic
 - `request<T>(method, path, body?, headers?)` — fetch wrapper with auth token injection
 - Reads `localStorage.getItem("auth-token")` — sends raw token as `Authorization` header (no "Bearer " prefix)
 - `ApiError` class exposes `.status` and `.message`
+- `request()` reads JSON or plain-text bodies (`POST /auth/register` answers with the bare email); error messages come from `error`, `message`, or the joined field messages of a validation response
+- Signing in or out clears the React Query cache; a failed `/users/me` only drops the token on 401/403
 - API base URL switches by env:
   - **Dev**: `/api/v1`
   - **Prod**: `https://hrva.cc/api/v1`

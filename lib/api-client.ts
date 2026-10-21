@@ -10,6 +10,35 @@ export class ApiError extends Error {
   }
 }
 
+interface PageWrapper {
+  page: { totalPages: number; totalElements: number; number?: number; size?: number }
+  totalPages?: number
+  totalElements?: number
+  number?: number
+  size?: number
+}
+
+const isPageWrapper = (data: unknown): data is PageWrapper =>
+  typeof data === "object" && data !== null && (data as PageWrapper).page?.totalPages != null
+
+async function readBody(response: Response): Promise<unknown> {
+  const text = await response.text()
+  if (!text) return undefined
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+function errorMessage(body: unknown): string {
+  if (typeof body !== "object" || body === null) return "Request failed"
+  const fields = body as Record<string, unknown>
+  // New API: { "error": "message" }, old API: { "message": "..." }, validation: { "field": "message" }
+  const message = fields.error ?? fields.message ?? Object.values(fields).filter((value) => typeof value === "string").join(". ")
+  return typeof message === "string" && message ? message : "Request failed"
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -38,27 +67,25 @@ async function request<T>(
   })
 
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}))
-    // New API: { "error": "message" }, old API: { "message": "..." }
-    const msg = body.error || body.message || "Request failed"
-    throw new ApiError(msg, response.status)
+    const errorBody = await readBody(response).catch(() => undefined)
+    throw new ApiError(errorMessage(errorBody), response.status)
   }
 
   if (response.status === 204 || response.status === 202) return {} as T
 
-  const data = await response.json()
+  const data = await readBody(response)
 
   // Normalize Spring Page wrapper: some endpoints return
   // {"content":[...],"page":{"totalPages":2,"totalElements":13}}
   // instead of flat fields. Promote nested page fields to root.
-  if (data && data.page && data.page.totalPages != null) {
+  if (isPageWrapper(data)) {
     data.totalPages = data.page.totalPages
     data.totalElements = data.page.totalElements
     data.number = data.page.number ?? data.number
     data.size = data.page.size ?? data.size
   }
 
-  return data
+  return data as T
 }
 
 // Auth

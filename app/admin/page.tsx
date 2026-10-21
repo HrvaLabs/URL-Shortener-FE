@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
-import { usePagination } from "@/lib/hooks/usePagination"
+import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import type { User, UserFilters } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,7 @@ export default function AdminUsersPage() {
     active: activeFilter === "all" ? undefined : activeFilter === "active",
   }
   const { data: users, isLoading, error } = useAllUsers(filters, page, size, sort, order)
+  useClampedPage(page, users?.totalPages, setPage)
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const [editUser, setEditUser] = useState<User | null>(null)

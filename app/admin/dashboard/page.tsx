@@ -204,7 +204,7 @@ function LoginRateLimits() {
 
   return (
     <section className="rounded-xl border bg-card">
-      <div className="flex min-h-[3.25rem] items-center justify-between gap-4 border-b px-5 py-2.5">
+      <div className="flex min-h-13 items-center justify-between gap-4 border-b px-5 py-2.5">
         <h2 className="text-sm font-semibold">Login Rate Limits</h2>
         {!isLoading && entries.length > 0 && (
           <Button variant="outline" size="sm" onClick={handleClear} className="h-8">

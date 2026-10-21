@@ -48,7 +48,7 @@ export default function EggPage() {
           </div>
 
           <div className="mt-8 rounded-xl border bg-card p-6">
-            <p className="min-h-[3rem] font-display text-2xl" aria-live="polite">
+            <p className="min-h-12 font-display text-2xl" aria-live="polite">
               {quacks[quackIndex]}
             </p>
             <Button onClick={handleQuack} size="lg" variant="brand" className="mt-4 gap-2">

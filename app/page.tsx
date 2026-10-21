@@ -80,7 +80,7 @@ function DashboardPreview() {
       <div
         role="img"
         aria-label="Example of the hrva.cc links dashboard"
-        className="overflow-hidden rounded-t-2xl border border-b-0 bg-card shadow-[0_-8px_48px_-16px_rgb(0_0_0/0.18)] [mask-image:linear-gradient(to_bottom,black_62%,transparent)]"
+        className="overflow-hidden rounded-t-2xl border border-b-0 bg-card shadow-[0_-8px_48px_-16px_rgb(0_0_0/0.18)] mask-[linear-gradient(to_bottom,black_62%,transparent)]"
       >
         <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5">
           <span className="text-sm font-semibold">Links</span>

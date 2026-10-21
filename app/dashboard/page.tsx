@@ -27,7 +27,7 @@ import { UrlStatsDialog } from "@/components/url-stats-dialog"
 import { PageMeta } from "@/components/page-meta"
 
 const selectClass =
-  "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+  "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
 const rowActionClass = "h-8 w-8 text-muted-foreground hover:text-foreground"
 const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                         type="button"
                         onClick={() => copyToClipboard(formatShortUrl(url.shortUrl), url.id)}
                         title={formatShortUrl(url.shortUrl)}
-                        className="max-w-[12rem] truncate text-left font-mono text-[13px] font-medium text-brand hover:underline"
+                        className="max-w-48 truncate text-left font-mono text-[13px] font-medium text-brand hover:underline"
                       >
                         <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                       </button>

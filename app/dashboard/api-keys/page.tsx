@@ -148,9 +148,9 @@ export default function ApiKeysPage() {
             <DialogTitle>Edit API Key</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="apiCallsLimit">API Call Limit</Label>
-              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="h-10" />
+              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-1.5 h-10" />
             </div>
             <Button onClick={handleEditSave} disabled={updateKey.isPending}>
               {updateKey.isPending ? "Saving…" : "Save"}

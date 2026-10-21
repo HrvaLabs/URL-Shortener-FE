@@ -60,9 +60,9 @@ export default function ResendVerificationPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2" />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Sending…" : "Resend verification link"}

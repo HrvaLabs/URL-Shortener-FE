@@ -41,7 +41,7 @@ export function SourceDialog({ open, source, onOpenChange }: SourceDialogProps) 
   const [action, setAction] = useState<SourceAction>(source?.action ?? "BLOCK")
   const [intervalHours, setIntervalHours] = useState(String(source?.refreshIntervalHours ?? 6))
   const [enabled, setEnabled] = useState(source?.enabled ?? true)
-  const [fallbacks, setFallbacks] = useState(source?.fallbackUrls.join("\n") ?? "")
+  const [fallbacks, setFallbacks] = useState(source?.fallbackUrls?.join("\n") ?? "")
 
   const save = useMutation({
     mutationFn: (input: BlocklistSourceInput) =>

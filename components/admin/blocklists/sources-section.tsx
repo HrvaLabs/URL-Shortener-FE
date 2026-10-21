@@ -29,7 +29,7 @@ const toInput = (source: BlocklistSource): BlocklistSourceInput => ({
   action: source.action,
   enabled: source.enabled,
   refreshIntervalHours: source.refreshIntervalHours,
-  fallbackUrls: source.fallbackUrls,
+  fallbackUrls: source.fallbackUrls ?? [],
 })
 
 const entryCount = (count: number | null) => (count == null ? "—" : count.toLocaleString())
@@ -179,9 +179,26 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
       </TableCell>
       <TableCell>
         <div className="flex flex-col items-start gap-1 whitespace-nowrap">
-          <span className="tabular-nums text-muted-foreground" title={source.lastSuccessAt ? formatDateTime(source.lastSuccessAt) : undefined}>
-            {source.lastSuccessAt ? formatTimeAgo(source.lastSuccessAt) : "Never"}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="tabular-nums text-muted-foreground" title={source.lastSuccessAt ? formatDateTime(source.lastSuccessAt) : undefined}>
+              {source.lastSuccessAt ? formatTimeAgo(source.lastSuccessAt) : "Never"}
+            </span>
+            {source.lastError && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    role="img"
+                    tabIndex={0}
+                    aria-label={`Last error: ${source.lastError}`}
+                    className="inline-flex rounded-full p-1 lg:hidden"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs whitespace-pre-wrap break-words">{source.lastError}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           {fromFallback && (
             <Tooltip>
               <TooltipTrigger asChild>

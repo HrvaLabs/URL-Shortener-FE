@@ -36,8 +36,16 @@ const createdMessage = (type: DomainRuleType, { rule, linksAffected }: DomainRul
   return linksAffected > 0 ? `Trusted ${rule.domain} and restored ${plural(linksAffected, "link")}` : `Trusted ${rule.domain}`
 }
 
-const normalizeDomain = (input: string) =>
-  input.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, "").replace(/[/?#].*$/, "").replace(/\.$/, "")
+const schemePrefix = /^[a-z][a-z0-9+.-]*:\/\//
+
+const normalizeDomain = (input: string) => {
+  const value = input.trim().toLowerCase()
+  try {
+    return new URL(schemePrefix.test(value) ? value : `http://${value}`).hostname.replace(/\.$/, "")
+  } catch {
+    return value.replace(schemePrefix, "").replace(/[/?#].*$/, "").replace(/\.$/, "")
+  }
+}
 
 export function DomainRulesSection() {
   return (

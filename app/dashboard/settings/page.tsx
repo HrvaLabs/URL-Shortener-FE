@@ -16,7 +16,7 @@ import { TwoFactorCard } from "@/components/two-factor-card"
 import { ConnectedAppsCard } from "@/components/connected-apps-card"
 
 export default function SettingsPage() {
-  const { user, refreshUser, logout } = useAuth()
+  const { user, refreshUser, logout, isAdmin } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState(user?.email || "")
   const [profileLoading, setProfileLoading] = useState(false)
@@ -41,6 +41,7 @@ export default function SettingsPage() {
   }
 
   const isLocalAccount = !user?.authProvider || user.authProvider === "local"
+  const canEditEmail = isAdmin && isLocalAccount
 
   const handleDeleteAccount = async () => {
     if (!confirm("Permanently delete your account, all your URLs and API keys? This cannot be undone.")) {
@@ -106,47 +107,58 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Profile</CardTitle>
-          <CardDescription>Update your email address</CardDescription>
+          <CardDescription>{canEditEmail ? "Update your email address" : "The email address you sign in with"}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 max-w-sm" />
+          {canEditEmail ? (
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="h-10 max-w-sm" />
+              </div>
+              <Button type="submit" disabled={profileLoading} size="sm">
+                {profileLoading ? "Saving…" : "Save changes"}
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{user?.email}</p>
+              <p className="text-sm text-muted-foreground">
+                To change it, email <a href="mailto:privacy@hrvalabs.net" className="text-brand underline-offset-4 hover:underline">privacy@hrvalabs.net</a>.
+              </p>
             </div>
-            <Button type="submit" disabled={profileLoading} size="sm">
-              {profileLoading ? "Saving…" : "Save changes"}
-            </Button>
-          </form>
+          )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Change Password</CardTitle>
-          <CardDescription>Update your account password</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="oldPassword">Current Password</Label>
-              <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="h-10 max-w-sm" />
-            </div>
-            <Separator />
-            <div className="space-y-1.5">
-              <Label htmlFor="newPassword">New Password</Label>
-              <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="h-10 max-w-sm" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 max-w-sm" />
-            </div>
-            <Button type="submit" disabled={passwordLoading} size="sm">
-              {passwordLoading ? "Changing…" : "Change password"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {isLocalAccount && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Change Password</CardTitle>
+            <CardDescription>Update your account password</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="oldPassword">Current Password</Label>
+                <Input id="oldPassword" type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required className="h-10 max-w-sm" />
+              </div>
+              <Separator />
+              <div className="space-y-1.5">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="h-10 max-w-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="h-10 max-w-sm" />
+              </div>
+              <Button type="submit" disabled={passwordLoading} size="sm">
+                {passwordLoading ? "Changing…" : "Change password"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <TwoFactorCard />
 

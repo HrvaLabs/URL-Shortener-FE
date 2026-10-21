@@ -16,8 +16,10 @@ import { Copy, Check, Plus, ShieldAlert, Pencil, Trash2, Eye, EyeOff } from "luc
 import { toast } from "sonner"
 import { formatDate, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
+import { useAuth } from "@/lib/auth-context"
 
 export default function ApiKeysPage() {
+  const { isAdmin } = useAuth()
   const { data: apiKeys, isLoading, error } = useMyApiKeys()
   const generateKey = useGenerateApiKey()
   const revokeKey = useRevokeApiKey()
@@ -76,7 +78,7 @@ export default function ApiKeysPage() {
         id: editKey.id,
         data: {
           id: editKey.id,
-          apiCallsLimit: parseInt(editLimit) || editKey.apiCallsLimit,
+          apiCallsLimit: Math.max(0, parseInt(editLimit, 10) || 0),
         },
       })
       toast.success("API key updated")
@@ -148,7 +150,7 @@ export default function ApiKeysPage() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="apiCallsLimit">API Call Limit</Label>
-              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder={editKey?.apiCallsLimit.toString()} className="h-10" />
+              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="h-10" />
             </div>
             <Button onClick={handleEditSave} disabled={updateKey.isPending}>
               {updateKey.isPending ? "Saving…" : "Save"}
@@ -248,20 +250,22 @@ export default function ApiKeysPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-0.5">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Edit limit"
-                              onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">Edit limit</TooltipContent>
-                        </Tooltip>
+                        {isAdmin && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Edit limit"
+                                onClick={() => { setEditKey(key); setEditLimit(String(key.apiCallsLimit ?? 0)) }}
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Edit limit</TooltipContent>
+                          </Tooltip>
+                        )}
                         {key.active && (
                           <Tooltip>
                             <AlertDialog>

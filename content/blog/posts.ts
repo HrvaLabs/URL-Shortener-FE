@@ -10,6 +10,174 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "how-hrva-cc-stops-phishing-links",
+    title: "How hrva.cc stops phishing links",
+    date: "2026-10-21",
+    excerpt:
+      "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check we tried. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
+    author: "Karlo Hrvačić",
+    tags: ["security", "phishing", "blocklists", "safe browsing"],
+    content: `
+      <p class="lead">
+        In September 2026, a new account used hrva.cc to share links to fake Njuškalo and Jófogás pages.
+        Google Safe Browsing didn't catch them, and neither did anything else we checked them against later.
+        This post explains why, and the layers hrva.cc now uses to stop links like these.
+      </p>
+
+      <h2>What happened</h2>
+      <p>
+        Njuškalo and Jófogás are popular classifieds sites in Croatia and Hungary. In mid-September, one new
+        account created a batch of hrva.cc links to pages that copied them, on domains such as
+        <code>njuskaio[.]cam</code> and <code>jofogas[.]cards</code>. The domains had been registered the same
+        day the links appeared. The links stayed up for weeks before we found them.
+      </p>
+      <p>
+        When we checked those domains in October, none of the outside services had flagged them. Google Safe
+        Browsing let them through. So did HaGeZi's threat lists, which hold millions of known bad domains,
+        and the malware-blocking DNS from Quad9 and Cloudflare.
+      </p>
+      <p>
+        That isn't a failure of those services. A list can only block a site after someone has spotted it,
+        and a domain registered that same day has no history yet. The lesson for us was that lists alone are too
+        slow for scams on fresh domains. So hrva.cc now also looks at how old a domain is, and at whether its
+        name imitates a well-known brand.
+      </p>
+
+      <h2>Checks when a link is created</h2>
+      <p>
+        No single check catches everything, so hrva.cc runs several. Each one covers gaps in the others.
+      </p>
+      <ul>
+        <li>
+          <strong>Google Safe Browsing.</strong> Every destination is checked against Google's database of
+          phishing and malware sites when the link is created, and again every night. We wrote about this in
+          <a href="/blog/safe-browsing-link-sharing">Why Safe Browsing matters for link sharing</a> and
+          <a href="/blog/safe-browsing-at-scale">Safe Browsing at scale</a>.
+        </li>
+        <li>
+          <strong>Local blocklists.</strong> hrva.cc downloads public blocklists to its own server and
+          refreshes them several times a day. Some list harmful domains. Others list exact links, which lets
+          us catch one bad page on a trusted host without blocking the whole host. Because the lists live on
+          our server, checking a link against them sends it nowhere.
+        </li>
+        <li>
+          <strong>Domain age.</strong> hrva.cc asks the domain's registry when the domain was registered. A
+          brand-new domain gets a closer look.
+        </li>
+        <li>
+          <strong>Lookalike and lure signals.</strong> A name that imitates a well-known brand, or an address
+          dressed up as a login or verification page, is a warning sign. Signals like these add up. A single
+          weak one never blocks a link on its own; it sends the link to a person instead.
+        </li>
+        <li>
+          <strong>Spamhaus.</strong> Destination domains are also checked against the Spamhaus domain
+          blocklist, which tracks domains used for phishing, malware and spam.
+        </li>
+        <li>
+          <strong>Redirect checks.</strong> A link can point to a harmless-looking address that then
+          redirects to a scam. After a link is created, hrva.cc follows its redirects in the background and
+          checks every address along the way.
+        </li>
+      </ul>
+
+      <h2>Checks after a link is live</h2>
+      <ul>
+        <li>
+          <strong>Every night.</strong> All active links are checked again against Safe Browsing and the
+          latest lists, so a site that turns bad later still gets caught.
+        </li>
+        <li>
+          <strong>Every click.</strong> Before a visitor is sent anywhere, the destination is checked against
+          the blocklists. If it has been listed since the last check, the link stops working on that click,
+          and the visitor sees a page saying the link isn't available.
+        </li>
+        <li>
+          <strong>Domain rules.</strong> When a domain is clearly bad, we can block it, and every link to it
+          stops working at once. We can also mark a domain as trusted, to undo a false alarm.
+        </li>
+      </ul>
+
+      <h2>A person makes the hard calls</h2>
+      <p>
+        Some links look doubtful but are fine. A small business on a new domain, or a real login page, can
+        trip the same signals as a scam. Blocking those automatically would hurt real people, so doubtful
+        links aren't blocked. They go to a review queue, and a person decides: the link is fine, the domain
+        is trusted, or the link, the domain or the account gets blocked.
+      </p>
+      <p>
+        Accounts that act like typical scam accounts are marked as possible scammers in that queue, so
+        they're easy to spot. The marker never blocks anything by itself. Blocking an account is always
+        our call, never the software's. A daily email lists the decisions waiting, so nothing sits in the
+        queue unseen.
+      </p>
+
+      <h2>Limits and reports</h2>
+      <ul>
+        <li>
+          <strong>Rate limits.</strong> Visitors and accounts can only create so many links in a short time,
+          so one account can't flood hrva.cc with scam links.
+        </li>
+        <li>
+          <strong>Reports from visitors.</strong> Anyone can report a link on the
+          <a href="/report">report page</a>. Reports go to the review queue. They never block a link on their
+          own, so nobody can take down someone else's link just by reporting it.
+        </li>
+      </ul>
+
+      <h2>What it can't catch</h2>
+      <p>
+        These checks make hrva.cc much harder to abuse, but they aren't perfect. They can miss:
+      </p>
+      <ul>
+        <li>
+          <strong>Bad files on trusted hosts.</strong> A harmful file on a big file-sharing or cloud service
+          is only caught once it's on a list of exact links. We won't block a whole trusted host for one bad
+          file.
+        </li>
+        <li>
+          <strong>Scams on old or hacked domains.</strong> A domain with a long, clean history looks normal
+          until a list picks it up.
+        </li>
+        <li>
+          <strong>Pages that change by visitor.</strong> Some scam pages show a harmless page to checkers and
+          the scam to real visitors.
+        </li>
+        <li>
+          <strong>JavaScript redirects.</strong> hrva.cc follows normal web redirects, but not ones a script
+          inside the page performs.
+        </li>
+      </ul>
+
+      <h2>What you can do</h2>
+      <ul>
+        <li>
+          <strong>Be wary of short links in messages.</strong> Scam links often arrive in chats, texts and
+          emails. If a message pushes you to log in, pay or confirm your details through a link, don't. Open
+          the site yourself by typing its address.
+        </li>
+        <li>
+          <strong>Check before you click.</strong> <a href="/validate">Check a link</a> shows where a hrva.cc
+          link goes without opening it.
+        </li>
+        <li>
+          <strong>Report it.</strong> If a hrva.cc link leads somewhere harmful, report it at
+          <a href="/report">/report</a> or email <a href="mailto:abuse@hrva.cc">abuse@hrva.cc</a> with the
+          short link.
+        </li>
+      </ul>
+
+      <h2>Thanks</h2>
+      <p>
+        This protection stands on the work of people who track threats and share what they find:
+        <a href="https://github.com/hagezi/dns-blocklists" target="_blank" rel="noopener noreferrer">HaGeZi</a>,
+        <a href="https://urlhaus.abuse.ch/" target="_blank" rel="noopener noreferrer">URLhaus</a> by abuse.ch,
+        <a href="https://openphish.com/" target="_blank" rel="noopener noreferrer">OpenPhish</a>,
+        <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a> and
+        <a href="https://www.spamhaus.org/" target="_blank" rel="noopener noreferrer">Spamhaus</a>. Thank you.
+      </p>
+    `,
+  },
+  {
     slug: "why-use-a-url-shortener",
     title: "Why You Should Use a URL Shortener in 2026",
     date: "2026-05-15",

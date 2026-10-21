@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "October 20, 2026"
+const LAST_UPDATED = "October 21, 2026"
 
 export default function PrivacyPage() {
   return (
@@ -122,6 +122,59 @@ export default function PrivacyPage() {
                 provide the connection you requested.
               </p>
 
+              <h2>Keeping links safe</h2>
+              <p>
+                To protect visitors from phishing, malware and scams, we check where links lead when
+                they are created or changed, and again later.
+              </p>
+              <ul>
+                <li>
+                  <strong>Blocklists</strong> — destinations are checked against public blocklists of
+                  harmful domains and links. We download these lists and store them on hrva.cc&apos;s
+                  own server, so this check sends nothing to anyone.
+                </li>
+                <li>
+                  <strong>Domain age</strong> — to learn when a destination&apos;s domain was
+                  registered, we send the domain name to the domain registries (RDAP). Only the
+                  domain name is sent.
+                </li>
+                <li>
+                  <strong>Spamhaus</strong> — when this check is enabled, the domain name may be
+                  looked up in Spamhaus&apos;s domain blocklist through DNS. Only the domain name is
+                  sent.
+                </li>
+                <li>
+                  <strong>Google Safe Browsing</strong> — receives the destination URL, as described
+                  under <em>Who else receives data</em>.
+                </li>
+                <li>
+                  <strong>Redirects</strong> — the hrva.cc server may request a destination to follow
+                  its redirects and check where they lead. The destination&apos;s server sees a request
+                  from hrva.cc, never from the visitor, and no visitor data is sent.
+                </li>
+              </ul>
+              <p>
+                Links that lead to known or very likely harmful sites are refused or disabled
+                automatically. Automated checks can also flag a link for review, or mark an account
+                as a possible scammer. The admin reviews flagged links and decides what happens to
+                them, and the checks never block an account on their own.
+              </p>
+              <p>
+                The admin can also moderate through the hrva.cc MCP connector in an AI app. The
+                connector only receives masked user data, such as a partly hidden email address, and
+                never IP addresses or visit details.
+              </p>
+              <p>
+                If you <Link href="/report">report a link</Link>, we store the short link, the
+                category and the details you write, and nothing about you. To limit abuse, reports
+                are rate-limited per network, with a counter in our cache that expires after an
+                hour.
+              </p>
+              <p>
+                Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — protecting visitors and the
+                service from abuse.
+              </p>
+
               <h2>Who else receives data</h2>
               <ul>
                 <li>
@@ -129,9 +182,14 @@ export default function PrivacyPage() {
                   acts as your identity provider under its own privacy policy.
                 </li>
                 <li>
-                  <strong>Google Safe Browsing</strong> — destination URLs you shorten are checked
-                  against Google&apos;s threat database to protect visitors from malicious sites. Only
-                  the URL is sent, never information about you or your visitors.
+                  <strong>Google Safe Browsing</strong> — destination URLs you shorten, and the
+                  addresses they redirect to, are checked against Google&apos;s threat database to
+                  protect visitors from malicious sites. Only the URL is sent, never information
+                  about you or your visitors.
+                </li>
+                <li>
+                  <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a
+                  destination, as described under <em>Keeping links safe</em>.
                 </li>
                 <li>
                   <strong>Cloudflare</strong> — delivers the web application (hosting/CDN). Your IP

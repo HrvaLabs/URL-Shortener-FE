@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "June 10, 2026"
+const LAST_UPDATED = "October 21, 2026"
 
 export default function TermsPage() {
   return (
@@ -74,9 +74,18 @@ export default function TermsPage() {
                 <li>spam or abusive automated traffic that degrades the service for others.</li>
               </ul>
               <p>
-                Destination URLs are screened with Google Safe Browsing, and links or accounts that
-                violate these rules may be disabled or deleted at any time, without notice and at
-                the operator&apos;s sole discretion.
+                Destination URLs are screened with Google Safe Browsing and public blocklists, and
+                links or accounts that violate these rules may be disabled or deleted at any time,
+                without notice and at the operator&apos;s sole discretion.
+              </p>
+
+              <h2>Reporting abuse</h2>
+              <p>
+                To report a short link that leads to phishing, malware, scams or spam, use the{" "}
+                <Link href="/report">report form</Link> or email{" "}
+                <a href="mailto:abuse@hrva.cc">abuse@hrva.cc</a> with the short link. The operator may
+                disable links that lead to phishing, malware, scams or spam, and may block the accounts
+                that create them.
               </p>
 
               <h2>Accounts</h2>

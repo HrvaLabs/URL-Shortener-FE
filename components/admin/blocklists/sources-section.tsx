@@ -13,8 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
 import type { BlocklistSource, BlocklistSourceInput } from "@/lib/types"
-import { cn, formatDateTime } from "@/lib/utils"
-import { formatMegabytes, formatTimeAgo } from "./format"
+import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils"
+import { formatMegabytes } from "./format"
 import { actionLabels, actionVariants, kindLabels } from "./labels"
 import { SourceDialog } from "./source-dialog"
 

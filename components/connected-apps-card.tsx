@@ -8,26 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { formatDate } from "@/lib/utils"
-
-const relativeTime = new Intl.RelativeTimeFormat("en")
-
-const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
-  ["year", 365 * 24 * 60 * 60],
-  ["month", 30 * 24 * 60 * 60],
-  ["week", 7 * 24 * 60 * 60],
-  ["day", 24 * 60 * 60],
-  ["hour", 60 * 60],
-  ["minute", 60],
-]
-
-function formatLastUsed(date: string): string {
-  const seconds = Math.max(0, (Date.now() - new Date(date).getTime()) / 1000)
-  for (const [unit, unitSeconds] of relativeUnits) {
-    if (seconds >= unitSeconds) return relativeTime.format(-Math.floor(seconds / unitSeconds), unit)
-  }
-  return "just now"
-}
+import { formatDate, formatTimeAgo } from "@/lib/utils"
 
 export function ConnectedAppsCard() {
   const { data: apps, isLoading, isFetching, error, refetch } = useConnectedApps()
@@ -36,8 +17,8 @@ export function ConnectedAppsCard() {
   const handleDisconnect = async (app: ConnectedApp) => {
     try {
       await disconnectApp.mutateAsync(app.clientId)
-    } catch (err: any) {
-      toast.error(err.message || "Failed to disconnect app")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to disconnect app")
     }
   }
 
@@ -73,7 +54,7 @@ export function ConnectedAppsCard() {
                     <p className="truncate text-sm font-medium">{app.clientName}</p>
                     <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs tabular-nums text-muted-foreground">
                       <span>Connected {formatDate(app.firstConnected)}</span>
-                      <span>{app.lastUsed ? `Last used ${formatLastUsed(app.lastUsed)}` : "Not used yet"}</span>
+                      <span>{app.lastUsed ? `Last used ${formatTimeAgo(app.lastUsed)}` : "Not used yet"}</span>
                     </p>
                   </div>
                   <AlertDialog>

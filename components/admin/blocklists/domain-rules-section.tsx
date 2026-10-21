@@ -13,8 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
 import type { DomainRule, DomainRuleCreated, DomainRuleType } from "@/lib/types"
-import { formatDateTime } from "@/lib/utils"
-import { formatTimeAgo } from "./format"
+import { formatDateTime, formatTimeAgo } from "@/lib/utils"
 import { ruleTypeLabels } from "./labels"
 
 const ruleTypes: DomainRuleType[] = ["BLOCK", "ALLOW"]

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { adminApi } from "@/lib/api-client"
-import { blockReasonLabels, outcomeLabels, outcomeVariants } from "./labels"
+import { blockReasonLabels, outcomeLabels, outcomeVariants } from "@/lib/labels"
 
 function ResultRow({ label, children }: { label: string; children: ReactNode }) {
   return (

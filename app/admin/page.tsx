@@ -326,7 +326,7 @@ export default function AdminUsersPage() {
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Unblock this user?</AlertDialogTitle>
+                              <AlertDialogTitle>Unblock <span className="break-all">{user.email}</span>?</AlertDialogTitle>
                               <AlertDialogDescription>Their account is reactivated and links blocked with them are restored.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

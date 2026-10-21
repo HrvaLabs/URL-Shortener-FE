@@ -375,7 +375,7 @@ export default function AdminUrlsPage() {
                       {url.reviewOpen && (
                         <Link
                           href={`/admin/review?entry=${url.id}`}
-                          className={cn(badgeVariants({ variant: "warning" }), "whitespace-nowrap hover:bg-warning/15")}
+                          className={cn(badgeVariants({ variant: "warning" }), "whitespace-nowrap underline-offset-2 hover:underline")}
                         >
                           In review
                         </Link>

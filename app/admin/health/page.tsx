@@ -5,8 +5,8 @@ import { adminApi } from "@/lib/api-client"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageMeta } from "@/components/page-meta"
-import { Database, Zap, Mail, Shield } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Database, Zap, Mail } from "lucide-react"
+import { cn, formatDateTime } from "@/lib/utils"
 
 export default function AdminHealthPage() {
   const { data: stats, isLoading } = useQuery({
@@ -14,6 +14,12 @@ export default function AdminHealthPage() {
     queryFn: () => adminApi.getStats(),
     refetchInterval: 30_000,
   })
+  const { data: latestEmails } = useQuery({
+    queryKey: ["admin", "email-log", 0, 1],
+    queryFn: () => adminApi.getEmailLog(0, 1),
+    refetchInterval: 30_000,
+  })
+  const lastEmail = latestEmails?.content?.[0]
 
   const services = [
     {
@@ -37,17 +43,10 @@ export default function AdminHealthPage() {
       name: "SMTP",
       icon: Mail,
       description: "Email delivery service",
-      ok: true,
-      okLabel: "Available",
-      failLabel: "Unavailable",
-    },
-    {
-      name: "SafeBrowsing API",
-      icon: Shield,
-      description: "Google Safe Browsing integration",
-      ok: true,
-      okLabel: "Configured",
-      failLabel: "Not configured",
+      ok: lastEmail?.status !== "FAILED",
+      okLabel: lastEmail ? "Last email delivered" : "No emails yet",
+      failLabel: "Last email failed",
+      extra: lastEmail ? `Last email: ${formatDateTime(lastEmail.createdAt)}` : undefined,
     },
   ]
 

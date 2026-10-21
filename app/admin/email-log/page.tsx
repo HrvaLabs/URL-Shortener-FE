@@ -1,9 +1,12 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { RotateCw } from "lucide-react"
+import { toast } from "sonner"
 import { usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
@@ -15,19 +18,33 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "su
   SENT: "success",
   FAILED: "destructive",
   SENDING: "secondary",
+  RESENT: "outline",
 }
 
 const statusLabels: Record<string, string> = {
   SENT: "Sent",
   FAILED: "Failed",
   SENDING: "Sending",
+  RESENT: "Resent",
 }
+
+const recipientList = (recipient: string) => recipient.replace(/^\[(.*)\]$/, "$1")
 
 export default function AdminEmailLogPage() {
   const { page, size, setPage, setSize } = usePagination()
+  const queryClient = useQueryClient()
   const { data, isLoading, error } = useQuery<Page<EmailLog>>({
     queryKey: ["admin", "email-log", page, size],
     queryFn: () => adminApi.getEmailLog(page, size),
+  })
+  const resendEmail = useMutation({
+    mutationFn: (id: number) => adminApi.resendEmail(id),
+    onSuccess: (resent) => {
+      if (resent.status === "SENT") toast.success("Email resent")
+      else toast.error(resent.errorMessage ? `Resend failed: ${resent.errorMessage}` : "Resend failed")
+    },
+    onError: (err: Error) => toast.error(err.message || "Failed to resend email"),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["admin", "email-log"] }),
   })
 
   return (
@@ -63,13 +80,14 @@ export default function AdminEmailLogPage() {
                 <TableHead>Subject</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden lg:table-cell">Error</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.content.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.createdAt)}</TableCell>
-                  <TableCell className="max-w-[220px] truncate font-medium" title={entry.recipient}>{entry.recipient}</TableCell>
+                  <TableCell className="max-w-[220px] truncate font-medium" title={recipientList(entry.recipient)}>{recipientList(entry.recipient)}</TableCell>
                   <TableCell className="max-w-[260px] truncate" title={entry.subject}>{entry.subject}</TableCell>
                   <TableCell>
                     <Badge variant={statusColors[entry.status] ?? "secondary"}>
@@ -78,6 +96,20 @@ export default function AdminEmailLogPage() {
                   </TableCell>
                   <TableCell className="hidden max-w-[240px] truncate text-muted-foreground lg:table-cell" title={entry.errorMessage || undefined}>
                     {entry.errorMessage || "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {entry.resendable ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1.5"
+                        disabled={resendEmail.isPending}
+                        onClick={() => resendEmail.mutate(entry.id)}
+                      >
+                        <RotateCw className="h-3.5 w-3.5" />
+                        Resend
+                      </Button>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}

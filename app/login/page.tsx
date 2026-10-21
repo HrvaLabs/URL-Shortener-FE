@@ -75,7 +75,7 @@ function LoginForm({ next }: { next: string | null }) {
               <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your account</p>
             </div>
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -84,6 +84,7 @@ function LoginForm({ next }: { next: string | null }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="mt-2"
                 />
               </div>
               <div className="space-y-2">
@@ -105,7 +106,7 @@ function LoginForm({ next }: { next: string | null }) {
                 />
               </div>
               {twoFactorRequired && (
-                <div className="space-y-2">
+                <div>
                   <Label htmlFor="code">Authenticator code</Label>
                   <Input
                     id="code"
@@ -114,7 +115,7 @@ function LoginForm({ next }: { next: string | null }) {
                     placeholder="123456 or recovery code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    className="font-mono placeholder:font-sans"
+                    className="mt-2 font-mono placeholder:font-sans"
                     autoFocus
                     required
                   />

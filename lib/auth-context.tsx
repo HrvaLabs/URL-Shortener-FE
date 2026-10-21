@@ -1,7 +1,8 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
-import { authApi, userApi } from "./api-client"
+import { useQueryClient } from "@tanstack/react-query"
+import { ApiError, authApi, userApi } from "./api-client"
 import type { UserDto } from "./types"
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<UserDto | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -30,9 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const userData = await userApi.getMe()
       setUser(userData)
-    } catch {
-      localStorage.removeItem("auth-token")
-      setUser(null)
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        localStorage.removeItem("auth-token")
+        setUser(null)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -47,10 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (res.twoFactorRequired) {
       return { twoFactorRequired: true }
     }
+    queryClient.clear()
     localStorage.setItem("auth-token", res.token!)
     setUser(res.user!)
     return { twoFactorRequired: false }
-  }, [])
+  }, [queryClient])
 
   const register = useCallback(async (email: string, password: string) => {
     await authApi.register({ email, password })
@@ -58,8 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("auth-token")
+    queryClient.clear()
     setUser(null)
-  }, [])
+  }, [queryClient])
 
   const isAdmin = user?.authorities?.some((a) => a.name === "ROLE_ADMIN") ?? false
 

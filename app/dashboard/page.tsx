@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useMyUrls, useDeactivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
-import { usePagination } from "@/lib/hooks/usePagination"
+import { useMyUrls, useActivateUrl, useDeactivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
+import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useMyApiKeys } from "@/lib/hooks/useApiKeys"
 import { Pagination } from "@/components/ui/pagination"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { QrCustomizer } from "@/components/qr-customizer"
-import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
+import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { cn, formatDate, formatDateTime, formatRelativeDate, truncateUrl, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
@@ -27,7 +27,7 @@ import { UrlStatsDialog } from "@/components/url-stats-dialog"
 import { PageMeta } from "@/components/page-meta"
 
 const selectClass =
-  "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+  "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
 const rowActionClass = "h-8 w-8 text-muted-foreground hover:text-foreground"
 const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
@@ -55,6 +55,8 @@ export default function DashboardPage() {
   const { data: myTags } = useQuery({ queryKey: ["urls", "tags"], queryFn: () => urlApi.getMyTags() })
   const { data: urls, isLoading, error } = useMyUrls(filters, page, size, sort, order)
   const deactivateUrl = useDeactivateUrl()
+  const activateUrl = useActivateUrl()
+  useClampedPage(page, urls?.totalPages, setPage)
   const deleteUrl = useDeleteUrl()
   const { data: apiKeys } = useMyApiKeys()
   const totalKeys = apiKeys?.length ?? 0
@@ -70,6 +72,15 @@ export default function DashboardPage() {
       setTimeout(() => setCopyPulseId(null), 400)
     }
     toast.success("Copied!")
+  }
+
+  const handleActivate = async (id: number) => {
+    try {
+      await activateUrl.mutateAsync(id)
+      toast.success("URL reactivated")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to reactivate")
+    }
   }
 
   const handleDeactivate = async (id: number) => {
@@ -156,7 +167,7 @@ export default function DashboardPage() {
           Expired only
         </label>
         <p className="w-full text-sm text-muted-foreground sm:ml-auto sm:w-auto">
-          <span className="font-medium tabular-nums text-foreground">{urls?.content?.length ?? 0}</span> URLs
+          <span className="font-medium tabular-nums text-foreground">{urls?.totalElements ?? urls?.content?.length ?? 0}</span> URLs
           <span className="mx-2 text-muted-foreground/50">·</span>
           <span className="font-medium tabular-nums text-foreground">{activeKeys}/{totalKeys}</span> API keys active
         </p>
@@ -228,7 +239,7 @@ export default function DashboardPage() {
                         type="button"
                         onClick={() => copyToClipboard(formatShortUrl(url.shortUrl), url.id)}
                         title={formatShortUrl(url.shortUrl)}
-                        className="max-w-[12rem] truncate text-left font-mono text-[13px] font-medium text-brand hover:underline"
+                        className="max-w-48 truncate text-left font-mono text-[13px] font-medium text-brand hover:underline"
                       >
                         <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                       </button>
@@ -355,7 +366,24 @@ export default function DashboardPage() {
                           </AlertDialog>
                         </Tooltip>
                       )}
-                      {!url.active && <span aria-hidden="true" className="inline-block h-8 w-8" />}
+                      {!url.active && url.status === "DEACTIVATED" && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Reactivate URL"
+                              className={rowActionClass}
+                              disabled={activateUrl.isPending}
+                              onClick={() => handleActivate(url.id)}
+                            >
+                              <ToggleLeft className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Reactivate URL</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {!url.active && url.status !== "DEACTIVATED" && <span aria-hidden="true" className="inline-block h-8 w-8" />}
 
                       <Tooltip>
                         <AlertDialog>

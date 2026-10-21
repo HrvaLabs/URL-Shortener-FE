@@ -31,7 +31,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           aria-label="Rows per page"
           value={size}
           onChange={(e) => onSizeChange(Number(e.target.value))}
-          className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/15"
+          className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-hidden focus:ring-4 focus:ring-ring/15"
         >
           {PAGE_SIZES.map((s) => (
             <option key={s} value={s}>{s}</option>
@@ -51,6 +51,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           className="h-8 w-8"
           disabled={page <= 0}
           onClick={() => onPageChange(page - 1)}
+          aria-label="Previous page"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
@@ -60,6 +61,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           className="h-8 w-8"
           disabled={page >= totalPages - 1}
           onClick={() => onPageChange(page + 1)}
+          aria-label="Next page"
         >
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>

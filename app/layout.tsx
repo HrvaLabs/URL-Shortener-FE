@@ -7,13 +7,13 @@ import { JsonLd } from "@/components/json-ld"
 
 const sans = Host_Grotesk({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-sans",
+  variable: "--font-host-grotesk",
 })
 
 const mono = JetBrains_Mono({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500"],
-  variable: "--font-mono",
+  variable: "--font-jetbrains-mono",
 })
 
 const baseUrl = "https://app.hrva.cc"
@@ -90,8 +90,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${sans.variable} ${mono.variable} font-sans antialiased`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased">
         <Providers>{children}</Providers>
         <Toaster
           closeButton

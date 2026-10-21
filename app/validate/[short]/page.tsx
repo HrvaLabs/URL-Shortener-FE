@@ -97,7 +97,7 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
             {searchResult && (
               <div className="animate-result-in mt-4 flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
                 <span className="shrink-0 font-mono font-medium text-brand">/{searchResult.shortUrl}</span>
-                <span className="min-w-0 truncate font-mono text-muted-foreground">{searchResult.longUrl}</span>
+                <span className="min-w-0 truncate font-mono text-muted-foreground">{searchResult.longUrl ?? "Password protected"}</span>
               </div>
             )}
 
@@ -139,10 +139,10 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
                   <div className="flex items-start gap-3 px-5 py-4">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-muted-foreground">Redirects to</p>
-                      <p className="mt-1 break-all font-mono text-sm">{data.longUrl}</p>
+                      <p className="mt-1 break-all font-mono text-sm">{data.longUrl ?? "Password protected. The destination shows after the password is entered."}</p>
                     </div>
                     <Button asChild variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-                      <a href={data.longUrl} target="_blank" rel="noopener noreferrer" aria-label="Open destination">
+                      <a href={data.longUrl ?? formatShortUrl(data.shortUrl)} target="_blank" rel="noopener noreferrer" aria-label="Open destination">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </Button>
@@ -153,7 +153,7 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
                       Created: {formatDate(data.createDate)}
                     </p>
                     <Button asChild size="sm" className="gap-1.5">
-                      <a href={data.longUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={data.longUrl ?? formatShortUrl(data.shortUrl)} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                         Visit URL
                       </a>

@@ -11,7 +11,11 @@ import { formatDateTime } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import type { AuditLog, Page } from "@/lib/types"
 
-const actionColors: Record<string, "default" | "secondary" | "destructive" | "success" | "outline"> = {
+type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "outline"
+
+const FAILED_SUFFIX = "_FAILED"
+
+const actionColors: Record<string, BadgeVariant> = {
   deactivateUrl: "destructive",
   revokeUrl: "destructive",
   deleteUrl: "destructive",
@@ -19,15 +23,23 @@ const actionColors: Record<string, "default" | "secondary" | "destructive" | "su
   activateUrl: "success",
   updateUrl: "secondary",
   updateUser: "secondary",
+  resendEmail: "secondary",
+}
+
+function actionColor(action: string): BadgeVariant {
+  if (action.endsWith(FAILED_SUFFIX)) return "destructive"
+  return actionColors[action] ?? "secondary"
 }
 
 function actionLabel(action: string): string {
-  return action
+  const failed = action.endsWith(FAILED_SUFFIX)
+  const label = action
+    .slice(0, failed ? -FAILED_SUFFIX.length : undefined)
     .replace(/([A-Z])/g, " $1")
-    .replace(/_FAILED$/, " (failed)")
     .trim()
     .toLowerCase()
     .replace(/^./, (c) => c.toUpperCase())
+  return failed ? `${label} (failed)` : label
 }
 
 export default function AdminAuditLogPage() {
@@ -79,7 +91,7 @@ export default function AdminAuditLogPage() {
                   <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.performedAt)}</TableCell>
                   <TableCell className="font-medium">{entry.performedBy}</TableCell>
                   <TableCell>
-                    <Badge variant={actionColors[entry.action] ?? "secondary"} className="whitespace-nowrap">
+                    <Badge variant={actionColor(entry.action)} className="whitespace-nowrap">
                       {actionLabel(entry.action)}
                     </Badge>
                   </TableCell>

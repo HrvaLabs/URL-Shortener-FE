@@ -108,10 +108,10 @@ export default function ValidatePage() {
                   <div className="flex items-start gap-3 px-5 py-4">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-muted-foreground">Redirects to</p>
-                      <p className="mt-1 break-all font-mono text-sm">{data.longUrl}</p>
+                      <p className="mt-1 break-all font-mono text-sm">{data.longUrl ?? "Password protected. The destination shows after the password is entered."}</p>
                     </div>
                     <Button asChild variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
-                      <a href={data.longUrl} target="_blank" rel="noopener noreferrer" aria-label="Open destination">
+                      <a href={data.longUrl ?? formatShortUrl(data.shortUrl)} target="_blank" rel="noopener noreferrer" aria-label="Open destination">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </Button>
@@ -122,7 +122,7 @@ export default function ValidatePage() {
                       Created: {formatDate(data.createDate)}
                     </p>
                     <Button asChild size="sm" className="gap-1.5">
-                      <a href={data.longUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={data.longUrl ?? formatShortUrl(data.shortUrl)} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                         Visit URL
                       </a>

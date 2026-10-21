@@ -40,7 +40,7 @@ function AdminMenu({ pathname }: { pathname: string }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={cn(navItemClass, navItemState(isAdminRoute), "outline-none data-[state=open]:bg-accent data-[state=open]:text-foreground")}>
+      <DropdownMenuTrigger className={cn(navItemClass, navItemState(isAdminRoute), "outline-hidden data-[state=open]:bg-accent data-[state=open]:text-foreground")}>
         Admin
         <ChevronDown className="h-3.5 w-3.5 opacity-60" />
       </DropdownMenuTrigger>
@@ -115,7 +115,7 @@ export function DashboardNav() {
 
         <nav
           aria-label="Dashboard"
-          className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 scrollbar-none md:hidden [&::-webkit-scrollbar]:hidden"
         >
           {links}
           {isAdmin && <AdminMenu pathname={pathname} />}

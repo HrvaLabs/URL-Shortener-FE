@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
-import { usePagination } from "@/lib/hooks/usePagination"
+import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
 import type { User, UserFilters } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,7 @@ export default function AdminUsersPage() {
     active: activeFilter === "all" ? undefined : activeFilter === "active",
   }
   const { data: users, isLoading, error } = useAllUsers(filters, page, size, sort, order)
+  useClampedPage(page, users?.totalPages, setPage)
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const [editUser, setEditUser] = useState<User | null>(null)
@@ -99,22 +100,23 @@ export default function AdminUsersPage() {
           </DialogHeader>
           {editUser && (
             <div className="space-y-4">
-              <div className="space-y-2">
+              <div>
                 <Label>Email</Label>
                 <Input
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   disabled={!!(editUser?.authProvider && editUser.authProvider !== "local")}
+                  className="mt-2"
                 />
                 {editUser?.authProvider && editUser.authProvider !== "local" && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Email is managed by {editUser.authProvider === "google" ? "Google" : "GitHub"}. Cannot be changed here.
                   </p>
                 )}
               </div>
-              <div className="space-y-2">
+              <div>
                 <Label>API Key Slots</Label>
-                <Input type="number" value={editSlots} onChange={(e) => setEditSlots(e.target.value)} />
+                <Input type="number" value={editSlots} onChange={(e) => setEditSlots(e.target.value)} className="mt-2" />
               </div>
               <Button onClick={handleEditSave} disabled={updateUser.isPending} className="w-full">
                 {updateUser.isPending ? "Saving..." : "Save changes"}
@@ -138,7 +140,7 @@ export default function AdminUsersPage() {
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
           aria-label="Filter by status"
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
         >
           <option value="all">All status</option>
           <option value="active">Active</option>

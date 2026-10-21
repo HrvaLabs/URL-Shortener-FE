@@ -150,8 +150,8 @@ export function ConnectContent() {
   return (
     <ConnectShell>
       <div className="text-center">
-        <h1 className="break-words font-display text-2xl">Allow {state.clientName} to use hrva.cc?</h1>
-        <p className="mt-1.5 break-words text-sm text-muted-foreground">
+        <h1 className="wrap-break-word font-display text-2xl">Allow {state.clientName} to use hrva.cc?</h1>
+        <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
           Signed in as <span className="font-medium text-foreground">{user?.email}</span>
         </p>
       </div>

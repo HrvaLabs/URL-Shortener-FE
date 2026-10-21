@@ -60,6 +60,7 @@ export interface UrlResponse {
   tags?: string[]
   passwordProtected?: boolean
   ownerEmail?: string
+  suspiciousReasons?: string[]
 }
 
 export interface ApiKey {
@@ -120,9 +121,10 @@ export interface UrlAnalytics {
 }
 
 export interface PeekUrl {
-  longUrl: string
+  longUrl: string | null
   shortUrl: string
   createDate: string
+  passwordProtected?: boolean
 }
 
 export interface JWTTokenDto {
@@ -248,6 +250,7 @@ export interface UrlFilters {
   search?: string
   active?: boolean
   expired?: boolean
+  anonymous?: boolean
   dateFrom?: string
   dateTo?: string
   tag?: string
@@ -270,12 +273,14 @@ export interface AuditLog {
 
 export interface EmailLog {
   id: number
+  sender?: string | null
   recipient: string
   subject: string
   status: string
   errorMessage: string | null
   sentAt: string | null
   createdAt: string
+  resendable?: boolean
 }
 
 export interface ConnectRequestView {

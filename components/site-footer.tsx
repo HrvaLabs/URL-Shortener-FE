@@ -35,9 +35,9 @@ export function SiteFooter() {
     <footer className="border-t bg-muted/40">
       <div className="container py-14">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
-          <div className="space-y-3">
+          <div>
             <Logo />
-            <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               A free, open-source URL shortener. Built and run by one person in Croatia.
             </p>
           </div>

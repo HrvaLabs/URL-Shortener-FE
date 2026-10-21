@@ -43,7 +43,7 @@ export function EasterEggKonami() {
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none fixed inset-0 z-[100] bg-brand/10 transition-opacity duration-1000",
+        "pointer-events-none fixed inset-0 z-100 bg-brand/10 transition-opacity duration-1000",
         visible ? "opacity-100" : "opacity-0",
       )}
     >

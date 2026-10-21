@@ -69,29 +69,29 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
         </DialogHeader>
         {!result ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            <div>
               <Label>Long URL</Label>
-              <Input placeholder="https://example.com/very/long/url" value={longUrl} onChange={(e) => setLongUrl(e.target.value)} required />
+              <Input placeholder="https://example.com/very/long/url" value={longUrl} onChange={(e) => setLongUrl(e.target.value)} required className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label>Custom alias (optional)</Label>
-              <Input placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} />
+              <Input placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label>Visit limit (optional)</Label>
-              <Input type="number" placeholder="e.g. 100" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} />
+              <Input type="number" placeholder="e.g. 100" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label>Tags (optional, comma-separated)</Label>
-              <Input placeholder="work, campaign" value={tags} onChange={(e) => setTags(e.target.value)} />
+              <Input placeholder="work, campaign" value={tags} onChange={(e) => setTags(e.target.value)} className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label>Password (optional)</Label>
-              <Input type="password" placeholder="Protect this link" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+              <Input type="password" placeholder="Protect this link" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="mt-2" />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label>Expiration date (optional)</Label>
-              <Input type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} />
+              <Input type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className="mt-2" />
             </div>
             <Button type="submit" className="w-full" disabled={createUrl.isPending}>
               {createUrl.isPending ? "Shortening..." : "Shorten"}

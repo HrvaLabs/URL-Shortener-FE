@@ -4,6 +4,12 @@ import { useState, useCallback, useEffect } from "react"
 
 const DEFAULT_SIZE = 20
 
+export function useClampedPage(page: number, totalPages: number | undefined, setPage: (page: number) => void) {
+  useEffect(() => {
+    if (totalPages != null && totalPages > 0 && page >= totalPages) setPage(totalPages - 1)
+  }, [page, totalPages, setPage])
+}
+
 export function usePagination() {
   const [page, setPageState] = useState(0)
   const [size, setSizeState] = useState(DEFAULT_SIZE)

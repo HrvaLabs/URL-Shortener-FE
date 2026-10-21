@@ -41,11 +41,11 @@ No test framework is set up.
 - `/admin/*` — Protected + ADMIN role
   - `/admin` — Users table
   - `/admin/dashboard` — Stats, metrics, login rate limits
-  - `/admin/urls` — All URLs with bulk actions (checkbox multi-select)
+  - `/admin/urls` — All URLs with bulk actions (checkbox multi-select). Search matches short link, destination and owner email (a pasted `hrva.cc/abc` is reduced to `abc`); filters Active/Deactivated, Expired only, Anonymous only; Owner sorts by `owner.email`; a Suspicious badge shows the backend's `suspiciousReasons`
   - `/admin/api-keys` — All API keys
   - `/admin/health` — System health (DB, Redis, SMTP, SafeBrowsing)
   - `/admin/audit-log` — Admin action audit trail
-  - `/admin/email-log` — Email delivery log
+  - `/admin/email-log` — Email delivery log; failed emails the backend still has content for (`resendable`) get a Resend button
 
 `@/*` path alias maps to **project root** (e.g. `@/lib/api-client` → `lib/api-client.ts`).
 
@@ -67,6 +67,8 @@ lib/          — Shared logic
 - `request<T>(method, path, body?, headers?)` — fetch wrapper with auth token injection
 - Reads `localStorage.getItem("auth-token")` — sends raw token as `Authorization` header (no "Bearer " prefix)
 - `ApiError` class exposes `.status` and `.message`
+- `request()` reads JSON or plain-text bodies (`POST /auth/register` answers with the bare email); error messages come from `error`, `message`, or the joined field messages of a validation response
+- Signing in or out clears the React Query cache; a failed `/users/me` only drops the token on 401/403
 - API base URL switches by env:
   - **Dev**: `/api/v1`
   - **Prod**: `https://hrva.cc/api/v1`
@@ -90,7 +92,8 @@ lib/          — Shared logic
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0
 
 ### Styling
-- Tailwind CSS with shadcn-style HSL CSS variables in `app/globals.css`; visual rules live in `DESIGN.md`
+- Tailwind CSS 4 with shadcn-style HSL CSS variables in `app/globals.css`, which also holds the theme (`@theme`; there is no `tailwind.config.js`); visual rules live in `DESIGN.md`
+- `space-y-*` puts its margin on the bottom of each child, which an inline first child (a `<label>`, a `<Link>`) ignores; a label above an input uses `mt-*` on the input instead
 - Light by default (follows the system); `.dark` class via `next-themes` (`attribute="class"`)
 - `primary` is near-black (white in dark mode) and is for primary buttons; `brand` (electric blue) is the single accent for links, short URLs, focus and charts; `success` / `warning` / `destructive` for status
 - Fonts: Host Grotesk (`font-sans`, and `font-display` = same family at weight 650) + JetBrains Mono (`font-mono`, short codes and code) via `next/font`
@@ -99,6 +102,7 @@ lib/          — Shared logic
 
 ### UI Components
 - shadcn/ui style: compose Radix primitives + `class-variance-authority` + `tailwind-merge` (via `cn()`)
+- Nesting a dialog trigger inside a tooltip: `Tooltip > TooltipTrigger asChild > AlertDialogTrigger asChild > button`. The reverse (`AlertDialogTrigger asChild > Tooltip`) renders no element for the trigger, so the click never opens the dialog
 - `sonner` for toasts, `lucide-react` for icons, `qrcode.react` for QR codes
 - `recharts` for analytics charts (used in `url-analytics.tsx`)
 
@@ -171,8 +175,9 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 | `GET /api/v1/urls/{short}/qr?size=300` | GET | Returns QR code as `image/png` bytes. Default 300×300. Use directly in `<img>` src via `urlApi.getQrCodeUrl(short)`. |
 | `GET /api/v1/urls/{short}/preview` | GET | Link preview: scrapes destination URL for OG/Twitter meta tags. Returns `LinkPreviewResponse { url, title?, description?, imageUrl? }`. Gracefully degrades (null fields) on timeout/error. |
 | `POST /api/v1/urls/bulk` | POST | Bulk create URLs. Body: `[ CreateUrlDto, ... ]`. Response: `[ UrlResponse, ... ]`. Requires auth (`ROLE_USER`). |
-| `GET /api/v1/admin/audit-log` | GET | Paginated admin audit trail. Roles: entries with action badges (deactivate=destructive, activate=default, update=secondary). |
-| `GET /api/v1/admin/email-log` | GET | Paginated email delivery log. Statuses: SENT=success, FAILED=destructive, SENDING=secondary. |
+| `GET /api/v1/admin/audit-log` | GET | Paginated admin audit trail. Roles: entries with action badges (deactivate=destructive, activate=default, update=secondary, any `_FAILED` action=destructive with a "(failed)" label). |
+| `GET /api/v1/admin/email-log` | GET | Paginated email delivery log. Statuses: SENT=success, FAILED=destructive, SENDING=secondary, RESENT=outline. |
+| `POST /api/v1/admin/email-log/{id}/resend` | POST | Sends a failed email again; returns the new log entry (SENT or FAILED). |
 | `GET /api/v1/admin/login-attempts` | GET | Map of IP → attempt count for active rate limits. |
 | `DELETE /api/v1/admin/login-attempts` | DELETE | Clear all login rate limits. |
 | `GET /api/changelog` | GET | Changelog JSON (all releases, sections, items). Public. |

@@ -52,7 +52,7 @@ export default function AdminApiKeysPage() {
         id: editKey.id,
         data: {
           id: editKey.id,
-          apiCallsLimit: parseInt(editLimit) || editKey.apiCallsLimit,
+          apiCallsLimit: Math.max(0, parseInt(editLimit, 10) || 0),
         },
       })
       toast.success("API key updated")
@@ -77,9 +77,9 @@ export default function AdminApiKeysPage() {
           </DialogHeader>
           {editKey && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>API Call Limit</Label>
-                <Input type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} />
+              <div>
+                <Label htmlFor="apiCallsLimit">API Call Limit</Label>
+                <Input id="apiCallsLimit" type="number" min={0} value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-2" />
               </div>
               <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
                 {updateKey.isPending ? "Saving..." : "Save"}
@@ -132,7 +132,7 @@ export default function AdminApiKeysPage() {
                     <div className="flex items-center justify-end gap-0.5">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button onClick={() => { setEditKey(key); setEditLimit(key.apiCallsLimit.toString()) }}
+                          <button onClick={() => { setEditKey(key); setEditLimit(String(key.apiCallsLimit ?? 0)) }}
                             aria-label="Edit API key"
                             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                             <Edit className="h-3.5 w-3.5" />

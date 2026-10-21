@@ -14,7 +14,7 @@ Next.js 16 App Router + React 19, deployed on Cloudflare Workers via `@opennextj
 | `npm run preview` | Build + Cloudflare local preview |
 | `npm run deploy` | Build + Cloudflare deploy |
 | `npm run cf-typegen` | Regenerate `cloudflare-env.d.ts` from wrangler config |
-| `npm run lint` | ESLint via `next lint` |
+| `npm run lint` | ESLint (`eslint .`) |
 
 No test framework is set up.
 
@@ -37,11 +37,15 @@ No test framework is set up.
 - `/validate/[short]` — Peek at a URL before visiting
 - `/fortune`, `/egg` — Easter eggs
 - `/changelog` — Release notes (fetches from backend `/api/changelog`)
+- `/unavailable?s=&reason=` — Where the backend sends a short link that can't redirect (`noindex`). `reason` is `blocked`, `expired`, `limit`, `inactive` or `missing`; anything else falls back to the `missing` line. "Report a link" carries `s` to `/report`
+- `/report?s=` — Public report form: short link (prefilled from `s`), category, details. The link is reduced to its bare code (`hrva.cc/abc` → `abc`, host taken from `getShortBaseUrl()`) before `reportApi.report()`; a 429 shows the backend's text
 - `/dashboard/*` — Protected; user's URLs, API keys, settings
-- `/admin/*` — Protected + ADMIN role
-  - `/admin` — Users table
+- `/admin/*` — Protected + `ROLE_ADMIN`
+  - `/admin` — Users table. "Possible scammers only" sends `possibleScammer=true` (server-side filter); a Possible scammer badge comes from `user.possibleScammer`; Block / Unblock user each ask for confirmation and toast the number of links blocked or restored
   - `/admin/dashboard` — Stats, metrics, login rate limits
-  - `/admin/urls` — All URLs with bulk actions (checkbox multi-select). Search matches short link, destination and owner email (a pasted `hrva.cc/abc` is reduced to `abc`); filters Active/Deactivated, Expired only, Anonymous only; Owner sorts by `owner.email`; a Suspicious badge shows the backend's `suspiciousReasons`
+  - `/admin/urls` — All URLs with bulk actions (checkbox multi-select). Search matches short link, destination and owner email (a pasted `hrva.cc/abc` is reduced to `abc`); filters Active/Deactivated, Expired only, Anonymous only; Owner sorts by `owner.email`; a Suspicious badge shows the backend's `suspiciousReasons`. A Blocked status shows `blockReason` in a tooltip (`blockReasonLabels`); the destination tooltip adds "Ends at" when `finalUrl` differs; an In review badge (`reviewOpen`) links to `/admin/review?entry=<id>`; the globe button opens `BlockDomainDialog`
+  - `/admin/review` — Review queue of flagged links (`adminApi.getReviewQueue`), filterable by reason and age. Row actions: Looks fine (`OK`), Trust domain, Block link, Block domain, Block user (all but Looks fine confirm first). `?entry=<urlId>` highlights and scrolls to that row, or says it's no longer open
+  - `/admin/blocklists` — Blocklist sources (enable switch, Refresh now, add/edit/delete), domain rules in Blocked / Trusted tabs (adding a Block rule toasts `Blocked N links on <domain>`), and a URL tester that shows the backend's verdict (`adminApi.checkUrl`)
   - `/admin/api-keys` — All API keys
   - `/admin/health` — System health (DB, Redis, SMTP, SafeBrowsing)
   - `/admin/audit-log` — Admin action audit trail
@@ -55,39 +59,48 @@ app/          — Next.js App Router pages
 components/   — React components
   ui/         — shadcn/ui primitives (button, card, dialog, table, etc.)
   dashboard/  — Dashboard-specific (create-url-dialog, url-analytics, dashboard-nav)
+  admin/      — Moderation: block-domain-dialog (shared by the review queue and All URLs), blocklists/ (the Blocklists page sections)
 lib/          — Shared logic
   api-client.ts   — Fetch-based API client
   auth-context.tsx — Auth state (React context)
   types.ts        — All TypeScript interfaces
-  hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers)
-  utils.ts        — cn(), formatDate(), getApiBaseUrl(), etc.
+  labels.ts       — Display labels for URL-check outcomes (`outcomeLabels`, `outcomeVariants`) and block reasons (`blockReasonLabels`)
+  hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers, useReviewCount)
+  utils.ts        — cn(), formatDate(), formatTimeAgo() ("3 hours ago", "—" for null), getApiBaseUrl(), etc.
 ```
 
 ### API Client (`lib/api-client.ts`)
 - `request<T>(method, path, body?, headers?)` — fetch wrapper with auth token injection
-- Reads `localStorage.getItem("auth-token")` — sends raw token as `Authorization` header (no "Bearer " prefix)
-- `ApiError` class exposes `.status` and `.message`
+- Reads `localStorage.getItem("auth-token")` and sends it as-is in the `Authorization` header. The stored value already starts with `Bearer ` (the login response's `token`; the OAuth callback adds the prefix)
+- `ApiError` class exposes `.status` and `.message`; `REQUEST_FAILED` is the fallback message when the body has none
 - `request()` reads JSON or plain-text bodies (`POST /auth/register` answers with the bare email); error messages come from `error`, `message`, or the joined field messages of a validation response
 - Signing in or out clears the React Query cache; a failed `/users/me` only drops the token on 401/403
 - API base URL switches by env:
   - **Dev**: `/api/v1`
   - **Prod**: `https://hrva.cc/api/v1`
 - **`urlApi`** — URL CRUD (create, list, peek, preview, QR, update, deactivate, delete, bulk, export)
-- **`userApi`** — User CRUD (me, list, update, password, delete)
-- **`adminApi`** — Admin operations (stats, export, audit log, email log, login attempts)
+- **`userApi`** — User CRUD (me, list, update, password, delete); `list` takes `possibleScammer`
+- **`adminApi`** — Admin operations (stats, export, audit log, email log, login attempts) and moderation:
+  - blocklist sources: `getBlocklistSources`, `createBlocklistSource`, `updateBlocklistSource`, `deleteBlocklistSource`, `refreshBlocklistSource` (`/admin/blocklist-sources`, `POST …/{id}/refresh`)
+  - domain rules: `getDomainRules(type)`, `createDomainRule` (returns `{ rule, linksAffected }`), `deleteDomainRule` (`/admin/domain-rules`)
+  - review queue: `getReviewQueue({ page, size, reason, olderThanDays })`, `resolveReview(urlId, action, domain?)` (`/admin/review-queue`, `POST …/{urlId}/resolve`)
+  - users: `blockUser`, `unblockUser` (return `{ linksAffected }`), `getPossibleScammers` (user ids)
+  - `checkUrl(url)` — `POST /admin/url-check`, the verdict (`ALLOWED` / `BLOCK` / `FLAG` / `CLEAN`) a new link would get
+- **`reportApi`** — `report({ shortUrl, category, details? })` → `POST /reports` (public, rate-limited per network)
 - Endpoints returning paginated data accept `UrlFilters` / `UserFilters` for search/status/date filtering
 
 ### Auth (`lib/auth-context.tsx`)
 - React Context provider wrapping the tree under `Providers`
-- On mount: reads `auth-token` from localStorage, calls `GET /user/me` to hydrate user
+- On mount: reads `auth-token` from localStorage, calls `GET /users/me` to hydrate user
 - `login()` stores token and sets user; `logout()` removes token and clears user
-- `isAdmin` derived from `user.authorities` containing `{ name: "ADMIN" }`
+- `isAdmin` derived from `user.authorities` containing `{ name: "ROLE_ADMIN" }`
 - **No route protection middleware** — dashboard/admin layouts redirect client-side via `useEffect`
 
 ### Data Fetching (TanStack React Query 5)
 - Query client in `providers.tsx`: `staleTime: 30s`, `retry: 1`
 - Hooks in `lib/hooks/` follow pattern: `useXxx()` for queries, `useXxx()` for mutations
-- Mutations invalidate relevant query keys (`["urls"]`, `["apiKeys"]`, `["users"]`, `["me"]`)
+- Mutations invalidate relevant query keys (`["urls"]`, `["apiKeys"]`, `["users"]`, `["me"]`); moderation keys live under `["admin", …]` (`["admin", "review"]`, `["admin", "domain-rules", type]`, `["admin", "blocklists"]`)
+- `useReviewCount()` — admin-only `GET /admin/review-queue?size=1` → `totalElements`, refetched every 60 s. Its key `["admin", "review", "count"]` sits under `["admin", "review"]`, so anything that resolves or blocks invalidates the count too
 - Pagination via `hooks/usePagination.ts` — reads `page`, `size`, `sort`, `order` from URL search params
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0
 
@@ -103,6 +116,7 @@ lib/          — Shared logic
 ### UI Components
 - shadcn/ui style: compose Radix primitives + `class-variance-authority` + `tailwind-merge` (via `cn()`)
 - Nesting a dialog trigger inside a tooltip: `Tooltip > TooltipTrigger asChild > AlertDialogTrigger asChild > button`. The reverse (`AlertDialogTrigger asChild > Tooltip`) renders no element for the trigger, so the click never opens the dialog
+- Admin nav (`components/dashboard/dashboard-nav.tsx`): the Admin dropdown and the Review queue item show the open review count (`useReviewCount`, `99+` above 99, hidden at 0). The badge is `relative` so its `sr-only` text can't widen the page at phone width
 - `sonner` for toasts, `lucide-react` for icons, `qrcode.react` for QR codes
 - `recharts` for analytics charts (used in `url-analytics.tsx`)
 
@@ -149,7 +163,7 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 | `PUT /api/v1/user` | `PUT /api/v1/users/{id}` | `id` moved from body to path |
 | `PUT /api/v1/user/update-password` | `PATCH /api/v1/users/password` | |
 | `DELETE /api/v1/user/{id}` | `DELETE /api/v1/users/{id}` | Unchanged |
-| `GET /api/v1/user/me` | `GET /api/v1/users/me` | Unchanged |
+| `GET /api/v1/user/me` | `GET /api/v1/users/me` | |
 
 ### Auth Endpoints
 
@@ -187,7 +201,8 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 ## Gotchas
 
 - **No `.env` files** — API base URL is hardcoded in `lib/utils.ts` and switches on `NODE_ENV`
-- **Auth token stored without "Bearer" prefix** — the backend expects the raw token string in the `Authorization` header
+- **Pointing dev at another backend port**: change the four `localhost:8080` rewrites in `next.config.mjs` and `getShortBaseUrl()` in `lib/utils.ts`, and don't commit it. Run the dev server on 3000, where the backend's `app.frontend-url` sends `/unavailable` redirects
+- **Auth token is stored with its `Bearer ` prefix** — `request()` adds nothing, so a token injected into `auth-token` by hand must include it
 - **No middleware-based route protection** — dashboard/admin check auth in a client `useEffect`, creating a flash of unauthenticated content
 - **`@/*` maps to root** — unlike the common Next.js pattern of mapping to `src/*`
 - **pnpm/npm**: lockfile is `package-lock.json` (npm), not pnpm

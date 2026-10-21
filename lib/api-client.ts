@@ -210,6 +210,7 @@ export const userApi = {
     if (sort) params.set("sort", `${sort},${order ?? "desc"}`)
     if (filters.search) params.set("search", filters.search)
     if (filters.active != null) params.set("active", String(filters.active))
+    if (filters.possibleScammer) params.set("possibleScammer", "true")
     return request<Page<User>>("GET", `/users?${params}`)
   },
   update: (id: number, data: UserUpdateDto) =>

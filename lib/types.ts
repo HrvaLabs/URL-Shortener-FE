@@ -264,6 +264,7 @@ export interface UrlFilters {
 export interface UserFilters {
   search?: string
   active?: boolean
+  possibleScammer?: boolean
 }
 
 export interface AuditLog {

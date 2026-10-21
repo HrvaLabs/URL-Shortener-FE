@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
@@ -24,22 +24,16 @@ export default function AdminUsersPage() {
   const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<string>("all")
-  useEffect(() => { setPage(0) }, [search, activeFilter])
-  const filterKey = `${search}-${activeFilter}`
+  const [scammersOnly, setScammersOnly] = useState(false)
+  useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly])
+  const filterKey = `${search}-${activeFilter}-${scammersOnly}`
   const filters: UserFilters = {
     search: search || undefined,
     active: activeFilter === "all" ? undefined : activeFilter === "active",
+    possibleScammer: scammersOnly || undefined,
   }
   const { data: users, isLoading, error } = useAllUsers(filters, page, size, sort, order)
   useClampedPage(page, users?.totalPages, setPage)
-  const [scammersOnly, setScammersOnly] = useState(false)
-  const possibleScammers = useQuery({
-    queryKey: ["admin", "possible-scammers"],
-    queryFn: () => adminApi.getPossibleScammers(),
-    enabled: scammersOnly,
-  })
-  const scammerIds = new Set(possibleScammers.data ?? [])
-  const rows = scammersOnly ? (users?.content ?? []).filter((user) => scammerIds.has(user.id)) : users?.content ?? []
   const queryClient = useQueryClient()
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set())
   const updateUser = useUpdateUser()
@@ -116,7 +110,6 @@ export default function AdminUsersPage() {
         queryClient.invalidateQueries({ queryKey: ["users"] }),
         queryClient.invalidateQueries({ queryKey: ["urls"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
-        queryClient.invalidateQueries({ queryKey: ["admin", "possible-scammers"] }),
       ])
     } catch (err) {
       toast.error(err instanceof ApiError && err.message ? err.message : block ? "Failed to block the user" : "Failed to unblock the user")
@@ -197,7 +190,7 @@ export default function AdminUsersPage() {
         </label>
       </div>
 
-      {isLoading || (scammersOnly && possibleScammers.isLoading) ? (
+      {isLoading ? (
         <div className="space-y-3 rounded-xl border bg-card p-5">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
@@ -208,15 +201,10 @@ export default function AdminUsersPage() {
           <p className="text-sm font-medium text-destructive">Failed to load users</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
         </div>
-      ) : scammersOnly && possibleScammers.isError && !possibleScammers.data ? (
-        <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm font-medium text-destructive">Failed to load possible scammers</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => possibleScammers.refetch()} disabled={possibleScammers.isFetching}>Retry</Button>
-        </div>
       ) : !users || !users.content || users.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <p className="font-semibold">No users found</p>
-          <p className="mt-1 text-sm text-muted-foreground">Try a different search or status filter.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Try a different search or filter.</p>
         </div>
       ) : (
         <div key={filterKey} className="overflow-hidden rounded-xl border bg-card">
@@ -254,18 +242,13 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {scammersOnly && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">No possible scammers on this page.</TableCell>
-                </TableRow>
-              )}
-              {rows.map((user: User) => (
+              {users.content?.map((user: User) => (
                 <TableRow key={user.id}>
                   <TableCell className="hidden tabular-nums text-muted-foreground lg:table-cell">{user.id}</TableCell>
                   <TableCell className="font-medium">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span>{user.email}</span>
-                      {(user.possibleScammer || scammerIds.has(user.id)) && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
+                      {user.possibleScammer && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -327,17 +310,31 @@ export default function AdminUsersPage() {
                           </AlertDialogContent>
                         </AlertDialog>
                       ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-                          onClick={() => handleBlock(user, false)}
-                          aria-disabled={busyIds.has(user.id)}
-                          aria-label="Unblock user"
-                          title="Unblock user"
-                        >
-                          <UserCheck className="h-4 w-4 text-success" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                              onClick={(e) => { if (busyIds.has(user.id)) e.preventDefault() }}
+                              aria-disabled={busyIds.has(user.id)}
+                              aria-label="Unblock user"
+                              title="Unblock user"
+                            >
+                              <UserCheck className="h-4 w-4 text-success" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Unblock this user?</AlertDialogTitle>
+                              <AlertDialogDescription>Their account is reactivated and links blocked with them are restored.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleBlock(user, false)}>Unblock user</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>

@@ -3,11 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { useReviewCount } from "@/lib/hooks/useReviewCount"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { Users, LinkIcon, Shield, LogOut, Activity, History, Mail, LayoutDashboard, ChevronDown } from "lucide-react"
+import { Users, LinkIcon, Shield, LogOut, Activity, History, Mail, LayoutDashboard, ChevronDown, ShieldAlert, ListFilter } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -21,6 +22,8 @@ const adminItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin", label: "Users", icon: Users },
   { href: "/admin/urls", label: "All URLs", icon: LinkIcon },
+  { href: "/admin/review", label: "Review queue", icon: ShieldAlert },
+  { href: "/admin/blocklists", label: "Blocklists", icon: ListFilter },
   { href: "/admin/api-keys", label: "All API Keys", icon: Shield },
   { href: "/admin/health", label: "Health", icon: Activity },
   { href: "/admin/audit-log", label: "Audit Log", icon: History },
@@ -37,6 +40,7 @@ function navItemState(isActive: boolean) {
 
 function AdminMenu({ pathname }: { pathname: string }) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
+  const { data: reviewCount } = useReviewCount()
 
   return (
     <DropdownMenu>
@@ -54,9 +58,15 @@ function AdminMenu({ pathname }: { pathname: string }) {
               asChild
               className={cn("cursor-pointer gap-2", isActive ? "bg-accent font-medium text-foreground" : "text-muted-foreground focus:text-foreground")}
             >
-              <Link href={item.href}>
+              <Link href={item.href} aria-current={isActive ? "page" : undefined}>
                 <Icon className="h-4 w-4" />
                 {item.label}
+                {item.href === "/admin/review" && !!reviewCount && (
+                  <span className="ml-auto rounded-md bg-warning/10 px-1.5 text-xs font-medium tabular-nums text-warning">
+                    {reviewCount > 99 ? "99+" : reviewCount}
+                    <span className="sr-only"> waiting</span>
+                  </span>
+                )}
               </Link>
             </DropdownMenuItem>
           )

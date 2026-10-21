@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, UrlCheckResult, LinkReport } from "./types"
 
 export class ApiError extends Error {
   status: number
@@ -274,6 +274,40 @@ export const adminApi = {
     request<Record<string, number>>("GET", "/admin/login-attempts"),
   clearLoginAttempts: () =>
     request<void>("DELETE", "/admin/login-attempts"),
+  getBlocklistSources: () =>
+    request<BlocklistSource[]>("GET", "/admin/blocklist-sources"),
+  createBlocklistSource: (input: BlocklistSourceInput) =>
+    request<BlocklistSource>("POST", "/admin/blocklist-sources", input),
+  updateBlocklistSource: (id: number, input: BlocklistSourceInput) =>
+    request<BlocklistSource>("PUT", `/admin/blocklist-sources/${id}`, input),
+  deleteBlocklistSource: (id: number) =>
+    request<void>("DELETE", `/admin/blocklist-sources/${id}`),
+  refreshBlocklistSource: (id: number) =>
+    request<BlocklistSource>("POST", `/admin/blocklist-sources/${id}/refresh`),
+  getDomainRules: (type: DomainRuleType) =>
+    request<DomainRule[]>("GET", `/admin/domain-rules?type=${type}`),
+  createDomainRule: (input: DomainRuleInput) =>
+    request<DomainRuleCreated>("POST", "/admin/domain-rules", input),
+  deleteDomainRule: (id: number) =>
+    request<void>("DELETE", `/admin/domain-rules/${id}`),
+  getReviewQueue: ({ page = 0, size = 20, reason, olderThanDays }: ReviewQueueFilters = {}) => {
+    const params = new URLSearchParams()
+    params.set("page", String(page))
+    params.set("size", String(size))
+    if (reason) params.set("reason", reason)
+    if (olderThanDays != null) params.set("olderThanDays", String(olderThanDays))
+    return request<Page<ReviewEntry>>("GET", `/admin/review-queue?${params}`)
+  },
+  resolveReview: (urlId: number, action: ReviewAction, domain?: string) =>
+    request<void>("POST", `/admin/review-queue/${urlId}/resolve`, domain ? { action, domain } : { action }),
+  blockUser: (id: number) =>
+    request<LinksAffected>("POST", `/admin/users/${id}/block`),
+  unblockUser: (id: number) =>
+    request<LinksAffected>("POST", `/admin/users/${id}/unblock`),
+  getPossibleScammers: () =>
+    request<number[]>("GET", "/admin/possible-scammers"),
+  checkUrl: (url: string) =>
+    request<UrlCheckResult>("POST", "/admin/url-check", { url }),
   exportUrlsCsv: async () => {
     const baseUrl = getApiBaseUrl()
     const token = localStorage.getItem("auth-token")
@@ -289,4 +323,10 @@ export const adminApi = {
     a.click()
     URL.revokeObjectURL(url)
   },
+}
+
+// Reports
+export const reportApi = {
+  report: (data: LinkReport) =>
+    request<void>("POST", "/reports", data),
 }

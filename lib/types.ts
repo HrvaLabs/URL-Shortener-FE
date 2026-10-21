@@ -15,6 +15,7 @@ export interface User {
   lastLogin: string
   active: boolean
   authProvider?: string
+  possibleScammer?: boolean
 }
 
 export interface UserDto {
@@ -61,6 +62,10 @@ export interface UrlResponse {
   passwordProtected?: boolean
   ownerEmail?: string
   suspiciousReasons?: string[]
+  blockReason?: BlockReason
+  reviewOpen?: boolean
+  ownerPossibleScammer?: boolean
+  finalUrl?: string | null
 }
 
 export interface ApiKey {
@@ -300,4 +305,105 @@ export interface ConnectedApp {
   clientName: string
   firstConnected: string
   lastUsed: string | null
+}
+
+export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS"
+
+export type SourceKind = "DOMAINS" | "LINKS"
+
+export type SourceAction = "BLOCK" | "FLAG"
+
+export interface BlocklistSource {
+  id: number
+  name: string
+  url: string
+  fallbackUrls: string[]
+  kind: SourceKind
+  action: SourceAction
+  enabled: boolean
+  refreshIntervalHours: number
+  lastFetchedAt: string | null
+  lastSuccessAt: string | null
+  lastSuccessUrl: string | null
+  domainCount: number | null
+  listVersion: string | null
+  lastError: string | null
+  memoryBytes: number | null
+}
+
+export interface BlocklistSourceInput {
+  name: string
+  url: string
+  kind: SourceKind
+  action: SourceAction
+  enabled: boolean
+  refreshIntervalHours: number
+  fallbackUrls: string[]
+}
+
+export type DomainRuleType = "BLOCK" | "ALLOW"
+
+export interface DomainRule {
+  id: number
+  domain: string
+  type: DomainRuleType
+  reason: string | null
+  createdBy: string | null
+  createdAt: string
+}
+
+export interface DomainRuleInput {
+  domain: string
+  type: DomainRuleType
+  reason?: string
+}
+
+export interface DomainRuleCreated {
+  rule: DomainRule
+  linksAffected: number
+}
+
+export interface LinksAffected {
+  linksAffected: number
+}
+
+export interface ReviewEntry {
+  urlId: number
+  shortUrl: string
+  longUrl: string
+  ownerId: number | null
+  ownerEmail: string | null
+  ownerCreatedAt: string | null
+  possibleScammer: boolean
+  createDate: string
+  reasons: string[]
+  flaggedAt: string
+}
+
+export interface ReviewQueueFilters {
+  page?: number
+  size?: number
+  reason?: string
+  olderThanDays?: number
+}
+
+export type ReviewAction = "OK" | "TRUST_DOMAIN" | "BLOCK_LINK" | "BLOCK_DOMAIN" | "BLOCK_USER"
+
+export type UrlCheckOutcome = "ALLOWED" | "BLOCK" | "FLAG" | "CLEAN"
+
+export interface UrlCheckResult {
+  outcome: UrlCheckOutcome
+  reasons: string[]
+  blockReason: BlockReason | null
+  blockDetail: string | null
+  host: string | null
+  registrableDomain: string | null
+}
+
+export type ReportCategory = "PHISHING" | "MALWARE" | "SPAM" | "OTHER"
+
+export interface LinkReport {
+  shortUrl: string
+  category: ReportCategory
+  details?: string
 }

@@ -166,9 +166,8 @@ export default function PrivacyPage() {
               </p>
               <p>
                 If you <Link href="/report">report a link</Link>, we store the short link, the
-                category and the details you write, and nothing about you. To limit abuse, reports
-                are rate-limited per network, with a counter in our cache that expires after an
-                hour.
+                category and the details you write, and nothing about you beyond a rate-limit
+                counter for your network, which expires after an hour.
               </p>
               <p>
                 Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — protecting visitors and the

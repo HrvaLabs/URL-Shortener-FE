@@ -33,7 +33,7 @@ export const blogPosts: BlogPost[] = [
       </p>
       <p>
         When we checked those domains in October, none of the outside services had flagged them. Google Safe
-        Browsing let them through. So did HaGeZi's threat lists, which hold millions of known bad domains,
+        Browsing let them through. So did HaGeZi's threat lists, which hold more than two million known bad domains,
         and the malware-blocking DNS from Quad9 and Cloudflare.
       </p>
       <p>
@@ -88,7 +88,7 @@ export const blogPosts: BlogPost[] = [
         </li>
         <li>
           <strong>Every click.</strong> Before a visitor is sent anywhere, the destination is checked against
-          the blocklists. If it has been listed since the last check, the link stops working on that click,
+          the blocklists that block outright. If it has been listed since the last check, the link stops working on that click,
           and the visitor sees a page saying the link isn't available.
         </li>
         <li>
@@ -106,8 +106,8 @@ export const blogPosts: BlogPost[] = [
       </p>
       <p>
         Accounts that act like typical scam accounts are marked as possible scammers in that queue, so
-        they're easy to spot. The marker never blocks anything by itself. Blocking an account is always
-        our call, never the software's. A daily email lists the decisions waiting, so nothing sits in the
+        they're easy to spot. The marker never blocks anything by itself. Blocking an account is never
+        automatic. A daily email lists the decisions waiting, so nothing sits in the
         queue unseen.
       </p>
 

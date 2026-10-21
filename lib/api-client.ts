@@ -1,6 +1,8 @@
 import { getApiBaseUrl } from "./utils"
 import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, UrlCheckResult, LinkReport } from "./types"
 
+export const REQUEST_FAILED = "Request failed"
+
 export class ApiError extends Error {
   status: number
   constructor(message: string, status: number) {
@@ -32,11 +34,11 @@ async function readBody(response: Response): Promise<unknown> {
 }
 
 function errorMessage(body: unknown): string {
-  if (typeof body !== "object" || body === null) return "Request failed"
+  if (typeof body !== "object" || body === null) return REQUEST_FAILED
   const fields = body as Record<string, unknown>
   // New API: { "error": "message" }, old API: { "message": "..." }, validation: { "field": "message" }
   const message = fields.error ?? fields.message ?? Object.values(fields).filter((value) => typeof value === "string").join(". ")
-  return typeof message === "string" && message ? message : "Request failed"
+  return typeof message === "string" && message ? message : REQUEST_FAILED
 }
 
 async function request<T>(

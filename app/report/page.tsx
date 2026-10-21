@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { ApiError, reportApi } from "@/lib/api-client"
+import { ApiError, REQUEST_FAILED, reportApi } from "@/lib/api-client"
 import type { ReportCategory } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,11 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { cn } from "@/lib/utils"
+import { cn, getShortBaseUrl } from "@/lib/utils"
 
 const DETAILS_LIMIT = 500
 const SHORT_CODE = /^[a-zA-Z0-9_-]+$/
 const SEND_FAILED = "Couldn't send the report. Try again, or email abuse@hrva.cc."
+const SHORT_HOST = getShortBaseUrl().replace(/^https?:\/\//, "").toLowerCase()
 
 const categories: { value: ReportCategory; label: string }[] = [
   { value: "PHISHING", label: "Phishing" },
@@ -29,16 +30,13 @@ const selectClass =
 type ReportStatus = { kind: "idle" } | { kind: "sent" } | { kind: "failed"; message: string }
 
 function toShortCode(input: string) {
-  return input
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/^(www\.)?hrva\.cc(?=\/|$)/i, "")
-    .replace(/[?#].*$/, "")
-    .replace(/^\/+|\/+$/g, "")
+  const link = input.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "")
+  const onShortHost = link.toLowerCase() === SHORT_HOST || link.toLowerCase().startsWith(`${SHORT_HOST}/`)
+  return (onShortHost ? link.slice(SHORT_HOST.length) : link).replace(/[?#].*$/, "").replace(/^\/+|\/+$/g, "")
 }
 
 function failureMessage(error: unknown) {
-  if (error instanceof ApiError && error.status === 429 && error.message !== "Request failed") return error.message
+  if (error instanceof ApiError && error.status === 429 && error.message !== REQUEST_FAILED) return error.message
   return SEND_FAILED
 }
 

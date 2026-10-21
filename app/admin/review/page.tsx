@@ -50,7 +50,7 @@ const resolveMessages: Record<RowAction, { success: string; failure: string }> =
 
 const selectClass = "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
-const iconButton = "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+const iconButton = "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
 
 const plural = (count: number, unit: string) => `${count} ${unit}${count === 1 ? "" : "s"}`
 
@@ -124,7 +124,8 @@ function ReviewQueue() {
   })
   useClampedPage(page, data?.totalPages, setPage)
   const resolveReview = useMutation({
-    mutationFn: ({ urlId, action }: { urlId: number; action: RowAction }) => adminApi.resolveReview(urlId, action),
+    mutationFn: ({ urlId, action, longUrl }: { urlId: number; action: RowAction; longUrl: string }) =>
+      adminApi.resolveReview(urlId, action, action === "TRUST_DOMAIN" ? hostOf(longUrl) ?? undefined : undefined),
   })
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set())
   const [blockTarget, setBlockTarget] = useState<ReviewEntry | null>(null)
@@ -149,14 +150,16 @@ function ReviewQueue() {
     })
 
   const resolve = async (entry: ReviewEntry, action: RowAction) => {
+    if (busyIds.has(entry.urlId)) return
     setBusy(entry.urlId, true)
     try {
-      await resolveReview.mutateAsync({ urlId: entry.urlId, action })
+      await resolveReview.mutateAsync({ urlId: entry.urlId, action, longUrl: entry.longUrl })
       const host = hostOf(entry.longUrl)
       toast.success(action === "TRUST_DOMAIN" && host ? `Trusted ${host}` : resolveMessages[action].success)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
         queryClient.invalidateQueries({ queryKey: ["urls"] }),
+        action === "TRUST_DOMAIN" && queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules"] }),
         action === "BLOCK_USER" && queryClient.invalidateQueries({ queryKey: ["users"] }),
       ])
     } catch (err) {
@@ -389,12 +392,15 @@ interface ReviewActionsProps {
 function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsProps) {
   const host = hostOf(entry.longUrl)
   const owner = ownerLabel(entry)
+  const preventWhileBusy = (event: React.MouseEvent) => {
+    if (busy) event.preventDefault()
+  }
 
   return (
     <div className="flex items-center justify-end gap-0.5">
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" onClick={() => onResolve(entry, "OK")} disabled={busy} aria-label="Looks fine" className={cn(iconButton, "hover:text-success")}>
+          <button type="button" onClick={() => onResolve(entry, "OK")} aria-disabled={busy} aria-label="Looks fine" className={cn(iconButton, "hover:text-success")}>
             <CircleCheck className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
@@ -404,7 +410,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsP
         <Tooltip>
           <TooltipTrigger asChild>
             <AlertDialogTrigger asChild>
-              <button type="button" disabled={busy} aria-label="Trust domain" className={cn(iconButton, "hover:text-success")}>
+              <button type="button" onClick={preventWhileBusy} aria-disabled={busy} aria-label="Trust domain" className={cn(iconButton, "hover:text-success")}>
                 <ShieldCheck className="h-3.5 w-3.5" />
               </button>
             </AlertDialogTrigger>
@@ -430,7 +436,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsP
         <Tooltip>
           <TooltipTrigger asChild>
             <AlertDialogTrigger asChild>
-              <button type="button" disabled={busy} aria-label="Block link" className={cn(iconButton, "hover:text-destructive")}>
+              <button type="button" onClick={preventWhileBusy} aria-disabled={busy} aria-label="Block link" className={cn(iconButton, "hover:text-destructive")}>
                 <Link2Off className="h-3.5 w-3.5" />
               </button>
             </AlertDialogTrigger>
@@ -450,7 +456,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsP
       </AlertDialog>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" onClick={() => onBlockDomain(entry)} disabled={busy} aria-label="Block domain" className={cn(iconButton, "hover:text-destructive")}>
+          <button type="button" onClick={() => { if (!busy) onBlockDomain(entry) }} aria-disabled={busy} aria-label="Block domain" className={cn(iconButton, "hover:text-destructive")}>
             <GlobeLock className="h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
@@ -459,7 +465,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsP
       {entry.ownerId == null ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" aria-disabled="true" aria-label="Block user" className={cn(iconButton, "cursor-not-allowed opacity-50 hover:bg-transparent")}>
+            <button type="button" aria-disabled="true" aria-label="Block user" className={iconButton}>
               <UserX className="h-3.5 w-3.5" />
             </button>
           </TooltipTrigger>
@@ -470,7 +476,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain }: ReviewActionsP
           <Tooltip>
             <TooltipTrigger asChild>
               <AlertDialogTrigger asChild>
-                <button type="button" disabled={busy} aria-label="Block user" className={cn(iconButton, "hover:text-destructive")}>
+                <button type="button" onClick={preventWhileBusy} aria-disabled={busy} aria-label="Block user" className={cn(iconButton, "hover:text-destructive")}>
                   <UserX className="h-3.5 w-3.5" />
                 </button>
               </AlertDialogTrigger>

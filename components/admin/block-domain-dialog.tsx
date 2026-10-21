@@ -89,6 +89,7 @@ function BlockDomainForm({ longUrl, urlId, blocking, setBlocking, onCancel, onBl
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
         queryClient.invalidateQueries({ queryKey: ["urls"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules"] }),
       ])
       onBlocked(count)
     } catch (err) {

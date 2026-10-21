@@ -12,7 +12,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "how-hrva-cc-stops-phishing-links",
     title: "How hrva.cc stops phishing links",
-    date: "2026-10-21",
+    date: "2026-10-22",
     excerpt:
       "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check we tried. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
     author: "Karlo Hrvačić",
@@ -68,10 +68,6 @@ export const blogPosts: BlogPost[] = [
           <strong>Lookalike and lure signals.</strong> A name that imitates a well-known brand, or an address
           dressed up as a login or verification page, is a warning sign. Signals like these add up. A single
           weak one never blocks a link on its own; it sends the link to a person instead.
-        </li>
-        <li>
-          <strong>Spamhaus.</strong> Destination domains are also checked against the Spamhaus domain
-          blocklist, which tracks domains used for phishing, malware and spam.
         </li>
         <li>
           <strong>Redirect checks.</strong> A link can point to a harmless-looking address that then
@@ -170,10 +166,10 @@ export const blogPosts: BlogPost[] = [
       <p>
         This protection stands on the work of people who track threats and share what they find:
         <a href="https://github.com/hagezi/dns-blocklists" target="_blank" rel="noopener noreferrer">HaGeZi</a>,
-        <a href="https://urlhaus.abuse.ch/" target="_blank" rel="noopener noreferrer">URLhaus</a> by abuse.ch,
         <a href="https://openphish.com/" target="_blank" rel="noopener noreferrer">OpenPhish</a>,
-        <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a> and
-        <a href="https://www.spamhaus.org/" target="_blank" rel="noopener noreferrer">Spamhaus</a>. Thank you.
+        <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a> and the
+        <a href="https://github.com/Phishing-Database/Phishing.Database" target="_blank" rel="noopener noreferrer">Phishing.Database</a>
+        project. Thank you.
       </p>
     `,
   },

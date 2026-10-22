@@ -166,6 +166,7 @@ export const blogPosts: BlogPost[] = [
       <p>
         This protection stands on the work of people who track threats and share what they find:
         <a href="https://github.com/hagezi/dns-blocklists" target="_blank" rel="noopener noreferrer">HaGeZi</a>,
+        <a href="https://urlhaus.abuse.ch/" target="_blank" rel="noopener noreferrer">URLhaus</a> by abuse.ch,
         <a href="https://openphish.com/" target="_blank" rel="noopener noreferrer">OpenPhish</a>,
         <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a> and the
         <a href="https://github.com/Phishing-Database/Phishing.Database" target="_blank" rel="noopener noreferrer">Phishing.Database</a>

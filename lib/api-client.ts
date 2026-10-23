@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, UrlCheckResult, LinkReport } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -267,8 +267,8 @@ export const analyticsApi = {
 export const adminApi = {
   getStats: () =>
     request<AdminStatsResponse>("GET", "/admin/stats"),
-  getAuditLog: (page = 0, size = 50) =>
-    request<Page<AuditLog>>("GET", `/admin/audit-log?page=${page}&size=${size}`),
+  getAuditLog: (page = 0, size = 50, action?: AuditAction) =>
+    request<Page<AuditLog>>("GET", `/admin/audit-log?page=${page}&size=${size}${action ? `&action=${action}` : ""}`),
   getEmailLog: (page = 0, size = 50) =>
     request<Page<EmailLog>>("GET", `/admin/email-log?page=${page}&size=${size}`),
   resendEmail: (id: number) =>
@@ -303,6 +303,8 @@ export const adminApi = {
   },
   resolveReview: (urlId: number, action: ReviewAction, domain?: string) =>
     request<void>("POST", `/admin/review-queue/${urlId}/resolve`, domain ? { action, domain } : { action }),
+  resolveReviews: (urlIds: number[], action: ReviewAction) =>
+    request<ReviewBulkResolveResult>("POST", "/admin/review-queue/resolve", { urlIds, action }),
   blockUser: (id: number) =>
     request<LinksAffected>("POST", `/admin/users/${id}/block`),
   unblockUser: (id: number) =>

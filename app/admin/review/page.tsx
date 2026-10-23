@@ -17,7 +17,7 @@ import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { PageMeta } from "@/components/page-meta"
 import { cn, formatDate, formatDateTime, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 import { adminApi, ApiError } from "@/lib/api-client"
-import type { ReviewAction, ReviewEntry, ReviewQueueFilters } from "@/lib/types"
+import type { ReviewAction, ReviewBulkResolveResult, ReviewEntry, ReviewQueueFilters } from "@/lib/types"
 
 type RowAction = Exclude<ReviewAction, "BLOCK_DOMAIN">
 
@@ -46,6 +46,14 @@ const resolveMessages: Record<RowAction, { success: string; failure: string }> =
   TRUST_DOMAIN: { success: "Domain trusted", failure: "Failed to trust the domain" },
   BLOCK_LINK: { success: "Link blocked", failure: "Failed to block the link" },
   BLOCK_USER: { success: "User blocked", failure: "Failed to block the user" },
+}
+
+const bulkMessages: Record<ReviewAction, { success: (links: string) => string; failure: string }> = {
+  OK: { success: (links) => `Marked ${links} as fine`, failure: "Failed to mark the selected links as fine" },
+  TRUST_DOMAIN: { success: (links) => `Trusted the domains of ${links}`, failure: "Failed to trust the selected domains" },
+  BLOCK_LINK: { success: (links) => `Blocked ${links}`, failure: "Failed to block the selected links" },
+  BLOCK_DOMAIN: { success: (links) => `Blocked the domains of ${links}`, failure: "Failed to block the selected domains" },
+  BLOCK_USER: { success: (links) => `Blocked the owners of ${links}`, failure: "Failed to block the selected users" },
 }
 
 const selectClass = "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
@@ -85,6 +93,21 @@ const hostOf = (url: string) => {
 
 const ownerLabel = (entry: ReviewEntry) =>
   entry.ownerId == null ? "Anonymous" : entry.ownerEmail ?? `User ${entry.ownerId}`
+
+const isIpAddress = (host: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(":")
+
+const distinct = <T,>(values: (T | null)[]) => [...new Set(values.filter((value): value is T => value != null))]
+
+const reportBulkResult = (action: ReviewAction, { resolved, failed }: ReviewBulkResolveResult) => {
+  if (failed.length === 0) {
+    toast.success(bulkMessages[action].success(plural(resolved.length, "link")))
+    return
+  }
+  const summary = `${resolved.length} resolved, ${failed.length} failed`
+  const description = distinct(failed.map((failure) => failure.error)).slice(0, 3).join(" ")
+  if (resolved.length === 0) toast.error(summary, { description })
+  else toast.warning(summary, { description })
+}
 
 export default function AdminReviewPage() {
   return (
@@ -127,10 +150,23 @@ function ReviewQueue() {
     mutationFn: ({ urlId, action, longUrl }: { urlId: number; action: RowAction; longUrl: string }) =>
       adminApi.resolveReview(urlId, action, action === "TRUST_DOMAIN" ? hostOf(longUrl) ?? undefined : undefined),
   })
+  const resolveReviews = useMutation({
+    mutationFn: ({ urlIds, action }: { urlIds: number[]; action: ReviewAction }) => adminApi.resolveReviews(urlIds, action),
+  })
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set())
   const [blockTarget, setBlockTarget] = useState<ReviewEntry | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const entries = data?.content ?? []
+  const selectionKey = `${page}-${size}-${reason}-${olderThanDays}`
+  const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
+  const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
+  const setSelectedIds = (update: Set<number> | ((prev: Set<number>) => Set<number>)) =>
+    setSelection((prev) => {
+      const current = prev.key === selectionKey ? prev.ids : new Set<number>()
+      return { key: selectionKey, ids: typeof update === "function" ? update(current) : update }
+    })
+  const selectedEntries = entries.filter((entry) => selectedIds.has(entry.urlId))
+  const allSelected = entries.length > 0 && entries.every((entry) => selectedIds.has(entry.urlId))
   const entryShown = entryId != null && entries.some((entry) => entry.urlId === entryId)
   const entryRowRef = useRef<HTMLTableRowElement>(null)
   const scrolledEntry = useRef<number | null>(null)
@@ -141,31 +177,61 @@ function ReviewQueue() {
     scrolledEntry.current = entryId
   }, [entryShown, entryId])
 
-  const setBusy = (id: number, busy: boolean) =>
+  const setBusy = (ids: number[], busy: boolean) =>
     setBusyIds((prev) => {
       const next = new Set(prev)
-      if (busy) next.add(id)
-      else next.delete(id)
+      for (const id of ids) {
+        if (busy) next.add(id)
+        else next.delete(id)
+      }
       return next
     })
 
+  const refreshAfter = (action: ReviewAction) =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
+      queryClient.invalidateQueries({ queryKey: ["urls"] }),
+      (action === "TRUST_DOMAIN" || action === "BLOCK_DOMAIN") && queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules"] }),
+      action === "BLOCK_USER" && queryClient.invalidateQueries({ queryKey: ["users"] }),
+    ])
+
+  const toggleSelect = (id: number) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const selectAll = () => setSelectedIds(allSelected ? new Set() : new Set(entries.map((entry) => entry.urlId)))
+
   const resolve = async (entry: ReviewEntry, action: RowAction) => {
     if (busyIds.has(entry.urlId)) return
-    setBusy(entry.urlId, true)
+    setBusy([entry.urlId], true)
     try {
       await resolveReview.mutateAsync({ urlId: entry.urlId, action, longUrl: entry.longUrl })
       const host = hostOf(entry.longUrl)
       toast.success(action === "TRUST_DOMAIN" && host ? `Trusted ${host}` : resolveMessages[action].success)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
-        queryClient.invalidateQueries({ queryKey: ["urls"] }),
-        action === "TRUST_DOMAIN" && queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules"] }),
-        action === "BLOCK_USER" && queryClient.invalidateQueries({ queryKey: ["users"] }),
-      ])
+      await refreshAfter(action)
     } catch (err) {
       toast.error(err instanceof ApiError && err.message ? err.message : resolveMessages[action].failure)
     } finally {
-      setBusy(entry.urlId, false)
+      setBusy([entry.urlId], false)
+    }
+  }
+
+  const resolveSelected = async (action: ReviewAction) => {
+    const urlIds = selectedEntries.map((entry) => entry.urlId)
+    if (resolveReviews.isPending || urlIds.length === 0) return
+    setBusy(urlIds, true)
+    try {
+      reportBulkResult(action, await resolveReviews.mutateAsync({ urlIds, action }))
+      setSelectedIds(new Set())
+      await refreshAfter(action)
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.message ? err.message : bulkMessages[action].failure)
+    } finally {
+      setBusy(urlIds, false)
     }
   }
 
@@ -219,6 +285,15 @@ function ReviewQueue() {
         </label>
       </div>
 
+      {selectedEntries.length > 0 && (
+        <BulkActions
+          entries={selectedEntries}
+          busy={resolveReviews.isPending}
+          onResolve={resolveSelected}
+          onClear={() => setSelectedIds(new Set())}
+        />
+      )}
+
       {entryId != null && data && !error && !entryShown && (
         <p className="text-sm text-muted-foreground">This entry is no longer open or is on another page.</p>
       )}
@@ -240,6 +315,15 @@ function ReviewQueue() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={selectAll}
+                    aria-label="Select all entries on this page"
+                    className="h-4 w-4 rounded border-input accent-brand"
+                  />
+                </TableHead>
                 <TableHead>Short link</TableHead>
                 <TableHead className="hidden lg:table-cell">Destination</TableHead>
                 <TableHead className="hidden xl:table-cell">Owner</TableHead>
@@ -251,6 +335,7 @@ function ReviewQueue() {
             <TableBody>
               {entries.map((entry) => {
                 const highlighted = entry.urlId === entryId
+                const selected = selectedIds.has(entry.urlId)
                 const anonymous = entry.ownerId == null
                 const age = accountAge(entry.ownerCreatedAt, dataUpdatedAt)
                 return (
@@ -258,8 +343,18 @@ function ReviewQueue() {
                     key={entry.urlId}
                     ref={highlighted ? entryRowRef : undefined}
                     aria-current={highlighted ? "true" : undefined}
+                    data-state={selected ? "selected" : undefined}
                     className={cn("group", highlighted && "bg-brand-soft hover:bg-brand-soft")}
                   >
+                    <TableCell className="w-10">
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleSelect(entry.urlId)}
+                        aria-label={`Select ${shortHost}/${entry.shortUrl}`}
+                        className="h-4 w-4 rounded border-input accent-brand"
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span className="block max-w-28 truncate font-mono text-[13px] font-medium text-brand sm:max-w-52" title={`${shortHost}/${entry.shortUrl}`}>
@@ -310,7 +405,7 @@ function ReviewQueue() {
                     <TableCell
                       className={cn(
                         "sticky right-0 bg-card text-right transition-colors",
-                        highlighted ? "bg-brand-soft" : "group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))]",
+                        highlighted || selected ? "bg-brand-soft" : "group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))]",
                       )}
                     >
                       <ReviewActions
@@ -344,6 +439,131 @@ function ReviewQueue() {
         onBlocked={() => undefined}
       />
     </div>
+  )
+}
+
+interface BulkActionsProps {
+  entries: ReviewEntry[]
+  busy: boolean
+  onResolve(action: ReviewAction): void
+  onClear(): void
+}
+
+function BulkActions({ entries, busy, onResolve, onClear }: BulkActionsProps) {
+  const links = plural(entries.length, "link")
+  const withDomain = entries.filter((entry) => entry.host != null && !isIpAddress(entry.host))
+  const hosts = distinct(withDomain.map((entry) => entry.host))
+  const registrableDomains = distinct(withDomain.map((entry) => entry.registrableDomain))
+  const withoutDomain = entries.length - withDomain.length
+  const owners = distinct(entries.map((entry) => entry.ownerId)).length
+  const anonymous = entries.some((entry) => entry.ownerId == null)
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-muted/40 px-4 py-2.5">
+      <span className="mr-1 text-sm font-medium tabular-nums">{entries.length} selected</span>
+      <Button size="sm" variant="outline" className="h-8" onClick={() => onResolve("OK")} disabled={busy}>
+        Looks fine
+      </Button>
+      <BulkConfirm
+        label="Trust domain"
+        title={`Trust the domains of ${links}?`}
+        description="This adds an allow rule for each domain below and its subdomains, marks every open entry for them as fine, and restores their links that a blocklist or the checks blocked."
+        domains={hosts}
+        withoutDomain={withoutDomain}
+        busy={busy}
+        onConfirm={() => onResolve("TRUST_DOMAIN")}
+      />
+      <BulkConfirm
+        label="Block link"
+        title={`Block ${links}?`}
+        description="Their owners are emailed and the links stop working."
+        destructive
+        busy={busy}
+        onConfirm={() => onResolve("BLOCK_LINK")}
+      />
+      <BulkConfirm
+        label="Block domain"
+        title={`Block the domains of ${links}?`}
+        description="Every active link to each domain below is deactivated and its owner emailed, and new links to them are refused."
+        domains={registrableDomains}
+        withoutDomain={withoutDomain}
+        destructive
+        busy={busy}
+        onConfirm={() => onResolve("BLOCK_DOMAIN")}
+      />
+      {anonymous ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="destructive" className="h-8 cursor-not-allowed opacity-50 hover:bg-destructive" aria-disabled="true">
+              Block user
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Some selected links are anonymous, with no user to block</TooltipContent>
+        </Tooltip>
+      ) : (
+        <BulkConfirm
+          label="Block user"
+          title={`Block the owners of ${links}?`}
+          description={`This deactivates ${owners === 1 ? "1 account" : `${owners} accounts`} and blocks all of ${owners === 1 ? "its" : "their"} links.`}
+          destructive
+          busy={busy}
+          onConfirm={() => onResolve("BLOCK_USER")}
+        />
+      )}
+      <Button size="sm" variant="ghost" className="h-8" onClick={onClear} disabled={busy}>
+        Clear
+      </Button>
+    </div>
+  )
+}
+
+interface BulkConfirmProps {
+  label: string
+  title: string
+  description: string
+  domains?: string[]
+  withoutDomain?: number
+  destructive?: boolean
+  busy: boolean
+  onConfirm(): void
+}
+
+function BulkConfirm({ label, title, description, domains, withoutDomain = 0, destructive = false, busy, onConfirm }: BulkConfirmProps) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" variant={destructive ? "destructive" : "outline"} className="h-8" disabled={busy}>
+          {label}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        {domains && domains.length > 0 && (
+          <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg border px-3 py-2 font-mono text-[13px]">
+            {domains.map((domain) => (
+              <li key={domain} className="break-all">{domain}</li>
+            ))}
+          </ul>
+        )}
+        {domains && withoutDomain > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {plural(withoutDomain, "selected link")} {withoutDomain === 1 ? "has" : "have"} no domain to act on and will stay open.
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={destructive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
+          >
+            {label}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 

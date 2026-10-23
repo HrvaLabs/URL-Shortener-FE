@@ -44,11 +44,11 @@ No test framework is set up.
   - `/admin` — Users table. "Possible scammers only" sends `possibleScammer=true` (server-side filter); a Possible scammer badge comes from `user.possibleScammer`; Block / Unblock user each ask for confirmation and toast the number of links blocked or restored
   - `/admin/dashboard` — Stats, metrics, login rate limits
   - `/admin/urls` — All URLs with bulk actions (checkbox multi-select). Search matches short link, destination and owner email (a pasted `hrva.cc/abc` is reduced to `abc`); filters Active/Deactivated, Expired only, Anonymous only; Owner sorts by `owner.email`; a Suspicious badge shows the backend's `suspiciousReasons`. A Blocked status shows `blockReason` in a tooltip (`blockReasonLabels`); the destination tooltip adds "Ends at" when `finalUrl` differs; an In review badge (`reviewOpen`) links to `/admin/review?entry=<id>`; the globe button opens `BlockDomainDialog`
-  - `/admin/review` — Review queue of flagged links (`adminApi.getReviewQueue`), filterable by reason and age. Row actions: Looks fine (`OK`), Trust domain, Block link, Block domain, Block user (all but Looks fine confirm first). `?entry=<urlId>` highlights and scrolls to that row, or says it's no longer open
+  - `/admin/review` — Review queue of flagged links (`adminApi.getReviewQueue`), filterable by reason and age. Row actions: Looks fine (`OK`), Trust domain, Block link, Block domain, Block user (all but Looks fine confirm first). `?entry=<urlId>` highlights and scrolls to that row, or says it's no longer open. Multi-select like All URLs (row checkboxes, a select-all for the page, cleared on a page, size or filter change): the bar shows "N selected", the same five actions and Clear, and sends one `adminApi.resolveReviews` call. All but Looks fine confirm with the number of links; Trust domain and Block domain also list the distinct domains from each entry's `host` / `registrableDomain` (the backend's defaults; entries without a domain, IPs included, are counted as staying open); Block user is disabled while an anonymous link is selected. The toast gives the resolved and failed counts (with the distinct backend errors), then the same query keys as a single resolve are invalidated
   - `/admin/blocklists` — Blocklist sources (enable switch, Refresh now, add/edit/delete), domain rules in Blocked / Trusted tabs (adding a Block rule toasts `Blocked N links on <domain>`), and a URL tester that shows the backend's verdict (`adminApi.checkUrl`)
   - `/admin/api-keys` — All API keys
   - `/admin/health` — System health (DB, Redis, SMTP, SafeBrowsing)
-  - `/admin/audit-log` — Admin action audit trail
+  - `/admin/audit-log` — Admin action audit trail. `action` is an `AuditAction` (string-literal union in `types.ts`) shown through an explicit label map ("Resolved review", "Blocked domain", "Revoked link", …; an unlisted value is title-cased) and a colour map; `failed` adds "(failed)" in red. The Action select filters on the server (`?action=`)
   - `/admin/email-log` — Email delivery log; failed emails the backend still has content for (`resendable`) get a Resend button
 
 `@/*` path alias maps to **project root** (e.g. `@/lib/api-client` → `lib/api-client.ts`).
@@ -80,10 +80,10 @@ lib/          — Shared logic
   - **Prod**: `https://hrva.cc/api/v1`
 - **`urlApi`** — URL CRUD (create, list, peek, preview, QR, update, deactivate, delete, bulk, export)
 - **`userApi`** — User CRUD (me, list, update, password, delete); `list` takes `possibleScammer`
-- **`adminApi`** — Admin operations (stats, export, audit log, email log, login attempts) and moderation:
+- **`adminApi`** — Admin operations (stats, export, audit log with an optional `action` filter, email log, login attempts) and moderation:
   - blocklist sources: `getBlocklistSources`, `createBlocklistSource`, `updateBlocklistSource`, `deleteBlocklistSource`, `refreshBlocklistSource` (`/admin/blocklist-sources`, `POST …/{id}/refresh`)
   - domain rules: `getDomainRules(type)`, `createDomainRule` (returns `{ rule, linksAffected }`), `deleteDomainRule` (`/admin/domain-rules`)
-  - review queue: `getReviewQueue({ page, size, reason, olderThanDays })`, `resolveReview(urlId, action, domain?)` (`/admin/review-queue`, `POST …/{urlId}/resolve`)
+  - review queue: `getReviewQueue({ page, size, reason, olderThanDays })`, `resolveReview(urlId, action, domain?)` (`/admin/review-queue`, `POST …/{urlId}/resolve`), `resolveReviews(urlIds, action)` (`POST /admin/review-queue/resolve` with 1–100 distinct ids, returns `{ resolved: number[], failed: { urlId, error }[] }`)
   - users: `blockUser`, `unblockUser` (return `{ linksAffected }`), `getPossibleScammers` (user ids)
   - `checkUrl(url)` — `POST /admin/url-check`, the verdict (`ALLOWED` / `BLOCK` / `FLAG` / `CLEAN`) a new link would get
 - **`reportApi`** — `report({ shortUrl, category, details? })` → `POST /reports` (public, rate-limited per network)
@@ -189,7 +189,7 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 | `GET /api/v1/urls/{short}/qr?size=300` | GET | Returns QR code as `image/png` bytes. Default 300×300. Use directly in `<img>` src via `urlApi.getQrCodeUrl(short)`. |
 | `GET /api/v1/urls/{short}/preview` | GET | Link preview: scrapes destination URL for OG/Twitter meta tags. Returns `LinkPreviewResponse { url, title?, description?, imageUrl? }`. Gracefully degrades (null fields) on timeout/error. |
 | `POST /api/v1/urls/bulk` | POST | Bulk create URLs. Body: `[ CreateUrlDto, ... ]`. Response: `[ UrlResponse, ... ]`. Requires auth (`ROLE_USER`). |
-| `GET /api/v1/admin/audit-log` | GET | Paginated admin audit trail. Roles: entries with action badges (deactivate=destructive, activate=default, update=secondary, any `_FAILED` action=destructive with a "(failed)" label). |
+| `GET /api/v1/admin/audit-log` | GET | Paginated admin audit trail; `?action=` filters by one `AuditAction`. Each entry has `action` (an `AuditAction` name) and `failed` (boolean, shown as a destructive "(failed)" badge). |
 | `GET /api/v1/admin/email-log` | GET | Paginated email delivery log. Statuses: SENT=success, FAILED=destructive, SENDING=secondary, RESENT=outline. |
 | `POST /api/v1/admin/email-log/{id}/resend` | POST | Sends a failed email again; returns the new log entry (SENT or FAILED). |
 | `GET /api/v1/admin/login-attempts` | GET | Map of IP → attempt count for active rate limits. |

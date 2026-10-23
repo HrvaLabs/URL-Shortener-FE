@@ -267,13 +267,37 @@ export interface UserFilters {
   possibleScammer?: boolean
 }
 
+export type AuditAction =
+  | "CLEAR_LOGIN_ATTEMPTS"
+  | "RESEND_EMAIL"
+  | "UPDATE_USER"
+  | "DELETE_USER"
+  | "UPDATE_URL"
+  | "REVOKE_URL"
+  | "ACTIVATE_URL"
+  | "DELETE_URL"
+  | "CREATE_SOURCE"
+  | "UPDATE_SOURCE"
+  | "DELETE_SOURCE"
+  | "REFRESH_SOURCE"
+  | "RESOLVE_REVIEW"
+  | "BLOCK_LINK"
+  | "BLOCK_DOMAIN"
+  | "ALLOW_DOMAIN"
+  | "REMOVE_DOMAIN_RULE"
+  | "BLOCK_USER"
+  | "REACTIVATE_USER"
+  | "DELETE_LINK"
+  | "UNKNOWN"
+
 export interface AuditLog {
   id: number
   performedBy: string
-  action: string
+  action: AuditAction
+  failed: boolean
   targetType: string
-  targetIdentifier: string
-  details: string
+  targetIdentifier: string | null
+  details: string | null
   performedAt: string
 }
 
@@ -372,6 +396,8 @@ export interface ReviewEntry {
   urlId: number
   shortUrl: string
   longUrl: string
+  host: string | null
+  registrableDomain: string | null
   ownerId: number | null
   ownerEmail: string | null
   ownerCreatedAt: string | null
@@ -389,6 +415,16 @@ export interface ReviewQueueFilters {
 }
 
 export type ReviewAction = "OK" | "TRUST_DOMAIN" | "BLOCK_LINK" | "BLOCK_DOMAIN" | "BLOCK_USER"
+
+export interface ReviewResolveFailure {
+  urlId: number
+  error: string
+}
+
+export interface ReviewBulkResolveResult {
+  resolved: number[]
+  failed: ReviewResolveFailure[]
+}
 
 export type UrlCheckOutcome = "ALLOWED" | "BLOCK" | "FLAG" | "CLEAN"
 

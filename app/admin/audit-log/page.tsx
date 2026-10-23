@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
@@ -9,44 +10,78 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageMeta } from "@/components/page-meta"
 import { formatDateTime } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
-import type { AuditLog, Page } from "@/lib/types"
+import type { AuditAction, AuditLog, Page } from "@/lib/types"
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "outline"
 
-const FAILED_SUFFIX = "_FAILED"
-
-const actionColors: Record<string, BadgeVariant> = {
-  deactivateUrl: "destructive",
-  revokeUrl: "destructive",
-  deleteUrl: "destructive",
-  deleteUser: "destructive",
-  activateUrl: "success",
-  updateUrl: "secondary",
-  updateUser: "secondary",
-  resendEmail: "secondary",
+const actionLabels: Record<AuditAction, string> = {
+  RESOLVE_REVIEW: "Resolved review",
+  BLOCK_LINK: "Blocked link",
+  BLOCK_DOMAIN: "Blocked domain",
+  ALLOW_DOMAIN: "Trusted domain",
+  REMOVE_DOMAIN_RULE: "Removed domain rule",
+  BLOCK_USER: "Blocked user",
+  REACTIVATE_USER: "Unblocked user",
+  DELETE_LINK: "Deleted flagged link",
+  UPDATE_URL: "Updated link",
+  REVOKE_URL: "Revoked link",
+  ACTIVATE_URL: "Activated link",
+  DELETE_URL: "Deleted link",
+  UPDATE_USER: "Updated user",
+  DELETE_USER: "Deleted user",
+  CREATE_SOURCE: "Added blocklist",
+  UPDATE_SOURCE: "Edited blocklist",
+  DELETE_SOURCE: "Removed blocklist",
+  REFRESH_SOURCE: "Refreshed blocklist",
+  RESEND_EMAIL: "Resent email",
+  CLEAR_LOGIN_ATTEMPTS: "Cleared login limits",
+  UNKNOWN: "Unknown action",
 }
 
-function actionColor(action: string): BadgeVariant {
-  if (action.endsWith(FAILED_SUFFIX)) return "destructive"
-  return actionColors[action] ?? "secondary"
+const actionColors: Record<AuditAction, BadgeVariant> = {
+  RESOLVE_REVIEW: "secondary",
+  BLOCK_LINK: "destructive",
+  BLOCK_DOMAIN: "destructive",
+  ALLOW_DOMAIN: "success",
+  REMOVE_DOMAIN_RULE: "secondary",
+  BLOCK_USER: "destructive",
+  REACTIVATE_USER: "success",
+  DELETE_LINK: "destructive",
+  UPDATE_URL: "secondary",
+  REVOKE_URL: "destructive",
+  ACTIVATE_URL: "success",
+  DELETE_URL: "destructive",
+  UPDATE_USER: "secondary",
+  DELETE_USER: "destructive",
+  CREATE_SOURCE: "secondary",
+  UPDATE_SOURCE: "secondary",
+  DELETE_SOURCE: "destructive",
+  REFRESH_SOURCE: "secondary",
+  RESEND_EMAIL: "secondary",
+  CLEAR_LOGIN_ATTEMPTS: "secondary",
+  UNKNOWN: "outline",
 }
 
-function actionLabel(action: string): string {
-  const failed = action.endsWith(FAILED_SUFFIX)
-  const label = action
-    .slice(0, failed ? -FAILED_SUFFIX.length : undefined)
-    .replace(/([A-Z])/g, " $1")
-    .trim()
-    .toLowerCase()
-    .replace(/^./, (c) => c.toUpperCase())
+const actionOptions = Object.entries(actionLabels) as [AuditAction, string][]
+
+const selectClass = "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+
+const titleCased = (action: string) => action.toLowerCase().replace(/_+/g, " ").trim().replace(/^./, (c) => c.toUpperCase())
+
+const actionColor = ({ action, failed }: AuditLog): BadgeVariant =>
+  failed ? "destructive" : (actionColors[action] ?? "secondary")
+
+const actionLabel = ({ action, failed }: AuditLog): string => {
+  const label = actionLabels[action] ?? titleCased(action)
   return failed ? `${label} (failed)` : label
 }
 
 export default function AdminAuditLogPage() {
   const { page, size, setPage, setSize } = usePagination()
+  const [action, setAction] = useState<AuditAction | "">("")
   const { data, isLoading, error } = useQuery<Page<AuditLog>>({
-    queryKey: ["admin", "audit-log", page, size],
-    queryFn: () => adminApi.getAuditLog(page, size),
+    queryKey: ["admin", "audit-log", page, size, action],
+    queryFn: () => adminApi.getAuditLog(page, size, action || undefined),
   })
 
   return (
@@ -55,6 +90,25 @@ export default function AdminAuditLogPage() {
       <div>
         <h1 className="font-display text-2xl">Audit Log</h1>
         <p className="mt-1 text-sm text-muted-foreground">Track administrative actions across the system</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          Action
+          <select
+            value={action}
+            onChange={(e) => {
+              setAction(e.target.value as AuditAction | "")
+              setPage(0)
+            }}
+            className={selectClass}
+          >
+            <option value="">All actions</option>
+            {actionOptions.map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {isLoading ? (
@@ -70,7 +124,9 @@ export default function AdminAuditLogPage() {
       ) : !data || data.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <p className="font-semibold">No audit log entries</p>
-          <p className="mt-1 text-sm text-muted-foreground">Actions taken by admins will be recorded here.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {action ? "Nothing recorded for this action yet. Try a different one." : "Actions taken by admins will be recorded here."}
+          </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
@@ -91,8 +147,8 @@ export default function AdminAuditLogPage() {
                   <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.performedAt)}</TableCell>
                   <TableCell className="font-medium">{entry.performedBy}</TableCell>
                   <TableCell>
-                    <Badge variant={actionColor(entry.action)} className="whitespace-nowrap">
-                      {actionLabel(entry.action)}
+                    <Badge variant={actionColor(entry)} className="whitespace-nowrap">
+                      {actionLabel(entry)}
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden capitalize text-muted-foreground md:table-cell">{entry.targetType}</TableCell>

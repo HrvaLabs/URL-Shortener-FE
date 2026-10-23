@@ -70,6 +70,10 @@ export const blogPosts: BlogPost[] = [
           weak one never blocks a link on its own; it sends the link to a person instead.
         </li>
         <li>
+          <strong>Spamhaus.</strong> Destination domains are also checked against the Spamhaus domain
+          blocklist, which tracks domains used for phishing, malware and spam.
+        </li>
+        <li>
           <strong>Redirect checks.</strong> A link can point to a harmless-looking address that then
           redirects to a scam. After a link is created, hrva.cc follows its redirects in the background and
           checks every address along the way.
@@ -168,9 +172,10 @@ export const blogPosts: BlogPost[] = [
         <a href="https://github.com/hagezi/dns-blocklists" target="_blank" rel="noopener noreferrer">HaGeZi</a>,
         <a href="https://urlhaus.abuse.ch/" target="_blank" rel="noopener noreferrer">URLhaus</a> by abuse.ch,
         <a href="https://openphish.com/" target="_blank" rel="noopener noreferrer">OpenPhish</a>,
-        <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a> and the
+        <a href="https://phishtank.org/" target="_blank" rel="noopener noreferrer">PhishTank</a>, the
         <a href="https://github.com/Phishing-Database/Phishing.Database" target="_blank" rel="noopener noreferrer">Phishing.Database</a>
-        project. Thank you.
+        project and
+        <a href="https://www.spamhaus.org/" target="_blank" rel="noopener noreferrer">Spamhaus</a>. Thank you.
       </p>
     `,
   },

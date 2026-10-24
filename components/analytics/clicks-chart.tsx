@@ -1,7 +1,7 @@
 "use client"
 
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from "recharts"
-import { analyticsDay } from "@/lib/analytics"
+import { analyticsDay, rangeLabels } from "@/lib/analytics"
 import type { AnalyticsDay, AnalyticsRange } from "@/lib/types"
 import { formatDate } from "@/lib/utils"
 
@@ -15,6 +15,8 @@ const series = [
   { key: "uniqueVisitors", label: "Daily unique visitors", stroke: "hsl(var(--brand) / 0.5)", dash: "4 3" },
 ] as const
 
+type Series = (typeof series)[number]
+
 const tickStep: Record<AnalyticsRange, number> = { 7: 1, 30: 7, 90: 15, 365: 61 }
 
 const compactNumber = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
@@ -25,6 +27,9 @@ const formatTick = (date: string) => analyticsDay(date).toLocaleDateString(undef
 
 export function ClicksChart({ daily, days }: ClicksChartProps) {
   const ticks = daily.filter((_, index) => (daily.length - 1 - index) % tickStep[days] === 0).map((day) => day.date)
+  const clicks = daily.reduce((sum, day) => sum + day.clicks, 0)
+  const uniqueVisitors = daily.reduce((sum, day) => sum + day.uniqueVisitors, 0)
+  const summary = `Clicks per day for the last ${rangeLabels[days]}: ${clicks.toLocaleString()} clicks, ${uniqueVisitors.toLocaleString()} daily unique visitors`
 
   return (
     <div className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -33,15 +38,13 @@ export function ClicksChart({ daily, days }: ClicksChartProps) {
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {series.map((entry) => (
             <li key={entry.key} className="flex items-center gap-1.5">
-              <svg aria-hidden="true" width="16" height="2" className="shrink-0 overflow-visible">
-                <line x1="0" y1="1" x2="16" y2="1" stroke={entry.stroke} strokeWidth="2" strokeDasharray={entry.dash} strokeLinecap="round" />
-              </svg>
+              <Swatch series={entry} width={16} />
               {entry.label}
             </li>
           ))}
         </ul>
       </div>
-      <div className="h-64 min-w-0 px-2 pb-3 pt-5 sm:px-4">
+      <div role="img" aria-label={summary} className="h-64 min-w-0 px-2 pb-3 pt-5 sm:px-4">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={daily} margin={{ top: 4, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
@@ -103,14 +106,20 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
       <ul className="space-y-1">
         {series.map((entry) => (
           <li key={entry.key} className="flex items-center gap-2">
-            <svg aria-hidden="true" width="12" height="2" className="shrink-0 overflow-visible">
-              <line x1="0" y1="1" x2="12" y2="1" stroke={entry.stroke} strokeWidth="2" strokeDasharray={entry.dash} strokeLinecap="round" />
-            </svg>
+            <Swatch series={entry} width={12} />
             <span className="font-semibold tabular-nums">{day[entry.key].toLocaleString()}</span>
             <span className="text-muted-foreground">{entry.label}</span>
           </li>
         ))}
       </ul>
     </div>
+  )
+}
+
+function Swatch({ series, width }: { series: Series; width: number }) {
+  return (
+    <svg aria-hidden="true" width={width} height="2" className="shrink-0 overflow-visible">
+      <line x1="0" y1="1" x2={width} y2="1" stroke={series.stroke} strokeWidth="2" strokeDasharray={series.dash} strokeLinecap="round" />
+    </svg>
   )
 }

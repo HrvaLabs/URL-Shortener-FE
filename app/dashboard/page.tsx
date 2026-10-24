@@ -201,7 +201,10 @@ export default function DashboardPage() {
               <TableRow>
                 <TableHead>Short URL</TableHead>
                 <TableHead className="hidden md:table-cell">Long URL</TableHead>
-                <TableHead aria-sort={sortDir("visits") === "asc" ? "ascending" : sortDir("visits") === "desc" ? "descending" : undefined}>
+                <TableHead
+                  title="Daily unique visitors, added up"
+                  aria-sort={sortDir("visits") === "asc" ? "ascending" : sortDir("visits") === "desc" ? "descending" : undefined}
+                >
                   <button type="button" onClick={() => toggleSort("visits")} className="inline-flex items-center gap-1 transition-colors hover:text-foreground">
                     Visits
                     <SortIcon dir={sortDir("visits")} />

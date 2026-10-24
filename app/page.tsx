@@ -166,7 +166,7 @@ function FeatureGrid() {
           <FeatureCell
             className="lg:col-span-2"
             icon={BarChart3}
-            title="Visit analytics"
+            title="Link analytics"
             description="Clicks and daily unique visitors per link, with referrers, countries and devices, without storing who your visitors are."
           >
             <div aria-hidden="true">

@@ -300,7 +300,7 @@ export default function AdminUrlsPage() {
                     {sortDir("owner.email") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("owner.email") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
                   </div>
                 </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("visits")}>
+                <TableHead className="cursor-pointer select-none" title="Daily unique visitors, added up" onClick={() => toggleSort("visits")}>
                   <div className="flex items-center gap-1">
                     Visits
                     {sortDir("visits") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("visits") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}

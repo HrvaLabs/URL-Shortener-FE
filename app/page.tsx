@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
@@ -643,41 +643,51 @@ function SignedInHome({ email }: { email: string }) {
 
   const latestUrls = recentUrls?.content?.slice(0, 6) ?? []
 
+  useEffect(() => {
+    const target = window.location.hash.slice(1)
+    if (target) document.getElementById(target)?.scrollIntoView()
+  }, [])
+
   return (
-    <section className="container py-10 sm:py-14">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">Shorten a link</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Signed in as {email}</p>
-      </div>
-
-      <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="rounded-xl border bg-card p-5 sm:p-6">
-          <ShortenForm withOptions />
+    <>
+      <section className="container py-10 sm:py-14">
+        <div>
+          <h1 className="font-display text-3xl sm:text-4xl">Shorten a link</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Signed in as {email}</p>
         </div>
 
-        <div className="rounded-xl border bg-card">
-          <div className="flex items-center justify-between border-b px-5 py-3.5">
-            <h2 className="text-sm font-semibold">Recent links</h2>
-            <Link href="/dashboard" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-              View all
-              <ArrowRight className="h-3 w-3" />
-            </Link>
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-xl border bg-card p-5 sm:p-6">
+            <ShortenForm withOptions />
           </div>
-          {latestUrls.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm font-medium">No links yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Your first short link will show up here.</p>
+
+          <div className="rounded-xl border bg-card">
+            <div className="flex items-center justify-between border-b px-5 py-3.5">
+              <h2 className="text-sm font-semibold">Recent links</h2>
+              <Link href="/dashboard" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                View all
+                <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
-          ) : (
-            <ul className="divide-y">
-              {latestUrls.map((url) => (
-                <RecentLink key={url.id} shortUrl={url.shortUrl} longUrl={url.longUrl} visits={url.visits} />
-              ))}
-            </ul>
-          )}
+            {latestUrls.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <p className="text-sm font-medium">No links yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">Your first short link will show up here.</p>
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {latestUrls.map((url) => (
+                  <RecentLink key={url.id} shortUrl={url.shortUrl} longUrl={url.longUrl} visits={url.visits} />
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <FeatureGrid />
+      <DevelopersSection />
+    </>
   )
 }
 

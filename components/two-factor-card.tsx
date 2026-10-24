@@ -16,6 +16,7 @@ export function TwoFactorCard() {
   const [setupData, setSetupData] = useState<{ secret: string; otpauthUri: string } | null>(null)
   const [code, setCode] = useState("")
   const [disableCode, setDisableCode] = useState("")
+  const [disabling, setDisabling] = useState(false)
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -65,6 +66,7 @@ export function TwoFactorCard() {
     try {
       await authApi.disableTwoFactor(disableCode)
       setDisableCode("")
+      setDisabling(false)
       await refreshUser()
       toast.success("Two-factor authentication disabled")
     } catch (err: any) {
@@ -94,15 +96,24 @@ export function TwoFactorCard() {
           </div>
         )}
 
-        {!recoveryCodes && enabled && (
+        {!recoveryCodes && enabled && !disabling && (
+          <Button variant="outline" size="sm" onClick={() => setDisabling(true)}>
+            Disable 2FA
+          </Button>
+        )}
+
+        {!recoveryCodes && enabled && disabling && (
           <div className="space-y-3">
             <div>
               <Label htmlFor="disableCode">Code to disable</Label>
-              <Input id="disableCode" inputMode="numeric" placeholder="123456 or recovery code" value={disableCode} onChange={(e) => setDisableCode(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
+              <Input id="disableCode" inputMode="numeric" autoComplete="one-time-code" placeholder="123456 or recovery code" value={disableCode} onChange={(e) => setDisableCode(e.target.value)} className="mt-1.5 h-10 max-w-sm" autoFocus />
             </div>
-            <Button variant="destructive" size="sm" disabled={loading || !disableCode} onClick={disable}>
-              {loading ? "Disabling…" : "Disable 2FA"}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="destructive" size="sm" disabled={loading || !disableCode} onClick={disable}>
+                {loading ? "Disabling…" : "Disable 2FA"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => { setDisabling(false); setDisableCode("") }}>Cancel</Button>
+            </div>
           </div>
         )}
 
@@ -121,7 +132,7 @@ export function TwoFactorCard() {
             <p className="break-all text-xs text-muted-foreground">Secret: <span className="font-mono text-foreground">{setupData.secret}</span></p>
             <div>
               <Label htmlFor="enableCode">Verification code</Label>
-              <Input id="enableCode" inputMode="numeric" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} className="mt-1.5 h-10 max-w-sm" autoFocus />
+              <Input id="enableCode" inputMode="numeric" autoComplete="one-time-code" placeholder="123456" value={code} onChange={(e) => setCode(e.target.value)} className="mt-1.5 h-10 max-w-sm" autoFocus />
             </div>
             <div className="flex gap-2">
               <Button size="sm" disabled={loading || !code} onClick={confirmEnable}>

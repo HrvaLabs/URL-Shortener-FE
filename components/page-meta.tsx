@@ -17,6 +17,7 @@ interface PageMetaProps {
  *   <PageMeta title="Dashboard — hrva.cc" description="Manage your URLs" />
  */
 export function PageMeta({ title, description, ogTitle, ogDescription }: PageMetaProps) {
+  // Runs after every render on purpose: Next rewrites <title> on query-string navigations.
   useEffect(() => {
     document.title = title
 

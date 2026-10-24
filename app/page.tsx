@@ -361,8 +361,8 @@ function FeatureCell({
 }
 
 const privacyClaims = [
-  { title: "No IPs stored", text: "Unique visitors are counted with a one-way hash under a random key that changes every day." },
-  { title: "Gone by morning", text: "The hashes and the day's key live only in memory and are deleted a few hours after midnight. Daily counts stay." },
+  { title: "No IPs stored", text: "Link statistics count unique visitors with a one-way hash under a random key that changes every day." },
+  { title: "Gone by morning", text: "The hashes and the day's key are kept only in Redis and deleted a few hours after midnight. Daily counts stay." },
   { title: "Open source", text: "The code is on GitHub, including the lines shown here." },
   { title: "Free, no ads", text: "A non-commercial HrvaLabs project, built and run by one person in Croatia." },
 ]
@@ -411,7 +411,12 @@ function PrivacySection() {
               <ArrowUpRight className="h-3.5 w-3.5" />
             </a>
           </div>
-          <pre className="overflow-x-auto py-4 font-mono text-[12.5px] leading-relaxed">
+          <pre
+            tabIndex={0}
+            role="region"
+            aria-label="Source of UniqueVisitorCounter.visitorHash"
+            className="overflow-x-auto py-4 font-mono text-[12.5px] leading-relaxed"
+          >
             <code>
               {[
                 { n: 58, text: "public static String visitorHash(final byte[] salt, final ClickRequest click, final long urlId) {" },
@@ -419,15 +424,23 @@ function PrivacySection() {
                 { n: 60, text: "    final var hmac = hmacSha256(salt).doFinal(visitor.getBytes(StandardCharsets.UTF_8));", mark: true },
                 { n: 61, text: "    return Base64.getUrlEncoder().withoutPadding().encodeToString(Arrays.copyOf(hmac, HASH_BYTES));" },
                 { n: 62, text: "}" },
-              ].map((line) => (
-                <span
-                  key={line.n}
-                  className={cn("block px-4", line.mark && "bg-brand/20 shadow-[inset_2px_0_0_hsl(var(--brand))]")}
-                >
-                  <span className="mr-4 inline-block w-5 select-none text-right text-zinc-600">{line.n}</span>
-                  {line.text}
-                </span>
-              ))}
+              ].map((line) => {
+                const hangingIndent = `${line.text.length - line.text.trimStart().length + 4}ch`
+                return (
+                  <span
+                    key={line.n}
+                    className={cn("flex px-4", line.mark && "bg-brand/20 shadow-[inset_2px_0_0_hsl(var(--brand))]")}
+                  >
+                    <span className="mr-4 w-5 shrink-0 select-none text-right text-zinc-600">{line.n}</span>
+                    <span
+                      className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]"
+                      style={{ paddingLeft: hangingIndent, textIndent: `-${hangingIndent}` }}
+                    >
+                      {line.text}
+                    </span>
+                  </span>
+                )
+              })}
             </code>
           </pre>
           <figcaption className="border-t border-zinc-800 px-4 py-3 text-xs leading-relaxed text-zinc-400">

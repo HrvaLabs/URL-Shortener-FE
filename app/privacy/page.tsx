@@ -32,8 +32,8 @@ export default function PrivacyPage() {
             <div className="mt-8 rounded-xl border bg-muted/40 p-5">
               <p className="leading-7 text-foreground">
                 In short: we collect only what the service needs to work. No ads, no tracking
-                cookies, no third-party analytics. Link statistics are daily counts, and
-                visitors&apos; IP addresses are never stored.
+                cookies, no third-party analytics. Link statistics are daily counts and never store
+                visitors&apos; IP addresses.
               </p>
             </div>
 
@@ -80,11 +80,11 @@ export default function PrivacyPage() {
               <p>
                 To count unique visitors, the visitor&apos;s IP address and browser identifier are
                 combined with the link and a random key that changes every day, and turned into a
-                one-way hash. The hashes and the day&apos;s key are held only in memory (Redis) and
-                are deleted a few hours after the day ends. Without the key the hashes can&apos;t be
-                traced back to anyone, and because the link is part of the hash, the same visitor
-                can&apos;t be followed across days or across links. Link owners see only the daily
-                totals.
+                one-way hash. The hashes and the day&apos;s key are kept only in Redis, never in our
+                database, and expire a few hours after the day ends. Without the key the hashes
+                can&apos;t be traced back to anyone, and because the key changes every day and the
+                link is part of the hash, the same visitor can&apos;t be followed across days or
+                across links. Link owners see only the daily totals.
               </p>
               <p>
                 Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — providing link owners with
@@ -232,8 +232,8 @@ export default function PrivacyPage() {
               <h2>How long we keep data</h2>
               <ul>
                 <li>
-                  <strong>Unique-visitor hashes and the daily key</strong> — held in memory only
-                  and deleted a few hours after the day ends.
+                  <strong>Unique-visitor hashes and the daily key</strong> — kept only in Redis and
+                  deleted a few hours after the day ends.
                 </li>
                 <li>
                   <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within

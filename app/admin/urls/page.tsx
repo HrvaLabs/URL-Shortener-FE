@@ -15,10 +15,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert, GlobeLock } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
 import { toast } from "sonner"
 import { cn, formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
+import { analyticsHref } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
 import { PageMeta } from "@/components/page-meta"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
@@ -413,6 +414,18 @@ export default function AdminUrlsPage() {
                           <TooltipContent side="top">Activate</TooltipContent>
                         </Tooltip>
                       )}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={analyticsHref({ link: url.id })}
+                            aria-label="View stats"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5" />
+                          </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">View stats</TooltipContent>
+                      </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button

@@ -107,22 +107,55 @@ export interface AnalyticsOverview {
   topUrls: AnalyticsTopUrl[]
 }
 
-export interface DailyCount {
+export type AnalyticsRange = 7 | 30 | 90 | 365
+
+export interface AnalyticsTotals {
+  clicks: number
+  uniqueVisitors: number
+  botClicks: number
+}
+
+export interface AnalyticsDay {
   date: string
-  count: number
+  clicks: number
+  uniqueVisitors: number
+  botClicks: number
+}
+
+export interface BreakdownEntry {
+  value: string
+  clicks: number
+}
+
+export interface AnalyticsBreakdowns {
+  referrers: BreakdownEntry[]
+  countries: BreakdownEntry[]
+  devices: BreakdownEntry[]
+  browsers: BreakdownEntry[]
+  operatingSystems: BreakdownEntry[]
+}
+
+export type BreakdownDimension = keyof AnalyticsBreakdowns
+
+export interface AnalyticsLinkSummary {
+  id: number
+  shortUrl: string
+  destinationHost: string
+  status: string
+  passwordProtected: boolean
+  createDate?: string | null
+  lastAccessed?: string | null
+  visits: number
 }
 
 export interface UrlAnalytics {
-  id: number
-  shortUrl: string
-  longUrl: string
-  status: string
-  visits: number
-  uniqueRecentVisitors: number
-  totalRecentClicks: number
-  lastAccessed?: string
-  createDate?: string
-  dailyNewVisitors: DailyCount[]
+  link: AnalyticsLinkSummary
+  days: AnalyticsRange
+  from: string
+  to: string
+  totals: AnalyticsTotals
+  daily: AnalyticsDay[]
+  breakdowns: AnalyticsBreakdowns
 }
 
 export interface PeekUrl {

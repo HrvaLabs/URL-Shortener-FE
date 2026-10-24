@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useMyUrls, useActivateUrl, useDeactivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useMyApiKeys } from "@/lib/hooks/useApiKeys"
@@ -22,8 +23,8 @@ import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, Ba
 import { toast } from "sonner"
 import { cn, formatDate, formatDateTime, formatRelativeDate, truncateUrl, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
+import { analyticsHref } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
-import { UrlStatsDialog } from "@/components/url-stats-dialog"
 import { PageMeta } from "@/components/page-meta"
 
 const selectClass =
@@ -63,7 +64,6 @@ export default function DashboardPage() {
   const activeKeys = apiKeys?.filter(k => k.active).length ?? 0
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [copyPulseId, setCopyPulseId] = useState<number | null>(null)
-  const [statsUrlId, setStatsUrlId] = useState<number | null>(null)
 
   const copyToClipboard = (text: string, id?: number) => {
     navigator.clipboard.writeText(text)
@@ -122,7 +122,6 @@ export default function DashboardPage() {
       </div>
 
       <CreateUrlDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
-      <UrlStatsDialog urlId={statsUrlId} onClose={() => setStatsUrlId(null)} />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
@@ -295,8 +294,10 @@ export default function DashboardPage() {
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label="View stats" onClick={() => setStatsUrlId(url.id)} className={rowActionClass}>
-                            <BarChart3 className="h-4 w-4" />
+                          <Button asChild variant="ghost" size="icon" className={rowActionClass}>
+                            <Link href={analyticsHref({ link: url.id })} aria-label="View stats">
+                              <BarChart3 className="h-4 w-4" />
+                            </Link>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top">View stats</TooltipContent>

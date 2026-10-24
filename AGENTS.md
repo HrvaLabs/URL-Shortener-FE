@@ -40,6 +40,7 @@ No test framework is set up.
 - `/unavailable?s=&reason=` — Where the backend sends a short link that can't redirect (`noindex`). `reason` is `blocked`, `expired`, `limit`, `inactive` or `missing`; anything else falls back to the `missing` line. "Report a link" carries `s` to `/report`
 - `/report?s=` — Public report form: short link (prefilled from `s`), category, details. The link is reduced to its bare code (`hrva.cc/abc` → `abc`, host taken from `getShortBaseUrl()`) before `reportApi.report()`; a 429 shows the backend's text
 - `/dashboard/*` — Protected; user's URLs, API keys, settings
+  - `/dashboard/analytics` — Analytics overview; `?link={id}` shows one link (its owner or an admin): summary, range totals, the clicks vs daily unique visitors chart and the referrer, country, device, browser and OS breakdowns. `?days=7|30|90|365` picks the range (default 30, left out of the URL); anything else falls back to 30, and a `link` that isn't a positive integer shows the overview. The dashboard row's and All URLs' "View stats" open it
 - `/admin/*` — Protected + `ROLE_ADMIN`
   - `/admin` — Users table. "Possible scammers only" sends `possibleScammer=true` (server-side filter); a Possible scammer badge comes from `user.possibleScammer`; Block / Unblock user each ask for confirmation and toast the number of links blocked or restored
   - `/admin/dashboard` — Stats, metrics, login rate limits
@@ -58,14 +59,16 @@ No test framework is set up.
 app/          — Next.js App Router pages
 components/   — React components
   ui/         — shadcn/ui primitives (button, card, dialog, table, etc.)
-  dashboard/  — Dashboard-specific (create-url-dialog, url-analytics, dashboard-nav)
+  dashboard/  — Dashboard-specific (create-url-dialog, dashboard-nav)
+  analytics/  — Analytics page: link-analytics (one link), overview-analytics, range-picker, stat-totals, clicks-chart, breakdown-list
   admin/      — Moderation: block-domain-dialog (shared by the review queue and All URLs), blocklists/ (the Blocklists page sections)
 lib/          — Shared logic
   api-client.ts   — Fetch-based API client
   auth-context.tsx — Auth state (React context)
   types.ts        — All TypeScript interfaces
   labels.ts       — Display labels for URL-check outcomes (`outcomeLabels`, `outcomeVariants`) and block reasons (`blockReasonLabels`)
-  hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers, useReviewCount)
+  analytics.ts    — Analytics ranges (`ANALYTICS_RANGES`, `rangeLabels`, `parseAnalyticsRange`), `parseLinkId`, `analyticsHref({ link, days })`, `ANALYTICS_HISTORY_START`, `analyticsDay()` (a `yyyy-MM-dd` day at local midnight), breakdown labels (`breakdownLabel`) and `countryFlag`
+  hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers, useReviewCount, useAnalytics)
   utils.ts        — cn(), formatDate(), formatTimeAgo() ("3 hours ago", "—" for null), getApiBaseUrl(), etc.
 ```
 
@@ -86,6 +89,7 @@ lib/          — Shared logic
   - review queue: `getReviewQueue({ page, size, reason, olderThanDays })`, `resolveReview(urlId, action, domain?)` (`/admin/review-queue`, `POST …/{urlId}/resolve`), `resolveReviews(urlIds, action)` (`POST /admin/review-queue/resolve` with 1–100 distinct ids, returns `{ resolved: number[], failed: { urlId, error }[] }`)
   - users: `blockUser`, `unblockUser` (return `{ linksAffected }`), `getPossibleScammers` (user ids)
   - `checkUrl(url)` — `POST /admin/url-check`, the verdict (`ALLOWED` / `BLOCK` / `FLAG` / `CLEAN`) a new link would get
+- **`analyticsApi`** — `getUrlAnalytics(id, days)` → `GET /analytics/urls/{id}?days=` (summary, totals, zero-filled `daily`, top-10 breakdowns plus `other`); `getOverview()`
 - **`reportApi`** — `report({ shortUrl, category, details? })` → `POST /reports` (public, rate-limited per network)
 - Endpoints returning paginated data accept `UrlFilters` / `UserFilters` for search/status/date filtering
 
@@ -100,6 +104,7 @@ lib/          — Shared logic
 - Query client in `providers.tsx`: `staleTime: 30s`, `retry: 1`
 - Hooks in `lib/hooks/` follow pattern: `useXxx()` for queries, `useXxx()` for mutations
 - Mutations invalidate relevant query keys (`["urls"]`, `["apiKeys"]`, `["users"]`, `["me"]`); moderation keys live under `["admin", …]` (`["admin", "review"]`, `["admin", "domain-rules", type]`, `["admin", "blocklists"]`)
+- `useUrlAnalytics(id, days)` — key `["analytics", "url", id, days]`; keeps the previous range on screen (dimmed) while a new range loads, and doesn't retry a 4xx
 - `useReviewCount()` — admin-only `GET /admin/review-queue?size=1` → `totalElements`, refetched every 60 s. Its key `["admin", "review", "count"]` sits under `["admin", "review"]`, so anything that resolves or blocks invalidates the count too
 - Pagination via `hooks/usePagination.ts` — reads `page`, `size`, `sort`, `order` from URL search params
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0
@@ -118,7 +123,7 @@ lib/          — Shared logic
 - Nesting a dialog trigger inside a tooltip: `Tooltip > TooltipTrigger asChild > AlertDialogTrigger asChild > button`. The reverse (`AlertDialogTrigger asChild > Tooltip`) renders no element for the trigger, so the click never opens the dialog
 - Admin nav (`components/dashboard/dashboard-nav.tsx`): the Admin dropdown and the Review queue item show the open review count (`useReviewCount`, `99+` above 99, hidden at 0). The badge is `relative` so its `sr-only` text can't widen the page at phone width
 - `sonner` for toasts, `lucide-react` for icons, `qrcode.react` for QR codes
-- `recharts` for analytics charts (used in `url-analytics.tsx`)
+- `recharts` for analytics charts (used in `components/analytics/clicks-chart.tsx`)
 
 ### Deployment (Cloudflare Workers)
 - Built with `@opennextjs/cloudflare` — config at `open-next.config.ts` (minimal, uses defaults)
@@ -209,3 +214,13 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 - **Changelog page** at `/changelog` is a client component — fetches changelog JSON from backend `/api/changelog`
 - **Easter eggs**: Konami code (↑↑↓↓←→←→BA) on landing page, `/fortune`, `/egg`, console message hint
 - **Animations**: `animate-copy-pulse` class, `CountUp` component for stat counters, staggered row entrance via `animate-fade-in` with inline delay, filter remount via `filterKey` 
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -21,7 +21,7 @@ Success: a visitor gets a working short link in seconds, and someone looking at 
 
 ## Positioning
 
-A free, ad-free, non-commercial shortener built and run by one person in Croatia (HrvaLabs), with its full source on GitHub. It is privacy-first in a way that can be checked in that source: visitor IPs are bcrypt-hashed on arrival and the hashes are deleted after 48 hours.
+A free, ad-free, non-commercial shortener built and run by one person in Croatia (HrvaLabs), with its full source on GitHub. It is privacy-first in a way that can be checked in that source: link statistics are daily counts, unique visitors are counted with a one-way hash under a random key that changes every day and is deleted a few hours after the day ends, and visitor IPs are never stored.
 
 ## Operating Context
 
@@ -47,7 +47,7 @@ A free, ad-free, non-commercial shortener built and run by one person in Croatia
 ## Evidence on Hand
 
 - Real features listed above; real blog posts in `content/blog/posts.ts`; real changelog from the API.
-- Privacy facts from the backend: IP bcrypt hashing (`DefaultIPAddressService`), 2-hour unique-visitor window, 48-hour deletion of hashed records.
+- Privacy facts from the backend: daily counts only; unique visitors via an HMAC under a daily random salt held in Redis (`UniqueVisitorCounter`), deleted a few hours after the day ends; no IPs stored.
 - No user counts, link counts, testimonials, uptime figures or speed benchmarks are on hand. Do not invent them.
 
 ## Product Principles

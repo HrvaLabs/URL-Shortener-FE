@@ -215,3 +215,4 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 - **Changelog page** at `/changelog` is a client component — fetches changelog JSON from backend `/api/changelog`
 - **Easter eggs**: Konami code (↑↑↓↓←→←→BA) on landing page, `/fortune`, `/egg`, console message hint
 - **Animations**: `animate-copy-pulse` class, `CountUp` component for stat counters, staggered row entrance via `animate-fade-in` with inline delay, filter remount via `filterKey` 
+- **Landing privacy figure** — The landing page's privacy figure quotes `UniqueVisitorCounter.visitorHash` and `AnalyticsDays.SALT_GRACE` by line number on GitHub; update the lines and the `#L` anchors when those files change

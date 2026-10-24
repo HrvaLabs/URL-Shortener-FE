@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "October 21, 2026"
+const LAST_UPDATED = "October 24, 2026"
 
 export default function PrivacyPage() {
   return (
@@ -32,8 +32,8 @@ export default function PrivacyPage() {
             <div className="mt-8 rounded-xl border bg-muted/40 p-5">
               <p className="leading-7 text-foreground">
                 In short: we collect only what the service needs to work. No ads, no tracking
-                cookies, no third-party analytics. Visitor IP addresses are hashed immediately and
-                deleted within 48 hours.
+                cookies, no third-party analytics. Link statistics are daily counts, and
+                visitors&apos; IP addresses are never stored.
               </p>
             </div>
 
@@ -67,12 +67,24 @@ export default function PrivacyPage() {
 
               <h3>Link statistics (visitors who open short links)</h3>
               <p>
-                When someone opens a short link, we count the visit and check whether it is a unique
-                visitor. To do this, the visitor&apos;s IP address is hashed with a salted one-way
-                function the moment it is received — the plain IP address is never written to our
-                database. Each hashed record is used for unique-visitor detection for 2 hours and is
-                permanently deleted within 48 hours. Link owners only ever see aggregate numbers
-                (visit counts and daily unique visitors), never anything about an individual visitor.
+                When someone opens a short link, hrva.cc adds to that link&apos;s counts for the day.
+                For each link and day it keeps only totals: clicks, unique visitors, clicks from bots
+                and link previews, and how many clicks came from each referring site&apos;s domain
+                (for example t.co), each country, each device type (mobile, tablet or desktop), and
+                each browser and operating system family. The country comes from Cloudflare, which
+                carries our traffic; we don&apos;t look up locations ourselves. Full addresses of
+                referring pages, full browser identifiers and IP addresses are never stored, and
+                nothing is recorded about an individual click. Short links set no cookies and run no
+                scripts.
+              </p>
+              <p>
+                To count unique visitors, the visitor&apos;s IP address and browser identifier are
+                combined with the link and a random key that changes every day, and turned into a
+                one-way hash. The hashes and the day&apos;s key are held only in memory (Redis) and
+                are deleted a few hours after the day ends. Without the key the hashes can&apos;t be
+                traced back to anyone, and because the link is part of the hash, the same visitor
+                can&apos;t be followed across days or across links. Link owners see only the daily
+                totals.
               </p>
               <p>
                 Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — providing link owners with
@@ -191,8 +203,10 @@ export default function PrivacyPage() {
                   destination, as described under <em>Keeping links safe</em>.
                 </li>
                 <li>
-                  <strong>Cloudflare</strong> — delivers the web application (hosting/CDN). Your IP
-                  address reaches Cloudflare as part of normal traffic delivery.
+                  <strong>Cloudflare</strong> — delivers the web application and short links
+                  (hosting/CDN). Your IP address reaches Cloudflare as part of normal traffic
+                  delivery, and Cloudflare tells us which country it belongs to, which we keep only
+                  as a daily count.
                 </li>
                 {/* TODO: name the email delivery provider (and its location/safeguards) */}
                 <li>
@@ -218,7 +232,8 @@ export default function PrivacyPage() {
               <h2>How long we keep data</h2>
               <ul>
                 <li>
-                  <strong>Hashed visitor IPs</strong> — deleted within 48 hours of the visit.
+                  <strong>Unique-visitor hashes and the daily key</strong> — held in memory only
+                  and deleted a few hours after the day ends.
                 </li>
                 <li>
                   <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within
@@ -233,7 +248,7 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Your links and their statistics</strong> — kept while your account exists;
-                  deleting a link also deletes its visit records.
+                  deleting a link also deletes its daily counts.
                 </li>
                 <li>
                   <strong>Connected-app token records</strong>{" "}

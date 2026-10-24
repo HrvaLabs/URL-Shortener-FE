@@ -38,7 +38,7 @@ function PublicHome() {
               Short links, shaped by you
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Free, open source and ad-free, with visitor IPs hashed on arrival and deleted after 48 hours.
+              Free, open source and ad-free. Visitors are counted, never tracked.
             </p>
           </div>
 
@@ -167,7 +167,7 @@ function FeatureGrid() {
             className="lg:col-span-2"
             icon={BarChart3}
             title="Visit analytics"
-            description="Total and unique visits per link, day by day, without storing who your visitors are."
+            description="Clicks and daily unique visitors per link, with referrers, countries and devices, without storing who your visitors are."
           >
             <div aria-hidden="true">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -175,7 +175,7 @@ function FeatureGrid() {
                 <span className="text-xs text-muted-foreground">Last 14 days</span>
               </div>
               <p className="mt-1 text-2xl font-semibold tabular-nums">
-                {visitsTotal.toLocaleString("en")} <span className="text-sm font-normal text-muted-foreground">visits</span>
+                {visitsTotal.toLocaleString("en")} <span className="text-sm font-normal text-muted-foreground">clicks</span>
               </p>
               <div className="relative mt-5 h-44">
                 {[0, 30, 60, 90].map((tick) => (
@@ -199,7 +199,7 @@ function FeatureGrid() {
                             style={{ bottom: `calc(${(value / visitsScale) * 100}% + 8px)` }}
                           >
                             <span className="text-muted-foreground">Today</span>{" "}
-                            <span className="font-medium tabular-nums">{value} visits</span>
+                            <span className="font-medium tabular-nums">{value} clicks</span>
                           </div>
                         )}
                       </div>
@@ -361,16 +361,16 @@ function FeatureCell({
 }
 
 const privacyClaims = [
-  { title: "IPs hashed on arrival", text: "Visitor IP addresses go through bcrypt before anything is saved." },
-  { title: "Deleted after 48 hours", text: "Hashed visitor records are removed after two days. Your visit counts stay." },
+  { title: "No IPs stored", text: "Unique visitors are counted with a one-way hash under a random key that changes every day." },
+  { title: "Gone by morning", text: "The hashes and the day's key live only in memory and are deleted a few hours after midnight. Daily counts stay." },
   { title: "Open source", text: "The code is on GitHub, including the lines shown here." },
   { title: "Free, no ads", text: "A non-commercial HrvaLabs project, built and run by one person in Croatia." },
 ]
 
-const ipServiceUrl =
-  "https://github.com/karlohrvacic/url-shortener/blob/main/src/main/java/cc/hrva/urlshortener/service/impl/DefaultIPAddressService.java#L38-L46"
-const retentionConfigUrl =
-  "https://github.com/karlohrvacic/url-shortener/blob/main/src/main/resources/application.yaml#L49"
+const visitorHashUrl =
+  "https://github.com/HrvaLabs/url-shortener/blob/main/src/main/java/cc/hrva/urlshortener/service/analytics/UniqueVisitorCounter.java#L58-L62"
+const saltGraceUrl =
+  "https://github.com/HrvaLabs/url-shortener/blob/main/src/main/java/cc/hrva/urlshortener/service/analytics/AnalyticsDays.java#L16"
 
 function PrivacySection() {
   return (
@@ -400,9 +400,9 @@ function PrivacySection() {
 
         <figure className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.4)]">
           <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
-            <span className="truncate font-mono text-xs text-zinc-400">DefaultIPAddressService.java</span>
+            <span className="truncate font-mono text-xs text-zinc-400">UniqueVisitorCounter.java</span>
             <a
-              href={ipServiceUrl}
+              href={visitorHashUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
@@ -414,14 +414,11 @@ function PrivacySection() {
           <pre className="overflow-x-auto py-4 font-mono text-[12.5px] leading-relaxed">
             <code>
               {[
-                { n: 39, text: "public void saveUrlVisitByIP(final Url url, final String clientIP) {" },
-                { n: 40, text: "    final var ipAddress = IPAddress.builder()" },
-                { n: 41, text: "            .hashedIPAddress(encoder.encode(clientIP))", mark: true },
-                { n: 42, text: "            .url(url)" },
-                { n: 43, text: "            .build();" },
-                { n: 44, text: "" },
-                { n: 45, text: "    ipAddressRepository.save(ipAddress);" },
-                { n: 46, text: "}" },
+                { n: 58, text: "public static String visitorHash(final byte[] salt, final ClickRequest click, final long urlId) {" },
+                { n: 59, text: '    final var visitor = StringUtils.defaultString(click.clientIp()) + "\\n" + StringUtils.defaultString(click.userAgent()) + "\\n" + urlId;' },
+                { n: 60, text: "    final var hmac = hmacSha256(salt).doFinal(visitor.getBytes(StandardCharsets.UTF_8));", mark: true },
+                { n: 61, text: "    return Base64.getUrlEncoder().withoutPadding().encodeToString(Arrays.copyOf(hmac, HASH_BYTES));" },
+                { n: 62, text: "}" },
               ].map((line) => (
                 <span
                   key={line.n}
@@ -434,11 +431,11 @@ function PrivacySection() {
             </code>
           </pre>
           <figcaption className="border-t border-zinc-800 px-4 py-3 text-xs leading-relaxed text-zinc-400">
-            <span className="text-zinc-200">encoder</span> is Spring&apos;s BCryptPasswordEncoder. Hashed records are deleted after{" "}
-            <a href={retentionConfigUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-zinc-200 underline decoration-zinc-600 underline-offset-4 hover:decoration-zinc-300">
-              ip-retention-duration-in-hours: 48
-            </a>
-            .
+            The <span className="text-zinc-200">salt</span> is 32 random bytes, made fresh each day and kept only in Redis until{" "}
+            <a href={saltGraceUrl} target="_blank" rel="noopener noreferrer" className="font-mono text-zinc-200 underline decoration-zinc-600 underline-offset-4 hover:decoration-zinc-300">
+              SALT_GRACE = Duration.ofHours(4)
+            </a>{" "}
+            after midnight.
           </figcaption>
         </figure>
       </div>

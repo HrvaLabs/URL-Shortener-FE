@@ -59,7 +59,7 @@ const toolGroups = [
       {
         name: "link_stats",
         description:
-          "Shows a link's total visits plus its visits in roughly the last 48 hours. hrva.cc keeps visitor details for only about 48 hours.",
+          "Shows a link's clicks, daily unique visitors and bot clicks for the last 7, 30, 90 or 365 days, with its top referrers, countries and devices.",
       },
     ],
   },

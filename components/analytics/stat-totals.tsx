@@ -7,7 +7,7 @@ interface StatTotalsProps {
 
 export function StatTotals({
   totals,
-  uniqueVisitorsHint = "Counted per day, so one person on two days counts twice.",
+  uniqueVisitorsHint = "Counted per day, so one person on two different days counts twice.",
 }: StatTotalsProps) {
   const stats = [
     { label: "Clicks", value: totals.clicks },

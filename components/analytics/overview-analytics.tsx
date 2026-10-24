@@ -84,7 +84,7 @@ function OverviewBody({ data, days, onDaysChange, refreshing }: OverviewBodyProp
       <div className={cn("space-y-6 transition-opacity", refreshing && "opacity-60")} aria-busy={refreshing}>
         <StatTotals
           totals={totals}
-          uniqueVisitorsHint="Counted per day and per link, so one person on two days or two links counts twice."
+          uniqueVisitorsHint="Counted per day and per link, so one person on two different days or two links counts twice."
         />
 
         {empty ? (

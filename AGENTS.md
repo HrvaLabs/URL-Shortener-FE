@@ -40,7 +40,7 @@ No test framework is set up.
 - `/unavailable?s=&reason=` — Where the backend sends a short link that can't redirect (`noindex`). `reason` is `blocked`, `expired`, `limit`, `inactive` or `missing`; anything else falls back to the `missing` line. "Report a link" carries `s` to `/report`
 - `/report?s=` — Public report form: short link (prefilled from `s`), category, details. The link is reduced to its bare code (`hrva.cc/abc` → `abc`, host taken from `getShortBaseUrl()`) before `reportApi.report()`; a 429 shows the backend's text
 - `/dashboard/*` — Protected; user's URLs, API keys, settings
-  - `/dashboard/analytics` — Analytics overview; `?link={id}` shows one link (its owner or an admin): summary, range totals, the clicks vs daily unique visitors chart and the referrer, country, device, browser and OS breakdowns. `?days=7|30|90|365` picks the range (default 30, left out of the URL); anything else falls back to 30, and a `link` that isn't a positive integer shows the overview. The dashboard row's and All URLs' "View stats" open it
+  - `/dashboard/analytics` — Analytics overview: the all-time counters (links, active, expired, all-time visits), then for the range the totals, the clicks vs daily unique visitors trend and the top 10 links by clicks, each opening its own view with the same range. `?link={id}` shows one link (its owner or an admin): summary, range totals, the clicks vs daily unique visitors chart and the referrer, country, device, browser and OS breakdowns. `?days=7|30|90|365` picks the range (default 30, left out of the URL); anything else falls back to 30, and a `link` that isn't a positive integer shows the overview. The dashboard row's and All URLs' "View stats" open it
 - `/admin/*` — Protected + `ROLE_ADMIN`
   - `/admin` — Users table. "Possible scammers only" sends `possibleScammer=true` (server-side filter); a Possible scammer badge comes from `user.possibleScammer`; Block / Unblock user each ask for confirmation and toast the number of links blocked or restored
   - `/admin/dashboard` — Stats, metrics, login rate limits
@@ -89,7 +89,7 @@ lib/          — Shared logic
   - review queue: `getReviewQueue({ page, size, reason, olderThanDays })`, `resolveReview(urlId, action, domain?)` (`/admin/review-queue`, `POST …/{urlId}/resolve`), `resolveReviews(urlIds, action)` (`POST /admin/review-queue/resolve` with 1–100 distinct ids, returns `{ resolved: number[], failed: { urlId, error }[] }`)
   - users: `blockUser`, `unblockUser` (return `{ linksAffected }`), `getPossibleScammers` (user ids)
   - `checkUrl(url)` — `POST /admin/url-check`, the verdict (`ALLOWED` / `BLOCK` / `FLAG` / `CLEAN`) a new link would get
-- **`analyticsApi`** — `getUrlAnalytics(id, days)` → `GET /analytics/urls/{id}?days=` (summary, totals, zero-filled `daily`, top-10 breakdowns plus `other`); `getOverview()`
+- **`analyticsApi`** — `getUrlAnalytics(id, days)` → `GET /analytics/urls/{id}?days=` (summary, totals, zero-filled `daily`, top-10 breakdowns plus `other`); `getOverview(days)` → `GET /analytics/overview?days=` (totals, zero-filled `daily`, top 10 links by clicks, all-time counters)
 - **`reportApi`** — `report({ shortUrl, category, details? })` → `POST /reports` (public, rate-limited per network)
 - Endpoints returning paginated data accept `UrlFilters` / `UserFilters` for search/status/date filtering
 
@@ -105,6 +105,7 @@ lib/          — Shared logic
 - Hooks in `lib/hooks/` follow pattern: `useXxx()` for queries, `useXxx()` for mutations
 - Mutations invalidate relevant query keys (`["urls"]`, `["apiKeys"]`, `["users"]`, `["me"]`); moderation keys live under `["admin", …]` (`["admin", "review"]`, `["admin", "domain-rules", type]`, `["admin", "blocklists"]`)
 - `useUrlAnalytics(id, days)` — key `["analytics", "url", id, days]`; keeps the previous range on screen (dimmed) while a new range loads, and doesn't retry a 4xx
+- `useAnalyticsOverview(days)` — key `["analytics", "overview", days]`; the same previous-range and no-4xx-retry behaviour
 - `useReviewCount()` — admin-only `GET /admin/review-queue?size=1` → `totalElements`, refetched every 60 s. Its key `["admin", "review", "count"]` sits under `["admin", "review"]`, so anything that resolves or blocks invalidates the count too
 - Pagination via `hooks/usePagination.ts` — reads `page`, `size`, `sort`, `order` from URL search params
 - Sortable columns: click table headers to toggle asc/desc, resets to page 0

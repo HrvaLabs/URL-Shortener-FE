@@ -257,8 +257,8 @@ export const connectedAppsApi = {
 
 // Analytics
 export const analyticsApi = {
-  getOverview: () =>
-    request<AnalyticsOverview>("GET", "/analytics/overview"),
+  getOverview: (days: AnalyticsRange) =>
+    request<AnalyticsOverview>("GET", `/analytics/overview?days=${days}`),
   getUrlAnalytics: (id: number, days: AnalyticsRange) =>
     request<UrlAnalytics>("GET", `/analytics/urls/${id}?days=${days}`),
 }

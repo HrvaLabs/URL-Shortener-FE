@@ -31,5 +31,5 @@ function Analytics() {
   const onDaysChange = (next: AnalyticsRange) => router.replace(analyticsHref({ link, days: next }), { scroll: false })
 
   if (link != null) return <LinkAnalytics linkId={link} days={days} onDaysChange={onDaysChange} />
-  return <OverviewAnalytics />
+  return <OverviewAnalytics days={days} onDaysChange={onDaysChange} />
 }

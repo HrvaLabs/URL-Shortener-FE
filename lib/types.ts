@@ -92,21 +92,6 @@ export interface ApiKeyResponse {
   ownerEmail?: string
 }
 
-export interface AnalyticsTopUrl {
-  id: number
-  shortUrl: string
-  longUrl: string
-  visits: number
-}
-
-export interface AnalyticsOverview {
-  totalUrls: number
-  activeUrls: number
-  expiredUrls: number
-  totalVisits: number
-  topUrls: AnalyticsTopUrl[]
-}
-
 export type AnalyticsRange = 7 | 30 | 90 | 365
 
 export interface AnalyticsTotals {
@@ -156,6 +141,27 @@ export interface UrlAnalytics {
   totals: AnalyticsTotals
   daily: AnalyticsDay[]
   breakdowns: AnalyticsBreakdowns
+}
+
+export interface AnalyticsTopLink {
+  id: number
+  shortUrl: string
+  destinationHost: string
+  clicks: number
+  uniqueVisitors: number
+}
+
+export interface AnalyticsOverview {
+  days: AnalyticsRange
+  from: string
+  to: string
+  totals: AnalyticsTotals
+  daily: AnalyticsDay[]
+  topLinks: AnalyticsTopLink[]
+  totalUrls: number
+  activeUrls: number
+  expiredUrls: number
+  totalVisits: number
 }
 
 export interface PeekUrl {

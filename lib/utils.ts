@@ -65,6 +65,10 @@ export function formatTimeAgo(date: string | Date | null): string {
   return "just now"
 }
 
+export function plural(count: number, word: string): string {
+  return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`
+}
+
 export function maskApiKey(key: string): string {
   if (key.length <= 8) return key
   return key.slice(0, 4) + "••••" + key.slice(-4)

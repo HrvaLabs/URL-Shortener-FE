@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
 import type { DomainRule, DomainRuleCreated, DomainRuleType } from "@/lib/types"
-import { formatDateTime, formatTimeAgo } from "@/lib/utils"
+import { formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 import { ruleTypeLabels } from "./labels"
 
 const ruleTypes: DomainRuleType[] = ["BLOCK", "ALLOW"]
@@ -27,8 +27,6 @@ const emptyTitles: Record<DomainRuleType, string> = {
   BLOCK: "No blocked domains",
   ALLOW: "No trusted domains",
 }
-
-const plural = (count: number, word: string) => `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`
 
 const createdMessage = (type: DomainRuleType, { rule, linksAffected }: DomainRuleCreated) => {
   if (type === "BLOCK") return `Blocked ${plural(linksAffected, "link")} on ${rule.domain}`

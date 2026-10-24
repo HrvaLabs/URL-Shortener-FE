@@ -4,14 +4,12 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { PageMeta } from "@/components/page-meta"
 import { StatusBadge } from "@/components/status-badge"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
-import { ApiError } from "@/lib/api-client"
-import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime, rangeLabels } from "@/lib/analytics"
+import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { useUrlAnalytics } from "@/lib/hooks/useAnalytics"
 import type { AnalyticsRange, UrlAnalytics } from "@/lib/types"
 import { cn, formatDate, formatDateTime, formatShortUrl, formatTimeAgo } from "@/lib/utils"
@@ -26,8 +24,6 @@ const refusals: Record<number, string> = {
   403: "You can only see analytics for your own links.",
   404: "This link doesn't exist or was deleted.",
 }
-
-const refusalOf = (error: Error) => (error instanceof ApiError ? refusals[error.status] : undefined)
 
 export function LinkAnalytics({ linkId, days, onDaysChange }: LinkAnalyticsProps) {
   const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useUrlAnalytics(linkId, days)
@@ -44,9 +40,9 @@ export function LinkAnalytics({ linkId, days, onDaysChange }: LinkAnalyticsProps
       </Link>
 
       {isPending ? (
-        <LinkAnalyticsLoading />
+        <AnalyticsSkeleton variant="link" />
       ) : error ? (
-        <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} />
+        <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} refusals={refusals} />
       ) : (
         <LinkAnalyticsBody data={data} days={days} onDaysChange={onDaysChange} refreshing={isPlaceholderData} />
       )}
@@ -109,11 +105,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
         <StatTotals totals={totals} />
 
         {empty ? (
-          <div className="rounded-xl border bg-card px-6 py-12 text-center">
-            <p className="mx-auto max-w-md text-sm text-muted-foreground">
-              No clicks in the last {rangeLabels[days]}. Daily history starts on {historyStart}, so earlier clicks only count toward all-time visits.
-            </p>
-          </div>
+          <AnalyticsEmpty days={days} historyStart={historyStart} />
         ) : (
           <>
             <ClicksChart daily={daily} days={days} />
@@ -133,41 +125,5 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
         )}
       </div>
     </>
-  )
-}
-
-interface AnalyticsErrorProps {
-  error: Error
-  retrying: boolean
-  onRetry: () => void
-}
-
-function AnalyticsError({ error, retrying, onRetry }: AnalyticsErrorProps) {
-  const refusal = refusalOf(error)
-  return (
-    <div className="rounded-xl border bg-card px-6 py-12 text-center">
-      <p className={cn("text-sm", refusal ? "text-muted-foreground" : "text-destructive")}>
-        {refusal ?? "Couldn't load analytics. Try again."}
-      </p>
-      {!refusal && (
-        <Button variant="outline" size="sm" onClick={onRetry} disabled={retrying} className="mt-4">
-          Retry
-        </Button>
-      )}
-    </div>
-  )
-}
-
-function LinkAnalyticsLoading() {
-  return (
-    <div className="space-y-6" aria-busy="true">
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-56 max-w-full" />
-        <Skeleton className="h-5 w-40 max-w-full" />
-      </div>
-      <Skeleton className="h-9 w-72 max-w-full" />
-      <Skeleton className="h-28 w-full rounded-xl" />
-      <Skeleton className="h-72 w-full rounded-xl" />
-    </div>
   )
 }

@@ -60,7 +60,7 @@ app/          — Next.js App Router pages
 components/   — React components
   ui/         — shadcn/ui primitives (button, card, dialog, table, etc.)
   dashboard/  — Dashboard-specific (create-url-dialog, dashboard-nav)
-  analytics/  — Analytics page: link-analytics (one link), overview-analytics, range-picker, stat-totals, clicks-chart, breakdown-list
+  analytics/  — Analytics page: link-analytics (one link), overview-analytics, range-picker, stat-totals, clicks-chart, breakdown-list, analytics-states (`AnalyticsEmpty`, `AnalyticsError` with optional per-status `refusals`, `AnalyticsSkeleton` with a `link` / `overview` header), shared by both views
   admin/      — Moderation: block-domain-dialog (shared by the review queue and All URLs), blocklists/ (the Blocklists page sections)
 lib/          — Shared logic
   api-client.ts   — Fetch-based API client
@@ -69,7 +69,7 @@ lib/          — Shared logic
   labels.ts       — Display labels for URL-check outcomes (`outcomeLabels`, `outcomeVariants`) and block reasons (`blockReasonLabels`)
   analytics.ts    — Analytics ranges (`ANALYTICS_RANGES`, `rangeLabels`, `parseAnalyticsRange`), `parseLinkId`, `analyticsHref({ link, days })`, `ANALYTICS_HISTORY_START`, `analyticsDay()` (a `yyyy-MM-dd` day at local midnight), `parseServerDateTime()` (a backend date-time with no offset read as UTC), breakdown labels (`breakdownLabel`) and `countryFlag`
   hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers, useReviewCount, useAnalytics)
-  utils.ts        — cn(), formatDate(), formatTimeAgo() ("3 hours ago", "—" for null), getApiBaseUrl(), etc.
+  utils.ts        — cn(), formatDate(), formatTimeAgo() ("3 hours ago", "—" for null), plural() ("1 link", "1,204 links"), getApiBaseUrl(), etc.
 ```
 
 ### API Client (`lib/api-client.ts`)

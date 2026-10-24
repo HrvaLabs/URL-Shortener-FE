@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { PageMeta } from "@/components/page-meta"
-import { cn, formatDate, formatDateTime, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, formatDate, formatDateTime, formatShortUrl, getShortBaseUrl, plural } from "@/lib/utils"
 import { adminApi, ApiError } from "@/lib/api-client"
 import type { ReviewAction, ReviewBulkResolveResult, ReviewEntry, ReviewQueueFilters } from "@/lib/types"
 
@@ -59,8 +59,6 @@ const bulkMessages: Record<ReviewAction, { success: (links: string) => string; f
 const selectClass = "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
 const iconButton = "rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:hover:bg-transparent aria-disabled:hover:text-muted-foreground"
-
-const plural = (count: number, unit: string) => `${count} ${unit}${count === 1 ? "" : "s"}`
 
 const accountAge = (createdAt: string | null, now: number) => {
   if (!createdAt) return "—"

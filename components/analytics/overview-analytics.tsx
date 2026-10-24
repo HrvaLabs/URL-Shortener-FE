@@ -2,22 +2,19 @@
 
 import Link from "next/link"
 import { PageMeta } from "@/components/page-meta"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
+import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
-import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, rangeLabels } from "@/lib/analytics"
+import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref } from "@/lib/analytics"
 import { useAnalyticsOverview } from "@/lib/hooks/useAnalytics"
 import type { AnalyticsOverview, AnalyticsRange, AnalyticsTopLink } from "@/lib/types"
-import { cn, formatDate } from "@/lib/utils"
+import { cn, formatDate, plural } from "@/lib/utils"
 
 interface OverviewAnalyticsProps {
   days: AnalyticsRange
   onDaysChange: (days: AnalyticsRange) => void
 }
-
-const plural = (count: number, word: string) => `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`
 
 export function OverviewAnalytics({ days, onDaysChange }: OverviewAnalyticsProps) {
   const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useAnalyticsOverview(days)
@@ -31,9 +28,9 @@ export function OverviewAnalytics({ days, onDaysChange }: OverviewAnalyticsProps
       </div>
 
       {isPending ? (
-        <OverviewLoading />
+        <AnalyticsSkeleton variant="overview" />
       ) : error ? (
-        <OverviewError retrying={isRefetching} onRetry={() => refetch()} />
+        <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} />
       ) : (
         <OverviewBody data={data} days={days} onDaysChange={onDaysChange} refreshing={isPlaceholderData} />
       )}
@@ -88,11 +85,7 @@ function OverviewBody({ data, days, onDaysChange, refreshing }: OverviewBodyProp
         />
 
         {empty ? (
-          <div className="rounded-xl border bg-card px-6 py-12 text-center">
-            <p className="mx-auto max-w-md text-sm text-muted-foreground">
-              No clicks in the last {rangeLabels[days]}. Daily history starts on {historyStart}, so earlier clicks only count toward all-time visits.
-            </p>
-          </div>
+          <AnalyticsEmpty days={days} historyStart={historyStart} />
         ) : (
           <>
             <ClicksChart daily={daily} days={days} />
@@ -144,35 +137,5 @@ function TopLinks({ links, days }: TopLinksProps) {
         </ol>
       )}
     </section>
-  )
-}
-
-interface OverviewErrorProps {
-  retrying: boolean
-  onRetry: () => void
-}
-
-function OverviewError({ retrying, onRetry }: OverviewErrorProps) {
-  return (
-    <div className="rounded-xl border bg-card px-6 py-12 text-center">
-      <p className="text-sm text-destructive">Couldn&apos;t load analytics. Try again.</p>
-      <Button variant="outline" size="sm" onClick={onRetry} disabled={retrying} className="mt-4">
-        Retry
-      </Button>
-    </div>
-  )
-}
-
-function OverviewLoading() {
-  return (
-    <div className="space-y-6" aria-busy="true">
-      <div className="space-y-3">
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-10 w-96 max-w-full" />
-      </div>
-      <Skeleton className="h-9 w-72 max-w-full" />
-      <Skeleton className="h-28 w-full rounded-xl" />
-      <Skeleton className="h-72 w-full rounded-xl" />
-    </div>
   )
 }

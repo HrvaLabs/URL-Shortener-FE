@@ -156,7 +156,7 @@ export default function AdminDashboardPage() {
               <TableHead>Short URL</TableHead>
               <TableHead>Long URL</TableHead>
               <TableHead>Owner</TableHead>
-              <TableHead>Visits</TableHead>
+              <TableHead title="Daily unique visitors, added up">Visits</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
           </TableHeader>

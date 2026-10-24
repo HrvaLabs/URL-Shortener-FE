@@ -211,7 +211,7 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 - **Auth token is stored with its `Bearer ` prefix** — `request()` adds nothing, so a token injected into `auth-token` by hand must include it
 - **No middleware-based route protection** — dashboard/admin check auth in a client `useEffect`, creating a flash of unauthenticated content
 - **`@/*` maps to root** — unlike the common Next.js pattern of mapping to `src/*`
-- **Backend date-times are UTC with no offset** (`LocalDateTime`, e.g. `2026-10-24T09:15:00`), which `new Date()` reads as local time. The analytics views parse them with `parseServerDateTime()` first; the other screens still pass the raw string to `formatDate()` and friends
+- **Backend date-times are UTC with no offset** in production, where the container runs in UTC (`LocalDateTime`, e.g. `2026-10-24T09:15:00`); a backend run locally with `mvn spring-boot:run` sends the host's zone instead, so analytics times there show ahead by the host's offset. `new Date()` reads them as local time, which `new Date()` reads as local time. The analytics views parse them with `parseServerDateTime()` first; the other screens still pass the raw string to `formatDate()` and friends
 - **pnpm/npm**: lockfile is `package-lock.json` (npm), not pnpm
 - **Changelog page** at `/changelog` is a client component — fetches changelog JSON from backend `/api/changelog`
 - **Easter eggs**: Konami code (↑↑↓↓←→←→BA) on landing page, `/fortune`, `/egg`, console message hint

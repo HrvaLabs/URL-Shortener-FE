@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { blogPosts } from "@/content/blog/posts"
+import { PostAuthor } from "@/components/blog/post-author"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 export async function generateStaticParams() {
@@ -68,7 +69,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   })}
                 </time>
                 <span aria-hidden="true"> · </span>
-                <span>{post.author}</span>
+                <PostAuthor name={post.author} />
               </p>
 
               <p className="mt-5 text-lg leading-relaxed text-muted-foreground">{post.excerpt}</p>

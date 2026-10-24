@@ -42,7 +42,9 @@ export default function TermsPage() {
               <p>
                 hrva.cc is a URL-shortening service and a hobby project of{" "}
                 <a href="https://hrvalabs.net/" target="_blank" rel="noopener noreferrer">HrvaLabs</a>,
-                operated by Karlo Hrvačić. It is offered free of charge, for personal and
+                operated by{" "}
+                <a href="https://karlo.cc" target="_blank" rel="noopener noreferrer">Karlo Hrvačić</a>.
+                It is offered free of charge, for personal and
                 non-critical use. By using the service or creating an account you accept these
                 terms.
               </p>

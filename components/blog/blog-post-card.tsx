@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import type { BlogPost } from "@/content/blog/posts"
+import { PostAuthor } from "@/components/blog/post-author"
 
 export function BlogPostCard({ post }: { post: BlogPost }) {
   return (
@@ -14,7 +15,7 @@ export function BlogPostCard({ post }: { post: BlogPost }) {
           })}
         </time>
         <span aria-hidden="true"> · </span>
-        <span>{post.author}</span>
+        <PostAuthor name={post.author} />
       </p>
 
       <h2 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">

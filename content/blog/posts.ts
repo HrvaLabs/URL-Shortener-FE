@@ -8,6 +8,10 @@ export interface BlogPost {
   content: string
 }
 
+export const authorUrls: Record<string, string> = {
+  "Karlo Hrvačić": "https://karlo.cc",
+}
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "how-hrva-cc-stops-phishing-links",

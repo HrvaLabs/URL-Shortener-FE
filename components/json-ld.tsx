@@ -25,7 +25,8 @@ export function JsonLd() {
         },
         author: {
           "@type": "Person",
-          name: "hrva.cc",
+          name: "Karlo Hrvačić",
+          url: "https://karlo.cc",
         },
       },
       {

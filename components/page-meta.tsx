@@ -40,7 +40,7 @@ export function PageMeta({ title, description, ogTitle, ogDescription }: PageMet
     return () => {
       // cleanup is automatic — next page mount will overwrite
     }
-  }, [title, description, ogTitle, ogDescription])
+  })
 
   return null
 }

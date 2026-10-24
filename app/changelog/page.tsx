@@ -128,7 +128,7 @@ export default function ChangelogPage() {
 
             {data && (
               <div className="mt-10 space-y-1 text-xs text-muted-foreground">
-                <p className="font-mono">150 tests · {data.releases.length} releases · 1 URL shortener</p>
+                <p className="font-mono">{data.releases.length} releases · 1 URL shortener</p>
                 <p>hrva.cc — &#x1F648; shaped by you.</p>
               </div>
             )}

@@ -22,7 +22,6 @@ export const metadata: Metadata = {
 }
 
 const accountUrl = "https://hrva.cc/mcp"
-const anonymousUrl = "https://hrva.cc/mcp/anon"
 
 const claudeCodeCommand = `claude mcp add --transport http hrva ${accountUrl}`
 const cursorConfig = JSON.stringify({ mcpServers: { hrva: { url: accountUrl } } }, null, 2)
@@ -33,11 +32,6 @@ const endpoints = [
     name: "Your account",
     url: accountUrl,
     description: "You sign in with your hrva.cc account. Links go into it, and your assistant can list them and read their visits.",
-  },
-  {
-    name: "Anonymous",
-    url: anonymousUrl,
-    description: "No account needed. It can only shorten URLs, up to 10 links per minute per network.",
   },
 ]
 
@@ -60,16 +54,6 @@ const toolGroups = [
         name: "link_stats",
         description:
           "Shows a link's clicks, daily unique visitors and bot clicks for the last 7, 30, 90 or 365 days, with its top referrers, countries and devices.",
-      },
-    ],
-  },
-  {
-    name: "Anonymous",
-    url: anonymousUrl,
-    tools: [
-      {
-        name: "shorten_url",
-        description: "Shortens a URL without an account. URL only, up to 10 links per minute per network.",
       },
     ],
   },

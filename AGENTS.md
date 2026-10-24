@@ -204,6 +204,9 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 
 ---
 
+## Changelog
+Every user-facing change here also needs an entry in the public changelog, which lives in the backend repo: `url-shortener/src/main/resources/changelog.json` (rendered by `/changelog` via `GET /api/changelog`) and `url-shortener/CHANGELOG.md`. Ship the entry with the backend push for the same change. See the backend AGENTS.md "Changelog" section.
+
 ## Gotchas
 
 - **No `.env` files** — API base URL is hardcoded in `lib/utils.ts` and switches on `NODE_ENV`

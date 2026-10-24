@@ -67,7 +67,7 @@ lib/          — Shared logic
   auth-context.tsx — Auth state (React context)
   types.ts        — All TypeScript interfaces
   labels.ts       — Display labels for URL-check outcomes (`outcomeLabels`, `outcomeVariants`) and block reasons (`blockReasonLabels`)
-  analytics.ts    — Analytics ranges (`ANALYTICS_RANGES`, `rangeLabels`, `parseAnalyticsRange`), `parseLinkId`, `analyticsHref({ link, days })`, `ANALYTICS_HISTORY_START`, `analyticsDay()` (a `yyyy-MM-dd` day at local midnight), breakdown labels (`breakdownLabel`) and `countryFlag`
+  analytics.ts    — Analytics ranges (`ANALYTICS_RANGES`, `rangeLabels`, `parseAnalyticsRange`), `parseLinkId`, `analyticsHref({ link, days })`, `ANALYTICS_HISTORY_START`, `analyticsDay()` (a `yyyy-MM-dd` day at local midnight), `parseServerDateTime()` (a backend date-time with no offset read as UTC), breakdown labels (`breakdownLabel`) and `countryFlag`
   hooks/          — TanStack React Query hooks (useUrls, useApiKeys, useUsers, useReviewCount, useAnalytics)
   utils.ts        — cn(), formatDate(), formatTimeAgo() ("3 hours ago", "—" for null), getApiBaseUrl(), etc.
 ```
@@ -211,6 +211,7 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 - **Auth token is stored with its `Bearer ` prefix** — `request()` adds nothing, so a token injected into `auth-token` by hand must include it
 - **No middleware-based route protection** — dashboard/admin check auth in a client `useEffect`, creating a flash of unauthenticated content
 - **`@/*` maps to root** — unlike the common Next.js pattern of mapping to `src/*`
+- **Backend date-times are UTC with no offset** (`LocalDateTime`, e.g. `2026-10-24T09:15:00`), which `new Date()` reads as local time. The analytics views parse them with `parseServerDateTime()` first; the other screens still pass the raw string to `formatDate()` and friends
 - **pnpm/npm**: lockfile is `package-lock.json` (npm), not pnpm
 - **Changelog page** at `/changelog` is a client component — fetches changelog JSON from backend `/api/changelog`
 - **Easter eggs**: Konami code (↑↑↓↓←→←→BA) on landing page, `/fortune`, `/egg`, console message hint

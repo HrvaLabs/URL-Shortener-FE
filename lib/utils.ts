@@ -56,7 +56,7 @@ const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ]
 
-export function formatTimeAgo(date: string | null): string {
+export function formatTimeAgo(date: string | Date | null): string {
   if (!date) return "—"
   const seconds = Math.max(0, (Date.now() - new Date(date).getTime()) / 1000)
   for (const [unit, unitSeconds] of relativeUnits) {

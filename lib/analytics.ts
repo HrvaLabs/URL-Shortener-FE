@@ -36,6 +36,13 @@ export function analyticsDay(date: string): Date {
   return new Date(`${date}T00:00:00`)
 }
 
+const dateTimeWithoutOffset = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/
+
+/** A backend date-time; one without an offset or `Z` is UTC, the server's time zone. */
+export function parseServerDateTime(value: string): Date {
+  return new Date(dateTimeWithoutOffset.test(value) ? `${value}Z` : value)
+}
+
 const fixedLabels: Record<Exclude<BreakdownDimension, "countries" | "referrers">, Record<string, string>> = {
   devices: { mobile: "Mobile", tablet: "Tablet", desktop: "Desktop", unknown: "Unknown" },
   browsers: {

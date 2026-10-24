@@ -11,7 +11,7 @@ import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ApiError } from "@/lib/api-client"
-import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, rangeLabels } from "@/lib/analytics"
+import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime, rangeLabels } from "@/lib/analytics"
 import { useUrlAnalytics } from "@/lib/hooks/useAnalytics"
 import type { AnalyticsRange, UrlAnalytics } from "@/lib/types"
 import { cn, formatDate, formatDateTime, formatShortUrl, formatTimeAgo } from "@/lib/utils"
@@ -65,6 +65,8 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
   const { link, totals, daily, breakdowns } = data
   const empty = totals.clicks + totals.botClicks === 0
   const historyStart = formatDate(analyticsDay(ANALYTICS_HISTORY_START))
+  const createDate = link.createDate ? parseServerDateTime(link.createDate) : null
+  const lastAccessed = link.lastAccessed ? parseServerDateTime(link.lastAccessed) : null
 
   return (
     <>
@@ -83,12 +85,12 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
         <dl className="flex flex-wrap gap-x-10 gap-y-4 text-sm">
           <div>
             <dt className="text-xs text-muted-foreground">Created</dt>
-            <dd className="mt-0.5 font-medium tabular-nums">{formatDate(link.createDate)}</dd>
+            <dd className="mt-0.5 font-medium tabular-nums">{formatDate(createDate)}</dd>
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Last visit</dt>
-            <dd className="mt-0.5 font-medium tabular-nums" title={link.lastAccessed ? formatDateTime(link.lastAccessed) : undefined}>
-              {formatTimeAgo(link.lastAccessed ?? null)}
+            <dd className="mt-0.5 font-medium tabular-nums" title={lastAccessed ? formatDateTime(lastAccessed) : undefined}>
+              {formatTimeAgo(lastAccessed)}
             </dd>
           </div>
           <div className="max-w-sm">

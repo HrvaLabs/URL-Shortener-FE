@@ -10,6 +10,7 @@ interface ClicksChartProps {
   daily: AnalyticsDay[]
   days: AnalyticsRange
   uniqueVisitorsLabel?: string
+  showUniqueVisitors?: boolean
   showBots?: boolean
   bucketed?: boolean
 }
@@ -33,11 +34,24 @@ const botStroke = "hsl(var(--muted-foreground))"
 
 const inProgressSeries: Series = { key: "clicks", label: "", stroke: "hsl(var(--muted-foreground))", dash: "5 4" }
 
-const chartSeries = (uniqueVisitorsLabel: string, showBots: boolean): Series[] => [
-  { key: "clicks", label: "Clicks", stroke: "hsl(var(--brand))", dash: undefined },
-  { key: "uniqueVisitors", label: uniqueVisitorsLabel, stroke: "hsl(var(--brand) / 0.5)", dash: "4 3" },
+const clicksSeries: Series = { key: "clicks", label: "Clicks", stroke: "hsl(var(--brand))", dash: undefined }
+
+const uniqueVisitorsSeries = (label: string): Series => ({ key: "uniqueVisitors", label, stroke: "hsl(var(--brand) / 0.5)", dash: "4 3" })
+
+const chartSeries = (uniqueVisitorsLabel: string, showUniqueVisitors: boolean, showBots: boolean): Series[] => [
+  clicksSeries,
+  ...(showUniqueVisitors ? [uniqueVisitorsSeries(uniqueVisitorsLabel)] : []),
   ...(showBots ? [{ key: "botClicks", label: "Bot clicks", stroke: botStroke, dash: undefined } as const] : []),
 ]
+
+const totalsSummary = (daily: AnalyticsDay[], uniqueVisitorsLabel: string, showUniqueVisitors: boolean, showBots: boolean) => {
+  const total = (key: SeriesKey) => daily.reduce((sum, day) => sum + day[key], 0).toLocaleString()
+  return [
+    `${total("clicks")} clicks`,
+    ...(showUniqueVisitors ? [`${total("uniqueVisitors")} ${uniqueVisitorsLabel.toLowerCase()}`] : []),
+    ...(showBots ? [`${total("botClicks")} bot clicks`] : []),
+  ].join(", ")
+}
 
 const tickStep: Record<AnalyticsRange, number> = { 7: 1, 30: 7, 90: 15, 365: 61 }
 
@@ -50,14 +64,29 @@ export const axisTick = { fontSize: 11, fill: "hsl(var(--muted-foreground))" }
 
 export const formatTick = (date: string) => analyticsDay(date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
 
-export function ClicksChart({ daily, days, uniqueVisitorsLabel = "Daily unique visitors", showBots = false, bucketed = false }: ClicksChartProps) {
-  if (bucketed) return <BucketedClicksChart daily={daily} days={days} uniqueVisitorsLabel={uniqueVisitorsLabel} showBots={showBots} />
-  const series = chartSeries(uniqueVisitorsLabel, showBots)
+export function ClicksChart({
+  daily,
+  days,
+  uniqueVisitorsLabel = "Daily unique visitors",
+  showUniqueVisitors = true,
+  showBots = false,
+  bucketed = false,
+}: ClicksChartProps) {
+  if (bucketed) {
+    return (
+      <BucketedClicksChart
+        daily={daily}
+        days={days}
+        uniqueVisitorsLabel={uniqueVisitorsLabel}
+        showUniqueVisitors={showUniqueVisitors}
+        showBots={showBots}
+      />
+    )
+  }
+  const series = chartSeries(uniqueVisitorsLabel, showUniqueVisitors, showBots)
+  const visitors = uniqueVisitorsSeries(uniqueVisitorsLabel)
   const ticks = dailyTicks(daily.map((day) => day.date), days)
-  const clicks = daily.reduce((sum, day) => sum + day.clicks, 0)
-  const uniqueVisitors = daily.reduce((sum, day) => sum + day.uniqueVisitors, 0)
-  const botClicks = daily.reduce((sum, day) => sum + day.botClicks, 0)
-  const summary = `Clicks per day for the last ${rangeLabels[days]}: ${clicks.toLocaleString()} clicks, ${uniqueVisitors.toLocaleString()} ${uniqueVisitorsLabel.toLowerCase()}${showBots ? `, ${botClicks.toLocaleString()} bot clicks` : ""}`
+  const summary = `Clicks per day for the last ${rangeLabels[days]}: ${totalsSummary(daily, uniqueVisitorsLabel, showUniqueVisitors, showBots)}`
 
   return (
     <div className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -101,12 +130,12 @@ export function ClicksChart({ daily, days, uniqueVisitorsLabel = "Daily unique v
               type="monotone"
               dataKey="clicks"
               name="Clicks"
-              stroke={series[0].stroke}
+              stroke={clicksSeries.stroke}
               strokeWidth={2}
               fill="hsl(var(--brand))"
               fillOpacity={0.1}
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: series[0].stroke }}
+              activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: clicksSeries.stroke }}
               isAnimationActive={false}
             />
             {showBots && (
@@ -121,17 +150,19 @@ export function ClicksChart({ daily, days, uniqueVisitorsLabel = "Daily unique v
                 isAnimationActive={false}
               />
             )}
-            <Line
-              type="monotone"
-              dataKey="uniqueVisitors"
-              name={uniqueVisitorsLabel}
-              stroke={series[1].stroke}
-              strokeWidth={2}
-              strokeDasharray={series[1].dash}
-              dot={false}
-              activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: "hsl(var(--brand))" }}
-              isAnimationActive={false}
-            />
+            {showUniqueVisitors && (
+              <Line
+                type="monotone"
+                dataKey="uniqueVisitors"
+                name={uniqueVisitorsLabel}
+                stroke={visitors.stroke}
+                strokeWidth={2}
+                strokeDasharray={visitors.dash}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: "hsl(var(--brand))" }}
+                isAnimationActive={false}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -179,17 +210,14 @@ function withPartialSegments(rows: (AnalyticsDay & BucketMeta)[], keys: SeriesKe
   })
 }
 
-function BucketedClicksChart({ daily, days, uniqueVisitorsLabel, showBots }: Required<Omit<ClicksChartProps, "bucketed">>) {
-  const series = chartSeries(uniqueVisitorsLabel, showBots)
+function BucketedClicksChart({ daily, days, uniqueVisitorsLabel, showUniqueVisitors, showBots }: Required<Omit<ClicksChartProps, "bucketed">>) {
+  const series = chartSeries(uniqueVisitorsLabel, showUniqueVisitors, showBots)
   const size = bucketSizeFor(days)
   const rows = withPartialSegments(bucketRows(daily, size), series.map((entry) => entry.key))
   const ticks = bucketTicks(rows.map((row) => row.date), size)
   const tickLabels = new Map(rows.map((row) => [row.date, row.tickLabel]))
-  const clicks = daily.reduce((sum, day) => sum + day.clicks, 0)
-  const uniqueVisitors = daily.reduce((sum, day) => sum + day.uniqueVisitors, 0)
-  const botClicks = daily.reduce((sum, day) => sum + day.botClicks, 0)
   const per = size === "day" ? "day" : size
-  const summary = `Clicks per ${per} for the last ${rangeLabels[days]}: ${clicks.toLocaleString()} clicks, ${uniqueVisitors.toLocaleString()} ${uniqueVisitorsLabel.toLowerCase()}${showBots ? `, ${botClicks.toLocaleString()} bot clicks` : ""}. The last ${per} is still in progress.`
+  const summary = `Clicks per ${per} for the last ${rangeLabels[days]}: ${totalsSummary(daily, uniqueVisitorsLabel, showUniqueVisitors, showBots)}. The last ${per} is still in progress.`
   const activeDot = (fill: string) => ({ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill })
   const lines = series.filter((entry) => entry.key !== "botClicks" || showBots)
 
@@ -242,13 +270,13 @@ function BucketedClicksChart({ daily, days, uniqueVisitorsLabel, showBots }: Req
                 type="monotone"
                 dataKey={`clicks${part}`}
                 name={part === "Settled" ? "Clicks" : "Clicks, in progress"}
-                stroke={series[0].stroke}
+                stroke={clicksSeries.stroke}
                 strokeWidth={2}
                 strokeDasharray={part === "Settled" ? undefined : partialDash.clicks}
                 fill="hsl(var(--brand))"
                 fillOpacity={part === "Settled" ? 0.1 : 0.05}
                 dot={false}
-                activeDot={activeDot(series[0].stroke)}
+                activeDot={activeDot(clicksSeries.stroke)}
                 isAnimationActive={false}
               />
             ))}

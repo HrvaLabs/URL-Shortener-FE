@@ -803,3 +803,17 @@ export interface LinkReport {
   category: ReportCategory
   details?: string
 }
+
+export interface PublicStatsResponse {
+  from: string
+  to: string
+  activeLinks: number
+  linksCreated: number
+  clicks: number
+  daily: { date: string; clicks: number }[]
+  blocked: { allTime: number; last30Days: number }
+  visitorReportsHandled: number
+  averageReviewMinutes: number | null
+  blocklists: { name: string; action: "BLOCK" | "FLAG"; entries: number }[]
+  updatedAt: string
+}

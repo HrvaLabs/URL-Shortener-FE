@@ -8,6 +8,7 @@ const columns = [
       { href: "/#features", label: "Features" },
       { href: "/validate", label: "Check a link" },
       { href: "/changelog", label: "Changelog" },
+      { href: "/stats", label: "hrva.cc in numbers" },
       { href: "https://status.hrva.cc/status/url", label: "Status", external: true },
     ],
   },

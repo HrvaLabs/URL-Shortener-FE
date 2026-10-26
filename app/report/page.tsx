@@ -1,6 +1,7 @@
 "use client"
 
 import { Suspense, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import { useSearchParams } from "next/navigation"
 import { ApiError, REQUEST_FAILED, reportApi } from "@/lib/api-client"
 import { handleFormatError, normalizeHandle } from "@/lib/bio"
@@ -14,7 +15,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { cn, getShortBaseUrl } from "@/lib/utils"
 
 const DETAILS_LIMIT = 500
-const SHORT_CODE = /^[a-zA-Z0-9_-]+$/
+const SHORT_CODE = /^[a-zA-Z0-9_-]{1,32}$/
 const SEND_FAILED = "Couldn't send the report. Try again, or email abuse@hrva.cc."
 const SCHEME = /^https?:\/\//i
 const SHORT_HOST = getShortBaseUrl().replace(SCHEME, "").replace(/\/+$/, "").toLowerCase()
@@ -82,15 +83,17 @@ function ReportForm({ initialShort }: { initialShort: string }) {
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState<ReportStatus>({ kind: "idle" })
   const linkInput = useRef<HTMLInputElement>(null)
+  const submitting = useRef(false)
   const typedBioPage = toReportTarget(shortLink)?.kind === "bio"
 
   const refuseLink = (message: string) => {
-    setLinkError(message)
+    flushSync(() => setLinkError(message))
     linkInput.current?.focus()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submitting.current) return
     const target = toReportTarget(shortLink)
     if (!target) {
       refuseLink(TARGET_INVALID)
@@ -98,6 +101,7 @@ function ReportForm({ initialShort }: { initialShort: string }) {
     }
     if (!category) return
     const shortUrl = target.kind === "bio" ? `@${target.handle}` : target.code
+    submitting.current = true
     setLinkError(null)
     setStatus({ kind: "idle" })
     setSending(true)
@@ -109,9 +113,10 @@ function ReportForm({ initialShort }: { initialShort: string }) {
       setStatus({ kind: "sent" })
     } catch (error) {
       const refused = error instanceof ApiError && error.status === 400 ? refusedMessage(error) : null
-      if (refused?.startsWith("Enter a hrva.cc")) refuseLink(refused)
+      if (refused?.startsWith("Enter a hrva.cc")) refuseLink(TARGET_INVALID)
       else setStatus({ kind: "failed", message: failureMessage(error) })
     } finally {
+      submitting.current = false
       setSending(false)
     }
   }
@@ -193,7 +198,12 @@ function ReportForm({ initialShort }: { initialShort: string }) {
         </div>
 
         <div>
-          <Button type="submit" disabled={sending} className="w-full sm:w-auto">
+          <Button
+            type="submit"
+            aria-disabled={sending}
+            aria-busy={sending}
+            className="w-full aria-disabled:pointer-events-none aria-disabled:opacity-50 sm:w-auto"
+          >
             {sending ? "Sending…" : "Send"}
           </Button>
           <div aria-live="polite">

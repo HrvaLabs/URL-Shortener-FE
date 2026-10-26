@@ -9,8 +9,11 @@ export function useReviewCount() {
   return useQuery({
     queryKey: ["admin", "review", "count"],
     queryFn: async () => {
-      const [links, bioPages] = await Promise.all([adminApi.getReviewQueue({ size: 1 }), adminBioApi.reviews(0, 1)])
-      return links.totalElements + bioPages.totalElements
+      const [links, bioPages] = await Promise.allSettled([adminApi.getReviewQueue({ size: 1 }), adminBioApi.reviews(0, 1)])
+      if (links.status === "rejected" && bioPages.status === "rejected") throw links.reason
+      const linkCount = links.status === "fulfilled" ? links.value.totalElements : 0
+      const bioPageCount = bioPages.status === "fulfilled" ? bioPages.value.totalElements : 0
+      return linkCount + bioPageCount
     },
     enabled: isAdmin,
     refetchInterval: 60_000,

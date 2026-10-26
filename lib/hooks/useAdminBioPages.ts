@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { adminBioApi } from "@/lib/api-client"
+import { BIO_PAGE_KEY } from "@/lib/hooks/useBioPage"
 import type { BioPageReviewAction } from "@/lib/types"
 
 export interface AdminBioPageFilters {
@@ -29,7 +30,9 @@ function useRefreshBioAdmin(extraKeys: readonly (readonly string[])[] = []) {
   const queryClient = useQueryClient()
   return () =>
     Promise.all(
-      [["admin", "bio-pages"], ["admin", "review"], ...extraKeys].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+      [["admin", "bio-pages"], ["admin", "review"], BIO_PAGE_KEY, ["admin", "stats"], ...extraKeys].map((queryKey) =>
+        queryClient.invalidateQueries({ queryKey }),
+      ),
     )
 }
 

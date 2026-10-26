@@ -1,3 +1,4 @@
+import { parseServerDateTime } from "./analytics"
 import type { BioAccent, BioAvatarKind, BioIcon, BioLinkState, BioPage, BioPageButton, BioPageButtonInput, BioPageUpdate, BioTheme, UrlResponse } from "./types"
 
 export const BIO_LIMITS = { handleMin: 3, handleMax: 30, displayName: 50, bio: 160, buttonTitle: 60, buttons: 30 } as const
@@ -279,7 +280,7 @@ export const rebaseSavedBioDraft = (draft: BioDraft, sent: BioDraft, saved: BioP
   rebaseDraftOn(draft, sent, bioDraftOf(saved))
 
 export const isOlderBioPage = (page: Pick<BioPage, "updatedAt">, than: Pick<BioPage, "updatedAt">): boolean =>
-  Date.parse(page.updatedAt) < Date.parse(than.updatedAt)
+  parseServerDateTime(page.updatedAt).getTime() < parseServerDateTime(than.updatedAt).getTime()
 
 export type BioProfileField = "displayName" | "bio" | "avatarEmoji"
 

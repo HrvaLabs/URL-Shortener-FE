@@ -274,14 +274,15 @@ function ReviewQueue() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin — Review queue" description="Flagged links waiting for a decision on hrva.cc." />
+      <PageMeta title="Admin — Review queue" description="Flagged links and bio pages waiting for a decision on hrva.cc." />
       <div>
         <h1 ref={headingRef} tabIndex={-1} className="rounded-sm font-display text-2xl">Review queue</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Flagged links waiting for your decision</p>
+        <p className="mt-1 text-sm text-muted-foreground">Flagged links and bio pages waiting for your decision</p>
       </div>
 
       <BioPageReviewSection fallbackFocusRef={headingRef} />
 
+      <h2 className="text-sm font-semibold">Links</h2>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Reason

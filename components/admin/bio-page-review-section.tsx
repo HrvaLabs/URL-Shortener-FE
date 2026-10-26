@@ -23,10 +23,14 @@ const DEFAULT_SIZE = 20
 
 const NOT_IN_QUEUE = "This bio page is no longer in the review queue."
 
+const NOTHING_WAITING = "No bio pages are waiting."
+
 const rowButton = "h-8 px-2.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
 const entryName = (entry: Pick<BioPageReviewEntry, "pageId" | "handle" | "displayName">) =>
   entry.handle ? `@${entry.handle}` : entry.displayName || `bio page ${entry.pageId}`
+
+const openedAtSection = () => typeof window !== "undefined" && window.location.hash === `#${SECTION_ID}`
 
 interface HideTarget {
   entry: BioPageReviewEntry
@@ -64,6 +68,8 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const loadFailed = !!error && !data
   const showTable = entries.length > 0 || loadFailed
   const notInQueue = bioId != null && !!data && !error && !entryShown
+  const [linkedHere] = useState(openedAtSection)
+  const nothingWaiting = linkedHere && bioId == null && !!data && !error && entries.length === 0
 
   useEffect(() => {
     if (!restoreAfterRefetch.current || !settled) return
@@ -78,14 +84,14 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   }, [entryShown, bioId])
 
   useEffect(() => {
-    if (window.location.hash === `#${SECTION_ID}`) scrollToSection.current = true
+    if (openedAtSection()) scrollToSection.current = true
   }, [])
 
   useEffect(() => {
-    if (!scrollToSection.current || bioId != null || entries.length === 0) return
+    if (!scrollToSection.current || bioId != null || (entries.length === 0 && !nothingWaiting)) return
     scrollToSection.current = false
     sectionRef.current?.scrollIntoView({ block: "start" })
-  }, [bioId, entries.length])
+  }, [bioId, entries.length, nothingWaiting])
 
   const setBusy = (pageId: number, busy: boolean) => {
     if (busy) pendingIds.current.add(pageId)
@@ -138,7 +144,9 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   }
 
   return (
-    <div id={SECTION_ID} ref={sectionRef} className={cn("scroll-mt-20 space-y-3", !showTable && !notInQueue && "hidden")}>
+    <div id={SECTION_ID} ref={sectionRef} className={cn("scroll-mt-20 space-y-3", !showTable && !notInQueue && !nothingWaiting && "hidden")}>
+      {nothingWaiting && <p className="text-sm text-muted-foreground">{NOTHING_WAITING}</p>}
+
       {notInQueue && (
         <p className="text-sm text-muted-foreground">
           {data && data.totalPages > 1 ? "This bio page is no longer in the review queue or is on another page." : NOT_IN_QUEUE}
@@ -265,7 +273,9 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
         open={hideOpen}
         onOpenChange={(open) => { if (!open) setHideOpen(false) }}
         onConfirm={confirmHide}
-        onCloseAutoFocus={(event) => removalFocus.onCloseAutoFocus(event, hideTarget?.trigger)}
+        onCloseAutoFocus={(event) =>
+          removalFocus.onCloseAutoFocus(event, hideTarget?.trigger?.isConnected ? hideTarget.trigger : firstRemaining())
+        }
       />
     </div>
   )

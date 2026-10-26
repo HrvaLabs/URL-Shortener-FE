@@ -166,10 +166,10 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   useRoomForSaveBar(dirty)
 
   useLayoutEffect(() => {
-    const hasHandle = page.handle !== null
+    const hasHandle = synced.handle !== null
     if (!hadHandle.current && hasHandle) handleTitleRef.current?.focus()
     hadHandle.current = hasHandle
-  }, [page.handle])
+  }, [synced.handle])
 
   const change = (patch: Partial<BioDraft>) => {
     setDraft((current) => ({ ...current, ...patch }))
@@ -269,7 +269,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
 
   const sections = (
     <div className="space-y-6" onFocusCapture={rememberFocus}>
-      <ShareBar handle={page.handle} />
+      <ShareBar handle={synced.handle} />
 
       <Section title="Profile">
         <ProfileFields idPrefix={idPrefix} draft={draft} errors={fieldErrors} onChange={change} />
@@ -304,24 +304,24 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
         </div>
       </Section>
 
-      {page.handle !== null && (
+      {synced.handle !== null && (
         <Section title="Handle" titleRef={handleTitleRef}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="min-w-0 font-mono text-sm font-medium [overflow-wrap:anywhere]">@{page.handle}</p>
-            <ChangeHandleDialog handle={page.handle} />
+            <p className="min-w-0 font-mono text-sm font-medium [overflow-wrap:anywhere]">@{synced.handle}</p>
+            <ChangeHandleDialog handle={synced.handle} />
           </div>
         </Section>
       )}
 
-      <DeleteBioPage handle={page.handle} hidden={page.hidden} />
+      <DeleteBioPage handle={synced.handle} hidden={synced.hidden} />
     </div>
   )
 
-  const preview = <PhonePreview draft={draft} handle={page.handle} />
+  const preview = <PhonePreview draft={draft} handle={synced.handle} />
 
   return (
     <div className="space-y-6">
-      <Banners page={page} />
+      <Banners page={synced} />
       {largeScreen ? (
         <div className="grid grid-cols-[minmax(0,1fr)_22rem] items-start gap-8">
           {sections}

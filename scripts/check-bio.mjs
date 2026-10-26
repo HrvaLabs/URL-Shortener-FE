@@ -1,5 +1,7 @@
 import assert from "node:assert/strict"
-import {
+import "./resolve-ts-imports.mjs"
+
+const {
   AVATAR_EMOJI_REQUIRED,
   BIO_ACCENTS,
   BIO_ICON_LABELS,
@@ -38,7 +40,7 @@ import {
   destinationHostOf,
   linkStateLabel,
   newBioButton,
-} from "../lib/bio.ts"
+} = await import("../lib/bio.ts")
 
 const check = (name, run) => {
   try {
@@ -503,6 +505,18 @@ check("isOlderBioPage spots a page from before the one on screen, so a late read
   assert.equal(isOlderBioPage(saved, before), false)
   assert.equal(isOlderBioPage(saved, samplePage({ updatedAt: "2026-10-26T10:05:00.5" })), false)
   assert.equal(isOlderBioPage(samplePage({ updatedAt: "not a date" }), saved), false)
+
+  const viewerZone = process.env.TZ
+  process.env.TZ = "Europe/Zagreb"
+  try {
+    const beforeTheGap = samplePage({ updatedAt: "2026-03-29T02:30:00" })
+    const afterTheGap = samplePage({ updatedAt: "2026-03-29T03:00:00" })
+    assert.equal(isOlderBioPage(beforeTheGap, afterTheGap), true, "server times are UTC, so a viewer's DST gap doesn't reorder them")
+    assert.equal(isOlderBioPage(afterTheGap, beforeTheGap), false)
+  } finally {
+    if (viewerZone === undefined) delete process.env.TZ
+    else process.env.TZ = viewerZone
+  }
 
   const sent = { ...bioDraftOf(before), displayName: "Ana X" }
   const savedPage = samplePage({ displayName: "Ana X", updatedAt: "2026-10-26T10:05:00.5" })

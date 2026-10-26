@@ -200,7 +200,7 @@ export function BioPagesTable() {
 
       {isLoading ? (
         <BioPagesLoading />
-      ) : error && !data ? (
+      ) : error ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load bio pages</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>

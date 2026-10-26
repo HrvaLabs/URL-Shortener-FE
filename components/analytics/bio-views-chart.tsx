@@ -49,6 +49,11 @@ export function BioViewsChart({ daily, days }: BioViewsChartProps) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <ul aria-label="Views per day" className="sr-only">
+        {daily.map((day) => (
+          <li key={day.date}>{`${formatDate(analyticsDay(day.date))}: ${plural(day.views, "view")}`}</li>
+        ))}
+      </ul>
     </div>
   )
 }

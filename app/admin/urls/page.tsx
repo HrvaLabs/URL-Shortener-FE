@@ -22,7 +22,7 @@ import { cn, destinationLengthError, formatDateTime, getShortBaseUrl, plural } f
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
-import { destinationToSend, hasUtm, readUtm, rememberUtm, type UtmValues } from "@/lib/utm"
+import { CANT_TAKE_UTM, destinationToSend, hasUtm, readUtm, rememberUtm, tooLongMessage, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
@@ -170,11 +170,12 @@ export default function AdminUrlsPage() {
     setEditTags(url.tags?.join(", ") || "")
     setEditPassword("")
     setRemovePassword(false)
-    setEditUtm(readUtm(url.longUrl))
-    setEditUtmOpen(hasUtm(url.longUrl))
+    setEditUtm(readUtm(withScheme(url.longUrl)))
+    setEditUtmOpen(hasUtm(withScheme(url.longUrl)))
   }
 
-  const handleEditSave = async () => {
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!editUrl) return
     const typed = editLongUrl.trim()
     if (!typed) {
@@ -184,22 +185,27 @@ export default function AdminUrlsPage() {
     if (editLongUrlError) return
     const longUrl = destinationToSend(typed, editUtmOpen, editUtm)
     if (longUrl === null) {
-      toast.error("Add a valid destination first")
+      toast.error(`${CANT_TAKE_UTM} Collapse Campaign tracking (UTM) to save it as typed.`)
       return
     }
+    if (tooLongWithUtm(typed, longUrl)) {
+      toast.error(tooLongMessage("destination"))
+      return
+    }
+    const destinationChanged = longUrl !== editUrl.longUrl
     try {
       await updateUrl.mutateAsync({
         id: editUrl.id,
         data: {
           id: editUrl.id,
-          longUrl: longUrl !== editUrl.longUrl ? longUrl : undefined,
+          longUrl: destinationChanged ? longUrl : undefined,
           visitLimit: editVisitLimit ? parseInt(editVisitLimit) : 0,
           expirationDate: editExpiration ? new Date(editExpiration).toISOString() : undefined,
           tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
           password: removePassword ? "" : (editPassword || undefined),
         },
       })
-      if (editUtmOpen) rememberUtm(editUtm)
+      if (editUtmOpen && destinationChanged) rememberUtm(editUtm)
       toast.success("URL updated")
       setEditUrl(null)
     } catch (err) {
@@ -508,7 +514,7 @@ export default function AdminUrlsPage() {
             <DialogTitle>Edit URL — /{editUrl?.shortUrl}</DialogTitle>
           </DialogHeader>
           {editUrl && (
-            <div className="space-y-4">
+            <form onSubmit={handleEditSave} noValidate className="space-y-4">
               <div>
                 <label htmlFor={`${editId}-long-url`} className="text-sm font-medium">Destination URL</label>
                 <Input
@@ -525,7 +531,7 @@ export default function AdminUrlsPage() {
                 />
                 {editLongUrlError && <p id={`${editId}-long-url-error`} className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
               </div>
-              <UtmFields destination={editLongUrl} value={editUtm} onChange={setEditUtm} open={editUtmOpen} onOpenChange={setEditUtmOpen} />
+              <UtmFields destination={editLongUrl} value={editUtm} onChange={setEditUtm} open={editUtmOpen} onOpenChange={setEditUtmOpen} variant="admin" />
               <div>
                 <label htmlFor={`${editId}-visit-limit`} className="text-sm font-medium">Visit limit</label>
                 <Input
@@ -551,7 +557,7 @@ export default function AdminUrlsPage() {
                 <label htmlFor={`${editId}-tags`} className="text-sm font-medium">Tags (comma-separated)</label>
                 <Input
                   id={`${editId}-tags`}
-                  placeholder="work, campaign"
+                  placeholder="work, personal"
                   value={editTags}
                   onChange={(e) => setEditTags(e.target.value)}
                   className="mt-2"
@@ -578,10 +584,10 @@ export default function AdminUrlsPage() {
                   </label>
                 )}
               </div>
-              <Button onClick={handleEditSave} disabled={updateUrl.isPending} className="w-full">
+              <Button type="submit" disabled={updateUrl.isPending} className="w-full">
                 {updateUrl.isPending ? "Saving..." : "Save changes"}
               </Button>
-            </div>
+            </form>
           )}
         </DialogContent>
       </Dialog>

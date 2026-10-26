@@ -77,15 +77,3 @@ export function useDeleteUrl() {
     },
   })
 }
-
-export function useLinkDestination(id: number, shortUrl: string, admin: boolean) {
-  return useQuery({
-    queryKey: ["urls", "destination", id, admin],
-    queryFn: async () => {
-      const filters: UrlFilters = { search: shortUrl }
-      const page = admin ? await urlApi.getAllUrls(filters, 0, 100) : await urlApi.getMyUrls(filters, 0, 100)
-      return page.content.find((url) => url.id === id)?.longUrl ?? null
-    },
-    retry: false,
-  })
-}

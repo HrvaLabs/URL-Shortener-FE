@@ -95,9 +95,9 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
             {searchLoading && <Skeleton className="mt-4 h-12 w-full rounded-xl" />}
             {searchError && <p className="mt-4 text-sm text-destructive">{searchError}</p>}
             {searchResult && (
-              <div className="animate-result-in mt-4 flex items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
+              <div className="animate-result-in mt-4 flex items-start gap-3 rounded-xl border bg-card px-4 py-3 text-sm">
                 <span className="shrink-0 font-mono font-medium text-brand">/{searchResult.shortUrl}</span>
-                <span className="min-w-0 truncate font-mono text-muted-foreground">{searchResult.longUrl ?? "Password protected"}</span>
+                <span className="min-w-0 break-all font-mono text-muted-foreground">{searchResult.longUrl ?? "Password protected"}</span>
               </div>
             )}
 
@@ -122,7 +122,7 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
                   <div className="flex items-center gap-3 px-5 py-4">
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-muted-foreground">Short URL</p>
-                      <p className="mt-1 truncate font-mono text-[15px] font-medium text-brand">
+                      <p className="mt-1 break-all font-mono text-[15px] font-medium text-brand">
                         {formatShortUrl(data.shortUrl).replace(/^https?:\/\//, "")}
                       </p>
                     </div>

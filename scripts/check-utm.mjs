@@ -1,13 +1,20 @@
 import assert from "node:assert/strict"
 import {
+  CANT_TAKE_UTM,
+  MAX_DESTINATION_LENGTH,
   QUICK_SOURCES,
   UTM_KEYS,
   destinationToSend,
+  followTags,
   hasUtm,
+  pickQuickSource,
   readUtm,
   recentUtm,
   rememberUtm,
+  tooLongMessage,
+  tooLongWithUtm,
   utmSignature,
+  valuesNotAdded,
   withScheme,
   withUtm,
 } from "../lib/utm.ts"
@@ -92,7 +99,7 @@ check("RF1 leaves a hash route alone", () => {
 check("RF1 trims values, skips empty ones and keeps the key order", () => {
   assert.equal(
     withUtm("https://a.example", { utm_content: " hero ", utm_term: "", utm_source: "x" }),
-    "https://a.example/?utm_source=x&utm_content=hero",
+    "https://a.example?utm_source=x&utm_content=hero",
   )
 })
 
@@ -110,7 +117,7 @@ const awkward = {
   utm_content: "a+b/c?d",
 }
 const awkwardUrl =
-  "https://a.example/?x=1&utm_source=news+letter&utm_medium=a%26b&utm_campaign=50%25%3Doff%231&utm_term=jesen+%C4%8Dokolada&utm_content=a%2Bb%2Fc%3Fd"
+  "https://a.example/?x=1&utm_source=news%20letter&utm_medium=a%26b&utm_campaign=50%25%3Doff%231&utm_term=jesen%20%C4%8Dokolada&utm_content=a%2Bb%2Fc%3Fd"
 
 check("RF2 encodes spaces, &, #, = and non-ASCII", () => {
   assert.equal(withUtm("https://a.example/?x=1", awkward), awkwardUrl)
@@ -123,8 +130,54 @@ check("RF2 every value round-trips through readUtm", () => {
   assert.deepEqual(readUtm(withUtm("https://a.example/?x=1", awkward)), awkward)
 })
 
-check("RF2 a non-ASCII destination still parses", () => {
-  assert.equal(withUtm("https://a.example/čaj?x=č", { utm_source: "x" }), "https://a.example/%C4%8Daj?x=%C4%8D&utm_source=x")
+check("RF2 a non-ASCII destination keeps its bytes", () => {
+  assert.equal(withUtm("https://a.example/čaj?x=č", { utm_source: "x" }), "https://a.example/čaj?x=č&utm_source=x")
+})
+
+check("RF2 spaces are %20 and a literal + is %2B, as in Google's Campaign URL Builder", () => {
+  assert.equal(
+    withUtm("https://a.example/", { utm_campaign: "autumn sale", utm_content: "a+b" }),
+    "https://a.example/?utm_campaign=autumn%20sale&utm_content=a%2Bb",
+  )
+  assert.deepEqual(readUtm("https://a.example/?utm_campaign=autumn%20sale&utm_content=a%2Bb"), { utm_campaign: "autumn sale", utm_content: "a+b" })
+  assert.deepEqual(readUtm("https://a.example/?utm_campaign=autumn+sale"), { utm_campaign: "autumn sale" })
+})
+
+check("BUG-02 a Croatian domain keeps its host and path byte for byte", () => {
+  assert.equal(
+    withUtm("https://čokolada.hr/košarica?x=1", { utm_source: "news letter", utm_medium: "a&b", utm_campaign: "50%#1+2", utm_term: "čokolada 🍫" }),
+    "https://čokolada.hr/košarica?x=1&utm_source=news%20letter&utm_medium=a%26b&utm_campaign=50%25%231%2B2&utm_term=%C4%8Dokolada%20%F0%9F%8D%AB",
+  )
+  assert.equal(destinationToSend("čokolada.hr/košarica", true, { utm_source: "qr" }), "https://čokolada.hr/košarica?utm_source=qr")
+})
+
+check("RF1 a key that starts with ? is not a utm key, in withUtm and readUtm alike", () => {
+  assert.equal(withUtm("https://a.example/p??utm_source=old&a=1", { utm_source: "new" }), "https://a.example/p??utm_source=old&a=1&utm_source=new")
+  assert.deepEqual(readUtm("https://a.example/p??utm_source=old&a=1"), {})
+})
+
+check("RF1 splice edge cases", () => {
+  const v = { utm_source: "new" }
+  assert.equal(withUtm("https://a.example/x#top", v), "https://a.example/x?utm_source=new#top")
+  assert.equal(withUtm("https://a.example/x?a=1&&b=2&", v), "https://a.example/x?a=1&b=2&utm_source=new")
+  assert.equal(withUtm("https://a.example/x?UTM_SOURCE=old", v), "https://a.example/x?UTM_SOURCE=old&utm_source=new")
+  assert.deepEqual(readUtm("https://a.example/x?UTM_SOURCE=old"), {})
+  assert.equal(withUtm("https://a.example/x?utm%5Fsource=old&a=1", v), "https://a.example/x?a=1&utm_source=new")
+  assert.deepEqual(readUtm("https://a.example/x?utm%5Fsource=old&a=1"), { utm_source: "old" })
+  assert.equal(withUtm("https://example.com:8080", v), "https://example.com:8080?utm_source=new")
+  assert.equal(withUtm("https://[2001:db8::1]:8443/x?a=1#f", v), "https://[2001:db8::1]:8443/x?a=1&utm_source=new#f")
+  assert.equal(withUtm("https://a.example/p?utm_source=x#frag", v), "https://a.example/p?utm_source=new#frag")
+  assert.equal(withUtm("https://a.example/p?utm_source=x#frag", {}), "https://a.example/p#frag")
+})
+
+check("BUG-02 a percent-encoded path, the other parameters and the fragment stay as typed", () => {
+  assert.equal(
+    withUtm("https://a.example/ko%C5%A1arica/moja%20lista?x=%C4%8D&q=a+b&utm_source=old#Odjeljak%201", { utm_source: "qr" }),
+    "https://a.example/ko%C5%A1arica/moja%20lista?x=%C4%8D&q=a+b&utm_source=qr#Odjeljak%201",
+  )
+  assert.equal(withUtm("HTTPS://Example.COM/Path?A=1", { utm_source: "x" }), "HTTPS://Example.COM/Path?A=1&utm_source=x")
+  assert.equal(withUtm("https://user:pw@example.com/x", { utm_source: "x" }), "https://user:pw@example.com/x?utm_source=x")
+  assert.equal(withUtm("https://a.example/x?#top", { utm_source: "x" }), "https://a.example/x?utm_source=x#top")
 })
 
 check("RF3 needs an absolute http(s) destination", () => {
@@ -198,7 +251,7 @@ check("RF5 untouched tags send the destination byte for byte", () => {
   assert.equal(destinationToSend("shop.example/?utm_source=a", true, { utm_source: "a" }), "shop.example/?utm_source=a")
   assert.equal(
     destinationToSend(pasted, true, { utm_source: "Mail Chimp", utm_campaign: "nov" }),
-    "https://a.example/landing?lang=hr&utm_source=Mail+Chimp&utm_campaign=nov",
+    "https://a.example/landing?lang=hr&utm_source=Mail%20Chimp&utm_campaign=nov",
   )
 })
 
@@ -212,6 +265,108 @@ check("admin guard: an untouched stored destination comes back unchanged", () =>
     assert.equal(destinationToSend(stored, true, readUtm(stored)), stored, stored)
     assert.equal(destinationToSend(stored, false, readUtm(stored)), stored, stored)
   }
+})
+
+check("BUG-03 the composed link may be 2048 characters, not 2049", () => {
+  assert.equal(MAX_DESTINATION_LENGTH, 2048)
+  const fits = `example.com/${"a".repeat(2014)}`
+  const fitsSent = destinationToSend(fits, true, { utm_source: "qr" })
+  assert.equal(fitsSent.length, 2048)
+  assert.equal(tooLongWithUtm(fits, fitsSent), false)
+  const over = `example.com/${"a".repeat(2015)}`
+  const overSent = destinationToSend(over, true, { utm_source: "qr" })
+  assert.equal(over.length, 2027)
+  assert.equal(overSent.length, 2049)
+  assert.equal(tooLongWithUtm(over, overSent), true)
+})
+
+check("BUG-03 only tags added by the builder trigger the message", () => {
+  const long = `https://example.com/${"a".repeat(2040)}?utm_source=qr`
+  assert.equal(tooLongWithUtm(long, destinationToSend(long, true, readUtm(long))), false)
+  assert.equal(tooLongWithUtm(long, destinationToSend(long, false, { utm_source: "x" })), false)
+  assert.equal(tooLongWithUtm("mailto:a@example.com", destinationToSend("mailto:a@example.com", true, { utm_source: "x" })), false)
+})
+
+check("BUG-03 and preview copy", () => {
+  assert.equal(
+    tooLongMessage("long URL"),
+    "With the UTM parameters added, the link is longer than 2048 characters. Shorten a value or the long URL.",
+  )
+  assert.equal(tooLongMessage("destination"), "With the UTM parameters added, the link is longer than 2048 characters. Shorten a value or the destination.")
+  assert.equal(CANT_TAKE_UTM, "This address can't take UTM parameters.")
+})
+
+const previousTags = { utm_source: "instagram", utm_medium: "social", utm_campaign: "autumn sale" }
+const pastedTagged = "https://shop.example.org/winter?utm_source=mailchimp&utm_medium=email&utm_campaign=winter-2026"
+const pastedTags = { utm_source: "mailchimp", utm_medium: "email", utm_campaign: "winter-2026" }
+
+check("BUG-01 after a create clears the fields, a pasted tagged link keeps its own tags", () => {
+  const next = followTags({}, readUtm(pastedTagged), {})
+  assert.deepEqual(next, { value: pastedTags, reveal: true })
+  assert.equal(destinationToSend(pastedTagged, true, next.value), pastedTagged)
+})
+
+check("BUG-01 a destination that brings other tags wins over the fields", () => {
+  assert.deepEqual(followTags({}, pastedTags, previousTags), { value: pastedTags, reveal: true })
+  assert.deepEqual(followTags({ utm_source: "a" }, pastedTags, { utm_source: "typed" }), { value: pastedTags, reveal: false })
+  assert.deepEqual(followTags({ utm_source: "a" }, { utm_source: "ab" }, { utm_source: "a" }), { value: { utm_source: "ab" }, reveal: false })
+})
+
+check("BUG-01 after a create of a tagged link, a paste with other tags reveals the section", () => {
+  assert.deepEqual(followTags({ utm_source: "a" }, pastedTags, {}), { value: pastedTags, reveal: true })
+})
+
+check("BUG-01 a destination that loses its tags clears mirrored fields only", () => {
+  assert.deepEqual(followTags(pastedTags, {}, pastedTags), { value: {}, reveal: false })
+  assert.equal(followTags(pastedTags, {}, previousTags), null)
+  assert.equal(followTags({}, {}, previousTags), null)
+})
+
+check("BUG-01 unchanged tags fill empty fields and leave typed ones", () => {
+  assert.deepEqual(followTags(pastedTags, pastedTags, {}), { value: pastedTags, reveal: false })
+  assert.equal(followTags(pastedTags, pastedTags, previousTags), null)
+})
+
+const instagram = QUICK_SOURCES[0]
+const newsletter = QUICK_SOURCES[5]
+
+check("BUG-05 a chip sets Source, and Medium when it is empty", () => {
+  assert.deepEqual(pickQuickSource({}, instagram, null), { value: { utm_source: "instagram", utm_medium: "social" }, chipMedium: "social" })
+  assert.deepEqual(pickQuickSource({ utm_medium: "paid" }, instagram, null), { value: { utm_source: "instagram", utm_medium: "paid" }, chipMedium: null })
+})
+
+check("BUG-05 pressing the picked chip clears Source and the Medium it set", () => {
+  assert.deepEqual(
+    pickQuickSource({ utm_source: "instagram", utm_medium: "social", utm_campaign: "sale" }, instagram, "social"),
+    { value: { utm_source: "", utm_medium: "", utm_campaign: "sale" }, chipMedium: null },
+  )
+  assert.deepEqual(
+    pickQuickSource({ utm_source: "instagram", utm_medium: "paid" }, instagram, null),
+    { value: { utm_source: "", utm_medium: "paid" }, chipMedium: null },
+  )
+  assert.deepEqual(
+    pickQuickSource({ utm_source: "instagram", utm_medium: "social" }, instagram, null),
+    { value: { utm_source: "", utm_medium: "social" }, chipMedium: null },
+  )
+})
+
+check("item 15 a second chip replaces the Medium the first chip set", () => {
+  assert.deepEqual(
+    pickQuickSource({ utm_source: "instagram", utm_medium: "social" }, newsletter, "social"),
+    { value: { utm_source: "newsletter", utm_medium: "email" }, chipMedium: "email" },
+  )
+  assert.deepEqual(
+    pickQuickSource({ utm_source: "instagram", utm_medium: "paid-social" }, newsletter, "social"),
+    { value: { utm_source: "newsletter", utm_medium: "paid-social" }, chipMedium: null },
+  )
+})
+
+check("item 12 counts the values a collapsed section leaves out", () => {
+  assert.equal(valuesNotAdded({}, {}), 0)
+  assert.equal(valuesNotAdded(previousTags, {}), 3)
+  assert.equal(valuesNotAdded({ utm_source: " ", utm_term: "" }, {}), 0)
+  assert.equal(valuesNotAdded(pastedTags, pastedTags), 0)
+  assert.equal(valuesNotAdded({ utm_source: " mailchimp ", utm_medium: "social" }, pastedTags), 1)
 })
 
 check("utmSignature ignores blanks, surrounding spaces and key order", () => {

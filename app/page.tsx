@@ -330,7 +330,15 @@ function FeatureGrid() {
             className="lg:col-span-3"
             icon={Megaphone}
             title="Campaign tracking"
-            description="Add UTM tags to any link in a few clicks, so your analytics tool can see where visitors came from."
+            description={
+              <>
+                Add UTM tags to any link in a few clicks with a free account, so your analytics tool can see where visitors came
+                from.{" "}
+                <Link href="/help/utm" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about campaign tracking</span>
+                </Link>
+              </>
+            }
           >
             <div aria-hidden="true">
               <div className="grid gap-3 sm:grid-cols-3">
@@ -372,7 +380,7 @@ function FeatureCell({
 }: {
   icon: React.ComponentType<{ className?: string }>
   title: string
-  description: string
+  description: React.ReactNode
   className?: string
   children: React.ReactNode
 }) {

@@ -131,6 +131,7 @@ export interface AnalyticsLinkSummary {
   createDate?: string | null
   lastAccessed?: string | null
   visits: number
+  longUrl?: string | null
 }
 
 export interface UrlAnalytics {

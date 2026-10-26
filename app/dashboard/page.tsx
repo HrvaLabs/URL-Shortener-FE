@@ -21,9 +21,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { cn, formatDate, formatDateTime, formatRelativeDate, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, formatDateTime, formatRelativeDate, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
-import { analyticsHref } from "@/lib/analytics"
+import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
 import { PageMeta } from "@/components/page-meta"
 
@@ -235,13 +235,12 @@ export default function DashboardPage() {
             <TableBody>
               {urls.content.map((url: UrlResponse) => (
                 <TableRow key={url.id}>
-                  <TableCell>
+                  <TableCell className="min-w-52">
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => copyToClipboard(formatShortUrl(url.shortUrl), url.id)}
-                        title={formatShortUrl(url.shortUrl)}
-                        className="max-w-48 truncate text-left font-mono text-[13px] font-medium text-brand hover:underline"
+                        className="min-w-0 text-left font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
                       >
                         <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                       </button>
@@ -271,7 +270,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden whitespace-nowrap text-sm tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
+                  <TableCell className="hidden min-w-32 text-sm tabular-nums text-muted-foreground lg:table-cell">{formatDateTime(parseServerDateTime(url.createDate))}</TableCell>
                   <TableCell className="hidden whitespace-nowrap text-sm tabular-nums lg:table-cell">{formatRelativeDate(url.expirationDate)}</TableCell>
                   <TableCell>
                     <StatusBadge status={url.status} active={url.active} />

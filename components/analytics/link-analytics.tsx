@@ -10,9 +10,7 @@ import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
-import { useAuth } from "@/lib/auth-context"
 import { useUrlAnalytics } from "@/lib/hooks/useAnalytics"
-import { useLinkDestination } from "@/lib/hooks/useUrls"
 import type { AnalyticsLinkSummary, AnalyticsRange, UrlAnalytics } from "@/lib/types"
 import { cn, formatDate, formatDateTime, formatShortUrl, formatTimeAgo } from "@/lib/utils"
 import { readUtm, UTM_KEYS, type UtmKey } from "@/lib/utm"
@@ -86,9 +84,8 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
           </div>
           <div>
             <dt className="text-xs text-muted-foreground">Last visit</dt>
-            <dd className="mt-0.5 font-medium tabular-nums" title={lastAccessed ? formatDateTime(lastAccessed) : undefined}>
-              {formatTimeAgo(lastAccessed)}
-            </dd>
+            <dd className="mt-0.5 font-medium tabular-nums">{formatTimeAgo(lastAccessed)}</dd>
+            {lastAccessed && <dd className="mt-1 text-xs tabular-nums text-muted-foreground">{formatDateTime(lastAccessed)}</dd>}
           </div>
           <div className="max-w-sm">
             <dt className="text-xs text-muted-foreground">All-time visits</dt>
@@ -139,9 +136,7 @@ const utmLabels: Record<UtmKey, string> = {
 }
 
 function CampaignTags({ link }: { link: AnalyticsLinkSummary }) {
-  const { isAdmin } = useAuth()
-  const { data: destination } = useLinkDestination(link.id, link.shortUrl, isAdmin)
-  const tags = destination ? readUtm(destination) : {}
+  const tags = readUtm(link.longUrl ?? "")
   const present = UTM_KEYS.filter((key) => tags[key])
   if (present.length === 0) return null
 

@@ -119,16 +119,14 @@ function TopLinks({ links, days }: TopLinksProps) {
                 className="block space-y-2 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
               >
                 <span className="flex items-baseline justify-between gap-4">
-                  <span className="min-w-0 truncate font-mono text-[13px] font-medium text-brand">/{link.shortUrl}</span>
+                  <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">/{link.shortUrl}</span>
                   <span className="shrink-0 text-sm tabular-nums">{plural(link.clicks, "click")}</span>
                 </span>
                 <span aria-hidden="true" className="block h-1.5 overflow-hidden rounded-full bg-muted">
                   <span className="block h-full rounded-full bg-brand" style={{ width: `${(link.clicks / top) * 100}%` }} />
                 </span>
                 <span className="flex items-baseline justify-between gap-4 text-xs text-muted-foreground">
-                  <span className="min-w-0 truncate" title={link.destinationHost || undefined}>
-                    {link.destinationHost}
-                  </span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{link.destinationHost}</span>
                   <span className="shrink-0 tabular-nums">{plural(link.uniqueVisitors, "daily unique visitor")}</span>
                 </span>
               </Link>

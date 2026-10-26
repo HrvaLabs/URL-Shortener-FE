@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
 import { toast } from "sonner"
@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import type { UrlResponse } from "@/lib/types"
 import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
-import { destinationToSend, rememberUtm, type UtmValues } from "@/lib/utm"
+import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
   withOptions?: boolean
@@ -29,6 +29,8 @@ export function ShortenForm({ withOptions = false, size = "default", className }
   const [utmOpen, setUtmOpen] = useState(false)
   const [result, setResult] = useState<UrlResponse | null>(null)
   const [copied, setCopied] = useState(false)
+  const resultRef = useRef<HTMLDivElement>(null)
+  const copyRef = useRef<HTMLButtonElement>(null)
 
   const { user } = useAuth()
   const createUrl = useCreateUrl()
@@ -39,13 +41,24 @@ export function ShortenForm({ withOptions = false, size = "default", className }
   const longUrlError = destinationLengthError(longUrl)
   const longUrlErrorId = useId()
 
+  useEffect(() => {
+    if (!result) return
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    resultRef.current?.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" })
+    copyRef.current?.focus({ preventScroll: true })
+  }, [result])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!longUrl || longUrlError) return
 
     const destination = destinationToSend(longUrl, tagging, utm)
     if (destination === null) {
-      toast.error("Add a valid destination first")
+      toast.error(`${CANT_TAKE_UTM} Collapse Campaign tracking (UTM) to save it as typed.`)
+      return
+    }
+    if (tooLongWithUtm(longUrl, destination)) {
+      toast.error(tooLongMessage("long URL"))
       return
     }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
@@ -58,6 +71,8 @@ export function ShortenForm({ withOptions = false, size = "default", className }
         expirationDate: expDate,
       })
       if (tagging) rememberUtm(utm)
+      setUtm({})
+      setUtmOpen(false)
       setResult(url)
       setCopied(false)
       toast.success("Link shortened")
@@ -153,6 +168,7 @@ export function ShortenForm({ withOptions = false, size = "default", className }
       {result && (
         <div
           key={result.shortUrl}
+          ref={resultRef}
           className="animate-result-in mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-card p-3 pr-4 text-left shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]"
           aria-live="polite"
         >
@@ -172,6 +188,7 @@ export function ShortenForm({ withOptions = false, size = "default", className }
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Button
+              ref={copyRef}
               type="button"
               size="sm"
               onClick={() => copyToClipboard(shortUrl)}

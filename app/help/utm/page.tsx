@@ -43,7 +43,7 @@ export default function UtmHelpPage() {
             <div className="prose-custom">
               <h2>What UTM tags are</h2>
               <p>
-                A UTM tag is a name and a value added to a link&apos;s address, such as{" "}
+                A UTM tag, also called a UTM parameter, is a name and a value added to a link&apos;s address, such as{" "}
                 <code>utm_source=instagram</code>. Tools such as Google Analytics, Plausible or Matomo
                 read them when someone arrives, so a visit is counted under the right source and
                 campaign. For example:
@@ -65,8 +65,9 @@ export default function UtmHelpPage() {
               <ul>
                 <li>
                   <strong>Source</strong>: where you share the link, for example <code>instagram</code> or{" "}
-                  <code>newsletter</code>. The quick picks under it fill in Source, and Medium too if
-                  it&apos;s empty.
+                  <code>newsletter</code>. The quick picks above the Source box fill in Source (
+                  <strong>X (Twitter)</strong> fills in <code>x</code>), and Medium too when it&apos;s empty
+                  or still holds what the last quick pick put there. Press a picked one again to clear it.
                 </li>
                 <li>
                   <strong>Medium</strong>: the kind of channel, for example <code>social</code> or{" "}
@@ -81,17 +82,29 @@ export default function UtmHelpPage() {
                 </li>
               </ul>
               <p>
-                Under the fields, <strong>Your link will open:</strong> shows the full destination with the
-                tags. If you paste a destination that already has tags, the fields show them so you can
-                change them. Values you used recently are offered as suggestions; they&apos;re kept in
-                your browser only. The <strong>What are UTM tags?</strong> link in the section opens
-                this page.
+                A line under the fields says <strong>Use lowercase and dashes, for example autumn-sale.</strong>{" "}
+                Most analytics tools count <code>Instagram</code> and <code>instagram</code> as two sources.
+                A space in a value is saved as <code>%20</code>.
+              </p>
+              <p>
+                <strong>Your link will open:</strong> shows the full destination with the tags. If you paste
+                a long URL that already has tags, the fields switch to its tags so you can change them. If
+                you set Medium or Campaign without a Source, it says{" "}
+                <strong>Add a Source too. Most analytics tools ignore campaign tags without one.</strong>{" "}
+                A link can be up to 2048 characters with its tags; if the tags make it longer, the link
+                isn&apos;t saved until you shorten a value or the long URL.
+              </p>
+              <p>
+                Values you used recently are offered as suggestions; they&apos;re kept in your browser
+                only. After you shorten a link on the home page, the fields are cleared and the section
+                closes. The <strong>What are UTM tags?</strong> link in the section opens this page.
               </p>
 
               <h2>Who reads them</h2>
               <p>
-                The analytics tool on the destination site reads the tags. hrva.cc doesn&apos;t: it
-                saves the destination you see in the preview, tags included, and sends visitors there.
+                The analytics tool on the destination site reads the tags. hrva.cc doesn&apos;t track or
+                count them: it saves the destination you see in the preview, tags included, and sends
+                visitors there.
                 It doesn&apos;t store the tags separately or send them anywhere else. The link&apos;s
                 analytics page lists them under <strong>Campaign tags</strong>, so you can see which
                 tags a link carries.
@@ -99,11 +112,14 @@ export default function UtmHelpPage() {
 
               <h2>Remove them</h2>
               <ul>
-                <li>Clear a field to remove that tag, or clear every field to remove them all.</li>
                 <li>
-                  Or collapse <strong>Campaign tracking (UTM)</strong> before you save. The tags in the
-                  fields are then left out, and the destination is saved exactly as you typed it. Tags
-                  that are already in the address you typed stay, so clear the fields to remove those.
+                  Open <strong>Campaign tracking (UTM)</strong> and clear the fields: one to remove that
+                  tag, or all of them to remove every tag, including tags that were already in the long URL.
+                </li>
+                <li>
+                  Or collapse the section to save the link exactly as you typed it. The values in the
+                  fields are then left out, and the collapsed row says so, for example{" "}
+                  <strong>off, 3 values not added</strong>. <strong>Turn on</strong> opens it again.
                 </li>
               </ul>
             </div>

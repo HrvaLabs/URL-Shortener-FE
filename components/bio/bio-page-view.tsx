@@ -78,7 +78,9 @@ export function BioPageView({
               <span className="text-3xl font-semibold">{initialsOf(page.displayName, page.handle)}</span>
             )}
           </div>
-          <h1 className="mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere]">{name}</h1>
+          <h1 className={`mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere] ${name ? "" : "text-[var(--bio-muted)]"}`}>
+            {name || "Your name"}
+          </h1>
           {page.displayName && handleLabel && (
             <p className="mt-1 w-full text-[var(--bio-muted)] [overflow-wrap:anywhere]">{handleLabel}</p>
           )}

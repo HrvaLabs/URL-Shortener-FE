@@ -1,12 +1,16 @@
 import assert from "node:assert/strict"
 import {
+  AVATAR_EMOJI_REQUIRED,
   BIO_ACCENTS,
   BIO_ICON_LABELS,
   BIO_LIMITS,
   BIO_PAGE_COLORS,
   EMOJI_SUGGESTIONS,
   LINK_STATE_LABELS,
+  bioDraftOf,
+  bioSaveFieldErrors,
   bioShareUrl,
+  bioUpdateOf,
   contrastRatio,
   defaultButtonTitle,
   displayShareUrl,
@@ -20,6 +24,8 @@ import {
   normalizeHandle,
   ogInitials,
   ogSafeText,
+  rebaseBioDraft,
+  sameBioDraft,
 } from "../lib/bio.ts"
 
 const check = (name, run) => {
@@ -371,6 +377,102 @@ check("link state labels", () => {
     LIMIT_REACHED: { badge: "Visit limit reached", hint: stopped },
     BLOCKED: { badge: "Link blocked", hint: "Not shown on your page. Blocked links can't be shown." },
   })
+})
+
+const samplePage = (overrides = {}) => ({
+  id: 1,
+  handle: "ana",
+  displayName: "Ana",
+  bio: "Hi",
+  avatarKind: "INITIALS",
+  avatarEmoji: null,
+  accent: "BLUE",
+  theme: "AUTO",
+  indexable: false,
+  hidden: false,
+  hiddenReason: null,
+  handleRevokedReason: null,
+  buttons: [
+    { id: 10, urlId: 5, shortUrl: "ig", destinationHost: "instagram.com", title: "Instagram", icon: "INSTAGRAM", visible: true, linkState: "LIVE", shownOnPage: true },
+    { id: 11, urlId: 7, shortUrl: "blog", destinationHost: "karlo.cc", title: "Blog", icon: null, visible: false, linkState: "DEACTIVATED", shownOnPage: false },
+  ],
+  createdAt: "2026-10-26T10:00:00",
+  updatedAt: "2026-10-26T10:00:00",
+  ...overrides,
+})
+
+check("bioUpdateOf sends every button in order and the emoji only for an emoji avatar", () => {
+  const draft = bioDraftOf(samplePage())
+  assert.equal(draft.avatarEmoji, "")
+  assert.deepEqual(bioUpdateOf(draft), {
+    displayName: "Ana",
+    bio: "Hi",
+    avatarKind: "INITIALS",
+    avatarEmoji: null,
+    accent: "BLUE",
+    theme: "AUTO",
+    indexable: false,
+    buttons: [
+      { urlId: 5, title: "Instagram", icon: "INSTAGRAM", visible: true },
+      { urlId: 7, title: "Blog", icon: null, visible: false },
+    ],
+  })
+  assert.equal(bioUpdateOf({ ...draft, avatarKind: "EMOJI", avatarEmoji: ` ${CAMERA_WITH_FLASH} ` }).avatarEmoji, CAMERA_WITH_FLASH)
+  assert.equal(bioUpdateOf({ ...draft, avatarKind: "INITIALS", avatarEmoji: CAMERA_WITH_FLASH }).avatarEmoji, null)
+  assert.deepEqual(bioUpdateOf({ ...draft, buttons: [] }).buttons, [])
+})
+
+check("sameBioDraft: a fresh draft is never dirty, and only real edits count", () => {
+  const page = samplePage()
+  const draft = bioDraftOf(page)
+  assert.equal(sameBioDraft(bioDraftOf(page), bioDraftOf(page)), true)
+  const emojiPage = samplePage({ avatarKind: "EMOJI", avatarEmoji: CAMERA_WITH_FLASH })
+  assert.equal(sameBioDraft(bioDraftOf(emojiPage), bioDraftOf(emojiPage)), true)
+  assert.equal(sameBioDraft({ ...draft, avatarEmoji: CAMERA_WITH_FLASH }, draft), true)
+  assert.equal(sameBioDraft({ ...draft, avatarKind: "EMOJI", avatarEmoji: CAMERA_WITH_FLASH }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, displayName: "Ana " }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, bio: "" }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, accent: "PINK" }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, theme: "DARK" }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, indexable: true }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, buttons: [...draft.buttons].reverse() }, draft), false)
+  assert.equal(sameBioDraft({ ...draft, buttons: draft.buttons.map((button) => ({ ...button, linkState: "BLOCKED", shownOnPage: false })) }, draft), true)
+})
+
+check("rebaseBioDraft keeps the owner's edits and takes the rest from the newer page", () => {
+  const before = samplePage()
+  const after = samplePage({
+    handle: "ana-2",
+    bio: "New bio",
+    updatedAt: "2026-10-26T10:05:00",
+    buttons: before.buttons.map((button) => (button.urlId === 7 ? { ...button, linkState: "LIVE" } : button)),
+  })
+  const edited = { ...bioDraftOf(before), displayName: "Ana Horvat", theme: "DARK" }
+  const rebased = rebaseBioDraft(edited, before, after)
+  assert.equal(rebased.displayName, "Ana Horvat")
+  assert.equal(rebased.theme, "DARK")
+  assert.equal(rebased.bio, "New bio")
+  assert.deepEqual(rebased.buttons, after.buttons)
+  assert.deepEqual(rebaseBioDraft(bioDraftOf(before), before, after), bioDraftOf(after))
+  const reordered = { ...bioDraftOf(before), buttons: [...before.buttons].reverse() }
+  assert.deepEqual(rebaseBioDraft(reordered, before, after).buttons, reordered.buttons)
+})
+
+check("bioSaveFieldErrors maps the backend's profile texts to their fields, and nothing else", () => {
+  assert.equal(AVATAR_EMOJI_REQUIRED, "Pick one emoji for the avatar.")
+  assert.deepEqual(bioSaveFieldErrors("Name must be 50 characters or fewer"), { displayName: "Name must be 50 characters or fewer" })
+  assert.deepEqual(bioSaveFieldErrors("Bio must be 160 characters or fewer"), { bio: "Bio must be 160 characters or fewer" })
+  assert.deepEqual(bioSaveFieldErrors("Bio must be 160 characters or fewer. Name must be 50 characters or fewer"), {
+    bio: "Bio must be 160 characters or fewer",
+    displayName: "Name must be 50 characters or fewer",
+  })
+  assert.deepEqual(bioSaveFieldErrors("Pick one emoji for the avatar."), { avatarEmoji: "Pick one emoji for the avatar." })
+  assert.equal(bioSaveFieldErrors("This page changed. Reload and try again."), null)
+  assert.equal(bioSaveFieldErrors("Name must be 50 characters or fewer. Pick a link"), null)
+  assert.equal(bioSaveFieldErrors("Only working links can be added. /abc isn't working right now."), null)
+  assert.equal(bioSaveFieldErrors("You've saved your bio page a lot in a short time. Try again in a few minutes."), null)
+  assert.equal(bioSaveFieldErrors("toString"), null)
+  assert.equal(bioSaveFieldErrors(""), null)
 })
 
 console.log("ok")

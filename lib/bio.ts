@@ -1,4 +1,4 @@
-import type { BioAccent, BioIcon, BioLinkState } from "./types"
+import type { BioAccent, BioAvatarKind, BioIcon, BioLinkState, BioPage, BioPageButton, BioPageButtonInput, BioPageUpdate, BioTheme } from "./types"
 
 export const BIO_LIMITS = { handleMin: 3, handleMax: 30, displayName: 50, bio: 160, buttonTitle: 60, buttons: 30 } as const
 
@@ -202,4 +202,82 @@ export const LINK_STATE_LABELS: Record<Exclude<BioLinkState, "LIVE">, { badge: s
   EXPIRED: { badge: "Link expired", hint: LINK_STOPPED_HINT },
   LIMIT_REACHED: { badge: "Visit limit reached", hint: LINK_STOPPED_HINT },
   BLOCKED: { badge: "Link blocked", hint: "Not shown on your page. Blocked links can't be shown." },
+}
+
+export const AVATAR_EMOJI_REQUIRED = "Pick one emoji for the avatar."
+
+export type BioDraft = {
+  displayName: string
+  bio: string
+  avatarKind: BioAvatarKind
+  avatarEmoji: string
+  accent: BioAccent
+  theme: BioTheme
+  indexable: boolean
+  buttons: BioPageButton[]
+}
+
+export const bioDraftOf = (page: BioPage): BioDraft => ({
+  displayName: page.displayName,
+  bio: page.bio,
+  avatarKind: page.avatarKind,
+  avatarEmoji: page.avatarEmoji ?? "",
+  accent: page.accent,
+  theme: page.theme,
+  indexable: page.indexable,
+  buttons: page.buttons,
+})
+
+const buttonInputsOf = (buttons: readonly BioPageButton[]): BioPageButtonInput[] =>
+  buttons.map(({ urlId, title, icon, visible }) => ({ urlId, title, icon, visible }))
+
+export const bioUpdateOf = (draft: BioDraft): BioPageUpdate => ({
+  displayName: draft.displayName,
+  bio: draft.bio,
+  avatarKind: draft.avatarKind,
+  avatarEmoji: draft.avatarKind === "EMOJI" ? draft.avatarEmoji.trim() : null,
+  accent: draft.accent,
+  theme: draft.theme,
+  indexable: draft.indexable,
+  buttons: buttonInputsOf(draft.buttons),
+})
+
+const sameJson = (first: unknown, second: unknown): boolean => JSON.stringify(first) === JSON.stringify(second)
+
+export const sameBioDraft = (first: BioDraft, second: BioDraft): boolean => sameJson(bioUpdateOf(first), bioUpdateOf(second))
+
+export const rebaseBioDraft = (draft: BioDraft, from: BioPage, to: BioPage): BioDraft => {
+  const base = bioDraftOf(from)
+  const next = bioDraftOf(to)
+  const pick = <K extends keyof BioDraft>(key: K): BioDraft[K] => (sameJson(draft[key], base[key]) ? next[key] : draft[key])
+  return {
+    displayName: pick("displayName"),
+    bio: pick("bio"),
+    avatarKind: pick("avatarKind"),
+    avatarEmoji: pick("avatarEmoji"),
+    accent: pick("accent"),
+    theme: pick("theme"),
+    indexable: pick("indexable"),
+    buttons: sameJson(buttonInputsOf(draft.buttons), buttonInputsOf(base.buttons)) ? next.buttons : draft.buttons,
+  }
+}
+
+export type BioProfileField = "displayName" | "bio" | "avatarEmoji"
+
+const PROFILE_FIELD_TEXTS = new Map<string, BioProfileField>([
+  ["Name must be 50 characters or fewer", "displayName"],
+  ["Bio must be 160 characters or fewer", "bio"],
+  [AVATAR_EMOJI_REQUIRED.replace(/\.$/, ""), "avatarEmoji"],
+])
+
+export const bioSaveFieldErrors = (message: string): Partial<Record<BioProfileField, string>> | null => {
+  const parts = message.split(". ").map((part) => part.trim()).filter(Boolean)
+  if (parts.length === 0) return null
+  const errors: Partial<Record<BioProfileField, string>> = {}
+  for (const part of parts) {
+    const field = PROFILE_FIELD_TEXTS.get(part.replace(/\.$/, ""))
+    if (!field) return null
+    errors[field] = part
+  }
+  return errors
 }

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { href: "/dashboard", label: "URLs" },
   { href: "/dashboard/analytics", label: "Analytics" },
+  { href: "/dashboard/bio", label: "Bio page" },
   { href: "/dashboard/api-keys", label: "API Keys" },
   { href: "/dashboard/settings", label: "Settings" },
 ]

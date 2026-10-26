@@ -101,7 +101,7 @@ function DomainRulesPanel({ type }: { type: DomainRuleType }) {
   return (
     <>
       <div className="border-b p-5">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 @2xl:flex-row">
           <Input
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
@@ -109,14 +109,14 @@ function DomainRulesPanel({ type }: { type: DomainRuleType }) {
             aria-label="Domain"
             spellCheck={false}
             autoCapitalize="none"
-            className="h-9 font-mono text-[13px] sm:max-w-xs"
+            className="h-9 font-mono text-[13px] @2xl:max-w-xs"
           />
           <Input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Reason (optional)"
             aria-label="Reason"
-            className="h-9 sm:flex-1"
+            className="h-9 @2xl:flex-1"
           />
           <Button type="submit" size="sm" disabled={addRule.isPending || !domain.trim()}>
             {addRule.isPending ? "Adding..." : "Add"}

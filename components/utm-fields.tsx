@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { QUICK_SOURCES, UTM_KEYS, hasUtmValues, readUtm, recentUtm, withScheme, withUtm, type UtmKey, type UtmValues } from "@/lib/utm"
+import { QUICK_SOURCES, hasUtmValues, readUtm, recentUtm, utmSignature, withScheme, withUtm, type UtmKey, type UtmValues } from "@/lib/utm"
 
 interface UtmFieldsProps {
   destination: string
@@ -31,26 +31,28 @@ const OTHER_FIELDS: UtmField[] = [
   { key: "utm_content", label: "Content (optional)" },
 ]
 
-const signature = (values: UtmValues) => UTM_KEYS.map((key) => values[key]?.trim() ?? "").join("\n")
+const NO_TAGS = utmSignature({})
 
 export function UtmFields({ destination, value, onChange, open, onOpenChange }: UtmFieldsProps) {
   const id = useId()
   const panelId = `${id}-panel`
   const target = withScheme(destination)
   const found = readUtm(target)
-  const foundKey = signature(found)
+  const foundKey = utmSignature(found)
   const lastFoundKey = useRef(foundKey)
-  const preview = withUtm(target, value)
+  const tagged = withUtm(target, value)
+  const preview = tagged && utmSignature(value) === foundKey ? target : tagged
   const recent = open ? recentUtm() : null
   const canFill = !hasUtmValues(value) && hasUtmValues(found)
 
   const followFoundTags = useEffectEvent(() => {
-    const mirroring = !hasUtmValues(value) || signature(value) === lastFoundKey.current
+    const firstTags = lastFoundKey.current === NO_TAGS
+    const mirroring = !hasUtmValues(value) || utmSignature(value) === lastFoundKey.current
     lastFoundKey.current = foundKey
     if (!mirroring) return
     if (hasUtmValues(found)) {
       onChange(found)
-      onOpenChange(true)
+      if (firstTags) onOpenChange(true)
     } else if (hasUtmValues(value)) {
       onChange({})
     }
@@ -125,7 +127,6 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange }: 
                 <button
                   key={source}
                   type="button"
-                  aria-pressed={picked}
                   onClick={() => pickSource(source, medium)}
                   className={cn(
                     "h-7 rounded-md border px-2.5 text-xs font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -141,15 +142,16 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange }: 
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{OTHER_FIELDS.map(renderField)}</div>
 
-        <div aria-live="polite" aria-atomic="true" className="rounded-lg bg-muted/60 px-3 py-2 text-xs">
+        <div className="rounded-lg bg-muted/60 px-3 py-2 text-xs">
           {preview ? (
             <>
               <span className="text-muted-foreground">Your link will open:</span>
               <span className="mt-1 block break-all font-mono text-foreground">{preview}</span>
             </>
           ) : (
-            <span className="text-muted-foreground">Add a valid destination first</span>
+            <span aria-hidden="true" className="text-muted-foreground">Add a valid destination first</span>
           )}
+          <span role="status" className="sr-only">{preview ? "" : "Add a valid destination first"}</span>
         </div>
       </div>
     </div>

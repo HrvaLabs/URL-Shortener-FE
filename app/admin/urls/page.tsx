@@ -22,7 +22,7 @@ import { cn, destinationLengthError, formatDateTime, getShortBaseUrl, plural } f
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
-import { destinationToSend, hasUtm, readUtm, rememberUtm, withUtm, type UtmValues } from "@/lib/utm"
+import { destinationToSend, hasUtm, readUtm, rememberUtm, type UtmValues } from "@/lib/utm"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
@@ -187,13 +187,12 @@ export default function AdminUrlsPage() {
       toast.error("Add a valid destination first")
       return
     }
-    const unchanged = longUrl === editUrl.longUrl || longUrl === withUtm(editUrl.longUrl, readUtm(editUrl.longUrl))
     try {
       await updateUrl.mutateAsync({
         id: editUrl.id,
         data: {
           id: editUrl.id,
-          longUrl: unchanged ? undefined : longUrl,
+          longUrl: longUrl !== editUrl.longUrl ? longUrl : undefined,
           visitLimit: editVisitLimit ? parseInt(editVisitLimit) : 0,
           expirationDate: editExpiration ? new Date(editExpiration).toISOString() : undefined,
           tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),

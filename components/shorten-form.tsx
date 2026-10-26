@@ -153,22 +153,22 @@ export function ShortenForm({ withOptions = false, size = "default", className }
       {result && (
         <div
           key={result.shortUrl}
-          className="animate-result-in mt-4 flex items-center gap-4 rounded-xl border bg-card p-3 pr-4 text-left shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]"
+          className="animate-result-in mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-card p-3 pr-4 text-left shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]"
           aria-live="polite"
         >
           <div className="hidden shrink-0 rounded-lg border bg-white p-1.5 sm:block">
             <QRCodeSVG value={shortUrl} size={64} fgColor="#0e0e11" bgColor="#ffffff" level="M" />
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 basis-56">
             <a
               href={shortUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block truncate font-mono text-base font-medium text-brand hover:underline"
+              className="block break-all font-mono text-base font-medium text-brand hover:underline"
             >
               {shortUrl.replace(/^https?:\/\//, "")}
             </a>
-            <p className="mt-0.5 truncate text-sm text-muted-foreground">{result.longUrl}</p>
+            <p className="mt-0.5 break-all text-sm text-muted-foreground">{result.longUrl}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
             <Button

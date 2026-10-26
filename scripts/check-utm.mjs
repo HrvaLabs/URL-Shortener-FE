@@ -1,12 +1,5 @@
 import assert from "node:assert/strict"
-
-// package.json has no "type", so Node warns while it detects that lib/utm.ts is an ES module; drop only that warning.
-for (const listener of process.listeners("warning")) {
-  process.removeListener("warning", listener)
-  process.on("warning", (warning) => warning.code === "MODULE_TYPELESS_PACKAGE_JSON" || listener(warning))
-}
-
-const {
+import {
   QUICK_SOURCES,
   UTM_KEYS,
   destinationToSend,
@@ -14,9 +7,10 @@ const {
   readUtm,
   recentUtm,
   rememberUtm,
+  utmSignature,
   withScheme,
   withUtm,
-} = await import("../lib/utm.ts")
+} from "../lib/utm.ts"
 
 let failures = 0
 
@@ -197,6 +191,34 @@ check("RF5 open with the pasted tags cleared removes them", () => {
   assert.equal(destinationToSend("https://a.example/?ref=1&utm_source=old", true, {}), "https://a.example/?ref=1")
 })
 
+check("RF5 untouched tags send the destination byte for byte", () => {
+  const pasted = "https://a.example/landing?utm_source=Mail%20Chimp&lang=hr&utm_campaign=oct"
+  assert.equal(destinationToSend(pasted, true, readUtm(pasted)), pasted)
+  assert.equal(destinationToSend(pasted, true, { utm_source: " Mail Chimp ", utm_campaign: "oct", utm_term: "" }), pasted)
+  assert.equal(destinationToSend("shop.example/?utm_source=a", true, { utm_source: "a" }), "shop.example/?utm_source=a")
+  assert.equal(
+    destinationToSend(pasted, true, { utm_source: "Mail Chimp", utm_campaign: "nov" }),
+    "https://a.example/landing?lang=hr&utm_source=Mail+Chimp&utm_campaign=nov",
+  )
+})
+
+check("admin guard: an untouched stored destination comes back unchanged", () => {
+  for (const stored of [
+    "https://example.org/landing?utm_source=Newsletter%20Oct&utm_medium=email&utm_campaign=oct-25&lang=hr",
+    "https://example.com/reg?a=1&utm_source=Mail+Chimp&utm_campaign=oct",
+    "https://example.com/plain",
+    "https://Example.com",
+  ]) {
+    assert.equal(destinationToSend(stored, true, readUtm(stored)), stored, stored)
+    assert.equal(destinationToSend(stored, false, readUtm(stored)), stored, stored)
+  }
+})
+
+check("utmSignature ignores blanks, surrounding spaces and key order", () => {
+  assert.equal(utmSignature({ utm_medium: " social ", utm_source: "ig", utm_term: "" }), utmSignature({ utm_source: "ig", utm_medium: "social" }))
+  assert.notEqual(utmSignature({ utm_source: "ig" }), utmSignature({ utm_medium: "ig" }))
+})
+
 check("recent values without a window", () => {
   assert.deepEqual(recentUtm(), noRecent)
   rememberUtm({ utm_source: "x" })
@@ -219,6 +241,8 @@ check("recent values survive corrupt storage", () => {
     assert.deepEqual(recentUtm(), noRecent)
     storage.setItem("hrva:utm-recent", JSON.stringify({ utm_source: "x", utm_medium: [1, "email", null, " "] }))
     assert.deepEqual(recentUtm(), { ...noRecent, utm_medium: ["email"] })
+    storage.setItem("hrva:utm-recent", JSON.stringify({ utm_campaign: ["a", "a", "b", "a", "c", "d", "e", "f"] }))
+    assert.deepEqual(recentUtm(), { ...noRecent, utm_campaign: ["a", "b", "c", "d", "e"] })
   })
 })
 

@@ -13,7 +13,7 @@ import { ShortenForm } from "@/components/shorten-form"
 import { EasterEggKonami } from "@/components/easter-egg-konami"
 import { useAuth } from "@/lib/auth-context"
 import { useMyUrls } from "@/lib/hooks/useUrls"
-import { cn, formatShortUrl, truncateUrl } from "@/lib/utils"
+import { cn, formatShortUrl } from "@/lib/utils"
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -708,8 +708,8 @@ function RecentLink({ shortUrl, longUrl, visits }: { shortUrl: string; longUrl: 
   return (
     <li className="group flex items-center gap-3 px-5 py-3">
       <div className="min-w-0 flex-1">
-        <p className="truncate font-mono text-[13px] font-medium text-brand">/{shortUrl}</p>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground">{truncateUrl(longUrl, 42)}</p>
+        <p className="break-all font-mono text-[13px] font-medium text-brand">/{shortUrl}</p>
+        <p className="mt-0.5 break-all text-xs text-muted-foreground">{longUrl}</p>
       </div>
       <span className="text-xs tabular-nums text-muted-foreground">{visits.toLocaleString()}</span>
       <button

@@ -4,7 +4,7 @@ export type UtmKey = typeof UTM_KEYS[number]
 
 export type UtmValues = Partial<Record<UtmKey, string>>
 
-export const QUICK_SOURCES: ReadonlyArray<{ source: string; medium: string }> = [
+export const QUICK_SOURCES = [
   { source: "instagram", medium: "social" },
   { source: "facebook", medium: "social" },
   { source: "tiktok", medium: "social" },
@@ -12,7 +12,7 @@ export const QUICK_SOURCES: ReadonlyArray<{ source: string; medium: string }> = 
   { source: "x", medium: "social" },
   { source: "newsletter", medium: "email" },
   { source: "qr", medium: "qr" },
-]
+] as const
 
 const RECENT_STORAGE_KEY = "hrva:utm-recent"
 const RECENT_LIMIT = 5
@@ -43,6 +43,10 @@ export function withScheme(destination: string): string {
   const trimmed = destination.trim()
   if (!trimmed || SCHEME_PREFIX.test(trimmed)) return trimmed
   return `https://${trimmed}`
+}
+
+export function utmSignature(values: UtmValues): string {
+  return UTM_KEYS.map((key) => values[key]?.trim() ?? "").join("\n")
 }
 
 export function hasUtmValues(values: UtmValues): boolean {
@@ -85,8 +89,8 @@ export function hasUtm(destination: string): boolean {
 export function destinationToSend(typed: string, open: boolean, values: UtmValues): string | null {
   if (!open) return typed
   const destination = withScheme(typed)
-  if (hasUtmValues(values)) return withUtm(destination, values)
-  return hasUtm(destination) ? withUtm(destination, {}) : typed
+  if (utmSignature(values) === utmSignature(readUtm(destination))) return typed
+  return withUtm(destination, values)
 }
 
 export function recentUtm(): Record<UtmKey, string[]> {
@@ -98,9 +102,8 @@ export function recentUtm(): Record<UtmKey, string[]> {
     for (const key of UTM_KEYS) {
       const list: unknown = (stored as Record<string, unknown>)[key]
       if (!Array.isArray(list)) continue
-      recent[key] = list
-        .filter((item): item is string => typeof item === "string" && item.trim() !== "")
-        .slice(0, RECENT_LIMIT)
+      const strings = list.filter((item): item is string => typeof item === "string" && item.trim() !== "")
+      recent[key] = [...new Set(strings)].slice(0, RECENT_LIMIT)
     }
     return recent
   } catch {

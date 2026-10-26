@@ -16,11 +16,13 @@ export function SecondStep({
   methods,
   onSignedIn,
   onExpired,
+  onBackToSignIn = onExpired,
 }: {
   pendingToken: string
   methods: TwoStepMethod[]
   onSignedIn: (signedIn: SignedIn) => void
   onExpired: () => void
+  onBackToSignIn?: () => void
 }) {
   const supported = useWebAuthnSupported()
   const [code, setCode] = useState("")
@@ -78,7 +80,9 @@ export function SecondStep({
       } finally {
         ceremonyInFlight.current = false
       }
-      onSignedIn(await authApi.secondStepPasskey(pendingToken, ceremonyId, credential))
+      const signedIn = await authApi.secondStepPasskey(pendingToken, ceremonyId, credential)
+      if (!mounted.current) return
+      onSignedIn(signedIn)
     } catch (error) {
       fail(error, passkeyErrorMessage(error, "verify"))
     }
@@ -88,7 +92,9 @@ export function SecondStep({
     event.preventDefault()
     setBusy("code")
     try {
-      onSignedIn(await authApi.secondStepTotp(pendingToken, code))
+      const signedIn = await authApi.secondStepTotp(pendingToken, code)
+      if (!mounted.current) return
+      onSignedIn(signedIn)
     } catch (error) {
       fail(error, (error instanceof Error && error.message) || REQUEST_FAILED)
     }
@@ -150,7 +156,7 @@ export function SecondStep({
             <p className="text-center text-sm text-muted-foreground">
               This browser can&apos;t use passkeys or security keys. Sign in from a browser that can.
             </p>
-            <Button type="button" variant="outline" className="w-full" onClick={onExpired}>
+            <Button type="button" variant="outline" className="w-full" onClick={onBackToSignIn}>
               Back to sign in
             </Button>
           </div>

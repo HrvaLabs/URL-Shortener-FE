@@ -379,7 +379,9 @@ export interface LoginDto {
   rememberMe?: boolean
 }
 
-export type TwoStepMethod = "TOTP" | "WEBAUTHN" | "RECOVERY_CODE"
+export const TWO_STEP_METHODS = ["TOTP", "WEBAUTHN", "RECOVERY_CODE"] as const
+
+export type TwoStepMethod = (typeof TWO_STEP_METHODS)[number]
 
 export type PasskeyKind = "SYNCED" | "DEVICE_BOUND" | "SECOND_STEP_ONLY" | "UNKNOWN"
 

@@ -2,14 +2,13 @@
 
 import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import { ApiError, authApi } from "@/lib/api-client"
+import { toastPasskeySignInError } from "@/lib/passkey-toasts"
 import type { AssertionCredentialJSON, PasskeyOptions, RequestOptionsJSON, SignedIn } from "@/lib/types"
 import {
   abortPasskeyRequest,
   getPasskey,
   isConditionalMediationAvailable,
-  passkeyErrorMessage,
 } from "@/lib/webauthn"
 
 export const CONDITIONAL_REFRESH_MS = 240_000
@@ -84,14 +83,7 @@ export function usePasskeyAutofill({
         if (mounted.current) onSignedInRef.current(signedIn)
       } catch (error) {
         if (!active) return
-        const message = passkeyErrorMessage(error, "sign-in")
-        if (error instanceof ApiError && error.status === 403 && error.message.toLowerCase().includes("verify")) {
-          toast.error(error.message, {
-            action: { label: "Resend", onClick: () => routerRef.current.push("/verify-email/resend") },
-          })
-        } else if (message) {
-          toast.error(message)
-        }
+        toastPasskeySignInError(error, { push: (href) => routerRef.current.push(href) })
         if (error instanceof ApiError && (error.status === 401 || error.status === 410)) void run()
         else scheduleRefresh()
       }

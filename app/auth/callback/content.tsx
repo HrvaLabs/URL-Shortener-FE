@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CircleAlert } from "lucide-react"
@@ -10,10 +10,8 @@ import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
-import type { SignedIn, TwoStepMethod } from "@/lib/types"
+import { TWO_STEP_METHODS, type SignedIn, type TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
-
-const TWO_STEP_METHODS: readonly TwoStepMethod[] = ["TOTP", "WEBAUTHN", "RECOVERY_CODE"]
 
 const EXPIRED = "Your sign-in expired. Sign in again."
 
@@ -79,6 +77,15 @@ export function AuthCallbackContent() {
     if (callback.kind === "second-step" && callback.methods.length === 0) return EXPIRED
     return null
   })
+  const errorHeadingRef = useRef<HTMLHeadingElement>(null)
+
+  useLayoutEffect(() => {
+    if (callback.kind === "second-step") window.history.replaceState(null, "", "/auth/callback")
+  }, [callback])
+
+  useEffect(() => {
+    if (error) errorHeadingRef.current?.focus()
+  }, [error])
 
   useEffect(() => {
     if (callback.kind === "token") {
@@ -90,9 +97,7 @@ export function AuthCallbackContent() {
           sessionStorage.removeItem("post-login-next")
         })
         .catch(() => setError("Authentication failed."))
-    } else if (callback.kind === "second-step") {
-      window.history.replaceState(null, "", "/auth/callback")
-    } else if (callback.fromProvider) {
+    } else if (callback.kind === "error" && callback.fromProvider) {
       sessionStorage.removeItem("post-login-next")
     }
   }, [callback, router, refreshUser])
@@ -105,6 +110,8 @@ export function AuthCallbackContent() {
 
   const handleExpired = useCallback(() => setError(EXPIRED), [])
 
+  const handleBackToSignIn = useCallback(() => router.push("/login"), [router])
+
   if (error) {
     return (
       <AuthCallbackShell>
@@ -112,7 +119,13 @@ export function AuthCallbackContent() {
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
             <CircleAlert className="h-5 w-5 text-destructive" />
           </div>
-          <h1 className="mt-4 font-display text-2xl">Authentication failed</h1>
+          <h1
+            ref={errorHeadingRef}
+            tabIndex={-1}
+            className="mt-4 font-display text-2xl focus-visible:ring-0 focus-visible:ring-offset-0"
+          >
+            Authentication failed
+          </h1>
           <p className="mt-1.5 text-sm text-muted-foreground">{error}</p>
           <Button asChild className="mt-8 w-full">
             <Link href="/login">Try again</Link>
@@ -131,6 +144,7 @@ export function AuthCallbackContent() {
             methods={callback.methods}
             onSignedIn={handleSignedIn}
             onExpired={handleExpired}
+            onBackToSignIn={handleBackToSignIn}
           />
         </Card>
       </AuthCallbackShell>

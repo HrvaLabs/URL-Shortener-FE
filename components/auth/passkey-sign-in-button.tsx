@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { KeyRound } from "lucide-react"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { ApiError, authApi } from "@/lib/api-client"
+import { authApi } from "@/lib/api-client"
 import { useWebAuthnSupported } from "@/lib/hooks/useWebAuthnSupported"
+import { toastPasskeySignInError } from "@/lib/passkey-toasts"
 import type { SignedIn } from "@/lib/types"
-import { abortPasskeyRequest, getPasskey, passkeyErrorMessage } from "@/lib/webauthn"
+import { abortPasskeyRequest, getPasskey } from "@/lib/webauthn"
 
 export function PasskeySignInButton({
   rememberMe,
@@ -53,17 +53,12 @@ export function PasskeySignInButton({
       } finally {
         ceremonyInFlight.current = false
       }
-      onSignedIn(await authApi.passkeySignIn(ceremonyId, credential, rememberMeRef.current))
+      const signedIn = await authApi.passkeySignIn(ceremonyId, credential, rememberMeRef.current)
+      if (!mounted.current) return
+      onSignedIn(signedIn)
     } catch (error) {
       if (!mounted.current) return
-      const message = passkeyErrorMessage(error, "sign-in")
-      if (error instanceof ApiError && error.status === 403 && error.message.toLowerCase().includes("verify")) {
-        toast.error(error.message, {
-          action: { label: "Resend", onClick: () => router.push("/verify-email/resend") },
-        })
-      } else if (message) {
-        toast.error(message)
-      }
+      toastPasskeySignInError(error, router)
     } finally {
       setBusy(false)
       onBusyChange(false)

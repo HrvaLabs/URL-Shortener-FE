@@ -15,6 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
+import { BioPageReviewSection } from "@/components/admin/bio-page-review-section"
 import { PageMeta } from "@/components/page-meta"
 import { adminSelectClass } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
@@ -278,6 +279,8 @@ function ReviewQueue() {
         <h1 ref={headingRef} tabIndex={-1} className="rounded-sm font-display text-2xl">Review queue</h1>
         <p className="mt-1 text-sm text-muted-foreground">Flagged links waiting for your decision</p>
       </div>
+
+      <BioPageReviewSection fallbackFocusRef={headingRef} />
 
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-muted-foreground">

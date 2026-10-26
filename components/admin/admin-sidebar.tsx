@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, Bookmark, History, LayoutDashboard, LinkIcon, ListFilter, Mail, Shield, ShieldAlert, Users, type LucideIcon } from "lucide-react"
+import { Activity, Bookmark, Contact, History, LayoutDashboard, LinkIcon, ListFilter, Mail, Shield, ShieldAlert, Users, type LucideIcon } from "lucide-react"
 import { useReviewCount } from "@/lib/hooks/useReviewCount"
 import { ReviewCountBadge } from "@/components/admin/review-count-badge"
 import { navItemClass, navItemState, revealInRow } from "@/components/dashboard/dashboard-nav"
@@ -34,6 +34,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { href: "/admin/urls", label: "All URLs", icon: LinkIcon },
       { href: "/admin", label: "Users", icon: Users },
+      { href: "/admin/bio-pages", label: "Bio pages", icon: Contact },
       { href: "/admin/api-keys", label: "All API keys", icon: Shield },
     ],
   },

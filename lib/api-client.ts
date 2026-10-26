@@ -434,8 +434,8 @@ export const adminBioApi = {
     request<AdminBioPage>("POST", `/admin/bio-pages/${id}/unhide`),
   changeHandle: (id: number, handle: string) =>
     request<AdminBioPage>("PUT", `/admin/bio-pages/${id}/handle`, { handle }),
-  revokeHandle: (id: number, reason: string) =>
-    request<AdminBioPage>("POST", `/admin/bio-pages/${id}/revoke-handle`, { reason }),
+  revokeHandle: (id: number, reason: string, expectedHandle?: string | null) =>
+    request<AdminBioPage>("POST", `/admin/bio-pages/${id}/revoke-handle`, { reason, expectedHandle: expectedHandle ?? undefined }),
   reviews: (page = 0, size = 20) =>
     request<Page<BioPageReviewEntry>>("GET", `/admin/bio-page-reviews?page=${page}&size=${size}`),
   resolveReview: (pageId: number, action: BioPageReviewAction, reason?: string) =>

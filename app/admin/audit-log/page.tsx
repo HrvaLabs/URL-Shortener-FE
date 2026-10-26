@@ -39,6 +39,11 @@ const actionLabels: Record<AuditAction, string> = {
   CLEAR_LOGIN_ATTEMPTS: "Cleared login limits",
   RESERVE_ALIAS: "Reserved alias",
   UNRESERVE_ALIAS: "Removed reserved alias",
+  HIDE_BIO_PAGE: "Hid bio page",
+  UNHIDE_BIO_PAGE: "Unhid bio page",
+  RENAME_BIO_HANDLE: "Changed bio handle",
+  REVOKE_BIO_HANDLE: "Revoked bio handle",
+  RESOLVE_BIO_REVIEW: "Resolved bio page review",
   UNKNOWN: "Unknown action",
 }
 
@@ -65,6 +70,11 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   CLEAR_LOGIN_ATTEMPTS: "secondary",
   RESERVE_ALIAS: "secondary",
   UNRESERVE_ALIAS: "secondary",
+  HIDE_BIO_PAGE: "destructive",
+  UNHIDE_BIO_PAGE: "secondary",
+  RENAME_BIO_HANDLE: "secondary",
+  REVOKE_BIO_HANDLE: "destructive",
+  RESOLVE_BIO_REVIEW: "secondary",
   UNKNOWN: "outline",
 }
 
@@ -78,6 +88,8 @@ const targetTypeLabels: Record<string, string> = {
   Blocklist: "Blocklist",
   EmailLog: "Email",
   Admin: "Site settings",
+  BioPage: "Bio page",
+  BioPageReview: "Bio page",
 }
 
 const targetTypeLabel = (targetType: string) =>

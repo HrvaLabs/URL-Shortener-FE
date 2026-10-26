@@ -627,6 +627,11 @@ export type AuditAction =
   | "DELETE_LINK"
   | "RESERVE_ALIAS"
   | "UNRESERVE_ALIAS"
+  | "HIDE_BIO_PAGE"
+  | "UNHIDE_BIO_PAGE"
+  | "RENAME_BIO_HANDLE"
+  | "REVOKE_BIO_HANDLE"
+  | "RESOLVE_BIO_REVIEW"
   | "UNKNOWN"
 
 export interface AuditLog {

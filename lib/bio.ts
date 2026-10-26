@@ -172,8 +172,16 @@ export const contrastRatio = (a: string, b: string): number => {
 
 const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" })
 
+const JOINERS = new Set([character(0x200c), character(0x200d)])
+
+const startsOrEndsWithJoiner = (value: string): boolean => {
+  const codePoints = Array.from(value)
+  return JOINERS.has(codePoints[0]) || JOINERS.has(codePoints[codePoints.length - 1])
+}
+
 export const isSingleEmoji = (value: string): boolean => {
   if (!value || value.length > 16 || (value.codePointAt(0) ?? 0) <= 0x7f) return false
+  if (startsOrEndsWithJoiner(value)) return false
   if (!/^\p{Emoji}/u.test(value)) return false
   return [...graphemes.segment(value)].length === 1
 }

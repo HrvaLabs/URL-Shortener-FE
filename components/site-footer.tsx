@@ -28,7 +28,7 @@ const columns = [
       { href: "/help", label: "Help" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
-      { href: "/report", label: "Report a link" },
+      { href: "/report", label: "Report abuse" },
     ],
   },
 ]

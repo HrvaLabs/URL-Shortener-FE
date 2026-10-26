@@ -803,7 +803,7 @@ export interface UrlCheckResult {
   registrableDomain: string | null
 }
 
-export type ReportCategory = "PHISHING" | "MALWARE" | "SPAM" | "OTHER"
+export type ReportCategory = "PHISHING" | "MALWARE" | "SPAM" | "IMPERSONATION" | "OTHER"
 
 export interface LinkReport {
   shortUrl: string

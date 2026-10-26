@@ -26,6 +26,7 @@ const categories: { value: ReportCategory; label: string }[] = [
   { value: "PHISHING", label: "Phishing" },
   { value: "MALWARE", label: "Malware" },
   { value: "SPAM", label: "Spam" },
+  { value: "IMPERSONATION", label: "Pretends to be someone" },
   { value: "OTHER", label: "Something else" },
 ]
 
@@ -128,7 +129,7 @@ function ReportForm({ initialShort }: { initialShort: string }) {
     <>
       <h1 className="font-display text-3xl sm:text-4xl">{reportsBioPage ? "Report a bio page" : "Report a link"}</h1>
       <p className="mt-3 text-muted-foreground">
-        Tell us about a hrva.cc link or bio page that leads to phishing, malware, spam or other abuse. You can also email{" "}
+        Tell us about a hrva.cc link or bio page used for phishing, malware, spam, impersonation or other abuse. You can also email{" "}
         <a href="mailto:abuse@hrva.cc" className="text-brand hover:underline">
           abuse@hrva.cc
         </a>

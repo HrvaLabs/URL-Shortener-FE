@@ -244,8 +244,9 @@ export default function LinkInBioHelpPage() {
               <h2 id="report">Report a bio page</h2>
               <p>
                 Select <strong>Report this page</strong> at the bottom of any bio page, or enter{" "}
-                <code>hrva.cc/@name</code> on the <Link href="/report">report form</Link>. Say which button
-                is the problem in the details. Reports go to a person; a report never hides a page by itself.
+                <code>hrva.cc/@name</code> on the <Link href="/report">report form</Link>. Choose{" "}
+                <strong>Pretends to be someone</strong> for a page that impersonates a person or a brand, and
+                say which button is the problem in the details. Reports go to a person; a report never hides a page by itself.
               </p>
               <p>
                 An admin may hide a page that breaks the <Link href="/terms">terms</Link>. Visitors then see

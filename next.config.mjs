@@ -1,4 +1,4 @@
-const devApiOrigin = process.env.DEV_API_ORIGIN ?? "http://localhost:8080";
+const devApiOrigin = process.env.DEV_API_ORIGIN || "http://localhost:8080";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

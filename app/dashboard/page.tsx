@@ -21,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { cn, formatDate, formatDateTime, formatRelativeDate, truncateUrl, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, formatDate, formatDateTime, formatRelativeDate, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
 import { analyticsHref } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
@@ -250,10 +250,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden max-w-[240px] md:table-cell">
-                    <span className="block truncate text-sm text-muted-foreground" title={url.longUrl}>
-                      {truncateUrl(url.longUrl, 34)}
-                    </span>
+                  <TableCell className="hidden min-w-56 md:table-cell">
+                    <span className="block break-all text-sm text-muted-foreground">{url.longUrl}</span>
                     {url.tags && url.tags.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {url.tags.map((t) => (

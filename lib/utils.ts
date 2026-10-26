@@ -112,7 +112,7 @@ export function getShortBaseUrl(): string {
   if (process.env.NODE_ENV === "production") {
     return "https://hrva.cc"
   }
-  return process.env.DEV_API_ORIGIN ?? "http://localhost:8080"
+  return process.env.DEV_API_ORIGIN || "http://localhost:8080"
 }
 
 export function formatShortUrl(short: string): string {

@@ -35,8 +35,8 @@ const guides = [
   },
   {
     href: "/help/stats#qr-scans",
-    title: "QR scans and direct clicks",
-    description: "How hrva.cc counts scans of its QR codes, and why older printed codes count as direct.",
+    title: "QR scans and other clicks",
+    description: "How hrva.cc counts scans of its QR codes, and why older printed codes count as other clicks.",
   },
 ]
 

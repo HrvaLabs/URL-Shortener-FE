@@ -66,7 +66,7 @@ const fixedLabels: Record<Exclude<BreakdownDimension, "countries" | "referrers">
     chromeos: "ChromeOS",
     other: "Other",
   },
-  sources: { qr: "QR scans", direct: "Direct" },
+  sources: { qr: "QR scans", direct: "Other clicks" },
 }
 
 export function qrSplit(totals: AnalyticsTotals, sources: BreakdownEntry[] | undefined): BreakdownEntry[] {

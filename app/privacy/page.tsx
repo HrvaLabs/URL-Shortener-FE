@@ -81,9 +81,9 @@ export default function PrivacyPage() {
                 When someone opens a short link, hrva.cc adds to that link&apos;s counts for the day.
                 For each link and day it keeps only totals: clicks, unique visitors, clicks from bots
                 and link previews, and how many clicks came from each referring site&apos;s domain
-                (for example t.co), each country, each device type (mobile, tablet or desktop), and
-                each browser and operating system family, and whether the click came from a QR code
-                made by hrva.cc. The country comes from Cloudflare, which
+                (for example t.co), each country, each device type (mobile, tablet or desktop), each
+                browser and operating system family, and whether the click came from a QR code made by
+                hrva.cc. The country comes from Cloudflare, which
                 carries our traffic; we don&apos;t look up locations ourselves. Full addresses of
                 referring pages, full browser identifiers and IP addresses are never stored, and
                 nothing is recorded about an individual click. Short links set no cookies and run no
@@ -185,7 +185,9 @@ export default function PrivacyPage() {
               </p>
               <p>
                 A weekly summary of site-wide totals, and an alert when many new links to the same new
-                domain appear in a short time, go only to the admin and never identify a visitor.
+                domain appear in a short time, go only to the admin and never identify a visitor. For
+                links made without an account, the check behind that alert keeps a one-way hash of the
+                creator&apos;s network for up to an hour, to spot phishing waves.
               </p>
               <p>
                 The admin can also moderate through the hrva.cc MCP connector in an AI app. The

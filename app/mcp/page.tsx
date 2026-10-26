@@ -96,8 +96,9 @@ export default function McpPage() {
                 <InlineCode>app.hrva.cc/connect</InlineCode>.
               </Paragraph>
               <Paragraph className="mt-4">
-                There&apos;s no server without an account anymore. If you added <InlineCode>hrva.cc/mcp/anon</InlineCode>{" "}
-                before, remove it and add <InlineCode>hrva.cc/mcp</InlineCode> instead.
+                The server without an account is gone. If your AI app shows <InlineCode>hrva.cc/mcp/anon</InlineCode>{" "}
+                as failing or not found, remove it and add <InlineCode>https://hrva.cc/mcp</InlineCode>. You&apos;ll be
+                asked to sign in, or to create a free account.
               </Paragraph>
             </Section>
 
@@ -260,7 +261,7 @@ function CodeBlock({ label, code, copyLabel, mono, prompt }: CodeBlockProps) {
   return (
     <div className="mt-4 min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-800 py-1.5 pl-4 pr-2">
-        <span className={cn("truncate text-xs text-zinc-400", mono ? "font-mono" : "font-medium")}>{label}</span>
+        <span className={cn("min-w-0 text-xs text-zinc-400 [overflow-wrap:anywhere]", mono ? "font-mono" : "font-medium")}>{label}</span>
         <CopyButton text={code} label={copyLabel} className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100" />
       </div>
       <pre className="whitespace-pre-wrap wrap-break-word p-4 font-mono text-[12.5px] leading-relaxed">

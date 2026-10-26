@@ -67,10 +67,10 @@ function PublicHome() {
 }
 
 const previewRows = [
-  { alias: "cv", destination: "drive.google.com/file/d/1Xa9…/view", visits: "1,284", tags: ["personal"], status: "Active" },
+  { alias: "cv", destination: "drive.google.com/file/d/1Xa9kQ2mZpL7/view", visits: "1,284", tags: ["personal"], status: "Active" },
   { alias: "launch", destination: "github.com/karlohrvacic/url-shortener", visits: "312 / 500", tags: ["work"], status: "Limit 500" },
   { alias: "menu", destination: "bistro.example.com/menu/october", visits: "96", tags: ["food"], status: "Expires 31 Oct" },
-  { alias: "team-photos", destination: "photos.example.com/album/4f2c…", visits: "47", tags: [], status: "Password" },
+  { alias: "team-photos", destination: "photos.example.com/album/4f2c81", visits: "47", tags: [], status: "Password" },
   { alias: "summer-23", destination: "events.example.com/summer-2023", visits: "2,019", tags: ["events"], status: "Expired" },
 ]
 
@@ -107,14 +107,14 @@ function DashboardPreview() {
               className="grid grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-3 text-sm sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_110px_120px] sm:px-5"
             >
               <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate font-mono text-[13px] font-medium text-brand">hrva.cc/{row.alias}</span>
+                <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">hrva.cc/{row.alias}</span>
                 {row.tags.map((tag) => (
                   <span key={tag} className="hidden rounded-md border px-1.5 py-px text-xs text-muted-foreground md:inline">
                     {tag}
                   </span>
                 ))}
               </span>
-              <span className="hidden truncate text-muted-foreground sm:block">{row.destination}</span>
+              <span className="hidden min-w-0 text-muted-foreground [overflow-wrap:anywhere] sm:block">{row.destination}</span>
               <span className="text-right tabular-nums sm:text-left">{row.visits}</span>
               <span className="hidden sm:block">
                 <PreviewStatus status={row.status} />
@@ -225,7 +225,7 @@ function FeatureGrid() {
             title="QR codes"
             description={
               <>
-                Pick colours and size, then download as PNG or SVG. Link analytics count scans apart from direct clicks.{" "}
+                Pick colours and size, then download as PNG or SVG. Link analytics count scans apart from other clicks.{" "}
                 <Link href="/help/stats#qr-scans" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about QR scans</span>
                 </Link>
@@ -503,7 +503,7 @@ function PrivacySection() {
 
         <figure className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.4)]">
           <div className="flex items-center justify-between gap-3 border-b border-zinc-800 px-4 py-2.5">
-            <span className="truncate font-mono text-xs text-zinc-400">UniqueVisitorCounter.java</span>
+            <span className="min-w-0 font-mono text-xs text-zinc-400 [overflow-wrap:anywhere]">UniqueVisitorCounter.java</span>
             <a
               href={visitorHashUrl}
               target="_blank"

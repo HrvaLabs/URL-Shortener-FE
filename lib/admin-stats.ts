@@ -97,7 +97,8 @@ export function formatBytes(bytes: number | null | undefined): string {
 }
 
 const minutesPerHour = 60
-const minutesPerDay = 24 * minutesPerHour
+const hoursPerDay = 24
+const minutesPerDay = hoursPerDay * minutesPerHour
 
 const oneDecimal = (value: number) => value.toFixed(1).replace(/\.0$/, "")
 
@@ -107,6 +108,33 @@ export function formatMinutes(minutes: number | null): string {
   if (minutes < minutesPerHour) return `${Math.floor(minutes)} min`
   if (minutes < 2 * minutesPerDay) return `${oneDecimal(minutes / minutesPerHour)} h`
   return `${oneDecimal(minutes / minutesPerDay)} days`
+}
+
+type DurationUnit = "day" | "hour" | "minute"
+
+const shortDurationUnits: Record<DurationUnit, (amount: number) => string> = {
+  day: (amount) => (amount === 1 ? "day" : "days"),
+  hour: () => "h",
+  minute: () => "min",
+}
+
+function durationParts(minutes: number): [number, DurationUnit][] {
+  const wholeMinutes = Math.round(minutes)
+  if (wholeMinutes < minutesPerHour) return [[wholeMinutes, "minute"]]
+  if (wholeMinutes < minutesPerDay) {
+    return [[Math.floor(wholeMinutes / minutesPerHour), "hour"], [wholeMinutes % minutesPerHour, "minute"]]
+  }
+  const hours = Math.round(wholeMinutes / minutesPerHour)
+  return [[Math.floor(hours / hoursPerDay), "day"], [hours % hoursPerDay, "hour"]]
+}
+
+export function formatDuration(minutes: number): { shown: string; spoken: string } {
+  if (!Number.isFinite(minutes) || minutes < 1) return { shown: "< 1 min", spoken: "less than a minute" }
+  const parts = durationParts(minutes).filter(([amount], index) => index === 0 || amount > 0)
+  return {
+    shown: parts.map(([amount, unit]) => `${amount} ${shortDurationUnits[unit](amount)}`).join(" "),
+    spoken: parts.map(([amount, unit]) => `${amount} ${unit}${amount === 1 ? "" : "s"}`).join(" "),
+  }
 }
 
 export type BucketSize = "day" | "week" | "month"

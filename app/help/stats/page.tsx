@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { QR_SCANS_START, analyticsDay } from "@/lib/analytics"
 
-const description = "What the public numbers mean, and how hrva.cc tells QR scans from direct clicks."
+const description = "What the public numbers mean, and how hrva.cc tells QR scans from other clicks."
 
 export const metadata: Metadata = {
   title: "hrva.cc in numbers: help",
@@ -38,8 +38,8 @@ export default function StatsHelpPage() {
 
             <div className="mt-8 rounded-xl border bg-muted/40 p-5">
               <p className="leading-7 text-foreground">
-                In short: the hrva.cc in numbers page shows site-wide totals for the last 30 full days. Link
-                analytics show QR scans apart from direct clicks.
+                In short: the hrva.cc in numbers page shows site-wide numbers, most of them for the last 30
+                full days. Link analytics show QR scans apart from other clicks.
               </p>
             </div>
 
@@ -57,8 +57,8 @@ export default function StatsHelpPage() {
                 numbers are refreshed every hour.
               </p>
               <p>
-                <strong>Harmful links blocked</strong>: the number counts every link that is still blocked,
-                since hrva.cc started. The line under it says how many were blocked in the last 30 days.
+                <strong>Harmful links blocked</strong>: links blocked in the last 30 full days. The line
+                under it gives the total since hrva.cc started, counting the links that are still blocked.
                 Links refused before they were created aren&apos;t counted, because they were never saved.
               </p>
               <p>
@@ -66,26 +66,28 @@ export default function StatsHelpPage() {
                 days. Anyone can <Link href="/report">report a link</Link>.
               </p>
               <p>
-                <strong>Average review time</strong>: how long it took, on average, from a link being
-                flagged or reported to a decision, for reviews finished in the last 30 days. Without any, it
-                says <strong>No reviews in the last 30 days</strong>.
+                <strong>Average review time</strong>: how long it took, on average, from the moment hrva.cc
+                or a visitor flagged a link to a person&apos;s decision, for reviews finished in the last 30
+                days. Without any, it says <strong>No reviews in the last 30 days</strong>.
               </p>
               <p>
                 <strong>Blocklists in use</strong>: the blocklists hrva.cc checks links against. Each row
-                gives the list&apos;s name, whether it blocks links (<strong>Blocks links</strong>) or sends
-                them for review (<strong>Sends links for review</strong>), and how many entries it has.
+                gives the list&apos;s name, whether it blocks links (<strong>Blocks links</strong>) or flags
+                them for a person to check (<strong>Flags links for a person to check</strong>), and how many
+                domains it has.
               </p>
               <p>
                 Nothing on the page is about a single link, person, country or referrer.{" "}
                 <Link href="/stats">Open hrva.cc in numbers</Link>.
               </p>
 
-              <h2 id="qr-scans">QR scans and direct clicks</h2>
+              <h2 id="qr-scans">QR scans and other clicks</h2>
               <ol>
                 <li>
-                  Get a QR code from hrva.cc: in <strong>Dashboard</strong>, select{" "}
-                  <strong>Show QR code</strong> next to a link, then <strong>PNG</strong> or{" "}
-                  <strong>SVG</strong>. The home page and the create dialog show one too.
+                  Sign in and open <strong>URLs</strong>. Next to a link, select the QR code icon (screen
+                  readers call it <strong>Show QR code</strong>), then <strong>PNG</strong> or{" "}
+                  <strong>SVG</strong>. The create dialog shows a code too, and so does the home page on a
+                  larger screen.
                 </li>
                 <li>
                   The code opens your short link with <code className="whitespace-nowrap">?qr</code> added,
@@ -94,15 +96,18 @@ export default function StatsHelpPage() {
                   the destination never sees it.
                 </li>
                 <li>
-                  Open the link&apos;s analytics (<strong>View stats</strong>) and look at{" "}
-                  <strong>QR scans and direct clicks</strong>.
+                  Next to the link, select the chart icon (screen readers call it{" "}
+                  <strong>View stats</strong>) and look at <strong>QR scans and other clicks</strong>.
                 </li>
               </ol>
               <p>
-                QR codes made before {qrScansStart} don&apos;t carry the marker, so their scans count as
-                direct. To count scans from a printed code, download it again and replace the print.
+                QR codes downloaded before {qrScansStart} don&apos;t carry the marker, so their scans count
+                as other clicks. To count scans from a printed code, download it again and replace the print.
               </p>
-              <p>Codes made by other QR generators, and scans of password-protected links, count as direct.</p>
+              <p>
+                Codes made by other QR generators, and links that were typed, clicked or pasted, count as other
+                clicks. A link with a password counts every visit, scans included, as another click.
+              </p>
               <p>Bots and link previews are never counted as scans or clicks.</p>
 
               <h2 id="privacy">Privacy</h2>

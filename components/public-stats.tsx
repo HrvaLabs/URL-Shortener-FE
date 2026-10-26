@@ -8,7 +8,7 @@ import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatMinutes } from "@/lib/admin-stats"
+import { formatDuration } from "@/lib/admin-stats"
 import { analyticsDay, parseServerDateTime } from "@/lib/analytics"
 import { ApiError } from "@/lib/api-client"
 import { usePublicStats } from "@/lib/hooks/usePublicStats"
@@ -19,7 +19,7 @@ type Blocklist = PublicStatsResponse["blocklists"][number]
 
 const blocklistActionLabels: Record<Blocklist["action"], string> = {
   BLOCK: "Blocks links",
-  FLAG: "Sends links for review",
+  FLAG: "Flags links for a person to check",
 }
 
 const relatedLinks = [
@@ -48,7 +48,8 @@ export function PublicStats() {
     <div className="@container">
       <h1 className="font-display text-3xl leading-tight sm:text-4xl">hrva.cc in numbers</h1>
       <p className="mt-3 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-        Site-wide totals for the last 30 full days, refreshed every hour. Nothing here is about a single link or person.
+        Site-wide numbers for hrva.cc, refreshed every hour. Most cover the last 30 full days. Nothing here is about a
+        single link or person.
       </p>
 
       <div id="numbers" className="mt-4 scroll-mt-24">
@@ -111,11 +112,20 @@ function Numbers({ data, focusPeriod }: { data: PublicStatsResponse; focusPeriod
           />
         </div>
 
-        <ClicksChart
-          daily={data.daily.map((day) => ({ date: day.date, clicks: day.clicks, uniqueVisitors: 0, botClicks: 0 }))}
-          days={30}
-          showUniqueVisitors={false}
-        />
+        <div className="relative">
+          <ClicksChart
+            daily={data.daily.map((day) => ({ date: day.date, clicks: day.clicks, uniqueVisitors: 0, botClicks: 0 }))}
+            days={30}
+            showUniqueVisitors={false}
+          />
+          {data.clicks === 0 && (
+            <p className="pointer-events-none absolute inset-x-0 bottom-0 top-12 flex items-center justify-center px-6">
+              <span className="rounded-md bg-card px-3 py-1.5 text-center text-sm text-muted-foreground">
+                No clicks in the last 30 days.
+              </span>
+            </p>
+          )}
+        </div>
 
         <div className={threeTilesPerRow}>
           <StatGrid
@@ -123,8 +133,8 @@ function Numbers({ data, focusPeriod }: { data: PublicStatsResponse; focusPeriod
             items={[
               {
                 label: "Harmful links blocked",
-                value: data.blocked.allTime.toLocaleString(),
-                hint: `${data.blocked.last30Days.toLocaleString()} in the last 30 days. Links refused before they were created aren't counted.`,
+                value: data.blocked.last30Days.toLocaleString(),
+                hint: `${data.blocked.allTime.toLocaleString()} since hrva.cc started. Links refused before they were created aren't counted.`,
               },
               {
                 label: "Visitor reports handled",
@@ -134,7 +144,7 @@ function Numbers({ data, focusPeriod }: { data: PublicStatsResponse; focusPeriod
               {
                 label: "Average review time",
                 value: <AverageReviewTime minutes={data.averageReviewMinutes} />,
-                hint: "From a link being flagged or reported to a decision.",
+                hint: "From the moment hrva.cc or a visitor flags a link to a person's decision.",
               },
             ]}
           />
@@ -150,21 +160,13 @@ function AverageReviewTime({ minutes }: { minutes: number | null }) {
   if (minutes == null) {
     return <span className="text-base font-medium text-muted-foreground">No reviews in the last 30 days</span>
   }
-  const shown = formatMinutes(minutes)
+  const { shown, spoken } = formatDuration(minutes)
   return (
     <>
       <span aria-hidden="true">{shown}</span>
-      <span className="sr-only">{spokenDuration(shown)}</span>
+      <span className="sr-only">{spoken}</span>
     </>
   )
-}
-
-function spokenDuration(shown: string): string {
-  if (shown === "< 1 min") return "less than a minute"
-  const [amount, unit] = shown.split(" ")
-  if (unit === "min") return amount === "1" ? "1 minute" : `${amount} minutes`
-  if (unit === "h") return amount === "1" ? "1 hour" : `${amount} hours`
-  return shown
 }
 
 function Blocklists({ blocklists }: { blocklists: Blocklist[] }) {
@@ -181,7 +183,7 @@ function Blocklists({ blocklists }: { blocklists: Blocklist[] }) {
               <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <Badge variant={actionVariants[list.action]}>{blocklistActionLabels[list.action]}</Badge>
                 <span className="whitespace-nowrap tabular-nums text-muted-foreground">
-                  {list.entries === 1 ? "1 entry" : `${list.entries.toLocaleString()} entries`}
+                  {list.entries === 1 ? "1 domain" : `${list.entries.toLocaleString()} domains`}
                 </span>
               </span>
             </li>

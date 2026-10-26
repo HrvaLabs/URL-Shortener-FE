@@ -182,7 +182,7 @@ export function PasskeysCard() {
 
       <Dialog open={adding} onOpenChange={(open) => { if (!open && !addBusy) closeAdd() }}>
         <DialogContent onCloseAutoFocus={restoreFocus}>
-          <AddPasskeyForm isLocal={isLocal} busy={addBusy} onBusyChange={setAddBusy} onDone={closeAdd} />
+          <AddPasskeyForm email={user?.email ?? ""} isLocal={isLocal} busy={addBusy} onBusyChange={setAddBusy} onDone={closeAdd} />
         </DialogContent>
       </Dialog>
 
@@ -267,11 +267,13 @@ function PasskeyRow({
 }
 
 function AddPasskeyForm({
+  email,
   isLocal,
   busy,
   onBusyChange,
   onDone,
 }: {
+  email: string
   isLocal: boolean
   busy: boolean
   onBusyChange: (busy: boolean) => void
@@ -351,6 +353,7 @@ function AddPasskeyForm({
           Your browser will offer this device, a password manager, your phone or a USB or NFC security key.
         </DialogDescription>
       </DialogHeader>
+      <input type="text" name="username" autoComplete="username" value={email} readOnly hidden aria-hidden="true" tabIndex={-1} />
       <div>
         <Label htmlFor="passkeyLabel">Name</Label>
         <Input
@@ -360,6 +363,10 @@ function AddPasskeyForm({
           placeholder="For example MacBook, iPhone or YubiKey"
           maxLength={64}
           autoComplete="off"
+          data-protonpass-ignore="true"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
           className="mt-1.5 h-10"
         />
       </div>
@@ -431,6 +438,10 @@ function RenamePasskeyForm({ passkey, onDone }: { passkey: Passkey; onDone: () =
           onChange={(e) => setLabel(e.target.value)}
           maxLength={64}
           autoComplete="off"
+          data-protonpass-ignore="true"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
           required
           className="mt-1.5 h-10"
         />

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useReviewCount } from "@/lib/hooks/useReviewCount"
@@ -18,6 +19,8 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings" },
 ]
 
+export const wideContainerClass = "mx-auto max-w-(--breakpoint-2xl) px-5"
+
 export const navItemClass = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm transition-colors"
 
 export function navItemState(isActive: boolean) {
@@ -29,9 +32,16 @@ export function navItemState(isActive: boolean) {
 function AdminLink({ pathname }: { pathname: string }) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
   const { data: reviewCount } = useReviewCount()
+  const reviewCountLoaded = reviewCount !== undefined
+  const linkRef = useRef<HTMLAnchorElement>(null)
+
+  useEffect(() => {
+    if (isAdminRoute) linkRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" })
+  }, [isAdminRoute, reviewCountLoaded])
 
   return (
     <Link
+      ref={linkRef}
       href="/admin/dashboard"
       aria-current={isAdminRoute ? "true" : undefined}
       className={cn(navItemClass, navItemState(isAdminRoute))}
@@ -42,7 +52,7 @@ function AdminLink({ pathname }: { pathname: string }) {
   )
 }
 
-export function DashboardNav() {
+export function DashboardNav({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname()
   const { user, logout, isAdmin } = useAuth()
 
@@ -62,7 +72,7 @@ export function DashboardNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="container">
+      <div className={wide ? wideContainerClass : "container"}>
         <div className="flex h-14 items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-6">
             <Logo showText className="shrink-0" />

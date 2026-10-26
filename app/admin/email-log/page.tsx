@@ -79,7 +79,7 @@ export default function AdminEmailLogPage() {
                 <TableHead>Recipient</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden lg:table-cell">Error</TableHead>
+                <TableHead className="hidden @6xl:table-cell">Error</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -94,7 +94,7 @@ export default function AdminEmailLogPage() {
                       {statusLabels[entry.status] ?? entry.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground lg:table-cell" title={entry.errorMessage || undefined}>
+                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground @6xl:table-cell" title={entry.errorMessage || undefined}>
                     {entry.errorMessage || "—"}
                   </TableCell>
                   <TableCell className="text-right">

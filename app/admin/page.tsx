@@ -211,7 +211,7 @@ export default function AdminUsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden lg:table-cell">ID</TableHead>
+                <TableHead className="hidden @5xl:table-cell">ID</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("email")}>
                   <div className="flex items-center gap-1">
                     Email
@@ -219,14 +219,14 @@ export default function AdminUsersPage() {
                   </div>
                 </TableHead>
                 <TableHead>Provider</TableHead>
-                <TableHead className="hidden lg:table-cell">Slots</TableHead>
+                <TableHead className="hidden @5xl:table-cell">Slots</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("createDate")}>
                   <div className="flex items-center gap-1">
                     Created
                     {sortDir("createDate") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("createDate") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
                   </div>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort("lastLogin")}>
+                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("lastLogin")}>
                   <div className="flex items-center gap-1">
                     Last login
                     {sortDir("lastLogin") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("lastLogin") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
@@ -244,7 +244,7 @@ export default function AdminUsersPage() {
             <TableBody>
               {users.content?.map((user: User) => (
                 <TableRow key={user.id}>
-                  <TableCell className="hidden tabular-nums text-muted-foreground lg:table-cell">{user.id}</TableCell>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @5xl:table-cell">{user.id}</TableCell>
                   <TableCell className="font-medium">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <span>{user.email}</span>
@@ -256,9 +256,9 @@ export default function AdminUsersPage() {
                       {user.authProvider === "google" ? "Google" : user.authProvider === "github" ? "GitHub" : "Email"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden tabular-nums lg:table-cell">{user.apiKeySlots}</TableCell>
+                  <TableCell className="hidden tabular-nums @5xl:table-cell">{user.apiKeySlots}</TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground" title={formatDateTime(user.createDate)}>{formatDate(user.createDate)}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(user.lastLogin)}>{formatDate(user.lastLogin)}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell" title={formatDateTime(user.lastLogin)}>{formatDate(user.lastLogin)}</TableCell>
                   <TableCell>
                     <Badge variant={user.active ? "success" : "destructive"}>
                       {user.active ? "Active" : "Inactive"}

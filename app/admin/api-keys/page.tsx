@@ -111,8 +111,8 @@ export default function AdminApiKeysPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Key</TableHead>
-                <TableHead className="hidden lg:table-cell">Owner</TableHead>
-                <TableHead className="hidden lg:table-cell">Created</TableHead>
+                <TableHead className="hidden @2xl:table-cell">Owner</TableHead>
+                <TableHead className="hidden @2xl:table-cell">Created</TableHead>
                 <TableHead>Usage</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -122,8 +122,8 @@ export default function AdminApiKeysPage() {
               {apiKeys.content.map((key: ApiKeyResponse) => (
                 <TableRow key={key.id}>
                   <TableCell><span className="whitespace-nowrap font-mono text-[13px]">{maskApiKey(key.key)}</span></TableCell>
-                  <TableCell className="hidden lg:table-cell">{key.ownerEmail || "\u2014"}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(key.createDate)}>{formatDate(key.createDate)}</TableCell>
+                  <TableCell className="hidden @2xl:table-cell">{key.ownerEmail || "\u2014"}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @2xl:table-cell" title={formatDateTime(key.createDate)}>{formatDate(key.createDate)}</TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
                   <TableCell>
                     <StatusBadge status={key.status} active={key.active} />

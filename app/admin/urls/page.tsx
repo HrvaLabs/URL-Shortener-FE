@@ -295,8 +295,8 @@ export default function AdminUrlsPage() {
                   />
                 </TableHead>
                 <TableHead>Short URL</TableHead>
-                <TableHead className="hidden lg:table-cell">Long URL</TableHead>
-                <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort("owner.email")}>
+                <TableHead className="hidden @5xl:table-cell">Long URL</TableHead>
+                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("owner.email")}>
                   <div className="flex items-center gap-1">
                     Owner
                     {sortDir("owner.email") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("owner.email") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
@@ -308,7 +308,7 @@ export default function AdminUrlsPage() {
                     {sortDir("visits") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("visits") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
                   </div>
                 </TableHead>
-                <TableHead className="hidden lg:table-cell cursor-pointer select-none" onClick={() => toggleSort("createDate")}>
+                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("createDate")}>
                   <div className="flex items-center gap-1">
                     Created
                     {sortDir("createDate") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("createDate") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
@@ -335,15 +335,15 @@ export default function AdminUrlsPage() {
                       <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden max-w-[200px] text-muted-foreground lg:table-cell">
+                  <TableCell className="hidden max-w-[200px] text-muted-foreground @5xl:table-cell">
                     <DestinationTooltip url={url} />
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
+                  <TableCell className="hidden @5xl:table-cell">
                     <span className="block max-w-52 truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
                     {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
                   </TableCell>
                   <TableCell className="whitespace-nowrap tabular-nums">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <div className="flex items-center gap-1.5">

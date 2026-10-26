@@ -136,9 +136,9 @@ export default function AdminAuditLogPage() {
                 <TableHead>Time</TableHead>
                 <TableHead>Admin</TableHead>
                 <TableHead>Action</TableHead>
-                <TableHead className="hidden md:table-cell">Target type</TableHead>
-                <TableHead className="hidden md:table-cell">Target</TableHead>
-                <TableHead className="hidden lg:table-cell">Details</TableHead>
+                <TableHead className="hidden @3xl:table-cell">Target type</TableHead>
+                <TableHead className="hidden @3xl:table-cell">Target</TableHead>
+                <TableHead className="hidden @5xl:table-cell">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,9 +151,9 @@ export default function AdminAuditLogPage() {
                       {actionLabel(entry)}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden capitalize text-muted-foreground md:table-cell">{entry.targetType}</TableCell>
-                  <TableCell className="hidden max-w-[180px] truncate font-mono text-[13px] md:table-cell" title={entry.targetIdentifier || undefined}>{entry.targetIdentifier || "—"}</TableCell>
-                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground lg:table-cell" title={entry.details || undefined}>{entry.details || "—"}</TableCell>
+                  <TableCell className="hidden capitalize text-muted-foreground @3xl:table-cell">{entry.targetType}</TableCell>
+                  <TableCell className="hidden max-w-[180px] truncate font-mono text-[13px] @3xl:table-cell" title={entry.targetIdentifier || undefined}>{entry.targetIdentifier || "—"}</TableCell>
+                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground @5xl:table-cell" title={entry.details || undefined}>{entry.details || "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

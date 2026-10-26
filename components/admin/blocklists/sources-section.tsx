@@ -80,15 +80,15 @@ export function SourcesSection() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden lg:table-cell">Kind</TableHead>
+              <TableHead className="hidden @5xl:table-cell">Kind</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Enabled</TableHead>
-              <TableHead className="hidden lg:table-cell">Every</TableHead>
+              <TableHead className="hidden @5xl:table-cell">Every</TableHead>
               <TableHead className="text-right">Entries</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">Memory</TableHead>
-              <TableHead className="hidden lg:table-cell">Version</TableHead>
+              <TableHead className="hidden text-right @5xl:table-cell">Memory</TableHead>
+              <TableHead className="hidden @5xl:table-cell">Version</TableHead>
               <TableHead>Last success</TableHead>
-              <TableHead className="hidden lg:table-cell">Last error</TableHead>
+              <TableHead className="hidden @5xl:table-cell">Last error</TableHead>
               <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -159,7 +159,7 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
           <TooltipContent side="bottom" className="max-w-sm whitespace-normal break-all font-mono">{source.url}</TooltipContent>
         </Tooltip>
       </TableCell>
-      <TableCell className="hidden text-muted-foreground lg:table-cell">{kindLabels[source.kind] ?? source.kind}</TableCell>
+      <TableCell className="hidden text-muted-foreground @5xl:table-cell">{kindLabels[source.kind] ?? source.kind}</TableCell>
       <TableCell>
         <Badge variant={actionVariants[source.action] ?? "secondary"}>{actionLabels[source.action] ?? source.action}</Badge>
       </TableCell>
@@ -171,10 +171,10 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
           aria-label={source.enabled ? `Disable ${source.name}` : `Enable ${source.name}`}
         />
       </TableCell>
-      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell">{source.refreshIntervalHours} h</TableCell>
+      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell">{source.refreshIntervalHours} h</TableCell>
       <TableCell className="whitespace-nowrap text-right tabular-nums">{entryCount(source.domainCount)}</TableCell>
-      <TableCell className="hidden whitespace-nowrap text-right tabular-nums text-muted-foreground lg:table-cell">{formatMegabytes(source.memoryBytes)}</TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell className="hidden whitespace-nowrap text-right tabular-nums text-muted-foreground @5xl:table-cell">{formatMegabytes(source.memoryBytes)}</TableCell>
+      <TableCell className="hidden @5xl:table-cell">
         <span className="block max-w-20 truncate tabular-nums text-muted-foreground" title={source.listVersion || undefined}>{source.listVersion || "—"}</span>
       </TableCell>
       <TableCell>
@@ -190,7 +190,7 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
                     role="img"
                     tabIndex={0}
                     aria-label={`Last error: ${source.lastError}`}
-                    className="inline-flex rounded-full p-1 lg:hidden"
+                    className="inline-flex rounded-full p-1 @5xl:hidden"
                   >
                     <span className="h-2 w-2 rounded-full bg-destructive" />
                   </span>
@@ -211,7 +211,7 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
           )}
         </div>
       </TableCell>
-      <TableCell className="hidden lg:table-cell">
+      <TableCell className="hidden @5xl:table-cell">
         {source.lastError ? (
           <Tooltip>
             <TooltipTrigger asChild>

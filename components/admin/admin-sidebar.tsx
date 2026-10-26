@@ -53,7 +53,11 @@ export function AdminSidebar() {
   const reviewCountLoaded = reviewCount !== undefined
 
   useEffect(() => {
-    activeChipRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" })
+    const chip = activeChipRef.current
+    if (!chip) return
+    const { top, bottom } = chip.getBoundingClientRect()
+    if (bottom < 0 || top > window.innerHeight) return
+    chip.scrollIntoView({ block: "nearest", inline: "nearest" })
   }, [pathname, reviewCountLoaded])
 
   const badgeFor = (item: AdminNavItem, className?: string) =>

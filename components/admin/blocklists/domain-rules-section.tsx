@@ -146,9 +146,9 @@ function DomainRulesPanel({ type }: { type: DomainRuleType }) {
           <TableHeader>
             <TableRow>
               <TableHead>Domain</TableHead>
-              <TableHead className="hidden sm:table-cell">Reason</TableHead>
-              <TableHead className="hidden md:table-cell">Added by</TableHead>
-              <TableHead className="hidden sm:table-cell">Added</TableHead>
+              <TableHead className="hidden @3xl:table-cell">Reason</TableHead>
+              <TableHead className="hidden @4xl:table-cell">Added by</TableHead>
+              <TableHead className="hidden @3xl:table-cell">Added</TableHead>
               <TableHead className="text-right">
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -179,15 +179,15 @@ function DomainRuleRow({ rule }: { rule: DomainRule }) {
     <TableRow>
       <TableCell>
         <span className="block max-w-56 truncate font-mono text-[13px]" title={rule.domain}>{rule.domain}</span>
-        {rule.reason && <span className="mt-0.5 block max-w-56 truncate text-xs text-muted-foreground sm:hidden" title={rule.reason}>{rule.reason}</span>}
+        {rule.reason && <span className="mt-0.5 block max-w-56 truncate text-xs text-muted-foreground @3xl:hidden" title={rule.reason}>{rule.reason}</span>}
       </TableCell>
-      <TableCell className="hidden max-w-[280px] text-muted-foreground sm:table-cell">
+      <TableCell className="hidden max-w-[280px] text-muted-foreground @3xl:table-cell">
         <span className="block truncate" title={rule.reason || undefined}>{rule.reason || "—"}</span>
       </TableCell>
-      <TableCell className="hidden max-w-[220px] text-muted-foreground md:table-cell">
+      <TableCell className="hidden max-w-[220px] text-muted-foreground @4xl:table-cell">
         <span className="block truncate" title={rule.createdBy || undefined}>{rule.createdBy || "—"}</span>
       </TableCell>
-      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground sm:table-cell" title={formatDateTime(rule.createdAt)}>
+      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @3xl:table-cell" title={formatDateTime(rule.createdAt)}>
         {formatTimeAgo(rule.createdAt)}
       </TableCell>
       <TableCell className="text-right">

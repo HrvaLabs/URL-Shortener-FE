@@ -323,10 +323,10 @@ function ReviewQueue() {
                   />
                 </TableHead>
                 <TableHead>Short link</TableHead>
-                <TableHead className="hidden lg:table-cell">Destination</TableHead>
-                <TableHead className="hidden xl:table-cell">Owner</TableHead>
-                <TableHead className="hidden lg:table-cell">Created</TableHead>
-                <TableHead className="hidden md:table-cell">Reasons</TableHead>
+                <TableHead className="hidden @5xl:table-cell">Destination</TableHead>
+                <TableHead className="hidden @min-[77rem]:table-cell">Owner</TableHead>
+                <TableHead className="hidden @5xl:table-cell">Created</TableHead>
+                <TableHead className="hidden @3xl:table-cell">Reasons</TableHead>
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -355,20 +355,20 @@ function ReviewQueue() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <span className="block max-w-28 truncate font-mono text-[13px] font-medium text-brand sm:max-w-52" title={`${shortHost}/${entry.shortUrl}`}>
+                        <span className="block max-w-28 truncate font-mono text-[13px] font-medium text-brand @lg:max-w-52" title={`${shortHost}/${entry.shortUrl}`}>
                           <span className="text-brand/60">{shortHost}/</span>{entry.shortUrl}
                         </span>
                         <CopyShortLinkButton shortUrl={entry.shortUrl} />
                       </div>
-                      <p className="mt-1 max-w-36 truncate text-xs text-muted-foreground sm:max-w-56 lg:hidden" title={entry.longUrl}>{entry.longUrl}</p>
-                      <div className="mt-1 flex max-w-36 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground sm:max-w-48 xl:hidden">
+                      <p className="mt-1 max-w-36 truncate text-xs text-muted-foreground @lg:max-w-56 @5xl:hidden" title={entry.longUrl}>{entry.longUrl}</p>
+                      <div className="mt-1 flex max-w-36 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:max-w-48 @min-[77rem]:hidden">
                         <span className="max-w-full truncate" title={entry.ownerEmail ?? undefined}>{ownerLabel(entry)}</span>
                         {!anonymous && <span className="tabular-nums" title="Account age">{age}</span>}
                         {entry.possibleScammer && <Badge variant="warning">Possible scammer</Badge>}
                       </div>
-                      <ReasonList reasons={entry.reasons} className="mt-1.5 max-w-36 sm:max-w-56 md:hidden" />
+                      <ReasonList reasons={entry.reasons} className="mt-1.5 max-w-36 @lg:max-w-56 @3xl:hidden" />
                     </TableCell>
-                    <TableCell className="hidden max-w-[200px] lg:table-cell">
+                    <TableCell className="hidden max-w-[200px] @5xl:table-cell">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span tabIndex={0} className="block truncate text-muted-foreground">{entry.longUrl}</span>
@@ -376,7 +376,7 @@ function ReviewQueue() {
                         <TooltipContent side="top" className="max-w-sm break-all">{entry.longUrl}</TooltipContent>
                       </Tooltip>
                     </TableCell>
-                    <TableCell className="hidden xl:table-cell">
+                    <TableCell className="hidden @min-[77rem]:table-cell">
                       <span className={cn("block max-w-48 truncate", anonymous && "text-muted-foreground")} title={entry.ownerEmail ?? undefined}>
                         {ownerLabel(entry)}
                       </span>
@@ -388,12 +388,12 @@ function ReviewQueue() {
                       )}
                     </TableCell>
                     <TableCell
-                      className="hidden whitespace-nowrap tabular-nums text-muted-foreground lg:table-cell"
+                      className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell"
                       title={`Created ${formatDateTime(entry.createDate)}, flagged ${formatDateTime(entry.flaggedAt)}`}
                     >
                       {timeAgo(entry.createDate, dataUpdatedAt)}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="hidden @3xl:table-cell">
                       {entry.reasons.length > 0 ? (
                         <ReasonList reasons={entry.reasons} className="min-w-40 max-w-64" />
                       ) : (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useId, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
 import { toast } from "sonner"
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import type { UrlResponse } from "@/lib/types"
-import { cn, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
 
 interface ShortenFormProps {
   withOptions?: boolean
@@ -28,10 +28,12 @@ export function ShortenForm({ withOptions = false, size = "default", className }
   const createUrl = useCreateUrl()
   const isLarge = size === "lg"
   const shortBase = getShortBaseUrl().replace(/^https?:\/\//, "")
+  const longUrlError = destinationLengthError(longUrl)
+  const longUrlErrorId = useId()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!longUrl) return
+    if (!longUrl || longUrlError) return
 
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
 
@@ -65,35 +67,40 @@ export function ShortenForm({ withOptions = false, size = "default", className }
   return (
     <div className={cn("w-full", className)}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <div className="relative min-w-0 flex-1">
-            <Link2
-              aria-hidden="true"
-              className={cn(
-                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted-foreground",
-                isLarge ? "left-4 h-5 w-5" : "left-3 h-4 w-4",
-              )}
-            />
-            <Input
-              type="text"
-              inputMode="url"
-              autoComplete="off"
-              spellCheck={false}
-              aria-label="Long URL"
-              placeholder="https://example.com/a-very-long-link"
-              value={longUrl}
-              onChange={(e) => setLongUrl(e.target.value)}
-              className={cn(isLarge ? "h-14 rounded-xl pl-12 text-base" : "h-11 pl-9")}
-              required
-            />
+        <div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Link2
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute top-1/2 -translate-y-1/2 text-muted-foreground",
+                  isLarge ? "left-4 h-5 w-5" : "left-3 h-4 w-4",
+                )}
+              />
+              <Input
+                type="text"
+                inputMode="url"
+                autoComplete="off"
+                spellCheck={false}
+                aria-label="Long URL"
+                placeholder="https://example.com/a-very-long-link"
+                value={longUrl}
+                onChange={(e) => setLongUrl(e.target.value)}
+                aria-invalid={!!longUrlError}
+                aria-describedby={longUrlError ? longUrlErrorId : undefined}
+                className={cn(isLarge ? "h-14 rounded-xl pl-12 text-base" : "h-11 pl-9")}
+                required
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={createUrl.isPending}
+              className={cn("shrink-0", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
+            >
+              {createUrl.isPending ? "Shortening…" : "Shorten"}
+            </Button>
           </div>
-          <Button
-            type="submit"
-            disabled={createUrl.isPending}
-            className={cn("shrink-0", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
-          >
-            {createUrl.isPending ? "Shortening…" : "Shorten"}
-          </Button>
+          {longUrlError && <p id={longUrlErrorId} className="mt-2 text-left text-sm text-destructive">{longUrlError}</p>}
         </div>
 
         {withOptions && (

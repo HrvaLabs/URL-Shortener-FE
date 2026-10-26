@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { Copy, Check } from "lucide-react"
-import { getShortBaseUrl } from "@/lib/utils"
+import { destinationLengthError, getShortBaseUrl } from "@/lib/utils"
 
 interface CreateUrlDialogProps {
   open: boolean
@@ -26,10 +26,11 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
   const [result, setResult] = useState<{ shortUrl: string; longUrl: string } | null>(null)
   const [copied, setCopied] = useState(false)
   const createUrl = useCreateUrl()
+  const longUrlError = destinationLengthError(longUrl)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!longUrl) return
+    if (!longUrl || longUrlError) return
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
     try {
       const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean)
@@ -71,7 +72,8 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label>Long URL</Label>
-              <Input placeholder="https://example.com/very/long/url" value={longUrl} onChange={(e) => setLongUrl(e.target.value)} required className="mt-2" />
+              <Input placeholder="https://example.com/very/long/url" value={longUrl} onChange={(e) => setLongUrl(e.target.value)} required aria-invalid={!!longUrlError} aria-describedby={longUrlError ? "create-long-url-error" : undefined} className="mt-2" />
+              {longUrlError && <p id="create-long-url-error" className="mt-2 text-sm text-destructive">{longUrlError}</p>}
             </div>
             <div>
               <Label>Custom alias (optional)</Label>

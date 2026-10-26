@@ -79,6 +79,12 @@ export function truncateUrl(url: string, maxLen = 50): string {
   return url.slice(0, maxLen) + "..."
 }
 
+const MAX_DESTINATION_LENGTH = 2048
+
+export function destinationLengthError(url: string): string | null {
+  return url.length > MAX_DESTINATION_LENGTH ? "Destination URL must be 2048 characters or fewer" : null
+}
+
 export function getApiBaseUrl(): string {
   if (process.env.NODE_ENV === "production") {
     return "https://hrva.cc/api/v1"

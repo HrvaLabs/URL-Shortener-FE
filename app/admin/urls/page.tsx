@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
 import { toast } from "sonner"
-import { cn, formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
+import { cn, destinationLengthError, formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
@@ -66,6 +66,7 @@ export default function AdminUrlsPage() {
   const [editTags, setEditTags] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [removePassword, setRemovePassword] = useState(false)
+  const editLongUrlError = destinationLengthError(editLongUrl.trim())
   const [blockTarget, setBlockTarget] = useState<UrlResponse | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
@@ -156,6 +157,7 @@ export default function AdminUrlsPage() {
       toast.error("Destination URL is required")
       return
     }
+    if (editLongUrlError) return
     try {
       await updateUrl.mutateAsync({
         id: editUrl.id,
@@ -513,8 +515,11 @@ export default function AdminUrlsPage() {
                   placeholder="https://example.com/page"
                   value={editLongUrl}
                   onChange={(e) => setEditLongUrl(e.target.value)}
+                  aria-invalid={!!editLongUrlError}
+                  aria-describedby={editLongUrlError ? "edit-long-url-error" : undefined}
                   className="mt-2"
                 />
+                {editLongUrlError && <p id="edit-long-url-error" className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
               </div>
               <div>
                 <label className="text-sm font-medium">Visit Limit</label>

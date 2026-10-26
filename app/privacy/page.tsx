@@ -191,7 +191,8 @@ export default function PrivacyPage() {
               <p>
                 If you <Link href="/report">report a link</Link>, we store the short link, the
                 category and the details you write, and nothing about you beyond a rate-limit
-                counter for your network, which expires after an hour.
+                counter for your network, which expires after an hour. Reports are also posted to
+                the admin&apos;s Discord channel, as described under <em>Who else receives data</em>.
               </p>
               <p>
                 Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — protecting visitors and the
@@ -219,6 +220,20 @@ export default function PrivacyPage() {
                   (hosting/CDN). Your IP address reaches Cloudflare as part of normal traffic
                   delivery, and Cloudflare tells us which country it belongs to, which we keep only
                   as a daily count.
+                </li>
+                <li>
+                  <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc
+                  posts short alerts to a private Discord channel that only the admin reads: when a
+                  link is flagged for review, reported by a visitor or blocked automatically, when
+                  someone signs up, and when a blocklist fails to load or loads again. An alert can
+                  include the short link, the domain it points to (never the full address), the
+                  owner&apos;s account number (not their email address or name), the reasons for the
+                  flag or block, and for a visitor report its category and up to 200 characters
+                  of the details, with anything that looks like an email or IP address removed. A
+                  sign-up alert shows only the account number and whether the account uses email,
+                  Google or GitHub. Discord Inc., based in the United States, processes these
+                  messages under its own terms, and they stay in the channel until the admin
+                  deletes them.
                 </li>
                 {/* TODO: name the email delivery provider (and its location/safeguards) */}
                 <li>

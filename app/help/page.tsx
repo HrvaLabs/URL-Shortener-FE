@@ -28,6 +28,16 @@ const guides = [
     title: "Passkeys and security keys",
     description: "Sign in without a password, and use a passkey or security key as your second step.",
   },
+  {
+    href: "/help/stats",
+    title: "hrva.cc in numbers",
+    description: "What the public numbers mean: active links, clicks, harmful links blocked and review times.",
+  },
+  {
+    href: "/help/stats#qr-scans",
+    title: "QR scans and direct clicks",
+    description: "How hrva.cc counts scans of its QR codes, and why older printed codes count as direct.",
+  },
 ]
 
 export default function HelpPage() {

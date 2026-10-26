@@ -40,6 +40,8 @@ const {
   bioSaveErrors,
   buttonTitleError,
   cleanBioText,
+  cleanBioLines,
+  bioOnOneLine,
   destinationHostOf,
   linkStateLabel,
   newBioButton,
@@ -677,6 +679,111 @@ check("cleanBioText caps stacked marks at four after NFC", () => {
   assert.equal(marksOf(cleanBioText(joined)), 4)
   assert.equal(marksOf(cleanBioText(text("x", ...Array(10).fill(0x20dd)))), 4)
   assert.equal(cleanBioText(text("x", ACUTE, ACUTE, ACUTE, ACUTE)), text("x", ACUTE, ACUTE, ACUTE, ACUTE))
+})
+
+check("cleanBioLines keeps line breaks, as the backend's cleanBio does", () => {
+  assert.equal(cleanBioLines(text(CAMERA_WITH_FLASH, " Photographer\nZagreb\nDMs open")), text(CAMERA_WITH_FLASH, " Photographer\nZagreb\nDMs open"))
+})
+
+check("cleanBioLines turns CRLF and lone CR into newlines", () => {
+  assert.equal(cleanBioLines("Photographer\r\nZagreb"), "Photographer\nZagreb")
+  assert.equal(cleanBioLines("Photographer\rZagreb"), "Photographer\nZagreb")
+  assert.equal(cleanBioLines("Photographer\r\n\r\nZagreb\r\rDMs open"), "Photographer\nZagreb\nDMs open")
+  assert.equal(cleanBioLines("Photographer\n\rZagreb"), "Photographer\nZagreb")
+})
+
+check("cleanBioLines drops blank lines", () => {
+  assert.equal(cleanBioLines("Photographer\n\n\nZagreb"), "Photographer\nZagreb")
+  assert.equal(cleanBioLines("Photographer\n   \n\t\nZagreb"), "Photographer\nZagreb")
+  assert.equal(cleanBioLines("\n\n  Photographer  \n\n"), "Photographer")
+})
+
+check("cleanBioLines keeps four line breaks and joins the rest with spaces", () => {
+  assert.equal(cleanBioLines("one\ntwo\nthree\nfour\nfive"), "one\ntwo\nthree\nfour\nfive")
+  assert.equal(cleanBioLines("one\ntwo\nthree\nfour\nfive\nsix"), "one\ntwo\nthree\nfour\nfive six")
+  assert.equal(cleanBioLines("one\ntwo\n\nthree\nfour\n\n\nfive\nsix\nseven"), "one\ntwo\nthree\nfour\nfive six seven")
+})
+
+check("cleanBioLines collapses spaces within each line and trims every line", () => {
+  assert.equal(cleanBioLines("Photographer  \n  Zagreb"), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(" Photos \t from   Zagreb \n DMs\t\topen "), "Photos from Zagreb\nDMs open")
+})
+
+check("cleanBioLines drops invisible characters before it looks for blank lines", () => {
+  assert.equal(cleanBioLines(text("Photographer", 0x200b, "\n", 0x200b, "Zagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n", 0x200b, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n", 0x202e, 0x0007, "\n", 0x3164, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text(0x200b, "\n", 0x00ad, "\n", 0x200b)), "")
+})
+
+check("cleanBioLines makes other whitespace a space, not a line break", () => {
+  for (const codePoint of [0x000b, 0x000c, 0x00a0, 0x2028, 0x2029, 0x3000]) {
+    assert.equal(cleanBioLines(text("Photographer", codePoint, "Zagreb")), "Photographer Zagreb", codePoint.toString(16))
+  }
+  assert.equal(cleanBioLines(text("Photographer", 0x0085, "Zagreb")), "PhotographerZagreb")
+})
+
+check("cleanBioLines answers empty for only line breaks and spaces", () => {
+  assert.equal(cleanBioLines("\n \r\n\t\n"), "")
+  assert.equal(cleanBioLines(""), "")
+})
+
+check("cleanBioLines caps marks on each line", () => {
+  const acute = text(ACUTE)
+  assert.equal(cleanBioLines(text("x", acute.repeat(10), "\nq", acute.repeat(10))), text("x", acute.repeat(4), "\nq", acute.repeat(4)))
+})
+
+check("cleanBioText still collapses line breaks in names and titles", () => {
+  assert.equal(cleanBioText("Ana\nHorvat"), "Ana Horvat")
+  assert.equal(cleanBioText("Ana\r\n\r\nHorvat"), "Ana Horvat")
+})
+
+check("cleanBioLines drops lines with nothing visible on them", () => {
+  assert.equal(cleanBioLines(text("Photographer\n", 0x200d, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n", ACUTE, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n", 0x20dd, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n", 0x2800, "\nZagreb")), "Photographer\nZagreb")
+  assert.equal(cleanBioLines(text("Photographer\n ", 0xfffc, " ", 0x200c, " \nZagreb")), "Photographer\nZagreb")
+})
+
+check("lines with nothing visible don't count towards the four line breaks", () => {
+  assert.equal(cleanBioLines(text("one\n", 0x200d, "\ntwo\n", 0x2800, "\nthree\nfour\nfive\nsix")), "one\ntwo\nthree\nfour\nfive six")
+})
+
+check("kept invisible characters beside visible text on a line stay", () => {
+  assert.equal(cleanBioLines(text("Photographer\nZagreb ", 0x2800)), text("Photographer\nZagreb ", 0x2800))
+  const familyOfThree = text(0x1f468, ZERO_WIDTH_JOINER, 0x1f469, ZERO_WIDTH_JOINER, 0x1f467)
+  assert.equal(cleanBioLines(text("Family\n", familyOfThree)), text("Family\n", familyOfThree))
+})
+
+check("a bio of only kept invisible characters becomes empty", () => {
+  for (const only of [
+    text(0x200d),
+    text(0x200c),
+    text(0xfe0f),
+    text(0x034f),
+    text(0x0301),
+    text(0x20dd),
+    text(0xe0041, 0xe0042),
+    text(0x17b4),
+    text(0x180b),
+    text(0x0301).repeat(3),
+    text(0x200d, 0x0020, 0x200c, 0x0020, 0xfe0f),
+    text(0x200d, 0x0301, 0x20dd, 0xe007f),
+    text(0x2800),
+    text(0x2800, 0x2800, 0x2800),
+    text(0xfffc),
+    text(0x2800, 0x0020, 0xfffc, 0x200d),
+  ]) {
+    assert.equal(cleanBioLines(only), "", JSON.stringify(only))
+    assert.equal(cleanBioLines(`${only}\n${only}`), "", JSON.stringify(only))
+  }
+})
+
+check("bioOnOneLine joins a bio's lines with a middle dot for share text", () => {
+  assert.equal(bioOnOneLine("Photographer\nZagreb\nDMs open"), text("Photographer ", 0x00b7, " Zagreb ", 0x00b7, " DMs open"))
+  assert.equal(bioOnOneLine("One line"), "One line")
+  assert.equal(bioOnOneLine(""), "")
 })
 
 check("cleanBioText answers empty when nothing visible is left", () => {

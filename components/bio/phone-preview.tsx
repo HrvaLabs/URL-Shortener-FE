@@ -2,14 +2,14 @@
 
 import { useId } from "react"
 import { BioPageView, type BioPageViewModel } from "@/components/bio/bio-page-view"
-import { cleanBioText, isSingleEmoji, type BioDraft } from "@/lib/bio"
+import { cleanBioLines, cleanBioText, isSingleEmoji, type BioDraft } from "@/lib/bio"
 
 const previewModelOf = (draft: BioDraft, handle: string | null): BioPageViewModel => {
   const emoji = draft.avatarEmoji.trim()
   return {
     handle,
     displayName: cleanBioText(draft.displayName),
-    bio: cleanBioText(draft.bio),
+    bio: cleanBioLines(draft.bio),
     avatarKind: draft.avatarKind,
     avatarEmoji: isSingleEmoji(emoji) ? emoji : null,
     accent: draft.accent,

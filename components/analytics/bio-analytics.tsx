@@ -9,7 +9,7 @@ import { RangePicker } from "@/components/analytics/range-picker"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ApiError } from "@/lib/api-client"
-import { bioButtonLabel, displayShareUrl } from "@/lib/bio"
+import { bioButtonLabel, displayShareUrl, linkStateLabel } from "@/lib/bio"
 import { useBioAnalytics } from "@/lib/hooks/useBioAnalytics"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import type { AnalyticsRange, BioButtonClicks, BioPageAnalytics } from "@/lib/types"
@@ -84,7 +84,7 @@ interface BioAnalyticsBodyProps {
 function BioAnalyticsBody({ data, days, onDaysChange, refreshing }: BioAnalyticsBodyProps) {
   const totals = [
     { label: "Views", value: data.views, hint: "Each visitor counts once a day. Bots are counted apart." },
-    { label: "Bot views", value: data.botViews },
+    { label: "Bot views", value: data.botViews, hint: "Link previews and crawlers. Not counted as views." },
   ]
 
   return (
@@ -116,6 +116,9 @@ function BioAnalyticsBody({ data, days, onDaysChange, refreshing }: BioAnalytics
   )
 }
 
+const missingReason = (button: BioButtonClicks): string =>
+  button.visible === false ? "Hidden" : (linkStateLabel(button.linkState)?.badge ?? "Not on your page")
+
 function ButtonClicks({ buttons }: { buttons: BioButtonClicks[] }) {
   return (
     <section className={panelClass}>
@@ -133,7 +136,7 @@ function ButtonClicks({ buttons }: { buttons: BioButtonClicks[] }) {
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-36 pl-5">Button</TableHead>
-                <TableHead className="text-right">From hrva.cc pages</TableHead>
+                <TableHead className="text-right">From your bio page</TableHead>
                 <TableHead className="pr-5 text-right">All clicks</TableHead>
               </TableRow>
             </TableHeader>
@@ -145,7 +148,7 @@ function ButtonClicks({ buttons }: { buttons: BioButtonClicks[] }) {
                     <span className="mt-0.5 block font-mono text-[13px] text-brand [overflow-wrap:anywhere]">/{button.shortUrl}</span>
                     {!button.shownOnPage && (
                       <Badge variant="secondary" className="mt-1.5">
-                        Not on your page
+                        {missingReason(button)}
                       </Badge>
                     )}
                   </TableCell>
@@ -156,7 +159,9 @@ function ButtonClicks({ buttons }: { buttons: BioButtonClicks[] }) {
             </TableBody>
           </Table>
           <p className="border-t px-5 py-3 text-xs text-muted-foreground">
-            From hrva.cc pages counts clicks on the link that came from a hrva.cc page, such as your bio page. All clicks counts every click on the link, wherever it was shared.
+            <span className="font-medium text-foreground">From your bio page.</span> Clicks on the link that came from a hrva.cc page,
+            such as your bio page. <span className="font-medium text-foreground">All clicks.</span> Every click on the link, wherever
+            it was shared.
           </p>
         </>
       )}

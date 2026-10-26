@@ -68,7 +68,10 @@ export default function LinkInBioHelpPage() {
               <p>
                 A reserved word, such as <code>admin</code> or <code>help</code>, gets{" "}
                 <strong>This handle is reserved. Try another.</strong> A handle someone else has gets{" "}
-                <strong>This handle is taken. Try another.</strong> If you type dots or spaces, as in{" "}
+                <strong>This handle is taken. Try another.</strong> A handle whose page was deleted in the
+                last 30 days says when it frees up, for example{" "}
+                <strong>This handle was recently used and is kept until November 25, 2026. Try another.</strong>{" "}
+                If you type dots or spaces, as in{" "}
                 <code>ana.horvat</code>, the editor offers a handle you can use instead, such as{" "}
                 <strong>Try @ana-horvat</strong>.
               </p>
@@ -125,8 +128,9 @@ export default function LinkInBioHelpPage() {
                   <strong>Display name</strong>: up to 50 characters.
                 </li>
                 <li>
-                  <strong>Bio</strong>: up to 160 characters of plain text. Links in your bio aren&apos;t
-                  clickable; add them as buttons.
+                  <strong>Bio</strong>: up to 160 characters of plain text on up to five lines. Empty lines
+                  are dropped, and line breaks after the fifth line become spaces. Links in your bio
+                  aren&apos;t clickable; add them as buttons.
                 </li>
                 <li>
                   <strong>Avatar</strong>: <strong>Initials</strong>, taken from your display name (or your
@@ -164,12 +168,15 @@ export default function LinkInBioHelpPage() {
               <ul>
                 <li>
                   <strong>Views</strong>: each visitor counts once a day, however often they open your
-                  page. <strong>Bot views</strong> are counted apart. Your own visits count too.
+                  page. <strong>Bot views</strong>, from link previews and crawlers, are counted apart and
+                  not counted as views. Your own visits count too.
                 </li>
                 <li>
-                  Under <strong>Buttons</strong>, <strong>From hrva.cc pages</strong> counts the clicks on
+                  Under <strong>Buttons</strong>, <strong>From your bio page</strong> counts the clicks on
                   a button&apos;s link that came from a hrva.cc page, such as your bio page, and{" "}
-                  <strong>All clicks</strong> counts every click on that link, wherever you shared it.
+                  <strong>All clicks</strong> counts every click on that link, wherever you shared it. A
+                  button that isn&apos;t on your page says why: <strong>Hidden</strong>, or the link&apos;s
+                  state, such as <strong>Link turned off</strong>.
                 </li>
               </ul>
 

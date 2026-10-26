@@ -983,3 +983,8 @@ export interface BioPageReviewEntry {
 export interface BioPageUpdate {
   expectedUpdatedAt?: string
 }
+
+export interface BioButtonClicks {
+  visible?: boolean
+  linkState?: BioLinkState
+}

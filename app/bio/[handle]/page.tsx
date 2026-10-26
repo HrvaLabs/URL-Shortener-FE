@@ -3,7 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation"
 import { BioPageView, type BioPageViewModel } from "@/components/bio/bio-page-view"
 import { BioRetryFocus } from "@/components/bio/bio-retry-focus"
 import { BioViewBeacon } from "@/components/bio/bio-view-beacon"
-import { BIO_PAGE_COLORS, BIO_PAGE_NAME_ID, handleFormatError, normalizeHandle } from "@/lib/bio"
+import { BIO_PAGE_COLORS, BIO_PAGE_NAME_ID, bioOnOneLine, handleFormatError, normalizeHandle } from "@/lib/bio"
 import { loadPublicBioPage } from "@/lib/bio-server"
 import type { BioTheme, PublicBioPage } from "@/lib/types"
 import { formatShortUrl } from "@/lib/utils"
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: BioRouteProps): Promise<Metad
   const handleLabel = `@${page.handle}`
   const name = page.displayName || handleLabel
   const title = page.displayName ? `${page.displayName} (${handleLabel})` : handleLabel
-  const description = page.bio || `Links from ${name} on hrva.cc.`
+  const description = page.bio ? bioOnOneLine(page.bio) : `Links from ${name} on hrva.cc.`
   const url = `https://app.hrva.cc/bio/${page.handle}`
   return {
     title,

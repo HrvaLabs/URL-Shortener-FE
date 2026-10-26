@@ -91,7 +91,7 @@ export function BioPageView({
             <p className="mt-1 w-full text-[var(--bio-muted)] [overflow-wrap:anywhere]">{handleLabel}</p>
           )}
           {page.bio && (
-            <p dir="auto" className="mt-4 w-full [overflow-wrap:anywhere]">
+            <p dir="auto" className="mt-4 w-full whitespace-pre-line [overflow-wrap:anywhere]">
               {page.bio}
             </p>
           )}

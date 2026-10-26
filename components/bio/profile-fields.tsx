@@ -138,7 +138,7 @@ export function ProfileFields({ idPrefix, draft, errors, onChange }: FieldsProps
           value={draft.bio}
           onChange={(event) => onChange({ bio: event.target.value })}
           maxLength={BIO_LIMITS.bio}
-          rows={3}
+          rows={4}
           aria-invalid={Boolean(errors.bio)}
           aria-describedby={[errors.bio && `${bioId}-error`, `${bioId}-hint`, `${bioId}-count`].filter(Boolean).join(" ")}
           className="mt-1.5"
@@ -146,7 +146,7 @@ export function ProfileFields({ idPrefix, draft, errors, onChange }: FieldsProps
         <div className="mt-1.5 space-y-1">
           <FieldError id={`${bioId}-error`} message={errors.bio} />
           <p id={`${bioId}-hint`} className="text-xs text-muted-foreground">
-            Plain text. Links in your bio aren&apos;t clickable; add them as buttons below.
+            Plain text on up to 5 lines. Links in your bio aren&apos;t clickable; add them as buttons below.
           </p>
         </div>
       </div>

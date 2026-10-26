@@ -334,6 +334,9 @@ const FORMAT = /^\p{Cf}$/u
 const NEVER_VISIBLE = /^[\p{Cc}\p{Cf}\p{Mn}\p{Me}\p{Z}]$/u
 const STACKED_MARKS = /([\p{Mn}\p{Me}](?:\p{Cf}*[\p{Mn}\p{Me}]){3})(?:\p{Cf}*[\p{Mn}\p{Me}])+/gu
 const WHITESPACE_RUN = /[\s\p{Z}]+/gu
+const LINE_BREAK = /\r\n?|\n/
+const WHITESPACE_WITHIN_A_LINE = /(?:(?!\n)[\s\p{Z}])+/gu
+const MAX_BIO_LINES = 5
 
 const codePointOf = (value: string): number => value.codePointAt(0) ?? 0
 
@@ -346,11 +349,30 @@ const isStripped = (value: string): boolean => {
 
 const isVisible = (value: string): boolean => !NEVER_VISIBLE.test(value) && !BLANK_SYMBOLS.has(codePointOf(value))
 
+const normalizedText = (text: string): string =>
+  Array.from(text)
+    .filter((value) => !isStripped(value))
+    .join("")
+    .normalize("NFC")
+    .replace(STACKED_MARKS, "$1")
+
+const hasVisible = (text: string): boolean => Array.from(text).some(isVisible)
+
 export const cleanBioText = (text: string): string => {
-  const kept = Array.from(text).filter((value) => !isStripped(value)).join("")
-  const cleaned = kept.normalize("NFC").replace(STACKED_MARKS, "$1").replace(WHITESPACE_RUN, " ").replace(JAVA_STRIP_EDGES, "")
-  return Array.from(cleaned).some(isVisible) ? cleaned : ""
+  const cleaned = normalizedText(text).replace(WHITESPACE_RUN, " ").replace(JAVA_STRIP_EDGES, "")
+  return hasVisible(cleaned) ? cleaned : ""
 }
+
+export const cleanBioLines = (text: string): string => {
+  const lines = normalizedText(text)
+    .split(LINE_BREAK)
+    .map((line) => line.replace(WHITESPACE_WITHIN_A_LINE, " ").replace(JAVA_STRIP_EDGES, ""))
+    .filter(hasVisible)
+  if (lines.length <= MAX_BIO_LINES) return lines.join("\n")
+  return `${lines.slice(0, MAX_BIO_LINES - 1).join("\n")}\n${lines.slice(MAX_BIO_LINES - 1).join(" ")}`
+}
+
+export const bioOnOneLine = (bio: string): string => bio.split("\n").join(" · ")
 
 export const buttonTitleError = (title: string): string | null => {
   const cleaned = cleanBioText(title)

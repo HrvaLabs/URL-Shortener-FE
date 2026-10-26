@@ -273,15 +273,20 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc
                   posts alerts to a private Discord channel that only the admin reads: when a link
-                  is flagged for review, reported by a visitor or blocked automatically, when
+                  is flagged for review, reported by a visitor or blocked automatically, when a bio
+                  page is sent for review by the automatic text checks or reported by a visitor, when
                   someone signs up, when a blocklist fails to load or loads again, and when many new
                   links to the same new domain appear in a short time (a possible phishing wave). An
                   alert can include the short link, the domain it points to (never the full
                   address), the owner&apos;s account number (not their email address or name), the
                   reasons for the flag or block, and for a visitor report its category and the full
-                  details, with anything that looks like an email or IP address removed. A sign-up
-                  alert shows only the account number and whether the account uses email, Google or
-                  GitHub. A phishing-wave alert names the domain and its age, if known, and counts
+                  details, with anything that looks like an email or IP address removed. A bio page
+                  alert names the page&apos;s handle (or its page number if it has none) and the
+                  owner&apos;s account number, and adds the reasons the text checks found or, for a
+                  visitor report, its category and the full details, cleaned the same way. The
+                  page&apos;s display name and bio text are never sent. A sign-up alert shows only the
+                  account number and whether the account uses email, Google or GitHub. A phishing-wave
+                  alert names the domain and its age, if known, and counts
                   the new links and the different accounts or networks that made them, without
                   saying which ones. Every Monday the channel also gets the weekly summary:
                   site-wide totals for the past week, such as clicks, visitors, new links and users,

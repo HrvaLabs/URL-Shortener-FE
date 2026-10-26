@@ -260,7 +260,7 @@ function PickerBody({
 function LoadError({ error, retrying, onRetry }: { error: unknown; retrying: boolean; onRetry: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
-      <p className="text-sm text-destructive [overflow-wrap:anywhere]">{errorText(error)}</p>
+      <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{errorText(error)}</p>
       <Button
         type="button"
         variant="outline"

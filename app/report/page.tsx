@@ -73,6 +73,94 @@ function ReportForm({ initialShort }: { initialShort: string }) {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-xl border bg-card p-6">
+      <div>
+        <Label htmlFor="short-link">Short link</Label>
+        <Input
+          id="short-link"
+          placeholder="hrva.cc/abc"
+          value={shortLink}
+          onChange={(e) => {
+            setShortLink(e.target.value)
+            setLinkError(null)
+          }}
+          required
+          autoComplete="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          aria-invalid={linkError ? true : undefined}
+          aria-describedby={linkError ? "short-link-error" : undefined}
+          className="mt-2 font-mono placeholder:font-sans"
+        />
+        {linkError && (
+          <p id="short-link-error" className="mt-1.5 text-sm text-destructive">
+            {linkError}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor="category">What&apos;s wrong with it?</Label>
+        <select
+          id="category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as ReportCategory | "")}
+          required
+          className={cn(selectClass, "mt-2", !category && "text-muted-foreground")}
+        >
+          <option value="" disabled>
+            Choose a category
+          </option>
+          {categories.map((option) => (
+            <option key={option.value} value={option.value} className="text-foreground">
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="details">Details (optional)</Label>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {details.length}/{DETAILS_LIMIT}
+          </span>
+        </div>
+        <Textarea
+          id="details"
+          value={details}
+          onChange={(e) => setDetails(e.target.value)}
+          maxLength={DETAILS_LIMIT}
+          rows={4}
+          placeholder="Where did you see the link, and what did the page ask for?"
+          className="mt-2"
+        />
+      </div>
+
+      <div>
+        <Button type="submit" disabled={sending} className="w-full sm:w-auto">
+          {sending ? "Sending…" : "Send"}
+        </Button>
+        <div aria-live="polite">
+          {status.kind === "sent" && (
+            <p className="mt-4 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">Thanks. We&apos;ll take a look.</p>
+          )}
+          {status.kind === "failed" && (
+            <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{status.message}</p>
+          )}
+        </div>
+      </div>
+    </form>
+  )
+}
+
+function ReportFormFromQuery() {
+  const searchParams = useSearchParams()
+  return <ReportForm initialShort={searchParams.get("s")?.trim() ?? ""} />
+}
+
+export default function ReportPage() {
+  return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
@@ -87,84 +175,9 @@ function ReportForm({ initialShort }: { initialShort: string }) {
               .
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-5 rounded-xl border bg-card p-6">
-              <div>
-                <Label htmlFor="short-link">Short link</Label>
-                <Input
-                  id="short-link"
-                  placeholder="hrva.cc/abc"
-                  value={shortLink}
-                  onChange={(e) => {
-                    setShortLink(e.target.value)
-                    setLinkError(null)
-                  }}
-                  required
-                  autoComplete="off"
-                  autoCapitalize="none"
-                  spellCheck={false}
-                  aria-invalid={linkError ? true : undefined}
-                  aria-describedby={linkError ? "short-link-error" : undefined}
-                  className="mt-2 font-mono placeholder:font-sans"
-                />
-                {linkError && (
-                  <p id="short-link-error" className="mt-1.5 text-sm text-destructive">
-                    {linkError}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="category">What&apos;s wrong with it?</Label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as ReportCategory | "")}
-                  required
-                  className={cn(selectClass, "mt-2", !category && "text-muted-foreground")}
-                >
-                  <option value="" disabled>
-                    Choose a category
-                  </option>
-                  {categories.map((option) => (
-                    <option key={option.value} value={option.value} className="text-foreground">
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="details">Details (optional)</Label>
-                  <span className="text-xs tabular-nums text-muted-foreground">
-                    {details.length}/{DETAILS_LIMIT}
-                  </span>
-                </div>
-                <Textarea
-                  id="details"
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  maxLength={DETAILS_LIMIT}
-                  rows={4}
-                  placeholder="Where did you see the link, and what did the page ask for?"
-                  className="mt-2"
-                />
-              </div>
-
-              <div>
-                <Button type="submit" disabled={sending} className="w-full sm:w-auto">
-                  {sending ? "Sending…" : "Send"}
-                </Button>
-                <div aria-live="polite">
-                  {status.kind === "sent" && (
-                    <p className="mt-4 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">Thanks. We&apos;ll take a look.</p>
-                  )}
-                  {status.kind === "failed" && (
-                    <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{status.message}</p>
-                  )}
-                </div>
-              </div>
-            </form>
+            <Suspense fallback={<ReportForm initialShort="" />}>
+              <ReportFormFromQuery />
+            </Suspense>
 
             <p className="mt-4 text-sm text-muted-foreground">
               Reports go to a person for review. Nothing is blocked automatically.
@@ -174,18 +187,5 @@ function ReportForm({ initialShort }: { initialShort: string }) {
       </main>
       <SiteFooter />
     </div>
-  )
-}
-
-function ReportFormFromQuery() {
-  const searchParams = useSearchParams()
-  return <ReportForm initialShort={searchParams.get("s")?.trim() ?? ""} />
-}
-
-export default function ReportPage() {
-  return (
-    <Suspense fallback={<ReportForm initialShort="" />}>
-      <ReportFormFromQuery />
-    </Suspense>
   )
 }

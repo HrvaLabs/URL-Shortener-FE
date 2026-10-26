@@ -20,7 +20,35 @@ const reasonMessages = new Map([
   ["missing", missingMessage],
 ])
 
-function UnavailableShell({ short, message }: { short: string; message: string }) {
+function UnavailableDetails({ short, message }: { short: string; message: string }) {
+  return (
+    <>
+      {short && (
+        <p className="mt-4 break-all font-mono text-[15px] font-medium text-brand">
+          {formatShortUrl(short).replace(/^https?:\/\//, "")}
+        </p>
+      )}
+      {message && <p className="mt-3 text-muted-foreground">{message}</p>}
+      <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
+        <Button asChild variant="outline">
+          <Link href={short ? `/report?s=${encodeURIComponent(short)}` : "/report"}>Report a link</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/">Go to hrva.cc</Link>
+        </Button>
+      </div>
+    </>
+  )
+}
+
+function UnavailableContent() {
+  const searchParams = useSearchParams()
+  const short = searchParams.get("s")?.trim() ?? ""
+  const message = reasonMessages.get(searchParams.get("reason") ?? "") ?? missingMessage
+  return <UnavailableDetails short={short} message={message} />
+}
+
+export default function UnavailablePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <PageMeta title="Link unavailable — hrva.cc" />
@@ -29,38 +57,12 @@ function UnavailableShell({ short, message }: { short: string; message: string }
         <div className="max-w-xl text-center">
           <Link2Off className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
           <h1 className="mt-4 font-display text-3xl sm:text-4xl">This link isn&apos;t available</h1>
-          {short && (
-            <p className="mt-4 break-all font-mono text-[15px] font-medium text-brand">
-              {formatShortUrl(short).replace(/^https?:\/\//, "")}
-            </p>
-          )}
-          {message && <p className="mt-3 text-muted-foreground">{message}</p>}
-          <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button asChild variant="outline">
-              <Link href={short ? `/report?s=${encodeURIComponent(short)}` : "/report"}>Report a link</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/">Go to hrva.cc</Link>
-            </Button>
-          </div>
+          <Suspense fallback={<UnavailableDetails short="" message="" />}>
+            <UnavailableContent />
+          </Suspense>
         </div>
       </main>
       <SiteFooter />
     </div>
-  )
-}
-
-function UnavailableContent() {
-  const searchParams = useSearchParams()
-  const short = searchParams.get("s")?.trim() ?? ""
-  const message = reasonMessages.get(searchParams.get("reason") ?? "") ?? missingMessage
-  return <UnavailableShell short={short} message={message} />
-}
-
-export default function UnavailablePage() {
-  return (
-    <Suspense fallback={<UnavailableShell short="" message="" />}>
-      <UnavailableContent />
-    </Suspense>
   )
 }

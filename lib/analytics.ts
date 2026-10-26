@@ -25,9 +25,16 @@ export function parseLinkId(value: string | null): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null
 }
 
-export function analyticsHref({ link, days }: { link?: number | null; days?: AnalyticsRange } = {}): string {
+export type AnalyticsView = "links" | "bio"
+
+export function parseAnalyticsView(value: string | null): AnalyticsView {
+  return value === "bio" ? "bio" : "links"
+}
+
+export function analyticsHref({ link, days, view }: { link?: number | null; days?: AnalyticsRange; view?: AnalyticsView } = {}): string {
   const params = new URLSearchParams()
   if (link != null) params.set("link", String(link))
+  else if (view === "bio") params.set("view", "bio")
   if (days != null && days !== DEFAULT_ANALYTICS_RANGE) params.set("days", String(days))
   const query = params.toString()
   return query ? `/dashboard/analytics?${query}` : "/dashboard/analytics"

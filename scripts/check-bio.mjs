@@ -29,11 +29,21 @@ const check = (name, run) => {
   }
 }
 
+const text = (...parts) => parts.map((part) => (typeof part === "number" ? String.fromCodePoint(part) : part)).join("")
+
+const ZERO_WIDTH_JOINER = text(0x200d)
+const VARIATION_SELECTOR_16 = text(0xfe0f)
+const GRINNING_FACE = text(0x1f600)
+const ARTIST_PALETTE = text(0x1f3a8)
+const CAMERA_WITH_FLASH = text(0x1f4f8)
+const FAMILY = text(0x1f468, ZERO_WIDTH_JOINER, 0x1f469, ZERO_WIDTH_JOINER, 0x1f467, ZERO_WIDTH_JOINER, 0x1f466)
+const CROATIAN_FLAG = text(0x1f1ed, 0x1f1f7)
+
 const LENGTH_TEXT = "A handle must be 3 to 30 characters."
 const CHARACTERS_TEXT = "Use only letters, numbers, hyphens and underscores."
 const NO_LETTER_TEXT = "A handle needs at least one letter or number."
 
-const hasLoneSurrogate = (value) => /[\uD800-\uDFFF]/u.test(value)
+const hasLoneSurrogate = (value) => /\p{Cs}/u.test(value)
 
 const graphemeCount = (value) => [...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(value)].length
 
@@ -52,11 +62,11 @@ check("normalizeHandle strips spaces, one leading @ and lower-cases", () => {
 })
 
 check("normalizeHandle strips what Java's String.strip strips, and nothing else", () => {
-  assert.equal(normalizeHandle("\u2003Ana\u3000"), "ana")
-  assert.equal(normalizeHandle("\u001Cana\u2029"), "ana")
-  assert.equal(normalizeHandle("\u00A0ana"), "\u00A0ana")
-  assert.equal(normalizeHandle("ana\u202F"), "ana\u202F")
-  assert.equal(handleFormatError(normalizeHandle("\u00A0ana")), CHARACTERS_TEXT)
+  assert.equal(normalizeHandle(text(0x2003, "Ana", 0x3000)), "ana")
+  assert.equal(normalizeHandle(text(0x001c, "ana", 0x2029)), "ana")
+  assert.equal(normalizeHandle(text(0x00a0, "ana")), text(0x00a0, "ana"))
+  assert.equal(normalizeHandle(text("ana", 0x202f)), text("ana", 0x202f))
+  assert.equal(handleFormatError(normalizeHandle(text(0x00a0, "ana"))), CHARACTERS_TEXT)
 })
 
 check("handleFormatError gives the backend's three texts in order", () => {
@@ -66,7 +76,7 @@ check("handleFormatError gives the backend's three texts in order", () => {
   assert.equal(handleFormatError("---"), NO_LETTER_TEXT)
   assert.equal(handleFormatError("_-_"), NO_LETTER_TEXT)
   assert.equal(handleFormatError("ana@"), CHARACTERS_TEXT)
-  assert.equal(handleFormatError("\u010Dokolada"), CHARACTERS_TEXT)
+  assert.equal(handleFormatError(text(0x010d, "okolada")), CHARACTERS_TEXT)
   assert.equal(handleFormatError("Ana"), CHARACTERS_TEXT)
   assert.equal(handleFormatError("a b"), CHARACTERS_TEXT)
   assert.equal(handleFormatError("@ana"), CHARACTERS_TEXT)
@@ -90,51 +100,56 @@ check("share urls", () => {
 
 check("initialsOf", () => {
   assert.equal(initialsOf("Ana Horvat", "ana"), "AH")
-  assert.equal(initialsOf("\u{1F600} ana", null), "A")
+  assert.equal(initialsOf(`${GRINNING_FACE} ana`, null), "A")
   assert.equal(initialsOf("", "karlo"), "K")
+  assert.equal(initialsOf("", "_ana"), "A")
+  assert.equal(initialsOf("", "-9lives"), "9")
   assert.equal(initialsOf("", null), "?")
   assert.equal(initialsOf("  ana   horvat  ", null), "AH")
   assert.equal(initialsOf("Ana Marija Horvat", null), "AM")
-  assert.equal(initialsOf("\u0111ur\u0111a \u0161imi\u0107", null), "\u0110\u0160")
+  assert.equal(initialsOf(text(0x0111, "ur", 0x0111, "a ", 0x0161, "imi", 0x0107), null), text(0x0110, 0x0160))
   assert.equal(initialsOf("2pac shakur", null), "2S")
-  assert.equal(initialsOf("\u{1F600} \u{1F3A8}", "karlo"), "K")
-  assert.equal(initialsOf("\u{1F600}", null), "?")
+  assert.equal(initialsOf(`${GRINNING_FACE} ${ARTIST_PALETTE}`, "karlo"), "K")
+  assert.equal(initialsOf(GRINNING_FACE, null), "?")
   assert.equal(initialsOf("", ""), "?")
 })
 
 check("ogSafeText keeps only what the bundled font can draw", () => {
-  assert.equal(ogSafeText("\u0110ur\u0111a \u{1F600} \u0160imi\u0107 \u65E5\u672C"), "\u0110ur\u0111a \u0160imi\u0107")
+  const durda = text(0x0110, "ur", 0x0111, "a")
+  const simic = text(0x0160, "imi", 0x0107)
+  assert.equal(ogSafeText(`${durda} ${GRINNING_FACE} ${simic} ${text(0x65e5, 0x672c)}`), `${durda} ${simic}`)
   assert.equal(ogSafeText("<b>x</b>"), "<b>x</b>")
   assert.equal(ogSafeText("<script>alert(1)</script>"), "<script>alert(1)</script>")
-  assert.equal(ogSafeText("\u0424\u043E\u0442\u043E \u0438\u0437 \u0417\u0430\u0433\u0440\u0435\u0431\u0430"), "\u0424\u043E\u0442\u043E \u0438\u0437 \u0417\u0430\u0433\u0440\u0435\u0431\u0430")
+  const cyrillic = text(0x0424, 0x043e, 0x0442, 0x043e, " ", 0x0438, 0x0437, " ", 0x0417, 0x0430, 0x0433, 0x0440, 0x0435, 0x0431, 0x0430)
+  assert.equal(ogSafeText(cyrillic), cyrillic)
   assert.equal(ogSafeText("  Ana \n\t Horvat  "), "Ana Horvat")
   assert.equal(ogSafeText("Ana\nHorvat"), "Ana Horvat")
-  assert.equal(ogSafeText("\u{1F600}\u{1F3A8}"), "")
+  assert.equal(ogSafeText(`${GRINNING_FACE}${ARTIST_PALETTE}`), "")
   assert.equal(ogSafeText(""), "")
 })
 
 check("ogSafeText drops bidi overrides and combining marks and never leaves half a surrogate", () => {
-  const overridden = ogSafeText("Shop\u202Enow")
+  const overridden = ogSafeText(text("Shop", 0x202e, "now"))
   assert.equal(overridden, "Shopnow")
-  const marked = ogSafeText(`a${"\u0301".repeat(40)}`)
+  const marked = ogSafeText(`a${text(0x0301).repeat(40)}`)
   assert.equal(marked, "a")
-  for (const value of ["\u{1F468}\u200D\u{1F469}\u200D\u{1F467}\u200D\u{1F466} family", "\u{1F1ED}\u{1F1F7} Zagreb", "a\uD83D", "\uDE00b", "\u{1D400}\u{1D401}\u{1D402}"]) {
+  for (const value of [`${FAMILY} family`, `${CROATIAN_FLAG} Zagreb`, text("a", 0xd83d), text(0xde00, "b"), text(0x1d400, 0x1d401, 0x1d402)]) {
     assert.equal(hasLoneSurrogate(ogSafeText(value)), false, value)
   }
-  assert.equal(ogSafeText("\u{1F468}\u200D\u{1F469}\u200D\u{1F467}\u200D\u{1F466} family"), "family")
+  assert.equal(ogSafeText(`${FAMILY} family`), "family")
 })
 
 check("ogSafeText range edges", () => {
-  assert.equal(ogSafeText("\u001F\u0020\u007E\u007F"), "~")
-  assert.equal(ogSafeText("x\u00ACx\u00ADx\u00AEx"), "x\u00ACxx\u00AEx")
-  assert.equal(ogSafeText("\u0113\u0114\u0115\u0116"), "\u0113\u0116")
-  assert.equal(ogSafeText("\u012B\u012C\u012D\u012E"), "\u012B\u012E")
-  assert.equal(ogSafeText("\u0137\u0138\u0139"), "\u0137\u0139")
-  assert.equal(ogSafeText("\u013E\u013F\u0140\u0141"), "\u013E\u0141")
-  assert.equal(ogSafeText("\u0148\u0149\u014A"), "\u0148\u014A")
-  assert.equal(ogSafeText("\u014D\u014E\u014F\u0150"), "\u014D\u0150")
-  assert.equal(ogSafeText("\u017E\u017F"), "\u017E")
-  assert.equal(ogSafeText("\u03FF\u0400\u045F\u0460"), "\u0400\u045F")
+  assert.equal(ogSafeText(text(0x001f, 0x0020, 0x007e, 0x007f)), "~")
+  assert.equal(ogSafeText(text("x", 0x00ac, "x", 0x00ad, "x", 0x00ae, "x")), text("x", 0x00ac, "xx", 0x00ae, "x"))
+  assert.equal(ogSafeText(text(0x0113, 0x0114, 0x0115, 0x0116)), text(0x0113, 0x0116))
+  assert.equal(ogSafeText(text(0x012b, 0x012c, 0x012d, 0x012e)), text(0x012b, 0x012e))
+  assert.equal(ogSafeText(text(0x0137, 0x0138, 0x0139)), text(0x0137, 0x0139))
+  assert.equal(ogSafeText(text(0x013e, 0x013f, 0x0140, 0x0141)), text(0x013e, 0x0141))
+  assert.equal(ogSafeText(text(0x0148, 0x0149, 0x014a)), text(0x0148, 0x014a))
+  assert.equal(ogSafeText(text(0x014d, 0x014e, 0x014f, 0x0150)), text(0x014d, 0x0150))
+  assert.equal(ogSafeText(text(0x017e, 0x017f)), text(0x017e))
+  assert.equal(ogSafeText(text(0x03ff, 0x0400, 0x045f, 0x0460)), text(0x0400, 0x045f))
 })
 
 check("contrastRatio follows the WCAG formula", () => {
@@ -262,7 +277,7 @@ check("defaultButtonTitle", () => {
   assert.equal(defaultButtonTitle("x.com"), "X")
   const long = `${"a".repeat(70)}.example`
   assert.equal(defaultButtonTitle(long), "a".repeat(60))
-  const straddling = `${"a".repeat(59)}\u{1F600}.example`
+  const straddling = `${"a".repeat(59)}${GRINNING_FACE}.example`
   const title = defaultButtonTitle(straddling)
   assert.ok(title.length <= BIO_LIMITS.buttonTitle, title)
   assert.equal(hasLoneSurrogate(title), false)
@@ -289,26 +304,29 @@ check("insertionIndex counts the midpoints above y", () => {
 })
 
 check("isSingleEmoji", () => {
-  assert.equal(isSingleEmoji("\u{1F468}\u200D\u{1F469}\u200D\u{1F467}\u200D\u{1F466}"), true)
-  assert.equal(isSingleEmoji("\u{1F1ED}\u{1F1F7}"), true)
-  assert.equal(isSingleEmoji("\u{1F4F8}"), true)
-  assert.equal(isSingleEmoji("\u2764\uFE0F"), true)
-  assert.equal(isSingleEmoji("\u{1F4F8}\u{1F4F8}"), false)
+  assert.equal(isSingleEmoji(FAMILY), true)
+  assert.equal(isSingleEmoji(CROATIAN_FLAG), true)
+  assert.equal(isSingleEmoji(CAMERA_WITH_FLASH), true)
+  assert.equal(isSingleEmoji(text(0x2764, VARIATION_SELECTOR_16)), true)
+  assert.equal(isSingleEmoji(CAMERA_WITH_FLASH.repeat(2)), false)
   assert.equal(isSingleEmoji("#"), false)
-  assert.equal(isSingleEmoji("#\uFE0F\u20E3"), false)
+  assert.equal(isSingleEmoji(text("#", VARIATION_SELECTOR_16, 0x20e3)), false)
   assert.equal(isSingleEmoji("a"), false)
   assert.equal(isSingleEmoji("1"), false)
   assert.equal(isSingleEmoji(""), false)
-  assert.equal(isSingleEmoji("\u00E9"), false)
-  assert.equal(isSingleEmoji("\u{1F4F8} "), false)
-  const longFamily = "\u{1F468}\u{1F3FB}\u200D\u{1F469}\u{1F3FB}\u200D\u{1F467}\u{1F3FB}\u200D\u{1F466}\u{1F3FB}"
+  assert.equal(isSingleEmoji(text(0x00e9)), false)
+  assert.equal(isSingleEmoji(`${CAMERA_WITH_FLASH} `), false)
+  assert.equal(isSingleEmoji(text(0x1f02c)), false)
+  assert.equal(isSingleEmoji(text(0x1f094)), false)
+  assert.equal(isSingleEmoji(text(0x1f3fb)), true)
+  const longFamily = text(0x1f468, 0x1f3fb, ZERO_WIDTH_JOINER, 0x1f469, 0x1f3fb, ZERO_WIDTH_JOINER, 0x1f467, 0x1f3fb, ZERO_WIDTH_JOINER, 0x1f466, 0x1f3fb)
   assert.equal(graphemeCount(longFamily), 1)
   assert.ok(longFamily.length > 16)
   assert.equal(isSingleEmoji(longFamily), false)
 })
 
 check("emoji suggestions are each one emoji", () => {
-  assert.deepEqual([...EMOJI_SUGGESTIONS], ["\u2728", "\u{1F3A8}", "\u{1F4F8}", "\u{1F3B5}", "\u{1F3AE}", "\u{1F4BC}", "\u{1F33F}", "\u2615", "\u{1F680}", "\u{1F4A1}", "\u2764\uFE0F", "\u{1F43E}"])
+  assert.deepEqual([...EMOJI_SUGGESTIONS], [text(0x2728), text(0x1f3a8), text(0x1f4f8), text(0x1f3b5), text(0x1f3ae), text(0x1f4bc), text(0x1f33f), text(0x2615), text(0x1f680), text(0x1f4a1), text(0x2764, VARIATION_SELECTOR_16), text(0x1f43e)])
   for (const emoji of EMOJI_SUGGESTIONS) assert.equal(isSingleEmoji(emoji), true, emoji)
 })
 

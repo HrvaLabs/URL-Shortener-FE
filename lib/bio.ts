@@ -2,7 +2,27 @@ import type { BioAccent, BioIcon, BioLinkState } from "./types"
 
 export const BIO_LIMITS = { handleMin: 3, handleMax: 30, displayName: 50, bio: 160, buttonTitle: 60, buttons: 30 } as const
 
-const JAVA_STRIP_EDGES = /^[\t-\r\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]+|[\t-\r\u001C-\u0020\u1680\u2000-\u2006\u2008-\u200A\u2028\u2029\u205F\u3000]+$/g
+const character = (codePoint: number): string => String.fromCodePoint(codePoint)
+
+const characterRange = (first: number, last: number): string => `${character(first)}-${character(last)}`
+
+const LINE_SEPARATOR = character(0x2028)
+const PARAGRAPH_SEPARATOR = character(0x2029)
+const VARIATION_SELECTOR_16 = character(0xfe0f)
+
+const JAVA_WHITESPACE = [
+  characterRange(0x0009, 0x000d),
+  characterRange(0x001c, 0x0020),
+  character(0x1680),
+  characterRange(0x2000, 0x2006),
+  characterRange(0x2008, 0x200a),
+  LINE_SEPARATOR,
+  PARAGRAPH_SEPARATOR,
+  character(0x205f),
+  character(0x3000),
+].join("")
+
+const JAVA_STRIP_EDGES = new RegExp(`^[${JAVA_WHITESPACE}]+|[${JAVA_WHITESPACE}]+$`, "g")
 
 export const normalizeHandle = (raw: string): string => {
   const stripped = raw.replace(JAVA_STRIP_EDGES, "")
@@ -32,11 +52,23 @@ export const initialsOf = (displayName: string, handle: string | null): string =
     .map((word) => firstCharacter(word).toLocaleUpperCase("en"))
     .join("")
   if (initials) return initials
-  if (handle) return firstCharacter(handle).toLocaleUpperCase("en")
-  return "?"
+  return handle?.match(/[a-z0-9]/)?.[0].toLocaleUpperCase("en") ?? "?"
 }
 
-const OG_UNSUPPORTED = /[^\u0020-\u007E\u00A0-\u00AC\u00AE-\u0113\u0116-\u012B\u012E-\u0137\u0139-\u013E\u0141-\u0148\u014A-\u014D\u0150-\u017E\u0400-\u045F]/gu
+const OG_DRAWABLE = [
+  characterRange(0x0020, 0x007e),
+  characterRange(0x00a0, 0x00ac),
+  characterRange(0x00ae, 0x0113),
+  characterRange(0x0116, 0x012b),
+  characterRange(0x012e, 0x0137),
+  characterRange(0x0139, 0x013e),
+  characterRange(0x0141, 0x0148),
+  characterRange(0x014a, 0x014d),
+  characterRange(0x0150, 0x017e),
+  characterRange(0x0400, 0x045f),
+].join("")
+
+const OG_UNSUPPORTED = new RegExp(`[^${OG_DRAWABLE}]`, "gu")
 
 export const ogSafeText = (value: string): string =>
   value.replace(/\s+/gu, " ").replace(OG_UNSUPPORTED, "").replace(/ {2,}/g, " ").trim()
@@ -95,9 +127,11 @@ export const guessIcon = (host: string): BioIcon => {
   return match ? match[0] : "WEBSITE"
 }
 
+const HIGH_SURROGATE = new RegExp(`[${characterRange(0xd800, 0xdbff)}]`)
+
 const cutToLength = (value: string, max: number): string => {
   if (value.length <= max) return value
-  const end = /[\uD800-\uDBFF]/.test(value.charAt(max - 1)) ? max - 1 : max
+  const end = HIGH_SURROGATE.test(value.charAt(max - 1)) ? max - 1 : max
   return value.slice(0, end)
 }
 
@@ -140,11 +174,11 @@ const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" })
 
 export const isSingleEmoji = (value: string): boolean => {
   if (!value || value.length > 16 || (value.codePointAt(0) ?? 0) <= 0x7f) return false
-  if (!/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(value)) return false
+  if (!/^\p{Emoji}/u.test(value)) return false
   return [...graphemes.segment(value)].length === 1
 }
 
-export const EMOJI_SUGGESTIONS = ["✨", "🎨", "📸", "🎵", "🎮", "💼", "🌿", "☕", "🚀", "💡", "❤\uFE0F", "🐾"] as const
+export const EMOJI_SUGGESTIONS = ["✨", "🎨", "📸", "🎵", "🎮", "💼", "🌿", "☕", "🚀", "💡", `❤${VARIATION_SELECTOR_16}`, "🐾"] as const
 
 const LINK_STOPPED_HINT = "Not shown on your page until the link works again."
 

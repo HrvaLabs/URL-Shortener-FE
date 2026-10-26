@@ -44,6 +44,12 @@ const stepColors: Record<StackStep, string> = {
 
 const mutedColor = "hsl(var(--muted-foreground) / 0.5)"
 
+const palestStep: StackStep = 25
+
+const edgeColor = "var(--stack-edge)"
+
+const edgeRoom = 5
+
 const hatchSize = 6
 
 const barGap: Record<AnalyticsRange, string | number> = { 7: "20%", 30: "20%", 90: "10%", 365: 0 }
@@ -74,6 +80,10 @@ function paint(fill: StackFill | null, patternBase: string): string {
   return fill?.hatch ? `url(#${hatchId(patternBase, fill.step)})` : solidColor(fill)
 }
 
+function hasEdge(fill: StackFill | null): boolean {
+  return fill?.step === palestStep
+}
+
 function useSvgId(): string {
   return useId().replace(/[^\w-]/g, "")
 }
@@ -93,7 +103,7 @@ export function StackedDailyChart({ title, series, labels, days, hint, fills }: 
   const summary = `${title} for the last ${rangeLabels[days]}: ${totals.length > 0 ? totals.join(", ") : "none"}`
 
   return (
-    <section className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)] [--stack-low:25%] [--stack-mid:55%] [--stack-toward:var(--card)] dark:[--stack-low:20%] dark:[--stack-mid:60%] dark:[--stack-toward:var(--foreground)]">
+    <section className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)] [--stack-low:25%] [--stack-mid:55%] [--stack-toward:var(--card)] [--stack-edge:hsl(var(--brand))] dark:[--stack-low:20%] dark:[--stack-mid:60%] dark:[--stack-toward:var(--foreground)] dark:[--stack-edge:transparent]">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-3.5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">{title}</h2>
@@ -142,7 +152,7 @@ export function StackedDailyChart({ title, series, labels, days, hint, fills }: 
                 name={segment.label}
                 stackId="day"
                 fill={paint(segment.fill, patternBase)}
-                shape={SegmentShape}
+                shape={hasEdge(segment.fill) ? EdgedSegmentShape : SegmentShape}
                 maxBarSize={28}
                 isAnimationActive={false}
               />
@@ -163,10 +173,36 @@ function HatchPattern({ id, step }: { id: string; step: StackStep }) {
   )
 }
 
+function segmentGap(height: number): number {
+  return height >= 6 ? 2 : height >= 3 ? 1 : 0
+}
+
 function SegmentShape({ x, y, width, height, fill }: BarShapeProps) {
   if (!(width > 0) || !(height > 0)) return null
-  const gap = height >= 6 ? 2 : height >= 3 ? 1 : 0
+  const gap = segmentGap(height)
   return <rect x={x} y={y + gap} width={width} height={height - gap} style={{ fill }} />
+}
+
+function EdgedSegmentShape(props: BarShapeProps) {
+  const { x, y, width, height } = props
+  if (!(width > 0) || !(height > 0)) return null
+  const top = y + segmentGap(height)
+  const bottom = y + height
+  const sides = width >= edgeRoom
+  const ends = bottom - top >= edgeRoom
+  const edges = [
+    ends && `M${x} ${top + 0.5}H${x + width}M${x} ${bottom - 0.5}H${x + width}`,
+    sides && `M${x + 0.5} ${top}V${bottom}M${x + width - 0.5} ${top}V${bottom}`,
+  ].filter(Boolean)
+
+  return (
+    <g>
+      <SegmentShape {...props} />
+      {edges.length > 0 && (
+        <path d={edges.join("")} shapeRendering="crispEdges" style={{ fill: "none", stroke: edgeColor, strokeWidth: 1 }} />
+      )}
+    </g>
+  )
 }
 
 function StackedTooltip({ active, payload, label, segments }: TooltipContentProps & { segments: Segment[] }) {
@@ -199,6 +235,7 @@ function Swatch({ fill }: { fill: StackFill | null }) {
         </defs>
       )}
       <rect width="10" height="10" rx="3" style={{ fill: paint(fill, patternBase) }} />
+      {hasEdge(fill) && <rect x="0.5" y="0.5" width="9" height="9" rx="2.5" style={{ fill: "none", stroke: edgeColor, strokeWidth: 1 }} />}
     </svg>
   )
 }

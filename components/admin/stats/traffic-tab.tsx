@@ -1,20 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
+import { AnalyticsEmpty } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { StatTotals } from "@/components/analytics/stat-totals"
+import { LinkIdentityCells, LinkIdentityHeads } from "@/components/admin/stats/link-identity-cells"
 import { StatGrid, type StatItem } from "@/components/admin/stats/stat-grid"
+import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { botShare } from "@/lib/admin-stats"
-import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref } from "@/lib/analytics"
+import { ANALYTICS_HISTORY_START, analyticsDay } from "@/lib/analytics"
 import { useTrafficStats } from "@/lib/hooks/useSiteStats"
 import type { AnalyticsRange, TrafficStats, TrafficTopLink } from "@/lib/types"
-import { cn, formatDate } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 
 const uniqueVisitorsLabel = "Unique visitors (per link per day)"
 
@@ -23,24 +24,16 @@ interface TrafficTabProps {
 }
 
 export function TrafficTab({ days }: TrafficTabProps) {
-  const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useTrafficStats(days)
-
-  if (isPending) return <AnalyticsSkeleton variant="panel" />
-  if (error) {
-    return (
-      <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} message="Couldn't load these stats. Try again." />
-    )
-  }
-  return <TrafficBody data={data} days={days} refreshing={isPlaceholderData} />
+  const query = useTrafficStats(days)
+  return <StatsPanel query={query}>{(data) => <TrafficBody data={data} days={days} />}</StatsPanel>
 }
 
 interface TrafficBodyProps {
   data: TrafficStats
   days: AnalyticsRange
-  refreshing: boolean
 }
 
-function TrafficBody({ data, days, refreshing }: TrafficBodyProps) {
+function TrafficBody({ data, days }: TrafficBodyProps) {
   const [showBots, setShowBots] = useState(false)
   const { totals, daily, topLinks, breakdowns } = data
   const empty = totals.clicks + totals.botClicks === 0
@@ -62,10 +55,10 @@ function TrafficBody({ data, days, refreshing }: TrafficBodyProps) {
   ]
 
   return (
-    <div className={cn("space-y-6 transition-opacity", refreshing && "opacity-60")} aria-busy={refreshing}>
+    <>
       <StatTotals
         totals={totals}
-        className="@2xl:grid-cols-3"
+        columnsClassName="@2xl:grid-cols-3"
         uniqueVisitorsLabel={uniqueVisitorsLabel}
         uniqueVisitorsHint="Each link's unique visitors per day, added up. One person on two links or two days counts more than once."
       />
@@ -99,7 +92,7 @@ function TrafficBody({ data, days, refreshing }: TrafficBodyProps) {
           </div>
         </>
       )}
-    </div>
+    </>
   )
 }
 
@@ -118,9 +111,7 @@ function TopLinks({ links, days }: TopLinksProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Link</TableHead>
-              <TableHead>Destination</TableHead>
-              <TableHead>Owner</TableHead>
+              <LinkIdentityHeads />
               <TableHead className="whitespace-nowrap text-right">Clicks</TableHead>
               <TableHead className="whitespace-nowrap text-right">Unique visitors</TableHead>
             </TableRow>
@@ -128,24 +119,7 @@ function TopLinks({ links, days }: TopLinksProps) {
           <TableBody>
             {links.map((link) => (
               <TableRow key={link.id}>
-                <TableCell>
-                  <Link
-                    href={analyticsHref({ link: link.id, days })}
-                    className="whitespace-nowrap font-mono text-[13px] font-medium text-brand hover:underline"
-                  >
-                    /{link.shortUrl}
-                  </Link>
-                </TableCell>
-                <TableCell className="max-w-[240px] text-muted-foreground">
-                  <span className="block truncate" title={link.destinationHost || undefined}>
-                    {link.destinationHost || "—"}
-                  </span>
-                </TableCell>
-                <TableCell className="max-w-[220px]">
-                  <span className={cn("block truncate", link.ownerEmail == null && "text-muted-foreground")} title={link.ownerEmail ?? undefined}>
-                    {link.ownerEmail ?? "Anonymous"}
-                  </span>
-                </TableCell>
+                <LinkIdentityCells link={link} days={days} />
                 <TableCell className="text-right tabular-nums">{link.clicks.toLocaleString()}</TableCell>
                 <TableCell className="text-right tabular-nums">{link.uniqueVisitors.toLocaleString()}</TableCell>
               </TableRow>

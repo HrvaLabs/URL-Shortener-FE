@@ -1,14 +1,14 @@
 "use client"
 
-import Link from "next/link"
-import { AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
+import { LinkIdentityCells, LinkIdentityHeads } from "@/components/admin/stats/link-identity-cells"
 import { RankedList } from "@/components/admin/stats/ranked-list"
 import { StackedDailyChart, type StackFill } from "@/components/admin/stats/stacked-daily-chart"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
+import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { StatusBadge } from "@/components/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { createdViaLabels } from "@/lib/admin-stats"
-import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
+import { parseServerDateTime } from "@/lib/analytics"
 import { useLinksStats } from "@/lib/hooks/useSiteStats"
 import { blockReasonLabels } from "@/lib/labels"
 import type { AnalyticsRange, BlockReason, CreatedVia, LinksStats, NewestLink, StackedSeries } from "@/lib/types"
@@ -39,28 +39,20 @@ interface LinksTabProps {
 }
 
 export function LinksTab({ days }: LinksTabProps) {
-  const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useLinksStats(days)
-
-  if (isPending) return <AnalyticsSkeleton variant="panel" />
-  if (error) {
-    return (
-      <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} message="Couldn't load these stats. Try again." />
-    )
-  }
-  return <LinksBody data={data} days={days} refreshing={isPlaceholderData} />
+  const query = useLinksStats(days)
+  return <StatsPanel query={query}>{(data) => <LinksBody data={data} days={days} />}</StatsPanel>
 }
 
 interface LinksBodyProps {
   data: LinksStats
   days: AnalyticsRange
-  refreshing: boolean
 }
 
-function LinksBody({ data, days, refreshing }: LinksBodyProps) {
+function LinksBody({ data, days }: LinksBodyProps) {
   const { created, createdInRange, now, topTags, topDomains, newest } = data
 
   return (
-    <div className={cn("space-y-6 transition-opacity", refreshing && "opacity-60")} aria-busy={refreshing}>
+    <>
       <StackedDailyChart
         title="Links created per day"
         hint="Links made before this was recorded show as Unknown."
@@ -102,7 +94,7 @@ function LinksBody({ data, days, refreshing }: LinksBodyProps) {
         <RankedList title="Top destinations" valueLabel="Active links" entries={topDomains} emptyText="No active links." />
       </div>
       <NewestLinks links={newest} days={days} />
-    </div>
+    </>
   )
 }
 
@@ -121,9 +113,7 @@ function NewestLinks({ links, days }: NewestLinksProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Link</TableHead>
-              <TableHead>Destination</TableHead>
-              <TableHead>Owner</TableHead>
+              <LinkIdentityHeads />
               <TableHead className="whitespace-nowrap">Made via</TableHead>
               <TableHead>Created</TableHead>
               <TableHead>Status</TableHead>
@@ -132,24 +122,7 @@ function NewestLinks({ links, days }: NewestLinksProps) {
           <TableBody>
             {links.map((link) => (
               <TableRow key={link.id}>
-                <TableCell>
-                  <Link
-                    href={analyticsHref({ link: link.id, days })}
-                    className="whitespace-nowrap font-mono text-[13px] font-medium text-brand hover:underline"
-                  >
-                    /{link.shortUrl}
-                  </Link>
-                </TableCell>
-                <TableCell className="max-w-[240px] text-muted-foreground">
-                  <span className="block truncate" title={link.destinationHost || undefined}>
-                    {link.destinationHost || "—"}
-                  </span>
-                </TableCell>
-                <TableCell className="max-w-[220px]">
-                  <span className={cn("block truncate", link.ownerEmail == null && "text-muted-foreground")} title={link.ownerEmail ?? undefined}>
-                    {link.ownerEmail ?? "Anonymous"}
-                  </span>
-                </TableCell>
+                <LinkIdentityCells link={link} days={days} />
                 <TableCell className={cn("whitespace-nowrap", link.createdVia === "unknown" && "text-muted-foreground")}>
                   {createdViaLabels[link.createdVia] ?? link.createdVia}
                 </TableCell>

@@ -1,41 +1,32 @@
 "use client"
 
-import { AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { RankedList } from "@/components/admin/stats/ranked-list"
 import { StackedDailyChart } from "@/components/admin/stats/stacked-daily-chart"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
+import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
 import { useUsersStats } from "@/lib/hooks/useSiteStats"
 import type { AnalyticsRange, UsersStats } from "@/lib/types"
-import { cn } from "@/lib/utils"
 
 interface UsersTabProps {
   days: AnalyticsRange
 }
 
 export function UsersTab({ days }: UsersTabProps) {
-  const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useUsersStats(days)
-
-  if (isPending) return <AnalyticsSkeleton variant="panel" />
-  if (error) {
-    return (
-      <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} message="Couldn't load these stats. Try again." />
-    )
-  }
-  return <UsersBody data={data} days={days} refreshing={isPlaceholderData} />
+  const query = useUsersStats(days)
+  return <StatsPanel query={query}>{(data) => <UsersBody data={data} days={days} />}</StatsPanel>
 }
 
 interface UsersBodyProps {
   data: UsersStats
   days: AnalyticsRange
-  refreshing: boolean
 }
 
-function UsersBody({ data, days, refreshing }: UsersBodyProps) {
+function UsersBody({ data, days }: UsersBodyProps) {
   const { signups, now, apiKeys, mcp } = data
 
   return (
-    <div className={cn("space-y-6 transition-opacity", refreshing && "opacity-60")} aria-busy={refreshing}>
+    <>
       <StackedDailyChart title="Sign-ups per day" series={signups} labels={providerLabels} days={days} />
       <StatGrid
         title="Accounts"
@@ -85,6 +76,6 @@ function UsersBody({ data, days, refreshing }: UsersBodyProps) {
           },
         ]}
       />
-    </div>
+    </>
   )
 }

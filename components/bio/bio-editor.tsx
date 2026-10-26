@@ -251,7 +251,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     setSaveError(null)
     const sent = draft
     try {
-      const saved = await save.mutateAsync(bioUpdateOf(sent))
+      const saved = await save.mutateAsync({ ...bioUpdateOf(sent), expectedUpdatedAt: synced.updatedAt })
       flushSync(() => {
         setDraft((current) => rebaseSavedBioDraft(current, sent, saved))
         setSynced(saved)

@@ -979,3 +979,7 @@ export interface BioPageReviewEntry {
   reasons: string[]
   flaggedAt: string
 }
+
+export interface BioPageUpdate {
+  expectedUpdatedAt?: string
+}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState, type RefObject } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Edit, Plus, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -12,11 +12,13 @@ import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
+import { parseServerDateTime } from "@/lib/analytics"
 import type { BlocklistSource, BlocklistSourceInput } from "@/lib/types"
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils"
 import { formatMegabytes } from "./format"
 import { actionLabels, actionVariants, kindLabels } from "./labels"
 import { SourceDialog } from "./source-dialog"
+import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 
 const sourcesKey = ["admin", "blocklists", "sources"]
 
@@ -42,6 +44,7 @@ export function SourcesSection() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogSource, setDialogSource] = useState<BlocklistSource | null>(null)
   const [dialogKey, setDialogKey] = useState(0)
+  const headingRef = useRef<HTMLHeadingElement>(null)
 
   const openDialog = (source: BlocklistSource | null) => {
     setDialogSource(source)
@@ -52,7 +55,7 @@ export function SourcesSection() {
   return (
     <section className="overflow-hidden rounded-xl border bg-card">
       <div className="flex min-h-13 items-center justify-between gap-4 border-b px-5 py-2.5">
-        <h2 className="text-sm font-semibold">Sources</h2>
+        <h2 ref={headingRef} tabIndex={-1} className="rounded-sm text-sm font-semibold">Sources</h2>
         <Button size="sm" className="h-8 gap-1.5" onClick={() => openDialog(null)}>
           <Plus className="h-3.5 w-3.5" />
           Add source
@@ -80,21 +83,21 @@ export function SourcesSection() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead className="hidden @5xl:table-cell">Kind</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="hidden @min-[78rem]:table-cell">Kind</TableHead>
+              <TableHead className="hidden @min-[45rem]:table-cell">Action</TableHead>
               <TableHead>Enabled</TableHead>
-              <TableHead className="hidden @5xl:table-cell">Every</TableHead>
-              <TableHead className="text-right">Entries</TableHead>
-              <TableHead className="hidden text-right @5xl:table-cell">Memory</TableHead>
-              <TableHead className="hidden @5xl:table-cell">Version</TableHead>
-              <TableHead>Last success</TableHead>
-              <TableHead className="hidden @5xl:table-cell">Last error</TableHead>
+              <TableHead className="hidden @min-[78rem]:table-cell">Every</TableHead>
+              <TableHead className="hidden text-right @min-[45rem]:table-cell">Entries</TableHead>
+              <TableHead className="hidden text-right @min-[78rem]:table-cell">Memory</TableHead>
+              <TableHead className="hidden @min-[78rem]:table-cell">Version</TableHead>
+              <TableHead className="hidden @min-[45rem]:table-cell">Last success</TableHead>
+              <TableHead className="hidden @min-[78rem]:table-cell">Last error</TableHead>
               <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sources.map((source) => (
-              <SourceRow key={source.id} source={source} onEdit={() => openDialog(source)} />
+              <SourceRow key={source.id} source={source} onEdit={() => openDialog(source)} fallbackFocusRef={headingRef} />
             ))}
           </TableBody>
         </Table>
@@ -105,8 +108,10 @@ export function SourcesSection() {
   )
 }
 
-function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => void }) {
+function SourceRow({ source, onEdit, fallbackFocusRef }: { source: BlocklistSource; onEdit: () => void; fallbackFocusRef: RefObject<HTMLElement | null> }) {
   const queryClient = useQueryClient()
+  const deleteRef = useRef<HTMLButtonElement>(null)
+  const removalFocus = useRowRemovalFocus(fallbackFocusRef)
   const replaceSource = (updated: BlocklistSource) =>
     queryClient.setQueryData<BlocklistSource[]>(sourcesKey, (current) =>
       current?.map((entry) => (entry.id === updated.id ? updated : entry)),
@@ -146,21 +151,28 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
     onSettled: invalidate,
   })
 
-  const fromFallback = source.lastSuccessUrl != null && source.lastSuccessUrl !== source.url
 
   return (
     <TableRow className="group">
       <TableCell>
-        <span className="block max-w-40 truncate font-medium" title={source.name}>{source.name}</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="mt-0.5 block max-w-40 truncate font-mono text-xs text-muted-foreground">{source.url}</span>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-sm whitespace-normal break-all font-mono">{source.url}</TooltipContent>
-        </Tooltip>
+        <span className="block min-w-32 font-medium [overflow-wrap:anywhere] @lg:min-w-40">{source.name}</span>
+        <span className="mt-0.5 block min-w-32 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-40">{source.url}</span>
+        <div className="mt-1.5 min-w-32 space-y-1 text-xs text-muted-foreground @lg:min-w-40 @min-[78rem]:hidden">
+          <Badge variant={actionVariants[source.action] ?? "secondary"} className="@min-[45rem]:hidden">{actionLabels[source.action] ?? source.action}</Badge>
+          <p>
+            {kindLabels[source.kind] ?? source.kind} · every {source.refreshIntervalHours} h
+          </p>
+          <p className="tabular-nums [overflow-wrap:anywhere]">
+            <span className="@min-[45rem]:hidden">{entryCount(source.domainCount)} entries · </span>
+            {formatMegabytes(source.memoryBytes)} · version {source.listVersion || "—"}
+          </p>
+          <div className="@min-[45rem]:hidden">
+            <LastSuccess source={source} labelled />
+          </div>
+        </div>
       </TableCell>
-      <TableCell className="hidden text-muted-foreground @5xl:table-cell">{kindLabels[source.kind] ?? source.kind}</TableCell>
-      <TableCell>
+      <TableCell className="hidden text-muted-foreground @min-[78rem]:table-cell">{kindLabels[source.kind] ?? source.kind}</TableCell>
+      <TableCell className="hidden @min-[45rem]:table-cell">
         <Badge variant={actionVariants[source.action] ?? "secondary"}>{actionLabels[source.action] ?? source.action}</Badge>
       </TableCell>
       <TableCell>
@@ -171,56 +183,22 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
           aria-label={source.enabled ? `Disable ${source.name}` : `Enable ${source.name}`}
         />
       </TableCell>
-      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell">{source.refreshIntervalHours} h</TableCell>
-      <TableCell className="whitespace-nowrap text-right tabular-nums">{entryCount(source.domainCount)}</TableCell>
-      <TableCell className="hidden whitespace-nowrap text-right tabular-nums text-muted-foreground @5xl:table-cell">{formatMegabytes(source.memoryBytes)}</TableCell>
-      <TableCell className="hidden @5xl:table-cell">
-        <span className="block max-w-20 truncate tabular-nums text-muted-foreground" title={source.listVersion || undefined}>{source.listVersion || "—"}</span>
+      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @min-[78rem]:table-cell">{source.refreshIntervalHours} h</TableCell>
+      <TableCell className="hidden whitespace-nowrap text-right tabular-nums @min-[45rem]:table-cell">{entryCount(source.domainCount)}</TableCell>
+      <TableCell className="hidden whitespace-nowrap text-right tabular-nums text-muted-foreground @min-[78rem]:table-cell">{formatMegabytes(source.memoryBytes)}</TableCell>
+      <TableCell className="hidden @min-[78rem]:table-cell">
+        <span className="block min-w-20 tabular-nums text-muted-foreground [overflow-wrap:anywhere]">{source.listVersion || "—"}</span>
       </TableCell>
-      <TableCell>
-        <div className="flex flex-col items-start gap-1 whitespace-nowrap">
-          <div className="flex items-center gap-1.5">
-            <span className="tabular-nums text-muted-foreground" title={source.lastSuccessAt ? formatDateTime(source.lastSuccessAt) : undefined}>
-              {source.lastSuccessAt ? formatTimeAgo(source.lastSuccessAt) : "Never"}
-            </span>
-            {source.lastError && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    role="img"
-                    tabIndex={0}
-                    aria-label={`Last error: ${source.lastError}`}
-                    className="inline-flex rounded-full p-1 @5xl:hidden"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-destructive" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs whitespace-pre-wrap break-words">{source.lastError}</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-          {fromFallback && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Badge variant="warning">From fallback</Badge>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-sm whitespace-normal break-all font-mono">{source.lastSuccessUrl}</TooltipContent>
-            </Tooltip>
-          )}
+      <TableCell className="hidden @min-[45rem]:table-cell">
+        <div className="min-w-40">
+          <LastSuccess source={source} errorClassName="@min-[78rem]:hidden" />
         </div>
       </TableCell>
-      <TableCell className="hidden @5xl:table-cell">
+      <TableCell className="hidden @min-[78rem]:table-cell">
         {source.lastError ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="block max-w-36 truncate rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                {source.lastError}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap break-words">{source.lastError}</TooltipContent>
-          </Tooltip>
+          <span className="block min-w-48 whitespace-pre-wrap rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive [overflow-wrap:anywhere]">
+            {source.lastError}
+          </span>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -252,26 +230,52 @@ function SourceRow({ source, onEdit }: { source: BlocklistSource; onEdit: () => 
             <Tooltip>
               <TooltipTrigger asChild>
                 <AlertDialogTrigger asChild>
-                  <button aria-label="Delete source" disabled={remove.isPending} className={cn(iconButtonClassName, "hover:text-destructive")}>
+                  <button ref={deleteRef} data-remove-row aria-label="Delete source" disabled={remove.isPending} className={cn(iconButtonClassName, "hover:text-destructive")}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </AlertDialogTrigger>
               </TooltipTrigger>
               <TooltipContent side="top">Delete source</TooltipContent>
             </Tooltip>
-            <AlertDialogContent>
+            <AlertDialogContent onCloseAutoFocus={removalFocus.onCloseAutoFocus}>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete source?</AlertDialogTitle>
                 <AlertDialogDescription>This deletes {source.name} and removes its loaded list.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                <AlertDialogAction onClick={() => { removalFocus.capture(deleteRef.current); remove.mutate() }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
       </TableCell>
     </TableRow>
+  )
+}
+
+function LastSuccess({ source, errorClassName, labelled = false }: { source: BlocklistSource; errorClassName?: string; labelled?: boolean }) {
+  const fromFallback = source.lastSuccessUrl != null && source.lastSuccessUrl !== source.url
+  const lastSuccess = source.lastSuccessAt ? parseServerDateTime(source.lastSuccessAt) : null
+  return (
+    <div className="flex flex-col items-start gap-1">
+      {lastSuccess ? (
+        <span className="tabular-nums text-muted-foreground">
+          <span className="block">{labelled ? `Last success ${formatTimeAgo(lastSuccess)}` : formatTimeAgo(lastSuccess)}</span>
+          <span className="block text-xs">{formatDateTime(lastSuccess)}</span>
+        </span>
+      ) : (
+        <span className="text-muted-foreground">Never loaded</span>
+      )}
+      {fromFallback && (
+        <>
+          <Badge variant="warning">From fallback</Badge>
+          <span className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{source.lastSuccessUrl}</span>
+        </>
+      )}
+      {source.lastError && (
+        <span className={cn("whitespace-pre-wrap text-xs text-destructive [overflow-wrap:anywhere]", errorClassName)}>Last error: {source.lastError}</span>
+      )}
+    </div>
   )
 }

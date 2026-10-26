@@ -29,7 +29,7 @@ export function LoginRateLimits() {
   return (
     <section className="rounded-xl border bg-card">
       <div className="flex min-h-13 items-center justify-between gap-4 border-b px-5 py-2.5">
-        <h2 className="text-sm font-semibold">Login Rate Limits</h2>
+        <h2 className="text-sm font-semibold">Login rate limits</h2>
         {!isLoading && entries.length > 0 && (
           <Button variant="outline" size="sm" onClick={handleClear} className="h-8">
             Clear all
@@ -41,12 +41,12 @@ export function LoginRateLimits() {
           <Skeleton className="h-20 w-full" />
         </div>
       ) : entries.length === 0 ? (
-        <p className="px-5 py-8 text-center text-sm text-muted-foreground">No active rate limits</p>
+        <p className="px-5 py-8 text-center text-sm text-muted-foreground">No active rate limits.</p>
       ) : (
         <ul className="divide-y">
           {entries.map(([ip, count]) => (
             <li key={ip} className="flex items-center justify-between gap-4 px-5 py-2.5">
-              <span className="font-mono text-[13px]">{ip}</span>
+              <span className="min-w-0 font-mono text-[13px] [overflow-wrap:anywhere]">{ip}</span>
               <Badge
                 variant={count >= 10 ? "destructive" : count >= 5 ? "warning" : "outline"}
                 className="tabular-nums"

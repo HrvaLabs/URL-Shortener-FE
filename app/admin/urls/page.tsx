@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -15,13 +15,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, ArrowUpDown, ArrowUp, ArrowDown, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
 import { toast } from "sonner"
-import { cn, destinationLengthError, formatDate, formatDateTime, getShortBaseUrl, truncateUrl } from "@/lib/utils"
+import { cn, destinationLengthError, formatDateTime, getShortBaseUrl, plural } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
-import { analyticsHref } from "@/lib/analytics"
+import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
 import { PageMeta } from "@/components/page-meta"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
+import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
 
 const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
@@ -29,6 +32,15 @@ const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\
 const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(shortHost)}/`, "i")
 
 const searchTerm = (input: string) => input.trim().replace(shortLinkPrefix, "")
+
+const sortOptions: SortOption[] = [
+  { field: "createDate", direction: "desc", label: "Newest first" },
+  { field: "createDate", direction: "asc", label: "Oldest first" },
+  { field: "visits", direction: "desc", label: "Most unique visitors" },
+  { field: "visits", direction: "asc", label: "Fewest unique visitors" },
+  { field: "owner.email", direction: "asc", label: "Owner, A to Z" },
+  { field: "owner.email", direction: "desc", label: "Owner, Z to A" },
+]
 
 const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
   if (!finalUrl) return null
@@ -40,7 +52,7 @@ const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
 }
 
 export default function AdminUrlsPage() {
-  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
@@ -67,6 +79,11 @@ export default function AdminUrlsPage() {
   const [editPassword, setEditPassword] = useState("")
   const [removePassword, setRemovePassword] = useState(false)
   const editLongUrlError = destinationLengthError(editLongUrl.trim())
+  const editId = useId()
+  const searchRef = useRef<HTMLInputElement>(null)
+  const removeTriggerRef = useRef<HTMLElement | null>(null)
+  const removalFocus = useRowRemovalFocus(searchRef)
+  const filtered = !!search.trim() || activeFilter !== "all" || expiredFilter || anonymousFilter
   const [blockTarget, setBlockTarget] = useState<UrlResponse | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
@@ -104,6 +121,7 @@ export default function AdminUrlsPage() {
     if (succeeded > 0) toast.success(`${label} ${succeeded} URL${succeeded > 1 ? "s" : ""}`)
     if (failed > 0) toast.error(`Failed to ${action} ${failed} URL${failed > 1 ? "s" : ""}`)
     setSelectedIds(new Set())
+    if (action === "delete") removalFocus.restore()
   }
 
   const allSelected = !!urls?.content?.length && urls.content.every((u) => selectedIds.has(u.id))
@@ -183,7 +201,7 @@ export default function AdminUrlsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl">All URLs</h1>
-          <p className="mt-1 text-sm text-muted-foreground">View all shortened URLs in the system</p>
+          <p className="mt-1 text-sm text-muted-foreground">View all shortened URLs in the system. Unique visitors are counted per link per day and added up.</p>
         </div>
         <Button
           onClick={() => adminApi.exportUrlsCsv()}
@@ -200,6 +218,7 @@ export default function AdminUrlsPage() {
         <div className="relative min-w-[200px] max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={searchRef}
             placeholder="Search link, destination or owner..."
             aria-label="Search by short link, destination or owner email"
             value={search}
@@ -211,7 +230,7 @@ export default function AdminUrlsPage() {
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
           aria-label="Filter by status"
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+          className={adminSelectClass}
         >
           <option value="all">All status</option>
           <option value="active">Active</option>
@@ -235,6 +254,7 @@ export default function AdminUrlsPage() {
           />
           Anonymous only
         </label>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[57rem]:hidden" />
       </div>
 
       {selectedIds.size > 0 && (
@@ -250,14 +270,14 @@ export default function AdminUrlsPage() {
             <AlertDialogTrigger asChild>
               <Button size="sm" variant="destructive" className="h-8">Delete</Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent onCloseAutoFocus={removalFocus.onCloseAutoFocus}>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete {selectedIds.size} URL{selectedIds.size > 1 ? "s" : ""}?</AlertDialogTitle>
                 <AlertDialogDescription>This will permanently delete the selected URLs.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => batchAction("delete")} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                <AlertDialogAction onClick={() => { removalFocus.capture(null); batchAction("delete") }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -277,12 +297,18 @@ export default function AdminUrlsPage() {
         </div>
       ) : !urls || !urls.content || urls.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">No URLs found</p>
-          <p className="mt-1 text-sm text-muted-foreground">Try a different search or filter.</p>
+          {filtered ? (
+            <>
+              <p className="font-semibold">No URLs found</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try a different search or filter.</p>
+            </>
+          ) : (
+            <p className="font-semibold">No links yet.</p>
+          )}
         </div>
       ) : (
         <div key={filterKey} className="overflow-hidden rounded-xl border bg-card">
-          <Table>
+          <Table className="[&_td]:px-3 [&_th]:px-3">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
@@ -295,26 +321,11 @@ export default function AdminUrlsPage() {
                   />
                 </TableHead>
                 <TableHead>Short URL</TableHead>
-                <TableHead className="hidden @5xl:table-cell">Long URL</TableHead>
-                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("owner.email")}>
-                  <div className="flex items-center gap-1">
-                    Owner
-                    {sortDir("owner.email") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("owner.email") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer select-none" title="Daily unique visitors, added up" onClick={() => toggleSort("visits")}>
-                  <div className="flex items-center gap-1">
-                    Visits
-                    {sortDir("visits") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("visits") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("createDate")}>
-                  <div className="flex items-center gap-1">
-                    Created
-                    {sortDir("createDate") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("createDate") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="hidden @min-[78.25rem]:table-cell">Long URL</TableHead>
+                <SortHead field="owner.email" label="Owner" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[57rem]:table-cell" />
+                <SortHead field="visits" label="Unique visitors" sortDir={sortDir} toggleSort={toggleSort} className="hidden @2xl:table-cell" />
+                <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[57rem]:table-cell" />
+                <TableHead className="hidden @2xl:table-cell">Status</TableHead>
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -331,62 +342,38 @@ export default function AdminUrlsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <span className="block max-w-52 truncate font-mono text-[13px] font-medium text-brand" title={`${shortHost}/${url.shortUrl}`}>
+                    <span className="block min-w-28 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
                       <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
                     </span>
-                  </TableCell>
-                  <TableCell className="hidden max-w-[200px] text-muted-foreground @5xl:table-cell">
-                    <DestinationTooltip url={url} />
-                  </TableCell>
-                  <TableCell className="hidden @5xl:table-cell">
-                    <span className="block max-w-52 truncate" title={url.ownerEmail || undefined}>{url.ownerEmail || "\u2014"}</span>
-                    {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap tabular-nums">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell" title={formatDateTime(url.createDate)}>{formatDate(url.createDate)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="flex items-center gap-1.5">
-                        {url.status === "BLOCKED" && url.blockReason ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span tabIndex={0} className="inline-flex rounded-md">
-                                <StatusBadge status={url.status} active={url.active} />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">{blockReasonLabels[url.blockReason] ?? url.blockReason}</TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <StatusBadge status={url.status} active={url.active} />
-                        )}
-                        {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span
-                                role="img"
-                                tabIndex={0}
-                                aria-label={`Suspicious: ${url.suspiciousReasons.join(", ")}`}
-                                className="inline-flex items-center rounded-md bg-warning/10 p-1 text-warning"
-                              >
-                                <TriangleAlert className="h-3.5 w-3.5" />
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs">Suspicious: {url.suspiciousReasons.join(" · ")}</TooltipContent>
-                          </Tooltip>
-                        )}
+                    <div className="mt-1 min-w-40 space-y-0.5 text-xs text-muted-foreground @lg:min-w-56 @min-[78.25rem]:hidden">
+                      <Destination url={url} />
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 @min-[57rem]:hidden">
+                        <span className="[overflow-wrap:anywhere]">{url.ownerEmail ?? "Anonymous"}</span>
+                        {url.ownerPossibleScammer && <Badge variant="warning">Possible scammer</Badge>}
                       </div>
-                      {url.reviewOpen && (
-                        <Link
-                          href={`/admin/review?entry=${url.id}`}
-                          className={cn(badgeVariants({ variant: "warning" }), "whitespace-nowrap underline-offset-2 hover:underline")}
-                        >
-                          In review
-                        </Link>
-                      )}
+                      <p className="tabular-nums @min-[57rem]:hidden">Created {url.createDate ? formatDateTime(parseServerDateTime(url.createDate)) : "—"}</p>
+                      <p className="tabular-nums @2xl:hidden">{visitorsText(url)}</p>
+                      <div className="pt-0.5 @2xl:hidden">
+                        <UrlStatus url={url} />
+                      </div>
                     </div>
                   </TableCell>
+                  <TableCell className="hidden text-muted-foreground @min-[78.25rem]:table-cell">
+                    <Destination url={url} className="min-w-[27rem]" />
+                  </TableCell>
+                  <TableCell className="hidden @min-[57rem]:table-cell">
+                    <span className={cn("block min-w-28 [overflow-wrap:anywhere]", !url.ownerEmail && "text-muted-foreground")}>{url.ownerEmail ?? "Anonymous"}</span>
+                    {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
+                  </TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums @2xl:table-cell">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[57rem]:table-cell">
+                    {url.createDate ? <DateTimeLines value={url.createDate} /> : "—"}
+                  </TableCell>
+                  <TableCell className="hidden @2xl:table-cell">
+                    <UrlStatus url={url} />
+                  </TableCell>
                   <TableCell className="sticky right-0 bg-card text-right transition-colors group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))] group-data-[state=selected]:bg-brand-soft">
-                    <div className="flex items-center justify-end gap-0.5">
+                    <div className="ml-auto flex w-21 flex-wrap items-center justify-end gap-0.5 @lg:w-max @lg:flex-nowrap">
                       {url.active ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -456,21 +443,26 @@ export default function AdminUrlsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <AlertDialogTrigger asChild>
-                              <button aria-label="Delete" className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive">
+                              <button
+                                data-remove-row
+                                aria-label="Delete"
+                                onClick={(event) => { removeTriggerRef.current = event.currentTarget }}
+                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                              >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </AlertDialogTrigger>
                           </TooltipTrigger>
                           <TooltipContent side="top">Delete</TooltipContent>
                         </Tooltip>
-                        <AlertDialogContent>
+                        <AlertDialogContent onCloseAutoFocus={removalFocus.onCloseAutoFocus}>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete URL?</AlertDialogTitle>
                             <AlertDialogDescription>This will permanently delete /{url.shortUrl}.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(url.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                            <AlertDialogAction onClick={() => { removalFocus.capture(removeTriggerRef.current); handleDelete(url.id) }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -506,9 +498,9 @@ export default function AdminUrlsPage() {
           {editUrl && (
             <div className="space-y-4">
               <div>
-                <label htmlFor="edit-long-url" className="text-sm font-medium">Destination URL</label>
+                <label htmlFor={`${editId}-long-url`} className="text-sm font-medium">Destination URL</label>
                 <Input
-                  id="edit-long-url"
+                  id={`${editId}-long-url`}
                   type="url"
                   inputMode="url"
                   spellCheck={false}
@@ -516,14 +508,15 @@ export default function AdminUrlsPage() {
                   value={editLongUrl}
                   onChange={(e) => setEditLongUrl(e.target.value)}
                   aria-invalid={!!editLongUrlError}
-                  aria-describedby={editLongUrlError ? "edit-long-url-error" : undefined}
+                  aria-describedby={editLongUrlError ? `${editId}-long-url-error` : undefined}
                   className="mt-2"
                 />
-                {editLongUrlError && <p id="edit-long-url-error" className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
+                {editLongUrlError && <p id={`${editId}-long-url-error`} className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
               </div>
               <div>
-                <label className="text-sm font-medium">Visit Limit</label>
+                <label htmlFor={`${editId}-visit-limit`} className="text-sm font-medium">Visit limit</label>
                 <Input
+                  id={`${editId}-visit-limit`}
                   type="number"
                   placeholder="e.g. 100 (0 = unlimited)"
                   value={editVisitLimit}
@@ -532,8 +525,9 @@ export default function AdminUrlsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Expiration Date</label>
+                <label htmlFor={`${editId}-expiration`} className="text-sm font-medium">Expiry date</label>
                 <Input
+                  id={`${editId}-expiration`}
                   type="datetime-local"
                   value={editExpiration}
                   onChange={(e) => setEditExpiration(e.target.value)}
@@ -541,8 +535,9 @@ export default function AdminUrlsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Tags (comma-separated)</label>
+                <label htmlFor={`${editId}-tags`} className="text-sm font-medium">Tags (comma-separated)</label>
                 <Input
+                  id={`${editId}-tags`}
                   placeholder="work, campaign"
                   value={editTags}
                   onChange={(e) => setEditTags(e.target.value)}
@@ -550,10 +545,11 @@ export default function AdminUrlsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">
+                <label htmlFor={`${editId}-password`} className="text-sm font-medium">
                   Password {editUrl?.passwordProtected && <span className="font-normal text-muted-foreground">(currently set)</span>}
                 </label>
                 <Input
+                  id={`${editId}-password`}
                   type="password"
                   placeholder={editUrl?.passwordProtected ? "Enter new password to replace" : "Set a password"}
                   value={editPassword}
@@ -580,17 +576,42 @@ export default function AdminUrlsPage() {
   )
 }
 
-function DestinationTooltip({ url }: { url: UrlResponse }) {
+function Destination({ url, className }: { url: UrlResponse; className?: string }) {
   const endsAt = endUrl(url)
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="block truncate">{truncateUrl(url.longUrl, 40)}</span>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-sm">
-        <span className="block break-all">{url.longUrl}</span>
-        {endsAt && <span className="mt-1 block text-primary-foreground/70">Ends at <span className="break-all">{endsAt}</span></span>}
-      </TooltipContent>
-    </Tooltip>
+    <div className={cn("[overflow-wrap:anywhere]", className)}>
+      <span className="block">{url.longUrl}</span>
+      {endsAt && <span className="mt-1 block text-xs">Ends at {endsAt}</span>}
+    </div>
+  )
+}
+
+const visitorsText = (url: UrlResponse) =>
+  `${plural(url.visits, "unique visitor")}${url.visitLimit > 0 ? ` of a ${url.visitLimit.toLocaleString()} limit` : ""}`
+
+function UrlStatus({ url }: { url: UrlResponse }) {
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <StatusBadge status={url.status} active={url.active} />
+        {url.reviewOpen && (
+          <Link
+            href={`/admin/review?entry=${url.id}`}
+            className={cn(badgeVariants({ variant: "warning" }), "whitespace-nowrap underline-offset-2 hover:underline")}
+          >
+            In review
+          </Link>
+        )}
+      </div>
+      {url.status === "BLOCKED" && url.blockReason && (
+        <p className="mt-1 min-w-24 text-xs text-muted-foreground">{blockReasonLabels[url.blockReason] ?? url.blockReason}</p>
+      )}
+      {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (
+        <p className="mt-1 flex min-w-24 items-start gap-1 text-xs text-warning">
+          <TriangleAlert aria-hidden="true" className="mt-px h-3.5 w-3.5 shrink-0" />
+          <span className="[overflow-wrap:anywhere]">Suspicious: {url.suspiciousReasons.join(" · ")}</span>
+        </p>
+      )}
+    </>
   )
 }

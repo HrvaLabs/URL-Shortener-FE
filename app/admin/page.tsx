@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -14,14 +14,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Trash2, ToggleLeft, ToggleRight, Search, ArrowUpDown, ArrowUp, ArrowDown, UserX, UserCheck } from "lucide-react"
+import { Edit, Trash2, ToggleLeft, ToggleRight, Search, UserX, UserCheck } from "lucide-react"
 import { toast } from "sonner"
-import { formatDate, formatDateTime } from "@/lib/utils"
+import { parseServerDateTime } from "@/lib/analytics"
+import { formatDateTime, plural } from "@/lib/utils"
 import { adminApi, ApiError } from "@/lib/api-client"
 import { PageMeta } from "@/components/page-meta"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
+import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
+import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
+
+const sortOptions: SortOption[] = [
+  { field: "createDate", direction: "desc", label: "Newest first" },
+  { field: "createDate", direction: "asc", label: "Oldest first" },
+  { field: "email", direction: "asc", label: "Email, A to Z" },
+  { field: "email", direction: "desc", label: "Email, Z to A" },
+  { field: "lastLogin", direction: "desc", label: "Last login, latest first" },
+  { field: "lastLogin", direction: "asc", label: "Last login, earliest first" },
+  { field: "active", direction: "desc", label: "Active first" },
+  { field: "active", direction: "asc", label: "Inactive first" },
+]
+
+const providerLabel = (provider: string | undefined) => providerLabels[(provider ?? "local") as SignInProvider] ?? provider
+
+const lastLoginText = (lastLogin: string | null | undefined) => (lastLogin ? formatDateTime(parseServerDateTime(lastLogin)) : "Never")
 
 export default function AdminUsersPage() {
-  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [scammersOnly, setScammersOnly] = useState(false)
@@ -41,11 +61,15 @@ export default function AdminUsersPage() {
   const [editUser, setEditUser] = useState<User | null>(null)
   const [editEmail, setEditEmail] = useState("")
   const [editSlots, setEditSlots] = useState("")
+  const editId = useId()
+  const searchRef = useRef<HTMLInputElement>(null)
+  const removeTriggerRef = useRef<HTMLElement | null>(null)
+  const removalFocus = useRowRemovalFocus(searchRef)
 
   const handleEdit = (user: User) => {
     setEditUser(user)
     setEditEmail(user.email)
-    setEditSlots(user.apiKeySlots.toString())
+    setEditSlots(String(user.apiKeySlots ?? ""))
   }
 
   const handleEditSave = async () => {
@@ -129,13 +153,14 @@ export default function AdminUsersPage() {
       <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null) }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>Edit user</DialogTitle>
           </DialogHeader>
           {editUser && (
             <div className="space-y-4">
               <div>
-                <Label>Email</Label>
+                <Label htmlFor={`${editId}-email`}>Email</Label>
                 <Input
+                  id={`${editId}-email`}
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
                   disabled={!!(editUser?.authProvider && editUser.authProvider !== "local")}
@@ -148,8 +173,8 @@ export default function AdminUsersPage() {
                 )}
               </div>
               <div>
-                <Label>API Key Slots</Label>
-                <Input type="number" value={editSlots} onChange={(e) => setEditSlots(e.target.value)} className="mt-2" />
+                <Label htmlFor={`${editId}-slots`}>API key slots</Label>
+                <Input id={`${editId}-slots`} type="number" value={editSlots} onChange={(e) => setEditSlots(e.target.value)} className="mt-2" />
               </div>
               <Button onClick={handleEditSave} disabled={updateUser.isPending} className="w-full">
                 {updateUser.isPending ? "Saving..." : "Save changes"}
@@ -163,7 +188,9 @@ export default function AdminUsersPage() {
         <div className="relative min-w-[200px] max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={searchRef}
             placeholder="Search users..."
+            aria-label="Search users by email"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 pl-9"
@@ -173,7 +200,7 @@ export default function AdminUsersPage() {
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
           aria-label="Filter by status"
-          className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+          className={adminSelectClass}
         >
           <option value="all">All status</option>
           <option value="active">Active</option>
@@ -188,6 +215,7 @@ export default function AdminUsersPage() {
           />
           Possible scammers only
         </label>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[61.5rem]:hidden" />
       </div>
 
       {isLoading ? (
@@ -211,58 +239,47 @@ export default function AdminUsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden @5xl:table-cell">ID</TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("email")}>
-                  <div className="flex items-center gap-1">
-                    Email
-                    {sortDir("email") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("email") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead className="hidden @5xl:table-cell">Slots</TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("createDate")}>
-                  <div className="flex items-center gap-1">
-                    Created
-                    {sortDir("createDate") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("createDate") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead className="hidden @5xl:table-cell cursor-pointer select-none" onClick={() => toggleSort("lastLogin")}>
-                  <div className="flex items-center gap-1">
-                    Last login
-                    {sortDir("lastLogin") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("lastLogin") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
-                <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("active")}>
-                  <div className="flex items-center gap-1">
-                    Status
-                    {sortDir("active") === "asc" ? <ArrowUp className="h-3 w-3" /> : sortDir("active") === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />}
-                  </div>
-                </TableHead>
+                <TableHead className="hidden @min-[61.5rem]:table-cell">ID</TableHead>
+                <SortHead field="email" label="Email" sortDir={sortDir} toggleSort={toggleSort} />
+                <TableHead className="hidden @min-[47rem]:table-cell">Provider</TableHead>
+                <TableHead className="hidden @min-[61.5rem]:table-cell">Slots</TableHead>
+                <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[47rem]:table-cell" />
+                <SortHead field="lastLogin" label="Last login" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[61.5rem]:table-cell" />
+                <SortHead field="active" label="Status" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[47rem]:table-cell" />
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.content?.map((user: User) => (
                 <TableRow key={user.id}>
-                  <TableCell className="hidden tabular-nums text-muted-foreground @5xl:table-cell">{user.id}</TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span>{user.email}</span>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[61.5rem]:table-cell">{user.id}</TableCell>
+                  <TableCell>
+                    <div className="flex min-w-40 flex-wrap items-center gap-1.5 font-medium">
+                      <span className="min-w-0 [overflow-wrap:anywhere]">{user.email}</span>
                       {user.possibleScammer && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
                     </div>
+                    <div className="mt-1 min-w-40 space-y-1 text-xs tabular-nums text-muted-foreground @min-[61.5rem]:hidden">
+                      <div className="flex flex-wrap items-center gap-1.5 @min-[47rem]:hidden">
+                        <ProviderBadge provider={user.authProvider} />
+                        <ActiveBadge active={user.active} />
+                      </div>
+                      <p>ID {user.id} · {plural(user.apiKeySlots ?? 0, "API key slot")}</p>
+                      <p className="@min-[47rem]:hidden">Created {user.createDate ? formatDateTime(parseServerDateTime(user.createDate)) : "—"}</p>
+                      <p>Last login {lastLoginText(user.lastLogin)}</p>
+                    </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={user.authProvider && user.authProvider !== "local" ? "secondary" : "outline"}>
-                      {user.authProvider === "google" ? "Google" : user.authProvider === "github" ? "GitHub" : "Email"}
-                    </Badge>
+                  <TableCell className="hidden @min-[47rem]:table-cell">
+                    <ProviderBadge provider={user.authProvider} />
                   </TableCell>
-                  <TableCell className="hidden tabular-nums @5xl:table-cell">{user.apiKeySlots}</TableCell>
-                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground" title={formatDateTime(user.createDate)}>{formatDate(user.createDate)}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @5xl:table-cell" title={formatDateTime(user.lastLogin)}>{formatDate(user.lastLogin)}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.active ? "success" : "destructive"}>
-                      {user.active ? "Active" : "Inactive"}
-                    </Badge>
+                  <TableCell className="hidden tabular-nums @min-[61.5rem]:table-cell">{user.apiKeySlots}</TableCell>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[47rem]:table-cell">
+                    {user.createDate ? <DateTimeLines value={user.createDate} /> : "—"}
+                  </TableCell>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[61.5rem]:table-cell">
+                    {user.lastLogin ? <DateTimeLines value={user.lastLogin} /> : "Never"}
+                  </TableCell>
+                  <TableCell className="hidden @min-[47rem]:table-cell">
+                    <ActiveBadge active={user.active} />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -338,18 +355,26 @@ export default function AdminUsersPage() {
                       )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Delete user" title="Delete user">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            data-remove-row
+                            onClick={(event) => { removeTriggerRef.current = event.currentTarget }}
+                            aria-label="Delete user"
+                            title="Delete user"
+                          >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent onCloseAutoFocus={removalFocus.onCloseAutoFocus}>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete user?</AlertDialogTitle>
-                            <AlertDialogDescription>This will permanently delete {user.email}. This action cannot be undone.</AlertDialogDescription>
+                            <AlertDialogDescription>This will permanently delete <span className="[overflow-wrap:anywhere]">{user.email}</span>. This action cannot be undone.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(user.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+                            <AlertDialogAction onClick={() => { removalFocus.capture(removeTriggerRef.current); handleDelete(user.id) }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -371,4 +396,16 @@ export default function AdminUsersPage() {
       )}
     </div>
   )
+}
+
+function ProviderBadge({ provider }: { provider: string | undefined }) {
+  return (
+    <Badge variant={provider && provider !== "local" ? "secondary" : "outline"} className="whitespace-nowrap">
+      {providerLabel(provider)}
+    </Badge>
+  )
+}
+
+function ActiveBadge({ active }: { active: boolean }) {
+  return <Badge variant={active ? "success" : "destructive"}>{active ? "Active" : "Inactive"}</Badge>
 }

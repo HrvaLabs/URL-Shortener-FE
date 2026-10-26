@@ -6,21 +6,21 @@ import { StackedDailyChart, inFillOrder, type StackFill } from "@/components/adm
 import { StatGrid } from "@/components/admin/stats/stat-grid"
 import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { StatusBadge } from "@/components/status-badge"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { createdViaLabels } from "@/lib/admin-stats"
-import { parseServerDateTime } from "@/lib/analytics"
 import { useLinksStats } from "@/lib/hooks/useSiteStats"
 import { blockReasonLabels } from "@/lib/labels"
 import type { AnalyticsRange, BlockReason, CreatedVia, LinksStats, NewestLink } from "@/lib/types"
-import { cn, formatDate } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 const channelFills: Record<CreatedVia, StackFill> = {
   WEB: { step: 100 },
   ANONYMOUS_WEB: { step: 100, hatch: true },
   MCP: { step: 55 },
   ANONYMOUS_MCP: { step: 55, hatch: true },
+  BULK: { step: 40 },
   API_KEY: { step: 25 },
-  BULK: { step: 25, hatch: true },
 }
 
 interface LinksTabProps {
@@ -29,7 +29,7 @@ interface LinksTabProps {
 
 export function LinksTab({ days }: LinksTabProps) {
   const query = useLinksStats(days)
-  return <StatsPanel query={query}>{(data) => <LinksBody data={data} days={days} />}</StatsPanel>
+  return <StatsPanel query={query}>{(data) => <LinksBody data={data} days={data.days} />}</StatsPanel>
 }
 
 interface LinksBodyProps {
@@ -43,7 +43,7 @@ function LinksBody({ data, days }: LinksBodyProps) {
   return (
     <>
       <StackedDailyChart
-        title="Links created per day"
+        title="Links created"
         hint="Links made before this was recorded show as Unknown."
         series={inFillOrder(created, channelFills)}
         labels={createdViaLabels}
@@ -56,7 +56,7 @@ function LinksBody({ data, days }: LinksBodyProps) {
           { label: "Total", value: createdInRange.total.toLocaleString() },
           { label: "With an account", value: createdInRange.account.toLocaleString() },
           { label: "Without an account", value: createdInRange.anonymous.toLocaleString() },
-          { label: "Tagged ai", value: createdInRange.aiTagged.toLocaleString(), hint: "The AI connector always adds the ai tag." },
+          { label: "With the ai tag", value: createdInRange.aiTagged.toLocaleString(), hint: "The AI connector always adds the ai tag." },
         ]}
       />
       <StatGrid
@@ -112,10 +112,12 @@ function NewestLinks({ links, days }: NewestLinksProps) {
             {links.map((link) => (
               <TableRow key={link.id}>
                 <LinkIdentityCells link={link} days={days} />
-                <TableCell className={cn("whitespace-nowrap", link.createdVia === "unknown" && "text-muted-foreground")}>
-                  {createdViaLabels[link.createdVia] ?? link.createdVia}
+                <TableCell className={cn(link.createdVia === "unknown" && "text-muted-foreground")}>
+                  <span className="block min-w-28">{createdViaLabels[link.createdVia] ?? link.createdVia}</span>
                 </TableCell>
-                <TableCell className="whitespace-nowrap tabular-nums">{formatDate(parseServerDateTime(link.createDate))}</TableCell>
+                <TableCell className="tabular-nums">
+                  <DateTimeLines value={link.createDate} />
+                </TableCell>
                 <TableCell>
                   <StatusBadge status={link.status} />
                 </TableCell>

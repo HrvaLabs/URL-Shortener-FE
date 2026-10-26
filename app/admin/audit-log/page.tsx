@@ -8,8 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
-import { parseServerDateTime } from "@/lib/analytics"
-import { formatDateTime } from "@/lib/utils"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { adminSelectClass } from "@/components/admin/sort-controls"
+import { Button } from "@/components/ui/button"
 import { adminApi } from "@/lib/api-client"
 import type { AuditAction, AuditLog, Page } from "@/lib/types"
 
@@ -69,7 +70,18 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
 
 const actionOptions = Object.entries(actionLabels) as [AuditAction, string][]
 
-const selectClass = "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+const targetTypeLabels: Record<string, string> = {
+  Url: "Link",
+  Domain: "Domain",
+  User: "User",
+  ReservedAlias: "Reserved alias",
+  Blocklist: "Blocklist",
+  EmailLog: "Email",
+  Admin: "Site settings",
+}
+
+const targetTypeLabel = (targetType: string) =>
+  targetTypeLabels[targetType] ?? targetType.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase().replace(/^./, (c) => c.toUpperCase())
 
 const titleCased = (action: string) => action.toLowerCase().replace(/_+/g, " ").trim().replace(/^./, (c) => c.toUpperCase())
 
@@ -84,16 +96,16 @@ const actionLabel = ({ action, failed }: AuditLog): string => {
 export default function AdminAuditLogPage() {
   const { page, size, setPage, setSize } = usePagination()
   const [action, setAction] = useState<AuditAction | "">("")
-  const { data, isLoading, error } = useQuery<Page<AuditLog>>({
+  const { data, isLoading, error, refetch, isFetching } = useQuery<Page<AuditLog>>({
     queryKey: ["admin", "audit-log", page, size, action],
     queryFn: () => adminApi.getAuditLog(page, size, action || undefined),
   })
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin — Audit Log" description="Track administrative actions across the system." />
+      <PageMeta title="Admin — Audit log" description="Track administrative actions across the system." />
       <div>
-        <h1 className="font-display text-2xl">Audit Log</h1>
+        <h1 className="font-display text-2xl">Audit log</h1>
         <p className="mt-1 text-sm text-muted-foreground">Track administrative actions across the system</p>
       </div>
 
@@ -106,7 +118,7 @@ export default function AdminAuditLogPage() {
               setAction(e.target.value as AuditAction | "")
               setPage(0)
             }}
-            className={selectClass}
+            className={adminSelectClass}
           >
             <option value="">All actions</option>
             {actionOptions.map(([value, label]) => (
@@ -124,7 +136,8 @@ export default function AdminAuditLogPage() {
         </div>
       ) : error ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm font-medium text-destructive">Failed to load audit log</p>
+          <p className="text-sm font-medium text-destructive">Failed to load the audit log</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
         </div>
       ) : !data || data.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
@@ -139,26 +152,40 @@ export default function AdminAuditLogPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Time</TableHead>
-                <TableHead>Admin</TableHead>
+                <TableHead className="hidden @2xl:table-cell">Admin</TableHead>
                 <TableHead>Action</TableHead>
-                <TableHead className="hidden @3xl:table-cell">Target type</TableHead>
-                <TableHead className="hidden @3xl:table-cell">Target</TableHead>
-                <TableHead className="hidden @5xl:table-cell">Details</TableHead>
+                <TableHead className="hidden @4xl:table-cell">Target type</TableHead>
+                <TableHead className="hidden @4xl:table-cell">Target</TableHead>
+                <TableHead className="hidden @4xl:table-cell">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.content.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(parseServerDateTime(entry.performedAt))}</TableCell>
-                  <TableCell className="font-medium">{entry.performedBy}</TableCell>
-                  <TableCell>
-                    <Badge variant={actionColor(entry)} className="whitespace-nowrap">
-                      {actionLabel(entry)}
-                    </Badge>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    <DateTimeLines value={entry.performedAt} />
                   </TableCell>
-                  <TableCell className="hidden capitalize text-muted-foreground @3xl:table-cell">{entry.targetType}</TableCell>
-                  <TableCell className="hidden max-w-[180px] truncate font-mono text-[13px] @3xl:table-cell" title={entry.targetIdentifier || undefined}>{entry.targetIdentifier || "—"}</TableCell>
-                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground @5xl:table-cell" title={entry.details || undefined}>{entry.details || "—"}</TableCell>
+                  <TableCell className="hidden font-medium @2xl:table-cell">
+                    <span className="block min-w-32 [overflow-wrap:anywhere]">{entry.performedBy}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={actionColor(entry)}>{actionLabel(entry)}</Badge>
+                    <div className="mt-1.5 min-w-40 space-y-0.5 text-xs text-muted-foreground @lg:min-w-56 @4xl:hidden">
+                      <p className="font-medium text-foreground [overflow-wrap:anywhere] @2xl:hidden">By {entry.performedBy}</p>
+                      <p className="[overflow-wrap:anywhere]">
+                        {targetTypeLabel(entry.targetType)}
+                        {entry.targetIdentifier && <span className="font-mono text-foreground"> {entry.targetIdentifier}</span>}
+                      </p>
+                      {entry.details && <p className="[overflow-wrap:anywhere]">{entry.details}</p>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground @4xl:table-cell">{targetTypeLabel(entry.targetType)}</TableCell>
+                  <TableCell className="hidden @4xl:table-cell">
+                    <span className="block min-w-28 font-mono text-[13px] [overflow-wrap:anywhere]">{entry.targetIdentifier || "—"}</span>
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground @4xl:table-cell">
+                    <span className="block min-w-40 [overflow-wrap:anywhere]">{entry.details || "—"}</span>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

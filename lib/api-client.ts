@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -279,8 +279,8 @@ export const adminApi = {
     request<SystemStats>("GET", `/admin/stats/system?days=${days}`),
   getAuditLog: (page = 0, size = 50, action?: AuditAction) =>
     request<Page<AuditLog>>("GET", `/admin/audit-log?page=${page}&size=${size}${action ? `&action=${action}` : ""}`),
-  getEmailLog: (page = 0, size = 50) =>
-    request<Page<EmailLog>>("GET", `/admin/email-log?page=${page}&size=${size}`),
+  getEmailLog: (page = 0, size = 50, status?: EmailStatus) =>
+    request<Page<EmailLog>>("GET", `/admin/email-log?page=${page}&size=${size}${status ? `&status=${status}` : ""}`),
   resendEmail: (id: number) =>
     request<EmailLog>("POST", `/admin/email-log/${id}/resend`),
   getLoginAttempts: () =>

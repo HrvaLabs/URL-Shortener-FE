@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
 import type { DomainRule, DomainRuleCreated, DomainRuleType } from "@/lib/types"
+import { parseServerDateTime } from "@/lib/analytics"
 import { focusTargetAfterRemoving, formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 import { ruleTypeLabels } from "./labels"
 
@@ -29,7 +30,7 @@ const emptyTitles: Record<DomainRuleType, string> = {
 }
 
 const createdMessage = (type: DomainRuleType, { rule, linksAffected }: DomainRuleCreated) => {
-  if (type === "BLOCK") return `Blocked ${plural(linksAffected, "link")} on ${rule.domain}`
+  if (type === "BLOCK") return linksAffected > 0 ? `Blocked ${plural(linksAffected, "link")} on ${rule.domain}` : `Blocked ${rule.domain}. No active links used it.`
   return linksAffected > 0 ? `Trusted ${rule.domain} and restored ${plural(linksAffected, "link")}` : `Trusted ${rule.domain}`
 }
 
@@ -148,9 +149,9 @@ function DomainRulesPanel({ type, fallbackFocusRef }: { type: DomainRuleType; fa
           <TableHeader>
             <TableRow>
               <TableHead>Domain</TableHead>
-              <TableHead className="hidden @3xl:table-cell">Reason</TableHead>
+              <TableHead className="hidden @4xl:table-cell">Reason</TableHead>
               <TableHead className="hidden @4xl:table-cell">Added by</TableHead>
-              <TableHead className="hidden @3xl:table-cell">Added</TableHead>
+              <TableHead className="hidden @4xl:table-cell">Added</TableHead>
               <TableHead className="text-right">
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -178,6 +179,7 @@ function DomainRuleRow({ rule, fallbackFocusRef }: { rule: DomainRule; fallbackF
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules", rule.type] }),
   })
   const ruleName = rule.type === "BLOCK" ? "block" : "trust"
+  const createdAt = parseServerDateTime(rule.createdAt)
 
   const startRemoving = () => {
     focusAfterClose.current = focusTargetAfterRemoving(triggerRef.current, fallbackFocusRef.current)
@@ -196,17 +198,23 @@ function DomainRuleRow({ rule, fallbackFocusRef }: { rule: DomainRule; fallbackF
   return (
     <TableRow>
       <TableCell>
-        <span className="block max-w-56 truncate font-mono text-[13px]" title={rule.domain}>{rule.domain}</span>
-        {rule.reason && <span className="mt-0.5 block max-w-56 truncate text-xs text-muted-foreground @3xl:hidden" title={rule.reason}>{rule.reason}</span>}
+        <span className="block min-w-40 font-mono text-[13px] [overflow-wrap:anywhere]">{rule.domain}</span>
+        <div className="mt-0.5 min-w-40 space-y-0.5 text-xs text-muted-foreground @4xl:hidden">
+          {rule.reason && <p className="[overflow-wrap:anywhere]">{rule.reason}</p>}
+          <p className="tabular-nums [overflow-wrap:anywhere]">
+            Added {formatTimeAgo(createdAt)} ({formatDateTime(createdAt)}){rule.createdBy && ` by ${rule.createdBy}`}
+          </p>
+        </div>
       </TableCell>
-      <TableCell className="hidden max-w-[280px] text-muted-foreground @3xl:table-cell">
-        <span className="block truncate" title={rule.reason || undefined}>{rule.reason || "—"}</span>
+      <TableCell className="hidden text-muted-foreground @4xl:table-cell">
+        <span className="block min-w-48 [overflow-wrap:anywhere]">{rule.reason || "—"}</span>
       </TableCell>
-      <TableCell className="hidden max-w-[220px] text-muted-foreground @4xl:table-cell">
-        <span className="block truncate" title={rule.createdBy || undefined}>{rule.createdBy || "—"}</span>
+      <TableCell className="hidden text-muted-foreground @4xl:table-cell">
+        <span className="block min-w-36 [overflow-wrap:anywhere]">{rule.createdBy || "—"}</span>
       </TableCell>
-      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @3xl:table-cell" title={formatDateTime(rule.createdAt)}>
-        {formatTimeAgo(rule.createdAt)}
+      <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @4xl:table-cell">
+        <span className="block">{formatTimeAgo(createdAt)}</span>
+        <span className="block text-xs">{formatDateTime(createdAt)}</span>
       </TableCell>
       <TableCell className="text-right">
         <AlertDialog>

@@ -15,6 +15,7 @@ interface BlockDomainDialogProps {
   onOpenChange(open: boolean): void
   onBlocked(count: number): void
   urlId?: number
+  onCloseAutoFocus?(event: Event): void
 }
 
 interface DomainChoice {
@@ -30,12 +31,12 @@ const domainChoices = (host: string, registrableDomain: string | null): DomainCh
   ]
 }
 
-export function BlockDomainDialog({ longUrl, open, onOpenChange, onBlocked, urlId }: BlockDomainDialogProps) {
+export function BlockDomainDialog({ longUrl, open, onOpenChange, onBlocked, urlId, onCloseAutoFocus }: BlockDomainDialogProps) {
   const [blocking, setBlocking] = useState(false)
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!blocking) onOpenChange(next) }}>
-      <DialogContent>
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <BlockDomainForm
           key={longUrl}
           longUrl={longUrl}
@@ -108,7 +109,7 @@ function BlockDomainForm({ longUrl, urlId, blocking, setBlocking, onCancel, onBl
         </DialogDescription>
       </DialogHeader>
 
-      <p className="line-clamp-2 break-all text-sm text-muted-foreground" title={longUrl}>{longUrl}</p>
+      <p className="break-all text-sm text-muted-foreground">{longUrl}</p>
 
       {isLoading ? (
         <div className="space-y-2">

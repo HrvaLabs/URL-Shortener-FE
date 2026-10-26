@@ -25,7 +25,7 @@ interface TrafficTabProps {
 
 export function TrafficTab({ days }: TrafficTabProps) {
   const query = useTrafficStats(days)
-  return <StatsPanel query={query}>{(data) => <TrafficBody data={data} days={days} />}</StatsPanel>
+  return <StatsPanel query={query}>{(data) => <TrafficBody data={data} days={data.days} />}</StatsPanel>
 }
 
 interface TrafficBodyProps {
@@ -48,9 +48,9 @@ function TrafficBody({ data, days }: TrafficBodyProps) {
     { label: "Clicks on links without an account", value: data.anonymousClicks.toLocaleString() },
     { label: "Clicks on account links", value: data.accountClicks.toLocaleString() },
     {
-      label: "All-time visits",
+      label: "All-time unique visitors",
       value: data.allTimeVisits.toLocaleString(),
-      hint: `Daily unique visitors, added up since each link was created. Counts from before ${historyStart} used an older method.`,
+      hint: `Unique visitors per link per day, added up since each link was created. Counts from before ${historyStart} used an older method.`,
     },
   ]
 
@@ -75,7 +75,7 @@ function TrafficBody({ data, days }: TrafficBodyProps) {
               </Label>
               <Switch id="traffic-show-bots" checked={showBots} onCheckedChange={setShowBots} />
             </div>
-            <ClicksChart daily={daily} days={days} uniqueVisitorsLabel={uniqueVisitorsLabel} showBots={showBots} />
+            <ClicksChart daily={daily} days={days} uniqueVisitorsLabel={uniqueVisitorsLabel} showBots={showBots} bucketed />
           </div>
           <TopLinks links={topLinks} days={days} />
           <div className="grid gap-4 @3xl:grid-cols-2">
@@ -83,7 +83,7 @@ function TrafficBody({ data, days }: TrafficBodyProps) {
               title="Referrers"
               dimension="referrers"
               entries={breakdowns.referrers}
-              note="Each link keeps its top 50 values a day; the rest were already counted as Other."
+              note="All links together. A link records its top 50 referrers a day; any others are counted under Other."
             />
             <BreakdownList title="Countries" dimension="countries" entries={breakdowns.countries} />
             <BreakdownList title="Devices" dimension="devices" entries={breakdowns.devices} />

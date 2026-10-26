@@ -52,10 +52,16 @@ export function usePagination() {
     [sort, order],
   )
 
+  const setSortOrder = useCallback((field: string, direction: "asc" | "desc") => {
+    setSortState(field)
+    setOrderState(direction)
+    setPageState(0)
+  }, [])
+
   const sortDir = useCallback(
     (field: string) => (sort === field ? order : null),
     [sort, order],
   )
 
-  return { page, size, sort, order, setPage, setSize, toggleSort, sortDir }
+  return { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir }
 }

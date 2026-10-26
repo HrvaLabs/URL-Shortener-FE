@@ -23,6 +23,16 @@ export const wideContainerClass = "mx-auto max-w-(--breakpoint-2xl) px-5"
 
 export const navItemClass = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm transition-colors"
 
+/** Scrolls a horizontally scrolling nav row so `item` is in view, without moving focus or the page. */
+export function revealInRow(item: HTMLElement | null, margin = 0) {
+  const row = item?.parentElement
+  if (!item || !row || row.scrollWidth <= row.clientWidth) return
+  const itemBox = item.getBoundingClientRect()
+  const rowBox = row.getBoundingClientRect()
+  if (itemBox.left - margin < rowBox.left) row.scrollLeft -= rowBox.left - itemBox.left + margin
+  else if (itemBox.right + margin > rowBox.right) row.scrollLeft += itemBox.right - rowBox.right + margin
+}
+
 export function navItemState(isActive: boolean) {
   return isActive
     ? "bg-accent font-medium text-foreground"
@@ -36,7 +46,7 @@ function AdminLink({ pathname }: { pathname: string }) {
   const linkRef = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
-    if (isAdminRoute) linkRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" })
+    if (isAdminRoute) revealInRow(linkRef.current)
   }, [isAdminRoute, reviewCountLoaded])
 
   return (
@@ -73,7 +83,7 @@ export function DashboardNav({ wide = false }: { wide?: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className={wide ? wideContainerClass : "container"}>
-        <div className="flex h-14 items-center justify-between gap-4">
+        <div className="flex min-h-14 items-center justify-between gap-4 py-1">
           <div className="flex min-w-0 items-center gap-6">
             <Logo showText className="shrink-0" />
             <nav aria-label="Dashboard" className="hidden items-center gap-1 md:flex">
@@ -82,8 +92,8 @@ export function DashboardNav({ wide = false }: { wide?: boolean }) {
             </nav>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
-            <span className="mr-2 hidden max-w-[180px] truncate text-sm text-muted-foreground lg:block">
+          <div className="flex min-w-0 items-center gap-1 [&>button]:shrink-0">
+            <span className="mr-2 hidden max-w-64 text-sm leading-tight text-muted-foreground [overflow-wrap:anywhere] lg:block">
               {user?.email}
             </span>
             <ThemeToggle />

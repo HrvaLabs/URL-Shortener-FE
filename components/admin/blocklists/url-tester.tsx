@@ -11,8 +11,8 @@ import { blockReasonLabels, outcomeLabels, outcomeVariants } from "@/lib/labels"
 
 function ResultRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid gap-1 px-5 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
-      <dt className="text-xs text-muted-foreground sm:pt-0.5">{label}</dt>
+    <div className="grid gap-1 px-5 py-3 @2xl:grid-cols-[10rem_minmax(0,1fr)] @2xl:gap-4">
+      <dt className="text-xs text-muted-foreground @2xl:pt-0.5">{label}</dt>
       <dd className="min-w-0 text-sm">{children}</dd>
     </div>
   )
@@ -38,7 +38,7 @@ export function UrlTester() {
       <div className="flex min-h-13 items-center border-b px-5 py-2.5">
         <h2 className="text-sm font-semibold">Test a URL</h2>
       </div>
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 p-5 sm:flex-row">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3 p-5 @2xl:flex-row">
         <Input
           type="url"
           inputMode="url"
@@ -47,7 +47,7 @@ export function UrlTester() {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://example.com/page"
           aria-label="URL to check"
-          className="h-9 font-mono text-[13px] sm:flex-1"
+          className="h-9 font-mono text-[13px] @2xl:flex-1"
         />
         <Button type="submit" size="sm" disabled={check.isPending || !url.trim()}>
           {check.isPending ? "Checking..." : "Check"}
@@ -57,7 +57,7 @@ export function UrlTester() {
       {result && (
         <dl className="divide-y border-t">
           <ResultRow label="URL">
-            <span className="block truncate font-mono text-[13px]" title={check.variables}>{check.variables}</span>
+            <span className="block font-mono text-[13px] [overflow-wrap:anywhere]">{check.variables}</span>
           </ResultRow>
           <ResultRow label="Outcome">
             <Badge variant={outcomeVariants[result.outcome] ?? "secondary"}>{outcomeLabels[result.outcome] ?? result.outcome}</Badge>
@@ -84,10 +84,10 @@ export function UrlTester() {
             )}
           </ResultRow>
           <ResultRow label="Host">
-            <span className="block truncate font-mono text-[13px]" title={result.host || undefined}>{result.host || "—"}</span>
+            <span className="block font-mono text-[13px] [overflow-wrap:anywhere]">{result.host || "—"}</span>
           </ResultRow>
           <ResultRow label="Registrable domain">
-            <span className="block truncate font-mono text-[13px]" title={result.registrableDomain || undefined}>{result.registrableDomain || "—"}</span>
+            <span className="block font-mono text-[13px] [overflow-wrap:anywhere]">{result.registrableDomain || "—"}</span>
           </ResultRow>
         </dl>
       )}

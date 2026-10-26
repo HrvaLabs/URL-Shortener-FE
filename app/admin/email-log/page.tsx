@@ -1,18 +1,21 @@
 "use client"
 
+import { Fragment, Suspense, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { RotateCw } from "lucide-react"
 import { toast } from "sonner"
 import { usePagination } from "@/lib/hooks/usePagination"
+import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
-import { formatDateTime } from "@/lib/utils"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { adminApi } from "@/lib/api-client"
-import type { EmailLog, Page } from "@/lib/types"
+import type { EmailLog, EmailStatus, Page } from "@/lib/types"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "success" | "outline"> = {
   SENT: "success",
@@ -30,45 +33,132 @@ const statusLabels: Record<string, string> = {
 
 const recipientList = (recipient: string) => recipient.replace(/^\[(.*)\]$/, "$1")
 
+function Recipient({ value }: { value: string }) {
+  return (
+    <>
+      {recipientList(value).split("@").map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 && (
+            <>
+              @<wbr />
+            </>
+          )}
+          {part}
+        </Fragment>
+      ))}
+    </>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return <Badge variant={statusColors[status] ?? "secondary"}>{statusLabels[status] ?? status}</Badge>
+}
+
+const STATUS_PARAM = "status"
+
+const FAILED: EmailStatus = "FAILED"
+
+function useFailedOnly() {
+  const failedOnly = useSearchParams().get(STATUS_PARAM) === FAILED
+
+  const update = (next: boolean) => {
+    const params = new URLSearchParams(window.location.search)
+    if (next) params.set(STATUS_PARAM, FAILED)
+    else params.delete(STATUS_PARAM)
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`)
+  }
+
+  return [failedOnly, update] as const
+}
+
+function EmailLogLoading() {
+  return (
+    <div className="space-y-3 rounded-xl border bg-card p-5">
+      {[...Array(8)].map((_, i) => (
+        <Skeleton key={i} className="h-9 w-full" />
+      ))}
+    </div>
+  )
+}
+
 export default function AdminEmailLogPage() {
+  return (
+    <Suspense fallback={<EmailLogLoading />}>
+      <EmailLog />
+    </Suspense>
+  )
+}
+
+function EmailLog() {
   const { page, size, setPage, setSize } = usePagination()
+  const [failedOnly, setFailedOnly] = useFailedOnly()
+  const status = failedOnly ? FAILED : undefined
   const queryClient = useQueryClient()
-  const { data, isLoading, error } = useQuery<Page<EmailLog>>({
-    queryKey: ["admin", "email-log", page, size],
-    queryFn: () => adminApi.getEmailLog(page, size),
+  const { data, isLoading, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useQuery<Page<EmailLog>>({
+    queryKey: ["admin", "email-log", page, size, status ?? "all"],
+    queryFn: () => adminApi.getEmailLog(page, size, status),
   })
+  const failedOnlyRef = useRef<HTMLInputElement>(null)
+  const removalFocus = useRowRemovalFocus(failedOnlyRef)
+  const restoreFocus = removalFocus.restore
+  const restoreAfterRefetch = useRef(false)
   const resendEmail = useMutation({
     mutationFn: (id: number) => adminApi.resendEmail(id),
     onSuccess: (resent) => {
+      restoreAfterRefetch.current = true
       if (resent.status === "SENT") toast.success("Email resent")
       else toast.error(resent.errorMessage ? `Resend failed: ${resent.errorMessage}` : "Resend failed")
     },
     onError: (err: Error) => toast.error(err.message || "Failed to resend email"),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["admin", "email-log"] }),
   })
+  const settled = !isFetching && !resendEmail.isPending
+
+  useEffect(() => {
+    if (!restoreAfterRefetch.current || !settled) return
+    restoreAfterRefetch.current = false
+    restoreFocus()
+  }, [settled, dataUpdatedAt, errorUpdatedAt, restoreFocus])
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin — Email Log" description="View email delivery status." />
+      <PageMeta title="Admin — Email log" description="View email delivery status." />
       <div>
-        <h1 className="font-display text-2xl">Email Log</h1>
+        <h1 className="font-display text-2xl">Email log</h1>
         <p className="mt-1 text-sm text-muted-foreground">View email delivery status</p>
       </div>
 
+      <label className="flex w-fit cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+        <input
+          ref={failedOnlyRef}
+          type="checkbox"
+          checked={failedOnly}
+          onChange={(event) => {
+            setFailedOnly(event.target.checked)
+            setPage(0)
+          }}
+          className="h-4 w-4 rounded border-input accent-brand"
+        />
+        Failed only
+      </label>
+
       {isLoading ? (
-        <div className="space-y-3 rounded-xl border bg-card p-5">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-9 w-full" />
-          ))}
-        </div>
+        <EmailLogLoading />
       ) : error ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm font-medium text-destructive">Failed to load email log</p>
+          <p className="text-sm font-medium text-destructive">Failed to load the email log</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
         </div>
       ) : !data || data.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">No emails sent yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">Outgoing emails will be listed here with their delivery status.</p>
+          {failedOnly ? (
+            <p className="font-semibold">No failed emails.</p>
+          ) : (
+            <>
+              <p className="font-semibold">No emails sent yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Outgoing emails will be listed here with their delivery status.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
@@ -77,34 +167,50 @@ export default function AdminEmailLogPage() {
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>Recipient</TableHead>
-                <TableHead>Subject</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden @6xl:table-cell">Error</TableHead>
+                <TableHead className="hidden @min-[59rem]:table-cell">Subject</TableHead>
+                <TableHead className="hidden @min-[59rem]:table-cell">Status</TableHead>
+                <TableHead className="hidden @min-[59rem]:table-cell">Error</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.content.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.createdAt)}</TableCell>
-                  <TableCell className="max-w-[220px] truncate font-medium" title={recipientList(entry.recipient)}>{recipientList(entry.recipient)}</TableCell>
-                  <TableCell className="max-w-[260px] truncate" title={entry.subject}>{entry.subject}</TableCell>
-                  <TableCell>
-                    <Badge variant={statusColors[entry.status] ?? "secondary"}>
-                      {statusLabels[entry.status] ?? entry.status}
-                    </Badge>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    <DateTimeLines value={entry.createdAt} />
                   </TableCell>
-                  <TableCell className="hidden max-w-[240px] truncate text-muted-foreground @6xl:table-cell" title={entry.errorMessage || undefined}>
-                    {entry.errorMessage || "—"}
+                  <TableCell>
+                    <span className="block min-w-44 font-medium [overflow-wrap:anywhere]">
+                      <Recipient value={entry.recipient} />
+                    </span>
+                    <div className="mt-1 min-w-44 space-y-1 text-xs @min-[59rem]:hidden">
+                      <p className="[overflow-wrap:anywhere]">{entry.subject}</p>
+                      <StatusBadge status={entry.status} />
+                      {entry.errorMessage && <p className="text-muted-foreground [overflow-wrap:anywhere]">Error: {entry.errorMessage}</p>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden @min-[59rem]:table-cell">
+                    <span className="block min-w-40 [overflow-wrap:anywhere]">{entry.subject}</span>
+                  </TableCell>
+                  <TableCell className="hidden @min-[59rem]:table-cell">
+                    <StatusBadge status={entry.status} />
+                  </TableCell>
+                  <TableCell className="hidden text-muted-foreground @min-[59rem]:table-cell">
+                    <span className="block min-w-44 [overflow-wrap:anywhere]">{entry.errorMessage || "—"}</span>
                   </TableCell>
                   <TableCell className="text-right">
                     {entry.resendable ? (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 gap-1.5"
-                        disabled={resendEmail.isPending}
-                        onClick={() => resendEmail.mutate(entry.id)}
+                        className="h-8 gap-1.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                        data-remove-row
+                        aria-disabled={resendEmail.isPending}
+                        onClick={(event) => {
+                          if (resendEmail.isPending) return
+                          removalFocus.capture(event.currentTarget)
+                          resendEmail.mutate(entry.id)
+                        }}
                       >
                         <RotateCw className="h-3.5 w-3.5" />
                         Resend

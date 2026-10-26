@@ -14,8 +14,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ToggleRight, ToggleLeft, Edit } from "lucide-react"
 import { toast } from "sonner"
-import { formatDate, formatDateTime, maskApiKey } from "@/lib/utils"
+import { parseServerDateTime } from "@/lib/analytics"
+import { formatDateTime, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
+import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { useState } from "react"
 
 export default function AdminApiKeysPage() {
@@ -64,21 +66,21 @@ export default function AdminApiKeysPage() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin — API Keys" description="View all API keys in the hrva.cc system." />
+      <PageMeta title="Admin — All API keys" description="View all API keys in the hrva.cc system." />
       <div>
-        <h1 className="font-display text-2xl">All API Keys</h1>
+        <h1 className="font-display text-2xl">All API keys</h1>
         <p className="mt-1 text-sm text-muted-foreground">View all API keys in the system</p>
       </div>
 
       <Dialog open={!!editKey} onOpenChange={(open) => { if (!open) setEditKey(null) }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit API Key</DialogTitle>
+            <DialogTitle>Edit API key</DialogTitle>
           </DialogHeader>
           {editKey && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="apiCallsLimit">API Call Limit</Label>
+                <Label htmlFor="apiCallsLimit">API call limit</Label>
                 <Input id="apiCallsLimit" type="number" min={0} value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-2" />
               </div>
               <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
@@ -111,21 +113,33 @@ export default function AdminApiKeysPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Key</TableHead>
-                <TableHead className="hidden @2xl:table-cell">Owner</TableHead>
-                <TableHead className="hidden @2xl:table-cell">Created</TableHead>
-                <TableHead>Usage</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="hidden @min-[46rem]:table-cell">Owner</TableHead>
+                <TableHead className="hidden @min-[46rem]:table-cell">Created</TableHead>
+                <TableHead className="hidden @md:table-cell">Usage</TableHead>
+                <TableHead className="hidden @md:table-cell">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {apiKeys.content.map((key: ApiKeyResponse) => (
                 <TableRow key={key.id}>
-                  <TableCell><span className="whitespace-nowrap font-mono text-[13px]">{maskApiKey(key.key)}</span></TableCell>
-                  <TableCell className="hidden @2xl:table-cell">{key.ownerEmail || "\u2014"}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums text-muted-foreground @2xl:table-cell" title={formatDateTime(key.createDate)}>{formatDate(key.createDate)}</TableCell>
-                  <TableCell className="whitespace-nowrap tabular-nums">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
                   <TableCell>
+                    <span className="whitespace-nowrap font-mono text-[13px]">{maskApiKey(key.key)}</span>
+                    <div className="mt-1 min-w-36 space-y-0.5 text-xs text-muted-foreground @min-[46rem]:hidden">
+                      <div className="pb-0.5 @md:hidden">
+                        <StatusBadge status={key.status} active={key.active} />
+                      </div>
+                      <p className="tabular-nums @md:hidden">{key.apiCallsUsed} of {key.apiCallsLimit > 0 ? key.apiCallsLimit : "unlimited"} calls used</p>
+                      <p className="[overflow-wrap:anywhere]">{key.ownerEmail || "No owner"}</p>
+                      <p className="tabular-nums">Created {key.createDate ? formatDateTime(parseServerDateTime(key.createDate)) : "—"}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden @min-[46rem]:table-cell">
+                    <span className="block min-w-44 [overflow-wrap:anywhere]">{key.ownerEmail || "\u2014"}</span>
+                  </TableCell>
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[46rem]:table-cell">{key.createDate ? <DateTimeLines value={key.createDate} /> : "—"}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap tabular-nums @md:table-cell">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
+                  <TableCell className="hidden @md:table-cell">
                     <StatusBadge status={key.status} active={key.active} />
                   </TableCell>
                   <TableCell className="text-right">

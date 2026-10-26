@@ -19,6 +19,6 @@ export const blockReasonLabels: Record<BlockReason, string> = {
   BLOCKLIST: "On a blocklist",
   DOMAIN_RULE: "Blocked domain",
   ADMIN: "Blocked by an admin",
-  USER_BLOCKED: "Owner blocked",
+  USER_BLOCKED: "Owner's account blocked",
   SCAM_SIGNALS: "Scam signals",
 }

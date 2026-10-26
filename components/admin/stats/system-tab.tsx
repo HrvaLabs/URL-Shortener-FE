@@ -15,8 +15,8 @@ import { cn, formatDateTime } from "@/lib/utils"
 
 const emailFills: Record<EmailStatus, StackFill> = {
   SENT: { step: 100 },
-  FAILED: { step: 55 },
-  RESENT: { step: 55, hatch: true },
+  FAILED: { tone: "destructive" },
+  RESENT: { step: 55 },
   SENDING: { step: 25 },
 }
 
@@ -45,7 +45,7 @@ export function SystemTab({ days }: SystemTabProps) {
   const query = useSystemStats(days)
   return (
     <div className="space-y-6">
-      <StatsPanel query={query}>{(data) => <SystemBody data={data} days={days} />}</StatsPanel>
+      <StatsPanel query={query}>{(data) => <SystemBody data={data} days={data.days} />}</StatsPanel>
       <LoginRateLimits />
     </div>
   )
@@ -117,7 +117,7 @@ function SystemBody({ data, days }: SystemBodyProps) {
         ]}
       />
       <StackedDailyChart
-        title="Emails per day"
+        title="Emails"
         series={inFillOrder(data.emails, emailFills)}
         labels={emailStatusLabels}
         fills={emailFills}

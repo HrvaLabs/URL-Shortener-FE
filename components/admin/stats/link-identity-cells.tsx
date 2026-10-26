@@ -27,7 +27,7 @@ export function LinkIdentityCells({ link, days }: LinkIdentityCellsProps) {
       <TableCell>
         <Link
           href={analyticsHref({ link: link.id, days })}
-          className="whitespace-nowrap font-mono text-[13px] font-medium text-brand hover:underline"
+          className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
         >
           /{link.shortUrl}
         </Link>

@@ -14,7 +14,7 @@ interface UsersTabProps {
 
 export function UsersTab({ days }: UsersTabProps) {
   const query = useUsersStats(days)
-  return <StatsPanel query={query}>{(data) => <UsersBody data={data} days={days} />}</StatsPanel>
+  return <StatsPanel query={query}>{(data) => <UsersBody data={data} days={data.days} />}</StatsPanel>
 }
 
 interface UsersBodyProps {
@@ -27,7 +27,7 @@ function UsersBody({ data, days }: UsersBodyProps) {
 
   return (
     <>
-      <StackedDailyChart title="Sign-ups per day" series={signups} labels={providerLabels} days={days} />
+      <StackedDailyChart title="Sign-ups" series={signups} labels={providerLabels} days={days} />
       <StatGrid
         title="Accounts"
         items={[
@@ -49,8 +49,8 @@ function UsersBody({ data, days }: UsersBodyProps) {
       <StatGrid
         title="Activity"
         items={[
-          { label: "Signed in in the last 7 days", value: data.activeLast7Days.toLocaleString(), hint: "By last sign-in." },
-          { label: "Signed in in the last 30 days", value: data.activeLast30Days.toLocaleString(), hint: "By last sign-in." },
+          { label: "Signed in, last 7 days", value: data.activeLast7Days.toLocaleString(), hint: "By last sign-in." },
+          { label: "Signed in, last 30 days", value: data.activeLast30Days.toLocaleString(), hint: "By last sign-in." },
         ]}
       />
       <StatGrid
@@ -58,6 +58,11 @@ function UsersBody({ data, days }: UsersBodyProps) {
         items={[
           { label: "Active", value: apiKeys.active.toLocaleString() },
           { label: "Expired", value: apiKeys.expired.toLocaleString() },
+          {
+            label: "Revoked or out of calls",
+            value: apiKeys.revoked.toLocaleString(),
+            hint: "Turned off by the owner or an admin, or used up their calls.",
+          },
           { label: "API calls used", value: apiKeys.callsUsed.toLocaleString(), hint: "All keys, all time." },
         ]}
       />

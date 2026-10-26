@@ -99,10 +99,98 @@ export function formatBytes(bytes: number | null | undefined): string {
 const minutesPerHour = 60
 const minutesPerDay = 24 * minutesPerHour
 
+const oneDecimal = (value: number) => value.toFixed(1).replace(/\.0$/, "")
+
 export function formatMinutes(minutes: number | null): string {
   if (minutes == null || !Number.isFinite(minutes)) return "—"
   if (minutes < 1) return "< 1 min"
   if (minutes < minutesPerHour) return `${Math.floor(minutes)} min`
-  if (minutes < 2 * minutesPerDay) return `${(minutes / minutesPerHour).toFixed(1)} h`
-  return `${(minutes / minutesPerDay).toFixed(1)} days`
+  if (minutes < 2 * minutesPerDay) return `${oneDecimal(minutes / minutesPerHour)} h`
+  return `${oneDecimal(minutes / minutesPerDay)} days`
+}
+
+export type BucketSize = "day" | "week" | "month"
+
+export interface BucketMeta {
+  date: string
+  bucketLabel: string
+  tickLabel: string
+  partial: boolean
+}
+
+export function bucketSizeFor(days: AnalyticsRange): BucketSize {
+  if (days === 365) return "month"
+  if (days === 90) return "week"
+  return "day"
+}
+
+const isoDay = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+
+const localDay = (date: string) => new Date(`${date}T00:00:00`)
+
+const monthDay = (date: Date) => date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+
+function bucketStart(date: string, size: BucketSize): string {
+  if (size === "day") return date
+  const day = localDay(date)
+  if (size === "month") return isoDay(new Date(day.getFullYear(), day.getMonth(), 1))
+  return isoDay(new Date(day.getFullYear(), day.getMonth(), day.getDate() - ((day.getDay() + 6) % 7)))
+}
+
+function bucketName(start: string, size: BucketSize): string {
+  const day = localDay(start)
+  if (size === "month") return day.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+  if (size === "week") return `Week of ${monthDay(day)}`
+  return day.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+}
+
+function tickName(start: string, size: BucketSize): string {
+  const day = localDay(start)
+  if (size !== "month") return monthDay(day)
+  return day.getMonth() === 0
+    ? day.toLocaleDateString(undefined, { month: "short", year: "numeric" })
+    : day.toLocaleDateString(undefined, { month: "short" })
+}
+
+/**
+ * Daily rows summed into days, weeks (from Monday) or months. The last row is today, so its bucket is
+ * marked partial and labelled "so far"; a first week or month that starts before the range is marked
+ * partial too and labelled with the range's first day.
+ */
+export function bucketRows<Row extends { date: string }>(rows: Row[], size: BucketSize): (Row & BucketMeta)[] {
+  const buckets: (Row & BucketMeta)[] = []
+  rows.forEach((row) => {
+    const start = bucketStart(row.date, size)
+    const current = buckets[buckets.length - 1]
+    if (current && current.date === start) {
+      const sums = current as unknown as Record<string, number>
+      for (const [key, value] of Object.entries(row)) {
+        if (typeof value === "number") sums[key] = (sums[key] ?? 0) + value
+      }
+      return
+    }
+    buckets.push({ ...row, date: start, bucketLabel: bucketName(start, size), tickLabel: tickName(start, size), partial: false })
+  })
+  const first = buckets[0]
+  if (first && rows.length > 0 && first.date !== rows[0].date) {
+    first.partial = true
+    first.bucketLabel = `${first.bucketLabel} (from ${monthDay(localDay(rows[0].date))})`
+  }
+  const last = buckets[buckets.length - 1]
+  if (last) {
+    last.partial = true
+    last.bucketLabel = `${last.bucketLabel} (${size === "day" ? "today so far" : "so far"})`
+  }
+  return buckets
+}
+
+/**
+ * The ticks for bucketed rows: every day up to a week, every seventh day back from today for a month,
+ * every week, and every other month counted from January, so the one label with a year always shows.
+ */
+export function bucketTicks(dates: string[], size: BucketSize): string[] {
+  if (size === "month") return dates.filter((date) => localDay(date).getMonth() % 2 === 0)
+  if (size === "week" || dates.length <= 7) return dates
+  return dates.filter((_, index) => (dates.length - 1 - index) % 7 === 0)
 }

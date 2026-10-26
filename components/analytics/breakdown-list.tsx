@@ -32,9 +32,9 @@ export function BreakdownList({ title, dimension, entries, note }: BreakdownList
                   className="absolute inset-y-0 left-0 rounded-md bg-brand/10"
                   style={{ width: `${(entry.clicks / largest) * 100}%` }}
                 />
-                <span className="relative flex min-w-0 items-center gap-2" title={label}>
+                <span className="relative flex min-w-0 items-center gap-2">
                   {flag && <span aria-hidden="true" className="shrink-0">{flag}</span>}
-                  <span className="truncate">{label}</span>
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{label}</span>
                 </span>
                 <span className="relative shrink-0 tabular-nums text-muted-foreground">{entry.clicks.toLocaleString()}</span>
               </li>

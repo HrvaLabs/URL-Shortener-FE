@@ -258,6 +258,7 @@ export interface UsersStats {
   apiKeys: {
     active: number
     expired: number
+    revoked: number
     callsUsed: number
   }
   mcp: {

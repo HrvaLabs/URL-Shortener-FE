@@ -48,7 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void Promise.resolve().then(refreshUser)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the token lives in localStorage, which only exists after mount
+    refreshUser()
   }, [refreshUser])
 
   const completeSignIn = useCallback((signedIn: SignedIn) => {

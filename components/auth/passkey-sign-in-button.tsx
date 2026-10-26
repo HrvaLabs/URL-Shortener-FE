@@ -22,10 +22,20 @@ export function PasskeySignInButton({
   const supported = useWebAuthnSupported()
   const [busy, setBusy] = useState(false)
   const ceremonyInFlight = useRef(false)
+  const mounted = useRef(true)
+  const rememberMeRef = useRef(rememberMe)
   const router = useRouter()
 
-  useEffect(() => () => {
-    if (ceremonyInFlight.current) abortPasskeyRequest()
+  useEffect(() => {
+    rememberMeRef.current = rememberMe
+  }, [rememberMe])
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+      if (ceremonyInFlight.current) abortPasskeyRequest()
+    }
   }, [])
 
   if (!supported) return null
@@ -35,6 +45,7 @@ export function PasskeySignInButton({
     onBusyChange(true)
     try {
       const { ceremonyId, options } = await authApi.passkeyOptions()
+      if (!mounted.current) return
       ceremonyInFlight.current = true
       let credential
       try {
@@ -42,9 +53,9 @@ export function PasskeySignInButton({
       } finally {
         ceremonyInFlight.current = false
       }
-      onSignedIn(await authApi.passkeySignIn(ceremonyId, credential, rememberMe))
-      return
+      onSignedIn(await authApi.passkeySignIn(ceremonyId, credential, rememberMeRef.current))
     } catch (error) {
+      if (!mounted.current) return
       const message = passkeyErrorMessage(error, "sign-in")
       if (error instanceof ApiError && error.status === 403 && error.message.toLowerCase().includes("verify")) {
         toast.error(error.message, {
@@ -53,9 +64,10 @@ export function PasskeySignInButton({
       } else if (message) {
         toast.error(message)
       }
+    } finally {
+      setBusy(false)
+      onBusyChange(false)
     }
-    setBusy(false)
-    onBusyChange(false)
   }
 
   return (
@@ -65,6 +77,7 @@ export function PasskeySignInButton({
       className="h-auto min-h-10 w-full gap-2 whitespace-normal"
       onClick={handleClick}
       disabled={busy}
+      aria-busy={busy}
     >
       <KeyRound className="h-4 w-4 shrink-0" />
       Sign in with a passkey

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ApiError, authApi } from "@/lib/api-client"
 import type { AssertionCredentialJSON, PasskeyOptions, RequestOptionsJSON, SignedIn } from "@/lib/types"
@@ -22,13 +23,24 @@ export function usePasskeyAutofill({
   rememberMe: boolean
   onSignedIn: (s: SignedIn) => void
 }): void {
+  const router = useRouter()
   const rememberMeRef = useRef(rememberMe)
   const onSignedInRef = useRef(onSignedIn)
+  const routerRef = useRef(router)
+  const mounted = useRef(true)
 
   useEffect(() => {
     rememberMeRef.current = rememberMe
     onSignedInRef.current = onSignedIn
-  }, [rememberMe, onSignedIn])
+    routerRef.current = router
+  }, [rememberMe, onSignedIn, router])
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!enabled) return
@@ -64,16 +76,22 @@ export function usePasskeyAutofill({
       } finally {
         if (ceremonyRun === thisRun) ceremonyRun = 0
       }
-      if (!active) return
+      if (!isCurrent()) return
       clearTimeout(refreshTimer)
 
       try {
         const signedIn = await authApi.passkeySignIn(ceremony.ceremonyId, credential, rememberMeRef.current)
-        if (active) onSignedInRef.current(signedIn)
+        if (mounted.current) onSignedInRef.current(signedIn)
       } catch (error) {
         if (!active) return
         const message = passkeyErrorMessage(error, "sign-in")
-        if (message) toast.error(message)
+        if (error instanceof ApiError && error.status === 403 && error.message.toLowerCase().includes("verify")) {
+          toast.error(error.message, {
+            action: { label: "Resend", onClick: () => routerRef.current.push("/verify-email/resend") },
+          })
+        } else if (message) {
+          toast.error(message)
+        }
         if (error instanceof ApiError && (error.status === 401 || error.status === 410)) void run()
         else scheduleRefresh()
       }

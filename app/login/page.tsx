@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,8 @@ function LoginForm({ next }: { next: string | null }) {
   const [rememberMe, setRememberMe] = useState(false)
   const [secondStep, setSecondStep] = useState<{ pendingToken: string; methods: TwoStepMethod[] } | null>(null)
   const [passkeyBusy, setPasskeyBusy] = useState(false)
+  const emailRef = useRef<HTMLInputElement>(null)
+  const focusEmailOnReturn = useRef(false)
   const { login, completeSignIn } = useAuth()
   const router = useRouter()
 
@@ -40,9 +42,16 @@ function LoginForm({ next }: { next: string | null }) {
     finishSignIn()
   }, [completeSignIn, finishSignIn])
 
-  usePasskeyAutofill({ enabled: !secondStep && !passkeyBusy, rememberMe, onSignedIn: handleSignedIn })
+  usePasskeyAutofill({ enabled: !secondStep && !passkeyBusy && !loading, rememberMe, onSignedIn: handleSignedIn })
+
+  useEffect(() => {
+    if (secondStep || !focusEmailOnReturn.current) return
+    focusEmailOnReturn.current = false
+    emailRef.current?.focus()
+  }, [secondStep])
 
   const handleExpired = () => {
+    focusEmailOnReturn.current = true
     setSecondStep(null)
     toast.error("Your sign-in expired. Sign in again.")
   }
@@ -107,6 +116,7 @@ function LoginForm({ next }: { next: string | null }) {
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <Input
+                      ref={emailRef}
                       id="email"
                       type="email"
                       placeholder="you@example.com"
@@ -145,7 +155,7 @@ function LoginForm({ next }: { next: string | null }) {
                     />
                     <span className="text-sm text-muted-foreground">Remember me</span>
                   </label>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
                     {loading ? "Signing in…" : "Sign in"}
                   </Button>
                 </form>

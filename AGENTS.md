@@ -229,7 +229,7 @@ Every user-facing change here also needs an entry in the public changelog, which
 ## Gotchas
 
 - **No `.env` files** — API base URL is hardcoded in `lib/utils.ts` and switches on `NODE_ENV`
-- **Pointing dev at another backend**: set `DEV_API_ORIGIN` (default `http://localhost:8080`; see Commands), e.g. `DEV_API_ORIGIN=http://localhost:18082 npm run dev -- -p 3002`; it feeds the four rewrites in `next.config.mjs` and `getShortBaseUrl()` in `lib/utils.ts` (inlined through `env`), so never edit those to change ports. The backend's `app.frontend-url` decides where `/unavailable` redirects go (3000 by default)
+- **Pointing dev at another backend**: set `DEV_API_ORIGIN` (default `http://localhost:8080`; see Commands), e.g. `DEV_API_ORIGIN=http://localhost:18082 npm run dev -- -p 3002`; it feeds the four rewrites in `next.config.mjs` and `getShortBaseUrl()` in `lib/utils.ts` (inlined through `env`), so never edit those to change ports. The backend's `app.frontend-url` decides where `/unavailable` and OAuth redirects go (3000 by default), so point it at the dev server's port
 - **Auth token is stored with its `Bearer ` prefix** — `request()` adds nothing, so a token injected into `auth-token` by hand must include it
 - **No middleware-based route protection** — dashboard/admin check auth in a client `useEffect`, creating a flash of unauthenticated content
 - **`@/*` maps to root** — unlike the common Next.js pattern of mapping to `src/*`

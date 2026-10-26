@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Copy, Lock, Plus, QrCode, Search, Tag, Timer,
+  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Copy, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -146,6 +146,12 @@ function PreviewStatus({ status }: { status: string }) {
     </span>
   )
 }
+
+const utmExample = [
+  { label: "Source", value: "instagram" },
+  { label: "Medium", value: "social" },
+  { label: "Campaign", value: "autumn-sale" },
+]
 
 const visitsByDay = [18, 24, 21, 35, 30, 44, 39, 52, 47, 61, 58, 73, 66, 81]
 const visitsScale = 90
@@ -317,6 +323,30 @@ function FeatureGrid() {
                   <span className="text-xs tabular-nums text-muted-foreground">58</span>
                 </li>
               </ul>
+            </div>
+          </FeatureCell>
+
+          <FeatureCell
+            className="lg:col-span-3"
+            icon={Megaphone}
+            title="Campaign tracking"
+            description="Add UTM tags to any link in a few clicks, so your analytics tool can see where visitors came from."
+          >
+            <div aria-hidden="true">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {utmExample.map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <div className="mt-1.5 flex h-9 items-center rounded-lg border bg-background px-3 text-sm">{value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 rounded-lg border bg-background px-3 py-2.5">
+                <p className="text-xs text-muted-foreground">Your link will open:</p>
+                <p className="mt-1 break-all font-mono text-[13px]">
+                  https://shop.example/sale?<span className="text-brand">utm_source=instagram&amp;utm_medium=social&amp;utm_campaign=autumn-sale</span>
+                </p>
+              </div>
             </div>
           </FeatureCell>
         </div>

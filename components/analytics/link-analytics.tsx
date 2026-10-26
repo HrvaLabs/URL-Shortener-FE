@@ -10,9 +10,12 @@ import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
+import { useAuth } from "@/lib/auth-context"
 import { useUrlAnalytics } from "@/lib/hooks/useAnalytics"
-import type { AnalyticsRange, UrlAnalytics } from "@/lib/types"
+import { useLinkDestination } from "@/lib/hooks/useUrls"
+import type { AnalyticsLinkSummary, AnalyticsRange, UrlAnalytics } from "@/lib/types"
 import { cn, formatDate, formatDateTime, formatShortUrl, formatTimeAgo } from "@/lib/utils"
+import { readUtm, UTM_KEYS, type UtmKey } from "@/lib/utm"
 
 interface LinkAnalyticsProps {
   linkId: number
@@ -72,9 +75,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
           <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2">
             <StatusBadge status={link.status} className="shrink-0" />
             {link.destinationHost && (
-              <span className="min-w-0 truncate text-sm text-muted-foreground" title={link.destinationHost}>
-                {link.destinationHost}
-              </span>
+              <span className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">{link.destinationHost}</span>
             )}
           </div>
         </div>
@@ -97,6 +98,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
             </dd>
           </div>
         </dl>
+        <CampaignTags link={link} />
       </div>
 
       <RangePicker value={days} onChange={onDaysChange} />
@@ -125,5 +127,35 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
         )}
       </div>
     </>
+  )
+}
+
+const utmLabels: Record<UtmKey, string> = {
+  utm_source: "Source",
+  utm_medium: "Medium",
+  utm_campaign: "Campaign",
+  utm_term: "Term",
+  utm_content: "Content",
+}
+
+function CampaignTags({ link }: { link: AnalyticsLinkSummary }) {
+  const { isAdmin } = useAuth()
+  const { data: destination } = useLinkDestination(link.id, link.shortUrl, isAdmin)
+  const tags = destination ? readUtm(destination) : {}
+  const present = UTM_KEYS.filter((key) => tags[key])
+  if (present.length === 0) return null
+
+  return (
+    <section className="max-w-xl rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+      <h2 className="border-b px-5 py-3.5 text-sm font-semibold">Campaign tags</h2>
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 px-5 py-4 text-sm">
+        {present.map((key) => (
+          <div key={key} className="contents">
+            <dt className="text-muted-foreground">{utmLabels[key]}</dt>
+            <dd className="font-medium [overflow-wrap:anywhere]">{tags[key]}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }

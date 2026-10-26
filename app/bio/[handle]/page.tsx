@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: BioRouteProps): Promise<Metad
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { type: "profile", siteName: "hrva.cc", title, description, url },
+    openGraph: { type: "profile", siteName: "hrva.cc", locale: "en_US", title, description, url },
     twitter: { card: "summary_large_image", title, description, images: [`/bio/${page.handle}/opengraph-image`] },
     robots: page.indexable ? { index: true, follow: true } : { index: false, follow: false },
   }

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 import { notFound } from "next/navigation"
-import { BIO_ACCENTS, initialsOf, ogSafeText } from "@/lib/bio"
+import { BIO_ACCENTS, ogInitials, ogSafeText } from "@/lib/bio"
 import { loadPublicBioPage } from "@/lib/bio-server"
 
 export const alt = "Bio page on hrva.cc"
@@ -19,7 +19,7 @@ export default async function BioShareImage({ params }: BioShareImageProps) {
 
   const handleLabel = `@${page.handle}`
   const name = ogSafeText(page.displayName)
-  const initials = ogSafeText(initialsOf(name, page.handle)) || initialsOf("", page.handle)
+  const initials = ogInitials(page.displayName, page.handle)
   const accent = BIO_ACCENTS[page.accent] ?? BIO_ACCENTS.BLUE
 
   return new ImageResponse(

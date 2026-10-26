@@ -14,9 +14,11 @@ import {
   handleFormatError,
   initialsOf,
   insertionIndex,
+  isBioIcon,
   isSingleEmoji,
   moveItem,
   normalizeHandle,
+  ogInitials,
   ogSafeText,
 } from "../lib/bio.ts"
 
@@ -152,6 +154,25 @@ check("ogSafeText range edges", () => {
   assert.equal(ogSafeText(text(0x03ff, 0x0400, 0x045f, 0x0460)), text(0x0400, 0x045f))
 })
 
+check("ogInitials re-filters the upper-cased initials through the font's letters", () => {
+  const MICRO_SIGN = text(0x00b5)
+  const GREEK_CAPITAL_MU = text(0x039c)
+  assert.equal(initialsOf(`${MICRO_SIGN}abc`, null), GREEK_CAPITAL_MU)
+  assert.equal(ogSafeText(MICRO_SIGN), MICRO_SIGN)
+  assert.equal(ogInitials(`${MICRO_SIGN}abc`, "ana"), "A")
+  assert.equal(ogInitials(`${MICRO_SIGN} Studio`, "ana"), "S")
+  assert.equal(ogInitials(MICRO_SIGN, "ana"), "A")
+  for (const name of [`${MICRO_SIGN}abc`, `${MICRO_SIGN} Studio`, MICRO_SIGN, `${MICRO_SIGN}${MICRO_SIGN} ${MICRO_SIGN}x`]) {
+    assert.equal(ogInitials(name, "ana").includes(GREEK_CAPITAL_MU), false, name)
+  }
+  assert.equal(ogInitials("Ana Horvat", "ana"), "AH")
+  assert.equal(ogInitials(text(0x0111, "ur", 0x0111, "a ", 0x0161, "imi", 0x0107), "ana"), text(0x0110, 0x0160))
+  assert.equal(ogInitials(`${GRINNING_FACE} ${text(0x65e5, 0x672c)}`, "_karlo"), "K")
+  assert.equal(ogInitials("", "9lives"), "9")
+  assert.equal(ogInitials(text(0x0391, 0x03bd, 0x03b1), "ana"), "A")
+  assert.equal(ogInitials(text(0x00df, "tefan"), "ana"), "SS")
+})
+
 check("contrastRatio follows the WCAG formula", () => {
   assert.equal(contrastRatio("#000000", "#ffffff"), 21)
   assert.equal(contrastRatio("#fff", "#ffffff"), 1)
@@ -230,6 +251,13 @@ check("icon labels", () => {
     WHATSAPP: "WhatsApp",
     TELEGRAM: "Telegram",
   })
+})
+
+check("isBioIcon accepts only the icons the FE can draw", () => {
+  for (const icon of Object.keys(BIO_ICON_LABELS)) assert.equal(isBioIcon(icon), true, icon)
+  for (const value of ["THREADS", "website", "", "toString", "constructor", "__proto__", "hasOwnProperty", null, undefined, 1]) {
+    assert.equal(isBioIcon(value), false, String(value))
+  }
 })
 
 check("guessIcon", () => {

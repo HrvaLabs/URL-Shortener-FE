@@ -1,4 +1,5 @@
 import { Globe, Mail } from "lucide-react"
+import { isBioIcon } from "@/lib/bio"
 import type { BioIcon } from "@/lib/types"
 
 const SIMPLE_ICON_PATHS: Record<Exclude<BioIcon, "WEBSITE" | "EMAIL" | "LINKEDIN">, string> = {
@@ -26,6 +27,7 @@ const LINKEDIN_LETTERS_PATH =
   "M6 2h12a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4zM5.5 6h2.6v2.6H5.5zM5.5 10.2h2.6V18H5.5zM10 10.2h2.5v1.1c.5-.8 1.4-1.3 2.6-1.3 2.2 0 3.4 1.4 3.4 3.9V18h-2.6v-3.8c0-1.3-.5-2-1.5-2-1.1 0-1.8.8-1.8 2.1V18H10z"
 
 export function BioIconGlyph({ icon, className }: { icon: BioIcon; className?: string }) {
+  if (!isBioIcon(icon)) return null
   if (icon === "WEBSITE") return <Globe className={className} aria-hidden="true" focusable="false" />
   if (icon === "EMAIL") return <Mail className={className} aria-hidden="true" focusable="false" />
   return (

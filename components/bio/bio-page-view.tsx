@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react"
 import Link from "next/link"
 import { BioIconGlyph } from "@/components/bio/bio-icons"
-import { BIO_ACCENTS, BIO_ICON_LABELS, initialsOf } from "@/lib/bio"
+import { BIO_ACCENTS, BIO_ICON_LABELS, initialsOf, isBioIcon } from "@/lib/bio"
 import type { BioAccent, BioAvatarKind, BioIcon, BioTheme } from "@/lib/types"
 
 export type BioPageViewModel = {
@@ -29,15 +29,16 @@ const platformLabelFor = (title: string, icon: BioIcon | null): string | null =>
 }
 
 function ButtonContent({ title, icon }: { title: string; icon: BioIcon | null }) {
-  const platformLabel = platformLabelFor(title, icon)
+  const knownIcon = isBioIcon(icon) ? icon : null
+  const platformLabel = platformLabelFor(title, knownIcon)
   return (
     <>
-      {icon && <BioIconGlyph icon={icon} className="size-5 shrink-0" />}
+      {knownIcon && <BioIconGlyph icon={knownIcon} className="size-5 shrink-0" />}
       <span className="min-w-0 flex-1 text-center">
         {platformLabel && <span className="sr-only">{platformLabel}: </span>}
         {title}
       </span>
-      {icon && <span className="size-5 shrink-0" aria-hidden="true" />}
+      {knownIcon && <span className="size-5 shrink-0" aria-hidden="true" />}
     </>
   )
 }

@@ -73,6 +73,9 @@ const OG_UNSUPPORTED = new RegExp(`[^${OG_DRAWABLE}]`, "gu")
 export const ogSafeText = (value: string): string =>
   value.replace(/\s+/gu, " ").replace(OG_UNSUPPORTED, "").replace(/ {2,}/g, " ").trim()
 
+export const ogInitials = (displayName: string, handle: string | null): string =>
+  ogSafeText(initialsOf(ogSafeText(displayName), handle)) || initialsOf("", handle)
+
 export const BIO_ACCENTS: Record<BioAccent, { label: string; light: string; dark: string }> = {
   BLUE: { label: "Blue", light: "#1d4ed8", dark: "#93c5fd" },
   VIOLET: { label: "Violet", light: "#6d28d9", dark: "#c4b5fd" },
@@ -105,6 +108,9 @@ export const BIO_ICON_LABELS: Record<BioIcon, string> = {
   WHATSAPP: "WhatsApp",
   TELEGRAM: "Telegram",
 }
+
+export const isBioIcon = (value: unknown): value is BioIcon =>
+  typeof value === "string" && Object.prototype.hasOwnProperty.call(BIO_ICON_LABELS, value)
 
 const ICON_DOMAINS: [BioIcon, string[]][] = [
   ["INSTAGRAM", ["instagram.com"]],

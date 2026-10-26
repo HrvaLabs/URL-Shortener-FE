@@ -35,14 +35,13 @@ const tileClass = "h-[7.5rem] rounded-xl"
 export function PublicStats() {
   const query = usePublicStats()
   const [lastError, setLastError] = useState<Error | null>(null)
-  const [retried, setRetried] = useState(false)
+  const [focusPeriod, setFocusPeriod] = useState(false)
   if (query.error && query.error !== lastError) setLastError(query.error)
   const error = query.error ?? (query.isFetching ? lastError : null)
 
   const retry = () => {
     if (query.isFetching) return
-    setRetried(true)
-    void query.refetch()
+    void query.refetch().then((result) => setFocusPeriod(result.data !== undefined))
   }
 
   return (
@@ -54,7 +53,7 @@ export function PublicStats() {
 
       <div id="numbers" className="mt-4 scroll-mt-24">
         {query.data ? (
-          <Numbers data={query.data} focusOnMount={retried} />
+          <Numbers data={query.data} focusPeriod={focusPeriod} />
         ) : error ? (
           <LoadError error={error} retrying={query.isFetching} onRetry={retry} />
         ) : (
@@ -77,13 +76,13 @@ export function PublicStats() {
   )
 }
 
-function Numbers({ data, focusOnMount }: { data: PublicStatsResponse; focusOnMount: boolean }) {
+function Numbers({ data, focusPeriod }: { data: PublicStatsResponse; focusPeriod: boolean }) {
   const periodRef = useRef<HTMLParagraphElement>(null)
   const updatedAt = parseServerDateTime(data.updatedAt)
 
   useEffect(() => {
-    if (focusOnMount) periodRef.current?.focus()
-  }, [focusOnMount])
+    if (focusPeriod) periodRef.current?.focus()
+  }, [focusPeriod])
 
   return (
     <>
@@ -201,15 +200,20 @@ function LoadError({ error, retrying, onRetry }: { error: Error; retrying: boole
         <p className="text-sm text-destructive">Couldn&apos;t load the numbers.</p>
         {refusal && <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{refusal}</p>}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRetry}
-        aria-disabled={retrying}
-        className="mt-4 aria-disabled:opacity-50"
-      >
-        Try again
-      </Button>
+      <p role="status" className="sr-only">
+        {retrying ? "Trying again" : ""}
+      </p>
+      {!refusal && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          aria-disabled={retrying}
+          className="mt-4 aria-disabled:opacity-50"
+        >
+          Try again
+        </Button>
+      )}
     </div>
   )
 }

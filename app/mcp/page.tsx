@@ -79,7 +79,7 @@ export default function McpPage() {
                   <li key={endpoint.url} className="p-5">
                     <h3 className="text-sm font-semibold">{endpoint.name}</h3>
                     <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
-                      <code className="min-w-0 truncate font-mono text-[13px] font-medium text-foreground">{endpoint.url}</code>
+                      <code className="min-w-0 font-mono text-[13px] font-medium text-foreground [overflow-wrap:anywhere]">{endpoint.url}</code>
                       <CopyButton
                         text={endpoint.url}
                         label={`${endpoint.name.toLowerCase()} URL`}

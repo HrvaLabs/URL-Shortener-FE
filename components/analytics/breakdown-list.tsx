@@ -5,7 +5,7 @@ interface BreakdownListProps {
   title: string
   dimension: BreakdownDimension
   entries: BreakdownEntry[]
-  note?: string
+  note?: React.ReactNode
 }
 
 export function BreakdownList({ title, dimension, entries, note }: BreakdownListProps) {

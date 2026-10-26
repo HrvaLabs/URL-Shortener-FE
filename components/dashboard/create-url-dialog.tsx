@@ -10,7 +10,7 @@ import { UtmFields } from "@/components/utm-fields"
 import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { Copy, Check } from "lucide-react"
-import { destinationLengthError, getShortBaseUrl } from "@/lib/utils"
+import { destinationLengthError, getShortBaseUrl, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface CreateUrlDialogProps {
@@ -59,8 +59,8 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
       if (utmOpen) rememberUtm(utm)
       setResult({ shortUrl: url.shortUrl, longUrl: url.longUrl })
       toast.success("URL shortened!")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create URL")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to create URL")
     }
   }
 
@@ -135,7 +135,7 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
             </p>
             <div className="flex justify-center">
               <div className="inline-block rounded-lg border bg-white p-2">
-                <QRCodeSVG value={`${getShortBaseUrl()}/${result.shortUrl}`} size={150} fgColor="#0e0e11" bgColor="#ffffff" />
+                <QRCodeSVG value={withQrMarker(`${getShortBaseUrl()}/${result.shortUrl}`)} size={150} fgColor="#0e0e11" bgColor="#ffffff" />
               </div>
             </div>
             <Button variant="outline" className="w-full" onClick={handleClose}>Done</Button>

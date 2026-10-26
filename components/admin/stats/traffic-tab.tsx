@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AnalyticsEmpty } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
+import { QrScansList } from "@/components/analytics/qr-scans-list"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { LinkIdentityCells, LinkIdentityHeads } from "@/components/admin/stats/link-identity-cells"
 import { StatGrid, type StatItem } from "@/components/admin/stats/stat-grid"
@@ -79,6 +80,7 @@ function TrafficBody({ data, days }: TrafficBodyProps) {
           </div>
           <TopLinks links={topLinks} days={days} />
           <div className="grid gap-4 @3xl:grid-cols-2">
+            <QrScansList totals={totals} sources={breakdowns.sources} />
             <BreakdownList
               title="Referrers"
               dimension="referrers"

@@ -119,6 +119,7 @@ export interface AnalyticsBreakdowns {
   devices: BreakdownEntry[]
   browsers: BreakdownEntry[]
   operatingSystems: BreakdownEntry[]
+  sources: BreakdownEntry[]
 }
 
 export type BreakdownDimension = keyof AnalyticsBreakdowns

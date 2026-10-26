@@ -5,6 +5,7 @@ import { QRCodeCanvas, QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Download } from "lucide-react"
+import { withQrMarker } from "@/lib/utils"
 
 type Level = "L" | "M" | "Q" | "H"
 
@@ -51,11 +52,11 @@ export function QrCustomizer({ value, filename = "qr-code" }: QrCustomizerProps)
   return (
     <div className="flex flex-col items-center gap-4">
       <div ref={canvasWrapRef} className="max-w-full overflow-hidden rounded-lg border p-2" style={{ background: transparent ? "transparent" : "#ffffff" }}>
-        <QRCodeCanvas value={value} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} style={{ maxWidth: "100%", height: "auto" }} />
+        <QRCodeCanvas value={withQrMarker(value)} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} style={{ maxWidth: "100%", height: "auto" }} />
       </div>
       {/* hidden SVG mirror for vector export */}
       <div ref={svgWrapRef} className="hidden">
-        <QRCodeSVG value={value} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} />
+        <QRCodeSVG value={withQrMarker(value)} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} />
       </div>
 
       <div className="w-full space-y-4">

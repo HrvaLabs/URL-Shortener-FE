@@ -1,4 +1,4 @@
-import type { AnalyticsRange, BreakdownDimension } from "./types"
+import type { AnalyticsRange, AnalyticsTotals, BreakdownDimension, BreakdownEntry } from "./types"
 
 export const ANALYTICS_RANGES: AnalyticsRange[] = [7, 30, 90, 365]
 
@@ -66,6 +66,15 @@ const fixedLabels: Record<Exclude<BreakdownDimension, "countries" | "referrers">
     chromeos: "ChromeOS",
     other: "Other",
   },
+  sources: { qr: "QR scans", direct: "Direct" },
+}
+
+export function qrSplit(totals: AnalyticsTotals, sources: BreakdownEntry[]): BreakdownEntry[] {
+  const qr = sources.find((entry) => entry.value === "qr")?.clicks ?? 0
+  return [
+    { value: "qr", clicks: qr },
+    { value: "direct", clicks: Math.max(0, totals.clicks - qr) },
+  ]
 }
 
 const referrerLabels: Record<string, string> = { direct: "Direct (no referrer)", unknown: "Unknown", other: "Other" }

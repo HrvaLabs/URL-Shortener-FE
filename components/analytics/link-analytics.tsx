@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge"
 import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
+import { QrScansList } from "@/components/analytics/qr-scans-list"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
@@ -109,6 +110,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
           <>
             <ClicksChart daily={daily} days={days} />
             <div className="grid gap-4 lg:grid-cols-2">
+              <QrScansList totals={totals} sources={breakdowns.sources} passwordProtected={link.passwordProtected} />
               <BreakdownList
                 title="Referrers"
                 dimension="referrers"

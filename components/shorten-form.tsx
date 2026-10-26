@@ -11,7 +11,7 @@ import { UtmFields } from "@/components/utm-fields"
 import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import type { UrlResponse } from "@/lib/types"
-import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
@@ -76,8 +76,8 @@ export function ShortenForm({ withOptions = false, size = "default", className }
       setResult(url)
       setCopied(false)
       toast.success("Link shortened")
-    } catch (err: any) {
-      toast.error(err.message || "Could not shorten that URL. Check it and try again.")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     }
   }
 
@@ -173,7 +173,7 @@ export function ShortenForm({ withOptions = false, size = "default", className }
           aria-live="polite"
         >
           <div className="hidden shrink-0 rounded-lg border bg-white p-1.5 sm:block">
-            <QRCodeSVG value={shortUrl} size={64} fgColor="#0e0e11" bgColor="#ffffff" level="M" />
+            <QRCodeSVG value={withQrMarker(shortUrl)} size={64} fgColor="#0e0e11" bgColor="#ffffff" level="M" />
           </div>
           <div className="min-w-0 flex-1 basis-56">
             <a

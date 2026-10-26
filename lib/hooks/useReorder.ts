@@ -13,9 +13,9 @@ import {
 } from "react"
 import { insertionIndex, moveItem } from "@/lib/bio"
 
-type DragSession = { pointerId: number; from: number; index: number }
+type DragSession = { pointerId: number; from: number; index: number; handle: HTMLElement }
 
-type PendingFocus = { index: number; scroll: boolean }
+type PendingFocus = { target: HTMLElement | null; scroll: boolean }
 
 const KEY_TARGETS = new Map<string, (index: number, last: number) => number>([
   ["ArrowUp", (index) => index - 1],
@@ -44,7 +44,6 @@ export function useReorder<T>({
   disabled?: boolean
 }) {
   const rows = useRef<(HTMLElement | null)[]>([])
-  const handles = useRef<(HTMLElement | null)[]>([])
   const order = useRef<readonly T[]>(items)
   const moving = useRef(false)
   const session = useRef<DragSession | null>(null)
@@ -58,7 +57,7 @@ export function useReorder<T>({
     const focus = pendingFocus.current
     if (!focus) return
     pendingFocus.current = null
-    handles.current[focus.index]?.focus({ preventScroll: !focus.scroll })
+    focus.target?.focus({ preventScroll: !focus.scroll })
   })
 
   const announce = (next: readonly T[], index: number) => {
@@ -88,11 +87,11 @@ export function useReorder<T>({
       return [box.top + box.height / 2]
     })
     const to = insertionIndex(midpoints, event.clientY)
-    const handleHadFocus = document.activeElement === handles.current[drag.index]
+    const handleHadFocus = document.activeElement === drag.handle
     if (!move(drag.index, to)) return
     drag.index = to
     setDraggingIndex(to)
-    if (handleHadFocus) pendingFocus.current = { index: to, scroll: false }
+    if (handleHadFocus) pendingFocus.current = { target: drag.handle, scroll: false }
   })
 
   const endDrag = useEffectEvent((event: globalThis.PointerEvent) => {
@@ -101,7 +100,7 @@ export function useReorder<T>({
     session.current = null
     setDraggingIndex(null)
     if (drag.index !== drag.from) announce(order.current, drag.index)
-    if (focusIsLost()) handles.current[drag.index]?.focus({ preventScroll: true })
+    if (focusIsLost() && drag.handle.isConnected) drag.handle.focus({ preventScroll: true })
   })
 
   const dragging = draggingIndex !== null
@@ -121,14 +120,11 @@ export function useReorder<T>({
   }, [dragging])
 
   const handleProps = (index: number) => ({
-    ref: (element: HTMLElement | null) => {
-      handles.current[index] = element
-    },
     style: HANDLE_STYLE,
     onPointerDown: (event: PointerEvent<HTMLElement>) => {
       if (disabled || session.current || (event.pointerType === "mouse" && event.button !== 0)) return
       event.currentTarget.setPointerCapture(event.pointerId)
-      session.current = { pointerId: event.pointerId, from: index, index }
+      session.current = { pointerId: event.pointerId, from: index, index, handle: event.currentTarget }
       setDraggingIndex(index)
     },
     onKeyDown: (event: KeyboardEvent<HTMLElement>) => {
@@ -139,7 +135,7 @@ export function useReorder<T>({
       const to = target(index, order.current.length - 1)
       const next = move(index, to)
       if (!next) return
-      pendingFocus.current = { index: to, scroll: true }
+      pendingFocus.current = { target: event.currentTarget, scroll: true }
       announce(next, to)
     },
   })

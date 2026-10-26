@@ -2,23 +2,21 @@
 
 import { useId } from "react"
 import { BioPageView, type BioPageViewModel } from "@/components/bio/bio-page-view"
-import { isSingleEmoji, type BioDraft } from "@/lib/bio"
-
-const collapseSpaces = (value: string): string => value.replace(/[\s\p{Z}]+/gu, " ").trim()
+import { cleanBioText, isSingleEmoji, type BioDraft } from "@/lib/bio"
 
 const previewModelOf = (draft: BioDraft, handle: string | null): BioPageViewModel => {
   const emoji = draft.avatarEmoji.trim()
   return {
     handle,
-    displayName: collapseSpaces(draft.displayName),
-    bio: collapseSpaces(draft.bio),
+    displayName: cleanBioText(draft.displayName),
+    bio: cleanBioText(draft.bio),
     avatarKind: draft.avatarKind,
     avatarEmoji: isSingleEmoji(emoji) ? emoji : null,
     accent: draft.accent,
     theme: draft.theme,
     buttons: draft.buttons
       .filter((button) => button.visible && button.linkState === "LIVE")
-      .map((button) => ({ key: String(button.urlId), title: collapseSpaces(button.title), icon: button.icon, href: null })),
+      .map((button) => ({ key: String(button.urlId), title: cleanBioText(button.title), icon: button.icon, href: null })),
   }
 }
 

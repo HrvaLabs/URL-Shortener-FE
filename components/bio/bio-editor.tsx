@@ -21,6 +21,7 @@ import {
   bioDraftOf,
   bioSaveErrors,
   bioUpdateOf,
+  isOlderBioPage,
   isSingleEmoji,
   rebaseBioDraft,
   rebaseSavedBioDraft,
@@ -154,12 +155,12 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const save = useSaveBioPage()
   const refresh = useRefreshBioPage()
 
-  if (synced !== page) {
+  if (synced !== page && !isOlderBioPage(page, synced)) {
     setSynced(page)
     setDraft((current) => rebaseBioDraft(current, synced, page))
   }
 
-  const dirty = !sameBioDraft(draft, bioDraftOf(page))
+  const dirty = !sameBioDraft(draft, bioDraftOf(synced))
 
   useLeaveWarning(dirty)
   useRoomForSaveBar(dirty)
@@ -235,6 +236,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       const saved = await save.mutateAsync(bioUpdateOf(sent))
       flushSync(() => {
         setDraft((current) => rebaseSavedBioDraft(current, sent, saved))
+        setSynced(saved)
         setFieldErrors({})
         setButtonErrors({})
         setSaving(false)
@@ -258,7 +260,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
 
   const handleDiscard = () => {
     flushSync(() => {
-      setDraft(bioDraftOf(page))
+      setDraft(bioDraftOf(synced))
       setFieldErrors({})
       setButtonErrors({})
     })

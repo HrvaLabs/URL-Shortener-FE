@@ -46,13 +46,6 @@ function errorMessage(body: unknown, status: number): string {
   return typeof message === "string" && message ? message : fallback
 }
 
-function validationFields(body: unknown): Record<string, string> {
-  if (typeof body !== "object" || body === null || Array.isArray(body)) return {}
-  const fields = body as Record<string, unknown>
-  if (fields.error != null || fields.message != null) return {}
-  return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
-}
-
 async function request<T>(
   method: string,
   path: string,
@@ -447,4 +440,11 @@ export const adminBioApi = {
     request<Page<BioPageReviewEntry>>("GET", `/admin/bio-page-reviews?page=${page}&size=${size}`),
   resolveReview: (pageId: number, action: BioPageReviewAction, reason?: string) =>
     request<void>("POST", `/admin/bio-page-reviews/${pageId}/resolve`, reason ? { action, reason } : { action }),
+}
+
+function validationFields(body: unknown): Record<string, string> {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return {}
+  const fields = body as Record<string, unknown>
+  if (fields.error != null || fields.message != null) return {}
+  return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
 }

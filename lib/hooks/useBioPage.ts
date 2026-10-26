@@ -42,7 +42,8 @@ function useCancelBioPageFetch() {
 
 function useStoreBioPage() {
   const queryClient = useQueryClient()
-  return (page: BioPage | null) => {
+  return async (page: BioPage | null) => {
+    await queryClient.cancelQueries({ queryKey: BIO_PAGE_KEY })
     queryClient.setQueryData(BIO_PAGE_KEY, page)
     void queryClient.invalidateQueries({ queryKey: HANDLE_KEY, refetchType: "none" })
     void queryClient.invalidateQueries({ queryKey: ["analytics", "bio"] })

@@ -19,6 +19,7 @@ import {
   initialsOf,
   insertionIndex,
   isBioIcon,
+  isOlderBioPage,
   isSingleEmoji,
   moveItem,
   normalizeHandle,
@@ -493,6 +494,42 @@ check("rebaseBioDraft merges newer link states into touched buttons and keeps th
     ],
   )
   assert.deepEqual(bioUpdateOf(rebased).buttons, bioUpdateOf(edited).buttons)
+})
+
+check("isOlderBioPage spots a page from before the one on screen, so a late read can't undo a save", () => {
+  const before = samplePage({ updatedAt: "2026-10-26T10:00:00.123456" })
+  const saved = samplePage({ updatedAt: "2026-10-26T10:05:00.5" })
+  assert.equal(isOlderBioPage(before, saved), true)
+  assert.equal(isOlderBioPage(saved, before), false)
+  assert.equal(isOlderBioPage(saved, samplePage({ updatedAt: "2026-10-26T10:05:00.5" })), false)
+  assert.equal(isOlderBioPage(samplePage({ updatedAt: "not a date" }), saved), false)
+
+  const sent = { ...bioDraftOf(before), displayName: "Ana X" }
+  const savedPage = samplePage({ displayName: "Ana X", updatedAt: "2026-10-26T10:05:00.5" })
+  const correctedDuringSave = { ...sent, displayName: before.displayName }
+  const afterSave = rebaseSavedBioDraft(correctedDuringSave, sent, savedPage)
+  assert.equal(afterSave.displayName, before.displayName)
+  assert.equal(rebaseBioDraft(afterSave, savedPage, { ...savedPage }).displayName, before.displayName)
+  assert.equal(sameBioDraft(afterSave, bioDraftOf(savedPage)), false)
+})
+
+check("rebaseBioDraft drops touched buttons whose links were deleted and keeps the buttons added here", () => {
+  const before = samplePage()
+  const after = samplePage({ updatedAt: "2026-10-26T10:05:00", buttons: before.buttons.filter((button) => button.urlId !== 7) })
+  const edited = { ...bioDraftOf(before), buttons: [before.buttons[1], { ...before.buttons[0], title: "Insta" }, NEW_BUTTON] }
+  assert.deepEqual(
+    rebaseBioDraft(edited, before, after).buttons.map((button) => [button.urlId, button.id, button.title]),
+    [[5, 10, "Insta"], [42, 0, "X"]],
+  )
+  assert.deepEqual(rebaseBioDraft(bioDraftOf(before), before, after).buttons, after.buttons)
+
+  const sent = { ...bioDraftOf(before), buttons: [...before.buttons, NEW_BUTTON] }
+  const saved = samplePage({ buttons: [before.buttons[0], { ...NEW_BUTTON, id: 12 }] })
+  const typedDuringSave = { ...sent, buttons: [{ ...before.buttons[0], title: "Insta" }, before.buttons[1], NEW_BUTTON, { ...NEW_BUTTON, urlId: 43, shortUrl: "y" }] }
+  assert.deepEqual(
+    rebaseSavedBioDraft(typedDuringSave, sent, saved).buttons.map((button) => [button.urlId, button.id, button.title]),
+    [[5, 10, "Insta"], [42, 12, "X"], [43, 0, "X"]],
+  )
 })
 
 check("rebaseSavedBioDraft takes the server's cleaned values and keeps edits typed during the save", () => {

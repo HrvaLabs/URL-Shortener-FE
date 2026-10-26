@@ -29,7 +29,7 @@ type ButtonField = "title" | "icon" | "visible" | "remove" | "handle" | "hint" |
 
 export const bioButtonFieldId = (prefix: string, urlId: number, field: ButtonField) => `${prefix}-button-${urlId}-${field}`
 
-type HandleProps = HTMLAttributes<HTMLButtonElement> & { ref: RefCallback<HTMLElement> }
+type HandleProps = HTMLAttributes<HTMLButtonElement>
 
 function ButtonRow({
   idPrefix,

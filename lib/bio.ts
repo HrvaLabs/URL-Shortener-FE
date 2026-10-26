@@ -248,11 +248,11 @@ export const sameBioDraft = (first: BioDraft, second: BioDraft): boolean => same
 
 const withServerStates = (buttons: readonly BioPageButton[], server: readonly BioPageButton[]): BioPageButton[] => {
   const serverButtons = new Map(server.map((button) => [button.urlId, button]))
-  return buttons.map((button) => {
+  return buttons.flatMap((button) => {
     const known = serverButtons.get(button.urlId)
-    if (!known) return button
+    if (!known) return button.id === 0 ? [button] : []
     const { title, icon, visible } = button
-    return { ...known, title, icon, visible, shownOnPage: visible && known.linkState === "LIVE" }
+    return [{ ...known, title, icon, visible, shownOnPage: visible && known.linkState === "LIVE" }]
   })
 }
 
@@ -277,6 +277,9 @@ export const rebaseBioDraft = (draft: BioDraft, from: BioPage, to: BioPage): Bio
 
 export const rebaseSavedBioDraft = (draft: BioDraft, sent: BioDraft, saved: BioPage): BioDraft =>
   rebaseDraftOn(draft, sent, bioDraftOf(saved))
+
+export const isOlderBioPage = (page: Pick<BioPage, "updatedAt">, than: Pick<BioPage, "updatedAt">): boolean =>
+  Date.parse(page.updatedAt) < Date.parse(than.updatedAt)
 
 export type BioProfileField = "displayName" | "bio" | "avatarEmoji"
 

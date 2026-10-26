@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -397,4 +397,45 @@ export const reportApi = {
 // Public numbers
 export const publicApi = {
   getStats: () => request<PublicStatsResponse>("GET", "/public/stats"),
+}
+
+// Bio pages
+export const bioApi = {
+  mine: () =>
+    request<BioPage>("GET", "/bio-pages/me"),
+  create: (handle: string) =>
+    request<BioPage>("POST", "/bio-pages/me", { handle }),
+  update: (data: BioPageUpdate) =>
+    request<BioPage>("PUT", "/bio-pages/me", data),
+  changeHandle: (handle: string) =>
+    request<BioPage>("PUT", "/bio-pages/me/handle", { handle }),
+  remove: () =>
+    request<void>("DELETE", "/bio-pages/me"),
+  availability: (handle: string) =>
+    request<BioHandleAvailability>("GET", `/bio-pages/handles/${encodeURIComponent(handle)}/availability`),
+  analytics: (days: AnalyticsRange) =>
+    request<BioPageAnalytics>("GET", `/analytics/bio-page?days=${days}`),
+}
+
+export const adminBioApi = {
+  list: ({ search, hiddenOnly }: { search?: string; hiddenOnly?: boolean } = {}, page = 0, size = 20) => {
+    const params = new URLSearchParams()
+    params.set("page", String(page))
+    params.set("size", String(size))
+    if (search) params.set("search", search)
+    if (hiddenOnly) params.set("hidden", "true")
+    return request<Page<AdminBioPage>>("GET", `/admin/bio-pages?${params}`)
+  },
+  hide: (id: number, reason: string) =>
+    request<AdminBioPage>("POST", `/admin/bio-pages/${id}/hide`, { reason }),
+  unhide: (id: number) =>
+    request<AdminBioPage>("POST", `/admin/bio-pages/${id}/unhide`),
+  changeHandle: (id: number, handle: string) =>
+    request<AdminBioPage>("PUT", `/admin/bio-pages/${id}/handle`, { handle }),
+  revokeHandle: (id: number, reason: string) =>
+    request<AdminBioPage>("POST", `/admin/bio-pages/${id}/revoke-handle`, { reason }),
+  reviews: (page = 0, size = 20) =>
+    request<Page<BioPageReviewEntry>>("GET", `/admin/bio-page-reviews?page=${page}&size=${size}`),
+  resolveReview: (pageId: number, action: BioPageReviewAction, reason?: string) =>
+    request<void>("POST", `/admin/bio-page-reviews/${pageId}/resolve`, reason ? { action, reason } : { action }),
 }

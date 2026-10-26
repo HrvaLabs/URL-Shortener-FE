@@ -202,6 +202,7 @@ export interface TrafficStats {
   topLinks: TrafficTopLink[]
   breakdowns: AnalyticsBreakdowns
   allTimeVisits: number
+  bioPageViews?: { views: number; botViews: number }
 }
 
 export type CreatedVia = "WEB" | "API_KEY" | "BULK" | "MCP" | "ANONYMOUS_WEB" | "ANONYMOUS_MCP"
@@ -268,6 +269,7 @@ export interface UsersStats {
     connectedUsers: number
     registeredClients: number
   }
+  bioPages?: { total: number; hidden: number }
 }
 
 export type ReviewSource = "SYSTEM" | "VISITOR"
@@ -816,4 +818,159 @@ export interface PublicStatsResponse {
   averageReviewMinutes: number | null
   blocklists: { name: string; action: "BLOCK" | "FLAG"; entries: number }[]
   updatedAt: string
+}
+
+export type BioAccent = "BLUE" | "VIOLET" | "PINK" | "RED" | "ORANGE" | "GREEN" | "TEAL" | "SLATE"
+
+export type BioTheme = "AUTO" | "LIGHT" | "DARK"
+
+export type BioAvatarKind = "INITIALS" | "EMOJI"
+
+export type BioIcon =
+  | "WEBSITE"
+  | "EMAIL"
+  | "INSTAGRAM"
+  | "TIKTOK"
+  | "YOUTUBE"
+  | "X"
+  | "FACEBOOK"
+  | "LINKEDIN"
+  | "GITHUB"
+  | "SPOTIFY"
+  | "WHATSAPP"
+  | "TELEGRAM"
+
+export type BioLinkState = "LIVE" | "IN_REVIEW" | "DEACTIVATED" | "EXPIRED" | "LIMIT_REACHED" | "BLOCKED"
+
+export type BioPageReviewAction = "OK" | "HIDE"
+
+export interface BioPageButton {
+  id: number
+  urlId: number
+  shortUrl: string
+  destinationHost: string
+  title: string
+  icon: BioIcon | null
+  visible: boolean
+  linkState: BioLinkState
+  shownOnPage: boolean
+}
+
+export interface BioPage {
+  id: number
+  handle: string | null
+  displayName: string
+  bio: string
+  avatarKind: BioAvatarKind
+  avatarEmoji: string | null
+  accent: BioAccent
+  theme: BioTheme
+  indexable: boolean
+  hidden: boolean
+  hiddenReason: string | null
+  handleRevokedReason: string | null
+  buttons: BioPageButton[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BioPageButtonInput {
+  urlId: number
+  title: string
+  icon: BioIcon | null
+  visible: boolean
+}
+
+export interface BioPageUpdate {
+  displayName: string
+  bio: string
+  avatarKind: BioAvatarKind
+  avatarEmoji: string | null
+  accent: BioAccent
+  theme: BioTheme
+  indexable: boolean
+  buttons: BioPageButtonInput[]
+}
+
+export interface BioHandleAvailability {
+  handle: string
+  available: boolean
+  reason: string | null
+}
+
+export interface PublicBioPageButton {
+  title: string
+  icon: BioIcon | null
+  shortUrl: string
+}
+
+export interface PublicBioPage {
+  handle: string
+  displayName: string
+  bio: string
+  avatarKind: BioAvatarKind
+  avatarEmoji: string | null
+  accent: BioAccent
+  theme: BioTheme
+  indexable: boolean
+  buttons: PublicBioPageButton[]
+}
+
+export interface BioViewDay {
+  date: string
+  views: number
+  botViews: number
+}
+
+export interface BioButtonClicks {
+  buttonId: number
+  urlId: number
+  shortUrl: string
+  title: string
+  shownOnPage: boolean
+  fromHrvaPages: number
+  allClicks: number
+}
+
+export interface BioPageAnalytics {
+  days: AnalyticsRange
+  from: string
+  to: string
+  handle: string | null
+  views: number
+  botViews: number
+  daily: BioViewDay[]
+  buttons: BioButtonClicks[]
+}
+
+export interface AdminBioPage {
+  id: number
+  handle: string | null
+  displayName: string
+  bio: string
+  ownerId: number
+  ownerEmail: string
+  ownerActive: boolean
+  hidden: boolean
+  hiddenReason: string | null
+  hiddenAt: string | null
+  hiddenBy: string | null
+  handleRevokedReason: string | null
+  buttons: number
+  visibleButtons: number
+  reviewOpen: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BioPageReviewEntry {
+  reviewId: number
+  pageId: number
+  handle: string | null
+  displayName: string
+  ownerId: number
+  ownerEmail: string
+  hidden: boolean
+  reasons: string[]
+  flaggedAt: string
 }

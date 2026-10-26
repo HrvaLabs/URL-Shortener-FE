@@ -389,3 +389,48 @@
   border-top: 1px solid hsl(var(--border));
   margin: 2rem 0;
 }
+
+/* Bio pages */
+.bio-theme-light {
+  --bio-bg: #ffffff;
+  --bio-fg: #0e0e11;
+  --bio-muted: #5c5c66;
+  --bio-accent: var(--bio-accent-light);
+  --bio-on-accent: #ffffff;
+  color-scheme: light;
+  background: var(--bio-bg);
+  color: var(--bio-fg);
+}
+
+.bio-theme-dark {
+  --bio-bg: #0b0b0e;
+  --bio-fg: #f5f5f5;
+  --bio-muted: #a1a1aa;
+  --bio-accent: var(--bio-accent-dark);
+  --bio-on-accent: #0b0b0e;
+  color-scheme: dark;
+  background: var(--bio-bg);
+  color: var(--bio-fg);
+}
+
+.bio-theme-auto {
+  --bio-bg: #ffffff;
+  --bio-fg: #0e0e11;
+  --bio-muted: #5c5c66;
+  --bio-accent: var(--bio-accent-light);
+  --bio-on-accent: #ffffff;
+  color-scheme: light;
+  background: var(--bio-bg);
+  color: var(--bio-fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bio-theme-auto {
+    --bio-bg: #0b0b0e;
+    --bio-fg: #f5f5f5;
+    --bio-muted: #a1a1aa;
+    --bio-accent: var(--bio-accent-dark);
+    --bio-on-accent: #0b0b0e;
+    color-scheme: dark;
+  }
+}

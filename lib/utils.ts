@@ -126,3 +126,10 @@ export function safeNext(next: string | null): string {
 export function isLocalAccount(user: { authProvider?: string } | null | undefined): boolean {
   return !user?.authProvider || user.authProvider === "local"
 }
+
+export function getServerApiBaseUrl(): string {
+  if (process.env.NODE_ENV === "production") {
+    return "https://hrva.cc/api/v1"
+  }
+  return `${process.env.DEV_API_ORIGIN ?? "http://localhost:8080"}/api/v1`
+}

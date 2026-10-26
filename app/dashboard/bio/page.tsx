@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useLayoutEffect, useRef } from "react"
 import Link from "next/link"
 import { BioEditor } from "@/components/bio/bio-editor"
 import { CreateBioPage } from "@/components/bio/create-bio-page"
@@ -15,7 +15,7 @@ export default function BioPageRoute() {
   const hadPage = useRef<boolean | null>(null)
   const hasPage = page === undefined ? null : page !== null
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (hasPage === null) return
     if (hadPage.current !== null && hadPage.current !== hasPage) headingRef.current?.focus()
     hadPage.current = hasPage

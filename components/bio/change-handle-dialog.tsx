@@ -13,14 +13,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { ApiError } from "@/lib/api-client"
 import { displayShareUrl } from "@/lib/bio"
-import { useChangeBioHandle } from "@/lib/hooks/useBioPage"
+import { useChangeBioHandle, useRefreshBioPage } from "@/lib/hooks/useBioPage"
 import { getShortBaseUrl } from "@/lib/utils"
 
 function useChangeHandle(onChanged?: () => void) {
   const change = useChangeBioHandle()
+  const refresh = useRefreshBioPage()
   return useHandleForm(async (handle) => {
-    const page = await change.mutateAsync(handle)
+    const page = await change.mutateAsync(handle).catch((error: unknown) => {
+      if (error instanceof ApiError && error.status === 404) void refresh()
+      throw error
+    })
     toast.success(`Handle changed to @${page.handle ?? handle}`)
     onChanged?.()
   })

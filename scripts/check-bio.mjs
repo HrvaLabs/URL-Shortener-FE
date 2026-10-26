@@ -25,6 +25,7 @@ import {
   ogInitials,
   ogSafeText,
   rebaseBioDraft,
+  rebaseSavedBioDraft,
   sameBioDraft,
 } from "../lib/bio.ts"
 
@@ -455,7 +456,63 @@ check("rebaseBioDraft keeps the owner's edits and takes the rest from the newer 
   assert.deepEqual(rebased.buttons, after.buttons)
   assert.deepEqual(rebaseBioDraft(bioDraftOf(before), before, after), bioDraftOf(after))
   const reordered = { ...bioDraftOf(before), buttons: [...before.buttons].reverse() }
-  assert.deepEqual(rebaseBioDraft(reordered, before, after).buttons, reordered.buttons)
+  assert.deepEqual(
+    rebaseBioDraft(reordered, before, after).buttons.map((button) => [button.urlId, button.title, button.linkState]),
+    [[7, "Blog", "LIVE"], [5, "Instagram", "LIVE"]],
+  )
+})
+
+const NEW_BUTTON = { id: 0, urlId: 42, shortUrl: "x", destinationHost: "x.com", title: "X", icon: "X", visible: true, linkState: "LIVE", shownOnPage: true }
+
+check("rebaseBioDraft merges newer link states into touched buttons and keeps the owner's order and edits", () => {
+  const before = samplePage()
+  const after = samplePage({
+    updatedAt: "2026-10-26T10:05:00",
+    buttons: before.buttons.map((button) =>
+      button.urlId === 7 ? { ...button, linkState: "LIVE", shownOnPage: false } : { ...button, linkState: "BLOCKED", shownOnPage: false },
+    ),
+  })
+  const edited = { ...bioDraftOf(before), buttons: [{ ...before.buttons[1], title: "My blog", visible: true }, before.buttons[0], NEW_BUTTON] }
+  const rebased = rebaseBioDraft(edited, before, after)
+  assert.deepEqual(
+    rebased.buttons.map((button) => [button.urlId, button.title, button.icon, button.visible, button.linkState, button.shownOnPage]),
+    [
+      [7, "My blog", null, true, "LIVE", true],
+      [5, "Instagram", "INSTAGRAM", true, "BLOCKED", false],
+      [42, "X", "X", true, "LIVE", true],
+    ],
+  )
+  assert.deepEqual(bioUpdateOf(rebased).buttons, bioUpdateOf(edited).buttons)
+})
+
+check("rebaseSavedBioDraft takes the server's cleaned values and keeps edits typed during the save", () => {
+  const page = samplePage()
+  const sent = { ...bioDraftOf(page), displayName: "Ana  Horvat", bio: "Photos   and films", avatarKind: "EMOJI", avatarEmoji: ` ${CAMERA_WITH_FLASH} ` }
+  const saved = samplePage({
+    displayName: "Ana Horvat",
+    bio: "Photos and films",
+    avatarKind: "EMOJI",
+    avatarEmoji: CAMERA_WITH_FLASH,
+    updatedAt: "2026-10-26T10:05:00",
+  })
+  assert.deepEqual(rebaseSavedBioDraft(sent, sent, saved), bioDraftOf(saved))
+  assert.equal(sameBioDraft(rebaseSavedBioDraft(sent, sent, saved), bioDraftOf(saved)), true)
+  const typedDuringSave = { ...sent, displayName: "Ana Horvat Jr", theme: "DARK" }
+  const rebased = rebaseSavedBioDraft(typedDuringSave, sent, saved)
+  assert.equal(rebased.displayName, "Ana Horvat Jr")
+  assert.equal(rebased.theme, "DARK")
+  assert.equal(rebased.bio, "Photos and films")
+  assert.equal(rebased.avatarEmoji, CAMERA_WITH_FLASH)
+  assert.equal(sameBioDraft(rebased, bioDraftOf(saved)), false)
+
+  const sentWithNew = { ...bioDraftOf(page), buttons: [...page.buttons, NEW_BUTTON] }
+  const savedWithNew = samplePage({ buttons: [...page.buttons, { ...NEW_BUTTON, id: 12, linkState: "IN_REVIEW", shownOnPage: false }] })
+  assert.deepEqual(rebaseSavedBioDraft(sentWithNew, sentWithNew, savedWithNew).buttons, savedWithNew.buttons)
+  const addedDuringSave = { ...sentWithNew, buttons: [...sentWithNew.buttons, { ...NEW_BUTTON, urlId: 43, shortUrl: "y" }] }
+  assert.deepEqual(
+    rebaseSavedBioDraft(addedDuringSave, sentWithNew, savedWithNew).buttons.map((button) => [button.urlId, button.id, button.linkState]),
+    [[5, 10, "LIVE"], [7, 11, "DEACTIVATED"], [42, 12, "IN_REVIEW"], [43, 0, "LIVE"]],
+  )
 })
 
 check("bioSaveFieldErrors maps the backend's profile texts to their fields, and nothing else", () => {

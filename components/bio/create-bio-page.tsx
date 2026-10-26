@@ -4,12 +4,21 @@ import { useId } from "react"
 import { HandleField, useHandleForm } from "@/components/bio/handle-field"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card"
-import { useCreateBioPage } from "@/lib/hooks/useBioPage"
+import { ApiError } from "@/lib/api-client"
+import { useCreateBioPage, useRefreshBioPage } from "@/lib/hooks/useBioPage"
 
 export function CreateBioPage() {
   const id = useId()
   const create = useCreateBioPage()
-  const form = useHandleForm((handle) => create.mutateAsync(handle))
+  const refresh = useRefreshBioPage()
+  const form = useHandleForm(async (handle) => {
+    try {
+      await create.mutateAsync(handle)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) void refresh()
+      throw error
+    }
+  })
 
   return (
     <Card className="max-w-2xl">

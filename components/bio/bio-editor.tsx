@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react"
+import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react"
 import { flushSync } from "react-dom"
 import { toast } from "sonner"
 import { ChangeHandleDialog, ChooseHandleForm } from "@/components/bio/change-handle-dialog"
@@ -23,6 +23,7 @@ import {
   bioUpdateOf,
   isSingleEmoji,
   rebaseBioDraft,
+  rebaseSavedBioDraft,
   sameBioDraft,
   type BioDraft,
   type BioProfileField,
@@ -177,7 +178,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const [draft, setDraft] = useState(() => bioDraftOf(page))
   const [synced, setSynced] = useState(page)
   const [fieldErrors, setFieldErrors] = useState<BioFieldErrors>({})
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle")
+  const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState("edit")
   const submitting = useRef(false)
   const lastEdited = useRef<HTMLElement | null>(null)
@@ -192,12 +193,11 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   }
 
   const dirty = !sameBioDraft(draft, bioDraftOf(page))
-  if (saveState === "saved" && !dirty) setSaveState("idle")
 
   useLeaveWarning(dirty)
   useRoomForSaveBar(dirty)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const hasHandle = page.handle !== null
     if (!hadHandle.current && hasHandle) handleTitleRef.current?.focus()
     hadHandle.current = hasHandle
@@ -208,6 +208,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     setFieldErrors((current) => {
       const next = { ...current }
       for (const key of Object.keys(patch)) delete next[key as BioProfileField]
+      if ("avatarKind" in patch) delete next.avatarEmoji
       return next
     })
   }
@@ -240,18 +241,21 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       return
     }
     submitting.current = true
-    setSaveState("saving")
+    setSaving(true)
+    const sent = draft
     try {
-      const saved = await save.mutateAsync(bioUpdateOf(draft))
-      setDraft(bioDraftOf(saved))
-      setFieldErrors({})
-      setSaveState("saved")
+      const saved = await save.mutateAsync(bioUpdateOf(sent))
+      flushSync(() => {
+        setDraft((current) => rebaseSavedBioDraft(current, sent, saved))
+        setFieldErrors({})
+        setSaving(false)
+      })
       submitting.current = false
       focusAfterSaveBar()
       toast.success("Bio page saved")
     } catch (error) {
       submitting.current = false
-      setSaveState("idle")
+      setSaving(false)
       const message = errorText(error)
       const errors = error instanceof ApiError && error.status === 400 ? bioSaveFieldErrors(message) : null
       if (errors) {
@@ -264,8 +268,10 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   }
 
   const handleDiscard = () => {
-    setDraft(bioDraftOf(page))
-    setFieldErrors({})
+    flushSync(() => {
+      setDraft(bioDraftOf(page))
+      setFieldErrors({})
+    })
     focusAfterSaveBar()
   }
 
@@ -332,7 +338,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
           <TabsContent value="preview">{preview}</TabsContent>
         </Tabs>
       )}
-      {dirty && <SaveBar saving={saveState !== "idle"} onSave={handleSave} onDiscard={handleDiscard} />}
+      {dirty && <SaveBar saving={saving} onSave={handleSave} onDiscard={handleDiscard} />}
     </div>
   )
 }

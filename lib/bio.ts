@@ -246,9 +246,17 @@ const sameJson = (first: unknown, second: unknown): boolean => JSON.stringify(fi
 
 export const sameBioDraft = (first: BioDraft, second: BioDraft): boolean => sameJson(bioUpdateOf(first), bioUpdateOf(second))
 
-export const rebaseBioDraft = (draft: BioDraft, from: BioPage, to: BioPage): BioDraft => {
-  const base = bioDraftOf(from)
-  const next = bioDraftOf(to)
+const withServerStates = (buttons: readonly BioPageButton[], server: readonly BioPageButton[]): BioPageButton[] => {
+  const serverButtons = new Map(server.map((button) => [button.urlId, button]))
+  return buttons.map((button) => {
+    const known = serverButtons.get(button.urlId)
+    if (!known) return button
+    const { title, icon, visible } = button
+    return { ...known, title, icon, visible, shownOnPage: visible && known.linkState === "LIVE" }
+  })
+}
+
+const rebaseDraftOn = (draft: BioDraft, base: BioDraft, next: BioDraft): BioDraft => {
   const pick = <K extends keyof BioDraft>(key: K): BioDraft[K] => (sameJson(draft[key], base[key]) ? next[key] : draft[key])
   return {
     displayName: pick("displayName"),
@@ -258,9 +266,17 @@ export const rebaseBioDraft = (draft: BioDraft, from: BioPage, to: BioPage): Bio
     accent: pick("accent"),
     theme: pick("theme"),
     indexable: pick("indexable"),
-    buttons: sameJson(buttonInputsOf(draft.buttons), buttonInputsOf(base.buttons)) ? next.buttons : draft.buttons,
+    buttons: sameJson(buttonInputsOf(draft.buttons), buttonInputsOf(base.buttons))
+      ? next.buttons
+      : withServerStates(draft.buttons, next.buttons),
   }
 }
+
+export const rebaseBioDraft = (draft: BioDraft, from: BioPage, to: BioPage): BioDraft =>
+  rebaseDraftOn(draft, bioDraftOf(from), bioDraftOf(to))
+
+export const rebaseSavedBioDraft = (draft: BioDraft, sent: BioDraft, saved: BioPage): BioDraft =>
+  rebaseDraftOn(draft, sent, bioDraftOf(saved))
 
 export type BioProfileField = "displayName" | "bio" | "avatarEmoji"
 

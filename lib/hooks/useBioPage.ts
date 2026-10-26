@@ -13,6 +13,8 @@ const HANDLE_KEY = ["bio", "handle"] as const
 
 const AVAILABILITY_DELAY_MS = 400
 
+const KNOWN_AVAILABILITY_MS = 30_000
+
 export function useBioPage() {
   return useQuery({
     queryKey: BIO_PAGE_KEY,
@@ -33,6 +35,11 @@ export function useRefreshBioPage() {
   return () => queryClient.invalidateQueries({ queryKey: BIO_PAGE_KEY })
 }
 
+function useCancelBioPageFetch() {
+  const queryClient = useQueryClient()
+  return () => queryClient.cancelQueries({ queryKey: BIO_PAGE_KEY })
+}
+
 function useStoreBioPage() {
   const queryClient = useQueryClient()
   return (page: BioPage | null) => {
@@ -44,32 +51,40 @@ function useStoreBioPage() {
 
 export function useCreateBioPage() {
   const store = useStoreBioPage()
+  const cancelFetch = useCancelBioPageFetch()
   return useMutation({
     mutationFn: (handle: string) => bioApi.create(handle),
+    onMutate: cancelFetch,
     onSuccess: (page) => store(page),
   })
 }
 
 export function useSaveBioPage() {
   const store = useStoreBioPage()
+  const cancelFetch = useCancelBioPageFetch()
   return useMutation({
     mutationFn: (data: BioPageUpdate) => bioApi.update(data),
+    onMutate: cancelFetch,
     onSuccess: (page) => store(page),
   })
 }
 
 export function useChangeBioHandle() {
   const store = useStoreBioPage()
+  const cancelFetch = useCancelBioPageFetch()
   return useMutation({
     mutationFn: (handle: string) => bioApi.changeHandle(handle),
+    onMutate: cancelFetch,
     onSuccess: (page) => store(page),
   })
 }
 
 export function useDeleteBioPage() {
   const store = useStoreBioPage()
+  const cancelFetch = useCancelBioPageFetch()
   return useMutation({
     mutationFn: () => bioApi.remove(),
+    onMutate: cancelFetch,
     onSuccess: () => store(null),
   })
 }
@@ -94,5 +109,9 @@ export function useHandleAvailability(handle: string, enabled: boolean) {
 
 export function useKnownHandleAvailability() {
   const queryClient = useQueryClient()
-  return (handle: string) => queryClient.getQueryData<BioHandleAvailability>([...HANDLE_KEY, handle])
+  return (handle: string) => {
+    const state = queryClient.getQueryState<BioHandleAvailability>([...HANDLE_KEY, handle])
+    if (!state?.data || state.isInvalidated || Date.now() - state.dataUpdatedAt > KNOWN_AVAILABILITY_MS) return undefined
+    return state.data
+  }
 }

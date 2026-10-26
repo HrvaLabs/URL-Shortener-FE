@@ -57,6 +57,7 @@ export function BioPageView({
   const isPublic = mode === "public"
   const Content = isPublic ? "main" : "div"
   const Footer = isPublic ? "footer" : "div"
+  const Name = isPublic ? "h1" : "p"
   const handleLabel = page.handle ? `@${page.handle}` : ""
   const name = page.displayName || handleLabel
   const showsEmoji = page.avatarKind === "EMOJI" && Boolean(page.avatarEmoji)
@@ -78,9 +79,9 @@ export function BioPageView({
               <span className="text-3xl font-semibold">{initialsOf(page.displayName, page.handle)}</span>
             )}
           </div>
-          <h1 className={`mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere] ${name ? "" : "text-[var(--bio-muted)]"}`}>
+          <Name className={`mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere] ${name ? "" : "text-[var(--bio-muted)]"}`}>
             {name || "Your name"}
-          </h1>
+          </Name>
           {page.displayName && handleLabel && (
             <p className="mt-1 w-full text-[var(--bio-muted)] [overflow-wrap:anywhere]">{handleLabel}</p>
           )}

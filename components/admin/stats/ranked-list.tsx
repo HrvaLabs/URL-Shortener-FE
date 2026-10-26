@@ -30,7 +30,7 @@ export function RankedList({ title, valueLabel, entries, label, emptyText }: Ran
                   className="absolute inset-y-0 left-0 rounded-md bg-brand/10"
                   style={{ width: `${(entry.count / largest) * 100}%` }}
                 />
-                <span className="relative min-w-0 truncate" title={text}>{text}</span>
+                <span className="relative min-w-0 [overflow-wrap:anywhere]">{text}</span>
                 <span className="relative shrink-0 tabular-nums text-muted-foreground">{entry.count.toLocaleString()}</span>
               </li>
             )

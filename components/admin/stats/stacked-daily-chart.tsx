@@ -54,6 +54,16 @@ const hatchSize = 6
 
 const barGap: Record<AnalyticsRange, string | number> = { 7: "20%", 30: "20%", 90: "10%", 365: 0 }
 
+export function inFillOrder(series: StackedSeries, fills: Record<string, StackFill>): StackedSeries {
+  const order = Object.keys(fills)
+  const rank = (key: string) => {
+    if (key === UNKNOWN_KEY) return order.length + 1
+    const index = order.indexOf(key)
+    return index === -1 ? order.length : index
+  }
+  return { ...series, keys: [...series.keys].sort((a, b) => rank(a) - rank(b)) }
+}
+
 function segmentsOf(keys: string[], labels: Record<string, string>, fills?: Record<string, StackFill>): Segment[] {
   let position = 0
   return keys.map((key, index) => ({

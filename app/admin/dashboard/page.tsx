@@ -6,7 +6,8 @@ import { PageMeta } from "@/components/page-meta"
 import { AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { LinksTab } from "@/components/admin/stats/links-tab"
-import { LoginRateLimits } from "@/components/admin/stats/login-rate-limits"
+import { SafetyTab } from "@/components/admin/stats/safety-tab"
+import { SystemTab } from "@/components/admin/stats/system-tab"
 import { TrafficTab } from "@/components/admin/stats/traffic-tab"
 import { UsersTab } from "@/components/admin/stats/users-tab"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -86,9 +87,13 @@ function Stats() {
         <TabsContent value="users" className="mt-6">
           <UsersTab days={days} />
         </TabsContent>
+        <TabsContent value="safety" className="mt-6">
+          <SafetyTab days={days} />
+        </TabsContent>
+        <TabsContent value="system" className="mt-6">
+          <SystemTab days={days} />
+        </TabsContent>
       </Tabs>
-
-      <LoginRateLimits />
     </div>
   )
 }

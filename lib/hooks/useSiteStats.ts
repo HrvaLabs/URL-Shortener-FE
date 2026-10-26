@@ -31,3 +31,21 @@ export function useUsersStats(days: AnalyticsRange) {
     retry: retryUnlessRefused,
   })
 }
+
+export function useSafetyStats(days: AnalyticsRange) {
+  return useQuery({
+    queryKey: ["admin", "stats", "safety", days],
+    queryFn: () => adminApi.getSafetyStats(days),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessRefused,
+  })
+}
+
+export function useSystemStats(days: AnalyticsRange) {
+  return useQuery({
+    queryKey: ["admin", "stats", "system", days],
+    queryFn: () => adminApi.getSystemStats(days),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessRefused,
+  })
+}

@@ -266,6 +266,98 @@ export interface UsersStats {
   }
 }
 
+export type ReviewSource = "SYSTEM" | "VISITOR"
+
+export type ReviewResolution = "OK" | "DOMAIN_TRUSTED" | "LINK_BLOCKED" | "DOMAIN_BLOCKED" | "USER_BLOCKED" | "DESTINATION_CHANGED"
+
+export interface SourceHealth {
+  id: number
+  name: string
+  action: SourceAction
+  enabled: boolean
+  domainCount: number | null
+  memoryBytes: number | null
+  lastSuccessAt: string | null
+  lastError: string | null
+}
+
+export interface SafetyStats {
+  days: AnalyticsRange
+  from: string
+  to: string
+  reviewsOpened: StackedSeries
+  openReviews: number
+  openVisitorReports: number
+  resolved: CountEntry[]
+  resolveTimes: {
+    count: number
+    medianMinutes: number | null
+    p90Minutes: number | null
+  }
+  blocked: StackedSeries
+  domainRules: {
+    block: number
+    allow: number
+  }
+  possibleScammers: number
+  sources: SourceHealth[]
+}
+
+export interface RedirectTiming {
+  source: "cache" | "db"
+  count: number
+  meanMs: number | null
+  maxMs: number | null
+}
+
+export interface RedisKeyCounts {
+  counts: Record<string, number>
+  other: number
+  scanned: number
+  capped: boolean
+}
+
+export type EmailStatus = "SENT" | "FAILED" | "SENDING" | "RESENT"
+
+export interface SystemStats {
+  days: AnalyticsRange
+  from: string
+  to: string
+  appVersion: string
+  startedAt: string
+  uptime: string
+  javaVersion: string
+  activeProfiles: string[]
+  jvmHeapUsedBytes: number
+  jvmHeapMaxBytes: number
+  redirects: RedirectTiming[]
+  requests: {
+    total: number
+    serverErrors: number
+  }
+  cache: {
+    hits: number
+    misses: number
+    hitRatio: number | null
+  }
+  health: {
+    database: string
+    redis: string
+  }
+  redis: {
+    usedMemoryBytes: number | null
+    maxMemoryBytes: number | null
+    keys: RedisKeyCounts | null
+  }
+  database: {
+    product: string
+    version: string
+    sizeBytes: number | null
+    shortUrlUnique: boolean
+  }
+  emails: StackedSeries
+}
+
 export interface PeekUrl {
   longUrl: string | null
   shortUrl: string

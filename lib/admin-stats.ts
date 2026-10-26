@@ -1,5 +1,5 @@
 import { DEFAULT_ANALYTICS_RANGE } from "./analytics"
-import type { AnalyticsRange, AnalyticsTotals, CreatedVia } from "./types"
+import type { AnalyticsRange, AnalyticsTotals, CreatedVia, EmailStatus, ReviewResolution, ReviewSource } from "./types"
 
 export type StatsTab = "traffic" | "links" | "users" | "safety" | "system"
 
@@ -11,7 +11,7 @@ export const statsTabLabels: Record<StatsTab, string> = {
   system: "System",
 }
 
-export const STATS_TABS: StatsTab[] = ["traffic", "links", "users"]
+export const STATS_TABS: StatsTab[] = ["traffic", "links", "users", "safety", "system"]
 
 export const DEFAULT_STATS_TAB: StatsTab = "traffic"
 
@@ -31,6 +31,37 @@ export const providerLabels: Record<SignInProvider, string> = {
   local: "Email and password",
   google: "Google",
   github: "GitHub",
+}
+
+export const reviewSourceLabels: Record<ReviewSource, string> = {
+  SYSTEM: "Flagged by the checks",
+  VISITOR: "Reported by visitors",
+}
+
+export const resolutionLabels: Record<ReviewResolution, string> = {
+  OK: "Looks fine",
+  DOMAIN_TRUSTED: "Domain trusted",
+  LINK_BLOCKED: "Link blocked",
+  DOMAIN_BLOCKED: "Domain blocked",
+  USER_BLOCKED: "User blocked",
+  DESTINATION_CHANGED: "Destination changed",
+}
+
+export const emailStatusLabels: Record<EmailStatus, string> = {
+  SENT: "Sent",
+  FAILED: "Failed",
+  SENDING: "Sending",
+  RESENT: "Resent",
+}
+
+export const redisPrefixLabels: Record<string, string> = {
+  "blocklist:": "Blocklists",
+  "rate-limit:": "Rate limits",
+  "analytics:": "Visitor counting (daily keys)",
+  "rdap:": "Domain age lookups",
+  "dbl:": "Spamhaus lookups",
+  "mcp:connect:": "AI connector sign-ins",
+  "urls::": "Link cache",
 }
 
 export function parseStatsTab(value: string | null): StatsTab {
@@ -63,4 +94,15 @@ export function formatBytes(bytes: number | null | undefined): string {
     unit += 1
   }
   return `${value.toFixed(1)} ${byteUnits[unit]}`
+}
+
+const minutesPerHour = 60
+const minutesPerDay = 24 * minutesPerHour
+
+export function formatMinutes(minutes: number | null): string {
+  if (minutes == null || !Number.isFinite(minutes)) return "—"
+  if (minutes < 1) return "< 1 min"
+  if (minutes < minutesPerHour) return `${Math.floor(minutes)} min`
+  if (minutes < 2 * minutesPerDay) return `${(minutes / minutesPerHour).toFixed(1)} h`
+  return `${(minutes / minutesPerDay).toFixed(1)} days`
 }

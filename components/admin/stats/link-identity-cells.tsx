@@ -32,13 +32,11 @@ export function LinkIdentityCells({ link, days }: LinkIdentityCellsProps) {
           /{link.shortUrl}
         </Link>
       </TableCell>
-      <TableCell className="max-w-[240px] text-muted-foreground">
-        <span className="block truncate" title={link.destinationHost || undefined}>
-          {link.destinationHost || "—"}
-        </span>
+      <TableCell className="text-muted-foreground">
+        <span className="block min-w-32 [overflow-wrap:anywhere]">{link.destinationHost || "—"}</span>
       </TableCell>
-      <TableCell className="max-w-[220px]">
-        <span className={cn("block truncate", link.ownerEmail == null && "text-muted-foreground")} title={link.ownerEmail ?? undefined}>
+      <TableCell>
+        <span className={cn("block min-w-36 [overflow-wrap:anywhere]", link.ownerEmail == null && "text-muted-foreground")}>
           {link.ownerEmail ?? "Anonymous"}
         </span>
       </TableCell>

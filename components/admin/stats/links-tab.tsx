@@ -2,7 +2,7 @@
 
 import { LinkIdentityCells, LinkIdentityHeads } from "@/components/admin/stats/link-identity-cells"
 import { RankedList } from "@/components/admin/stats/ranked-list"
-import { StackedDailyChart, type StackFill } from "@/components/admin/stats/stacked-daily-chart"
+import { StackedDailyChart, inFillOrder, type StackFill } from "@/components/admin/stats/stacked-daily-chart"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
 import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { StatusBadge } from "@/components/status-badge"
@@ -11,7 +11,7 @@ import { createdViaLabels } from "@/lib/admin-stats"
 import { parseServerDateTime } from "@/lib/analytics"
 import { useLinksStats } from "@/lib/hooks/useSiteStats"
 import { blockReasonLabels } from "@/lib/labels"
-import type { AnalyticsRange, BlockReason, CreatedVia, LinksStats, NewestLink, StackedSeries } from "@/lib/types"
+import type { AnalyticsRange, BlockReason, CreatedVia, LinksStats, NewestLink } from "@/lib/types"
 import { cn, formatDate } from "@/lib/utils"
 
 const channelFills: Record<CreatedVia, StackFill> = {
@@ -21,17 +21,6 @@ const channelFills: Record<CreatedVia, StackFill> = {
   ANONYMOUS_MCP: { step: 55, hatch: true },
   API_KEY: { step: 25 },
   BULK: { step: 25, hatch: true },
-}
-
-const channelOrder = Object.keys(channelFills)
-
-function inChannelOrder(series: StackedSeries): StackedSeries {
-  const rank = (key: string) => {
-    if (key === "unknown") return channelOrder.length + 1
-    const index = channelOrder.indexOf(key)
-    return index === -1 ? channelOrder.length : index
-  }
-  return { ...series, keys: [...series.keys].sort((a, b) => rank(a) - rank(b)) }
 }
 
 interface LinksTabProps {
@@ -56,7 +45,7 @@ function LinksBody({ data, days }: LinksBodyProps) {
       <StackedDailyChart
         title="Links created per day"
         hint="Links made before this was recorded show as Unknown."
-        series={inChannelOrder(created)}
+        series={inFillOrder(created, channelFills)}
         labels={createdViaLabels}
         fills={channelFills}
         days={days}

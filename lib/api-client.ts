@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -303,6 +303,12 @@ export const adminApi = {
     request<DomainRuleCreated>("POST", "/admin/domain-rules", input),
   deleteDomainRule: (id: number) =>
     request<void>("DELETE", `/admin/domain-rules/${id}`),
+  getReservedAliases: () =>
+    request<ReservedAlias[]>("GET", "/admin/reserved-aliases"),
+  reserveAlias: (input: ReservedAliasInput) =>
+    request<ReservedAlias>("POST", "/admin/reserved-aliases", input),
+  unreserveAlias: (id: number) =>
+    request<void>("DELETE", `/admin/reserved-aliases/${id}`),
   getReviewQueue: ({ page = 0, size = 20, reason, olderThanDays }: ReviewQueueFilters = {}) => {
     const params = new URLSearchParams()
     params.set("page", String(page))

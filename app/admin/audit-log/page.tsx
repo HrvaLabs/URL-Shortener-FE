@@ -35,6 +35,8 @@ const actionLabels: Record<AuditAction, string> = {
   REFRESH_SOURCE: "Refreshed blocklist",
   RESEND_EMAIL: "Resent email",
   CLEAR_LOGIN_ATTEMPTS: "Cleared login limits",
+  RESERVE_ALIAS: "Reserved alias",
+  UNRESERVE_ALIAS: "Removed reserved alias",
   UNKNOWN: "Unknown action",
 }
 
@@ -59,6 +61,8 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   REFRESH_SOURCE: "secondary",
   RESEND_EMAIL: "secondary",
   CLEAR_LOGIN_ATTEMPTS: "secondary",
+  RESERVE_ALIAS: "secondary",
+  UNRESERVE_ALIAS: "secondary",
   UNKNOWN: "outline",
 }
 

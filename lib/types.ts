@@ -521,6 +521,8 @@ export type AuditAction =
   | "BLOCK_USER"
   | "REACTIVATE_USER"
   | "DELETE_LINK"
+  | "RESERVE_ALIAS"
+  | "UNRESERVE_ALIAS"
   | "UNKNOWN"
 
 export interface AuditLog {
@@ -600,6 +602,28 @@ export interface BlocklistSourceInput {
 }
 
 export type DomainRuleType = "BLOCK" | "ALLOW"
+
+export interface ReservedAliasLink {
+  id: number
+  shortUrl: string
+  ownerEmail: string | null
+  active: boolean
+}
+
+export interface ReservedAlias {
+  id: number | null
+  alias: string
+  reason: string
+  builtIn: boolean
+  createdAt: string | null
+  createdBy: string | null
+  inUse: ReservedAliasLink[]
+}
+
+export interface ReservedAliasInput {
+  alias: string
+  reason: string
+}
 
 export interface DomainRule {
   id: number

@@ -1,15 +1,50 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CircleAlert } from "lucide-react"
+import { SecondStep } from "@/components/auth/second-step"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
+import type { SignedIn, TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
+
+const TWO_STEP_METHODS: readonly TwoStepMethod[] = ["TOTP", "WEBAUTHN", "RECOVERY_CODE"]
+
+const EXPIRED = "Your sign-in expired. Sign in again."
+
+const messages: Record<string, string> = {
+  no_email: "Could not retrieve email from provider.",
+  account_inactive: "Your account is deactivated. Contact an administrator.",
+  two_step_unavailable: "Two-step sign-in isn't available right now. Try again in a minute.",
+}
+
+type Callback =
+  | { kind: "token"; token: string }
+  | { kind: "second-step"; pendingToken: string; methods: TwoStepMethod[] }
+  | { kind: "error"; error: string; fromProvider: boolean }
+
+function isTwoStepMethod(value: string): value is TwoStepMethod {
+  return (TWO_STEP_METHODS as readonly string[]).includes(value)
+}
+
+function readCallback(searchParams: URLSearchParams): Callback {
+  const token = searchParams.get("token")
+  const pendingToken = searchParams.get("pendingToken")
+  const err = searchParams.get("error")
+
+  if (token) return { kind: "token", token }
+  if (pendingToken) {
+    const methods = (searchParams.get("methods") ?? "").split(",").filter(isTwoStepMethod)
+    return { kind: "second-step", pendingToken, methods }
+  }
+  if (err) return { kind: "error", error: messages[err] ?? "Authentication failed.", fromProvider: true }
+  return { kind: "error", error: "Invalid callback — no token received.", fromProvider: false }
+}
 
 function AuthCallbackShell({ children }: { children: React.ReactNode }) {
   return (
@@ -37,33 +72,38 @@ export function AuthCallbackLoading() {
 export function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { refreshUser } = useAuth()
-  const [error, setError] = useState<string | null>(null)
+  const { refreshUser, completeSignIn } = useAuth()
+  const [callback] = useState(() => readCallback(searchParams))
+  const [error, setError] = useState<string | null>(() => {
+    if (callback.kind === "error") return callback.error
+    if (callback.kind === "second-step" && callback.methods.length === 0) return EXPIRED
+    return null
+  })
 
   useEffect(() => {
-    const token = searchParams.get("token")
-    const err = searchParams.get("error")
-
-    if (token) {
+    if (callback.kind === "token") {
       const next = sessionStorage.getItem("post-login-next")
-      localStorage.setItem("auth-token", `Bearer ${token}`)
+      localStorage.setItem("auth-token", `Bearer ${callback.token}`)
       refreshUser()
         .then(() => {
           router.push(safeNext(next))
           sessionStorage.removeItem("post-login-next")
         })
         .catch(() => setError("Authentication failed."))
-    } else if (err) {
+    } else if (callback.kind === "second-step") {
+      window.history.replaceState(null, "", "/auth/callback")
+    } else if (callback.fromProvider) {
       sessionStorage.removeItem("post-login-next")
-      const messages: Record<string, string> = {
-        no_email: "Could not retrieve email from provider.",
-        account_inactive: "Your account is deactivated. Contact an administrator.",
-      }
-      setError(messages[err] ?? "Authentication failed.")
-    } else {
-      setError("Invalid callback — no token received.")
     }
-  }, [searchParams, router, refreshUser])
+  }, [callback, router, refreshUser])
+
+  const handleSignedIn = useCallback((signedIn: SignedIn) => {
+    completeSignIn(signedIn)
+    router.replace(safeNext(sessionStorage.getItem("post-login-next")))
+    sessionStorage.removeItem("post-login-next")
+  }, [completeSignIn, router])
+
+  const handleExpired = useCallback(() => setError(EXPIRED), [])
 
   if (error) {
     return (
@@ -77,6 +117,21 @@ export function AuthCallbackContent() {
           <Button asChild className="mt-8 w-full">
             <Link href="/login">Try again</Link>
           </Button>
+        </Card>
+      </AuthCallbackShell>
+    )
+  }
+
+  if (callback.kind === "second-step") {
+    return (
+      <AuthCallbackShell>
+        <Card className="w-full max-w-sm p-8">
+          <SecondStep
+            pendingToken={callback.pendingToken}
+            methods={callback.methods}
+            onSignedIn={handleSignedIn}
+            onExpired={handleExpired}
+          />
         </Card>
       </AuthCallbackShell>
     )

@@ -27,6 +27,16 @@ import {
   rebaseBioDraft,
   rebaseSavedBioDraft,
   sameBioDraft,
+  BUTTON_TITLE_REQUIRED,
+  BUTTON_TITLE_TOO_LONG,
+  bioButtonLabel,
+  bioButtonTitleErrors,
+  bioSaveErrors,
+  buttonTitleError,
+  cleanBioText,
+  destinationHostOf,
+  linkStateLabel,
+  newBioButton,
 } from "../lib/bio.ts"
 
 const check = (name, run) => {
@@ -530,6 +540,228 @@ check("bioSaveFieldErrors maps the backend's profile texts to their fields, and 
   assert.equal(bioSaveFieldErrors("You've saved your bio page a lot in a short time. Try again in a few minutes."), null)
   assert.equal(bioSaveFieldErrors("toString"), null)
   assert.equal(bioSaveFieldErrors(""), null)
+})
+
+const ACUTE = 0x0301
+const marksOf = (value) => [...value].filter((character) => /\p{M}/u.test(character)).length
+
+check("cleanBioText collapses whitespace and keeps text as typed", () => {
+  assert.equal(cleanBioText("  Ana   Horvat "), "Ana Horvat")
+  assert.equal(cleanBioText("Ana\nHorvat"), "Ana Horvat")
+  assert.equal(cleanBioText("Ana\t\tHorvat"), "Ana Horvat")
+  assert.equal(cleanBioText(text("Ana", 0x2028, "Horvat")), "Ana Horvat")
+  assert.equal(cleanBioText(text("Ana", 0x2029, "Horvat")), "Ana Horvat")
+  assert.equal(cleanBioText(text("Ana", 0x00a0, "Horvat")), "Ana Horvat")
+  assert.equal(cleanBioText(text("Ana", 0x3000, "Horvat")), "Ana Horvat")
+  assert.equal(cleanBioText("<script>alert(1)</script>"), "<script>alert(1)</script>")
+  assert.equal(cleanBioText("javascript:alert(1)"), "javascript:alert(1)")
+  assert.equal(cleanBioText(""), "")
+})
+
+check("cleanBioText strips controls, format characters and fillers, as the backend does", () => {
+  assert.equal(cleanBioText(text("Insta", 0x200b, "gram")), "Instagram")
+  assert.equal(cleanBioText(text("a", 0x202e, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x2066, "b", 0x2069)), "ab")
+  assert.equal(cleanBioText(text("a", 0x200e, 0x200f, 0x061c, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x00ad, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x180e, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0xfeff, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x2065, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x0007, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x001c, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x0085, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x3164, "b")), "ab")
+  assert.equal(cleanBioText(text("a", 0x115f, 0x1160, 0xffa0, "b")), "ab")
+})
+
+check("cleanBioText keeps emoji sequences whole", () => {
+  assert.equal(cleanBioText(FAMILY), FAMILY)
+  assert.equal(cleanBioText(CROATIAN_FLAG), CROATIAN_FLAG)
+  assert.equal(cleanBioText(text(0x2764, VARIATION_SELECTOR_16)), text(0x2764, VARIATION_SELECTOR_16))
+  const england = text(0x1f3f4, 0xe0067, 0xe0062, 0xe0065, 0xe006e, 0xe0067, 0xe007f)
+  assert.equal(cleanBioText(england), england)
+  assert.equal(cleanBioText(text("Hi ", 0x1f44b, 0x1f3fd)), text("Hi ", 0x1f44b, 0x1f3fd))
+})
+
+check("cleanBioText caps stacked marks at four after NFC", () => {
+  const zalgo = text("x", ...Array(40).fill(ACUTE))
+  assert.equal(cleanBioText(zalgo), text("x", ACUTE, ACUTE, ACUTE, ACUTE))
+  assert.equal(cleanBioText(text("a", ...Array(40).fill(ACUTE))), text(0x00e1, ACUTE, ACUTE, ACUTE, ACUTE))
+  const joined = text("x", ...Array(10).fill([ACUTE, 0x200d]).flat())
+  assert.equal(marksOf(cleanBioText(joined)), 4)
+  assert.equal(marksOf(cleanBioText(text("x", ...Array(10).fill(0x20dd)))), 4)
+  assert.equal(cleanBioText(text("x", ACUTE, ACUTE, ACUTE, ACUTE)), text("x", ACUTE, ACUTE, ACUTE, ACUTE))
+})
+
+check("cleanBioText answers empty when nothing visible is left", () => {
+  for (const blank of [
+    " ",
+    "\t\n",
+    text(0x200b),
+    text(0x200b, 0x200b, 0x2060),
+    text(0x2800),
+    text(0xfffc),
+    text(0x2800, " ", 0xfffc),
+    text(0x3164),
+    text(0x200d),
+    text(0x200c),
+    text(0x200d, VARIATION_SELECTOR_16),
+    text(ACUTE, ACUTE),
+    text(0x034f),
+    text(0xe0067, 0xe007f),
+    text(0x00a0, 0x2007, 0x202f),
+  ]) {
+    assert.equal(cleanBioText(blank), "", JSON.stringify(blank))
+  }
+  assert.equal(cleanBioText(text("Hi ", 0x2800)), text("Hi ", 0x2800))
+  assert.equal(cleanBioText(text(0xfffc, "a")), text(0xfffc, "a"))
+})
+
+check("buttonTitleError gives the backend's two title texts", () => {
+  assert.equal(BUTTON_TITLE_REQUIRED, "Give the button a title")
+  assert.equal(BUTTON_TITLE_TOO_LONG, "Button title must be 60 characters or fewer")
+  assert.equal(buttonTitleError("Instagram"), null)
+  assert.equal(buttonTitleError(" Instagram "), null)
+  assert.equal(buttonTitleError(""), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError("   "), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError(text(0x200b)), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError(text(0x2800)), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError(text(0xfffc)), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError(text(0x3164)), BUTTON_TITLE_REQUIRED)
+  assert.equal(buttonTitleError("a".repeat(60)), null)
+  assert.equal(buttonTitleError("a".repeat(61)), BUTTON_TITLE_TOO_LONG)
+  assert.equal(buttonTitleError(text(...Array(30).fill(0x0958))), null)
+  assert.equal(buttonTitleError(text(...Array(31).fill(0x0958))), BUTTON_TITLE_TOO_LONG)
+  assert.equal(buttonTitleError(`${"a".repeat(58)}${GRINNING_FACE}`), null)
+})
+
+check("bioButtonTitleErrors keys the title errors by link id, in order", () => {
+  assert.deepEqual(bioButtonTitleErrors([]), {})
+  assert.deepEqual(
+    bioButtonTitleErrors([
+      { urlId: 5, title: "Instagram" },
+      { urlId: 7, title: text(0x200b) },
+      { urlId: 9, title: "a".repeat(61) },
+    ]),
+    { 7: { field: "title", text: BUTTON_TITLE_REQUIRED }, 9: { field: "title", text: BUTTON_TITLE_TOO_LONG } },
+  )
+})
+
+check("destinationHostOf mirrors the backend's host", () => {
+  assert.equal(destinationHostOf("https://www.Instagram.com/ana"), "www.instagram.com")
+  assert.equal(destinationHostOf("instagram.com/ana"), "instagram.com")
+  assert.equal(destinationHostOf("https://user:pw@Example.COM:8443/x?y#z"), "example.com")
+  assert.equal(destinationHostOf(text("https://k", 0x00f6, "ln.de/")), "xn--kln-sna.de")
+  assert.equal(destinationHostOf("not a url"), "")
+  assert.equal(destinationHostOf("::::"), "")
+  assert.equal(destinationHostOf(""), "")
+  assert.equal(destinationHostOf("   "), "")
+})
+
+check("newBioButton guesses the title and icon, and falls back to the alias, then Link", () => {
+  assert.deepEqual(newBioButton({ id: 5, shortUrl: "ig", longUrl: "https://www.instagram.com/ana" }), {
+    id: 0,
+    urlId: 5,
+    shortUrl: "ig",
+    destinationHost: "www.instagram.com",
+    title: "Instagram",
+    icon: "INSTAGRAM",
+    visible: true,
+    linkState: "LIVE",
+    shownOnPage: true,
+  })
+  const website = newBioButton({ id: 6, shortUrl: "blog", longUrl: "https://www.karlo.cc/blog" })
+  assert.equal(website.title, "karlo.cc")
+  assert.equal(website.icon, "WEBSITE")
+  const idn = newBioButton({ id: 8, shortUrl: "k", longUrl: text("https://k", 0x00f6, "ln.de/") })
+  assert.equal(idn.destinationHost, "xn--kln-sna.de")
+  assert.equal(idn.title, "xn--kln-sna.de")
+  const unparsable = newBioButton({ id: 7, shortUrl: "my-alias", longUrl: "::::" })
+  assert.equal(unparsable.destinationHost, "")
+  assert.equal(unparsable.title, "my-alias")
+  assert.equal(unparsable.icon, "WEBSITE")
+  assert.equal(newBioButton({ id: 9, shortUrl: "", longUrl: "::::" }).title, "Link")
+  assert.equal(newBioButton({ id: 10, shortUrl: "a".repeat(70), longUrl: "" }).title, "a".repeat(60))
+  for (const button of [website, idn, unparsable]) assert.equal(buttonTitleError(button.title), null)
+})
+
+check("bioButtonLabel names a button by its title, else its alias", () => {
+  assert.equal(bioButtonLabel({ title: "  Insta   gram ", shortUrl: "ig" }), "Insta gram")
+  assert.equal(bioButtonLabel({ title: "", shortUrl: "ig" }), "/ig")
+  assert.equal(bioButtonLabel({ title: text(0x200b), shortUrl: "ig" }), "/ig")
+})
+
+check("linkStateLabel guards states the FE doesn't know", () => {
+  assert.equal(linkStateLabel("LIVE"), null)
+  assert.deepEqual(linkStateLabel("DEACTIVATED"), LINK_STATE_LABELS.DEACTIVATED)
+  assert.deepEqual(linkStateLabel("BLOCKED"), LINK_STATE_LABELS.BLOCKED)
+  for (const unknown of ["PAUSED", "toString", "constructor", "__proto__", "", null, undefined]) {
+    assert.equal(linkStateLabel(unknown), null, String(unknown))
+  }
+})
+
+const sentButtons = [
+  { urlId: 5, shortUrl: "ig", title: "Instagram" },
+  { urlId: 7, shortUrl: "blog", title: text(0x200b) },
+  { urlId: 9, shortUrl: "yt", title: "a".repeat(61) },
+]
+
+check("bioSaveErrors maps indexed field errors to their buttons and profile fields", () => {
+  assert.deepEqual(bioSaveErrors("Give the button a title", { "buttons[1].title": "Give the button a title" }, sentButtons), {
+    profile: {},
+    buttons: { 7: { field: "title", text: "Give the button a title" } },
+  })
+  assert.deepEqual(
+    bioSaveErrors("x", { displayName: "Name must be 50 characters or fewer", "buttons[2].title": BUTTON_TITLE_TOO_LONG, "buttons[0].urlId": "Pick a link" }, sentButtons),
+    {
+      profile: { displayName: "Name must be 50 characters or fewer" },
+      buttons: { 9: { field: "title", text: BUTTON_TITLE_TOO_LONG }, 5: { field: "link", text: "Pick a link" } },
+    },
+  )
+  assert.deepEqual(bioSaveErrors("Pick a link", { "buttons[0]": "Pick a link" }, sentButtons), {
+    profile: {},
+    buttons: { 5: { field: "link", text: "Pick a link" } },
+  })
+  assert.deepEqual(bioSaveErrors("x", { bio: "Bio must be 160 characters or fewer" }, sentButtons), {
+    profile: { bio: "Bio must be 160 characters or fewer" },
+    buttons: {},
+  })
+  assert.equal(bioSaveErrors("x", { "buttons[3].title": BUTTON_TITLE_REQUIRED }, sentButtons), null)
+  assert.equal(bioSaveErrors("x", { "buttons[01].title": BUTTON_TITLE_REQUIRED }, sentButtons), null)
+  assert.equal(bioSaveErrors("x", { buttons: "A page can have at most 30 buttons" }, sentButtons), null)
+  assert.equal(bioSaveErrors("x", { accent: "Choose an accent colour" }, sentButtons), null)
+  assert.equal(bioSaveErrors("x", { toString: "x" }, sentButtons), null)
+  assert.equal(bioSaveErrors("x", { "buttons[0].title": BUTTON_TITLE_REQUIRED, theme: "Choose a theme" }, sentButtons), null)
+})
+
+check("bioSaveErrors maps unindexed texts to the button they belong to", () => {
+  assert.deepEqual(bioSaveErrors(BUTTON_TITLE_REQUIRED, {}, sentButtons), {
+    profile: {},
+    buttons: { 7: { field: "title", text: BUTTON_TITLE_REQUIRED } },
+  })
+  assert.deepEqual(bioSaveErrors(BUTTON_TITLE_TOO_LONG, {}, sentButtons), {
+    profile: {},
+    buttons: { 9: { field: "title", text: BUTTON_TITLE_TOO_LONG } },
+  })
+  assert.equal(bioSaveErrors(BUTTON_TITLE_REQUIRED, {}, [sentButtons[0]]), null)
+  assert.deepEqual(bioSaveErrors("Only working links can be added. /blog isn't working right now.", {}, sentButtons), {
+    profile: {},
+    buttons: { 7: { field: "link", text: "Only working links can be added. /blog isn't working right now." } },
+  })
+  assert.equal(bioSaveErrors("Only working links can be added. /gone isn't working right now.", {}, sentButtons), null)
+  assert.deepEqual(bioSaveErrors("Name must be 50 characters or fewer", {}, sentButtons), {
+    profile: { displayName: "Name must be 50 characters or fewer" },
+    buttons: {},
+  })
+  for (const unmapped of [
+    "You can only add your own short links.",
+    "Each link can be on your page only once.",
+    "This page changed. Reload and try again.",
+    "You've saved your bio page a lot in a short time. Try again in a few minutes.",
+    "",
+  ]) {
+    assert.equal(bioSaveErrors(unmapped, {}, sentButtons), null, unmapped)
+  }
 })
 
 console.log("ok")

@@ -18,7 +18,7 @@ const previewModelOf = (draft: BioDraft, handle: string | null): BioPageViewMode
     theme: draft.theme,
     buttons: draft.buttons
       .filter((button) => button.visible && button.linkState === "LIVE")
-      .map((button) => ({ key: String(button.urlId), title: button.title, icon: button.icon, href: null })),
+      .map((button) => ({ key: String(button.urlId), title: collapseSpaces(button.title), icon: button.icon, href: null })),
   }
 }
 

@@ -7,9 +7,11 @@ export const CANT_REACH = "Can't reach hrva.cc right now. Check your connection 
 
 export class ApiError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  fields: Record<string, string>
+  constructor(message: string, status: number, fields: Record<string, string> = {}) {
     super(message)
     this.status = status
+    this.fields = fields
     this.name = "ApiError"
   }
 }
@@ -42,6 +44,13 @@ function errorMessage(body: unknown, status: number): string {
   // New API: { "error": "message" }, old API: { "message": "..." }, validation: { "field": "message" }
   const message = fields.error ?? fields.message ?? Object.values(fields).filter((value) => typeof value === "string").join(". ")
   return typeof message === "string" && message ? message : fallback
+}
+
+function validationFields(body: unknown): Record<string, string> {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return {}
+  const fields = body as Record<string, unknown>
+  if (fields.error != null || fields.message != null) return {}
+  return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
 }
 
 async function request<T>(
@@ -78,7 +87,7 @@ async function request<T>(
 
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
-    throw new ApiError(errorMessage(errorBody, response.status), response.status)
+    throw new ApiError(errorMessage(errorBody, response.status), response.status, validationFields(errorBody))
   }
 
   if (response.status === 204 || response.status === 202) return {} as T

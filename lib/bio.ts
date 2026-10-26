@@ -1,4 +1,4 @@
-import type { BioAccent, BioAvatarKind, BioIcon, BioLinkState, BioPage, BioPageButton, BioPageButtonInput, BioPageUpdate, BioTheme } from "./types"
+import type { BioAccent, BioAvatarKind, BioIcon, BioLinkState, BioPage, BioPageButton, BioPageButtonInput, BioPageUpdate, BioTheme, UrlResponse } from "./types"
 
 export const BIO_LIMITS = { handleMin: 3, handleMax: 30, displayName: 50, bio: 160, buttonTitle: 60, buttons: 30 } as const
 
@@ -296,4 +296,135 @@ export const bioSaveFieldErrors = (message: string): Partial<Record<BioProfileFi
     errors[field] = part
   }
   return errors
+}
+
+export const BUTTON_TITLE_REQUIRED = "Give the button a title"
+
+export const BUTTON_TITLE_TOO_LONG = "Button title must be 60 characters or fewer"
+
+const ASCII_SPACE_CONTROLS = new Set([0x09, 0x0a, 0x0b, 0x0c, 0x0d])
+const KEPT_FORMAT_CHARACTERS = new Set([0x200c, 0x200d])
+const FIRST_TAG = 0xe0020
+const LAST_TAG = 0xe007f
+const STRIPPED_FILLERS = new Set([0x115f, 0x1160, 0x3164, 0xffa0, 0x2065])
+const BLANK_SYMBOLS = new Set([0x2800, 0xfffc])
+
+const CONTROL = /^\p{Cc}$/u
+const FORMAT = /^\p{Cf}$/u
+const NEVER_VISIBLE = /^[\p{Cc}\p{Cf}\p{Mn}\p{Me}\p{Z}]$/u
+const STACKED_MARKS = /([\p{Mn}\p{Me}](?:\p{Cf}*[\p{Mn}\p{Me}]){3})(?:\p{Cf}*[\p{Mn}\p{Me}])+/gu
+const WHITESPACE_RUN = /[\s\p{Z}]+/gu
+
+const codePointOf = (value: string): number => value.codePointAt(0) ?? 0
+
+const isStripped = (value: string): boolean => {
+  const codePoint = codePointOf(value)
+  if (CONTROL.test(value)) return !ASCII_SPACE_CONTROLS.has(codePoint)
+  if (FORMAT.test(value)) return !KEPT_FORMAT_CHARACTERS.has(codePoint) && (codePoint < FIRST_TAG || codePoint > LAST_TAG)
+  return STRIPPED_FILLERS.has(codePoint)
+}
+
+const isVisible = (value: string): boolean => !NEVER_VISIBLE.test(value) && !BLANK_SYMBOLS.has(codePointOf(value))
+
+export const cleanBioText = (text: string): string => {
+  const kept = Array.from(text).filter((value) => !isStripped(value)).join("")
+  const cleaned = kept.normalize("NFC").replace(STACKED_MARKS, "$1").replace(WHITESPACE_RUN, " ").replace(JAVA_STRIP_EDGES, "")
+  return Array.from(cleaned).some(isVisible) ? cleaned : ""
+}
+
+export const buttonTitleError = (title: string): string | null => {
+  const cleaned = cleanBioText(title)
+  if (!cleaned) return BUTTON_TITLE_REQUIRED
+  if (title.length > BIO_LIMITS.buttonTitle || cleaned.length > BIO_LIMITS.buttonTitle) return BUTTON_TITLE_TOO_LONG
+  return null
+}
+
+export type BioButtonError = { field: "title" | "link"; text: string }
+
+export type BioButtonErrors = Record<number, BioButtonError>
+
+export const bioButtonTitleErrors = (buttons: readonly Pick<BioPageButton, "urlId" | "title">[]): BioButtonErrors => {
+  const errors: BioButtonErrors = {}
+  for (const button of buttons) {
+    const text = buttonTitleError(button.title)
+    if (text) errors[button.urlId] = { field: "title", text }
+  }
+  return errors
+}
+
+export const destinationHostOf = (longUrl: string): string => {
+  if (!longUrl.trim()) return ""
+  try {
+    return new URL(longUrl.includes("://") ? longUrl : `https://${longUrl}`).hostname.toLowerCase()
+  } catch {
+    return ""
+  }
+}
+
+export const newBioButton = ({ id, shortUrl, longUrl }: Pick<UrlResponse, "id" | "shortUrl" | "longUrl">): BioPageButton => {
+  const destinationHost = destinationHostOf(longUrl)
+  return {
+    id: 0,
+    urlId: id,
+    shortUrl,
+    destinationHost,
+    title: defaultButtonTitle(destinationHost) || cutToLength(shortUrl, BIO_LIMITS.buttonTitle) || "Link",
+    icon: guessIcon(destinationHost),
+    visible: true,
+    linkState: "LIVE",
+    shownOnPage: true,
+  }
+}
+
+export const bioButtonLabel = (button: Pick<BioPageButton, "title" | "shortUrl">): string =>
+  cleanBioText(button.title) || `/${button.shortUrl}`
+
+export const linkStateLabel = (state: unknown): { badge: string; hint: string } | null =>
+  typeof state === "string" && Object.prototype.hasOwnProperty.call(LINK_STATE_LABELS, state)
+    ? LINK_STATE_LABELS[state as Exclude<BioLinkState, "LIVE">]
+    : null
+
+export type BioSaveErrors = { profile: Partial<Record<BioProfileField, string>>; buttons: BioButtonErrors }
+
+const PROFILE_FIELD_KEYS = new Set<string>(["displayName", "bio"])
+
+const BUTTON_FIELD_KEY = /^buttons\[(0|[1-9][0-9]*)\](?:\.(title|urlId))?$/
+
+const LINK_NOT_WORKING = /^Only working links can be added\. \/(.+) isn't working right now\.$/
+
+type SentButton = Pick<BioPageButton, "urlId" | "shortUrl" | "title">
+
+const oneButtonError = (button: SentButton | undefined, error: BioButtonError): BioSaveErrors | null =>
+  button ? { profile: {}, buttons: { [button.urlId]: error } } : null
+
+export const bioSaveErrors = (
+  message: string,
+  fields: Readonly<Record<string, string>>,
+  sent: readonly SentButton[],
+): BioSaveErrors | null => {
+  const entries = Object.entries(fields)
+  if (entries.length > 0) {
+    const errors: BioSaveErrors = { profile: {}, buttons: {} }
+    for (const [key, text] of entries) {
+      if (PROFILE_FIELD_KEYS.has(key)) {
+        errors.profile[key as BioProfileField] = text
+        continue
+      }
+      const match = BUTTON_FIELD_KEY.exec(key)
+      const button = match ? sent[Number(match[1])] : undefined
+      if (!match || !button) return null
+      errors.buttons[button.urlId] = { field: match[2] === "title" ? "title" : "link", text }
+    }
+    return errors
+  }
+  const profile = bioSaveFieldErrors(message)
+  if (profile) return { profile, buttons: {} }
+  if (message === BUTTON_TITLE_REQUIRED || message === BUTTON_TITLE_TOO_LONG) {
+    return oneButtonError(sent.find((button) => buttonTitleError(button.title) === message), { field: "title", text: message })
+  }
+  const notWorking = LINK_NOT_WORKING.exec(message)
+  if (notWorking) {
+    return oneButtonError(sent.find((button) => button.shortUrl === notWorking[1]), { field: "link", text: message })
+  }
+  return null
 }

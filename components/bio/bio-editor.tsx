@@ -3,6 +3,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react"
 import { flushSync } from "react-dom"
 import { toast } from "sonner"
+import { ButtonsEditor, bioButtonFieldId } from "@/components/bio/buttons-editor"
 import { ChangeHandleDialog, ChooseHandleForm } from "@/components/bio/change-handle-dialog"
 import { DeleteBioPage } from "@/components/bio/delete-bio-page"
 import { errorText } from "@/components/bio/handle-field"
@@ -10,26 +11,27 @@ import { PhonePreview } from "@/components/bio/phone-preview"
 import { ProfileFields, profileFieldId, type BioFieldErrors } from "@/components/bio/profile-fields"
 import { SaveBar } from "@/components/bio/save-bar"
 import { ShareBar } from "@/components/bio/share-bar"
-import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ApiError } from "@/lib/api-client"
 import {
   AVATAR_EMOJI_REQUIRED,
-  LINK_STATE_LABELS,
+  bioButtonTitleErrors,
   bioDraftOf,
-  bioSaveFieldErrors,
+  bioSaveErrors,
   bioUpdateOf,
   isSingleEmoji,
   rebaseBioDraft,
   rebaseSavedBioDraft,
   sameBioDraft,
+  type BioButtonErrors,
   type BioDraft,
   type BioProfileField,
+  type BioSaveErrors,
 } from "@/lib/bio"
 import { useRefreshBioPage, useSaveBioPage } from "@/lib/hooks/useBioPage"
-import type { BioLinkState, BioPage, BioPageButton } from "@/lib/types"
+import type { BioPage } from "@/lib/types"
 
 const LARGE_SCREEN_QUERY = "(min-width: 64rem)"
 
@@ -38,14 +40,6 @@ const LEAVE_WARNING = "You have unsaved changes. Leave this page without saving 
 const SAVE_BAR_ROOM = "8rem"
 
 const PROFILE_FIELD_ORDER: BioProfileField[] = ["displayName", "bio", "avatarEmoji"]
-
-const LINK_STATE_VARIANTS: Record<Exclude<BioLinkState, "LIVE">, BadgeProps["variant"]> = {
-  IN_REVIEW: "warning",
-  DEACTIVATED: "secondary",
-  EXPIRED: "secondary",
-  LIMIT_REACHED: "secondary",
-  BLOCKED: "destructive",
-}
 
 const SECTION_CLASS = "rounded-xl border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
 
@@ -114,34 +108,6 @@ function Section({ title, titleRef, children }: { title: string; titleRef?: RefO
   )
 }
 
-function SavedButtons({ buttons }: { buttons: BioPageButton[] }) {
-  if (buttons.length === 0) return <p className="text-sm text-muted-foreground">No buttons yet.</p>
-  return (
-    <ul className="divide-y">
-      {buttons.map((button) => {
-        const state = button.linkState === "LIVE" ? null : LINK_STATE_LABELS[button.linkState]
-        return (
-          <li key={button.urlId} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <div className="min-w-0 space-y-0.5">
-              <p className="text-sm font-medium [overflow-wrap:anywhere]">{button.title}</p>
-              <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">/{button.shortUrl}</p>
-              {state && <p className="text-xs text-muted-foreground">{state.hint}</p>}
-            </div>
-            {(state || !button.visible) && (
-              <div className="flex shrink-0 flex-wrap gap-1.5">
-                {!button.visible && <Badge variant="outline">Hidden</Badge>}
-                {state && button.linkState !== "LIVE" && (
-                  <Badge variant={LINK_STATE_VARIANTS[button.linkState]}>{state.badge}</Badge>
-                )}
-              </div>
-            )}
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
 function Banners({ page }: { page: BioPage }) {
   return (
     <>
@@ -178,6 +144,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const [draft, setDraft] = useState(() => bioDraftOf(page))
   const [synced, setSynced] = useState(page)
   const [fieldErrors, setFieldErrors] = useState<BioFieldErrors>({})
+  const [buttonErrors, setButtonErrors] = useState<BioButtonErrors>({})
   const [saving, setSaving] = useState(false)
   const [tab, setTab] = useState("edit")
   const submitting = useRef(false)
@@ -223,21 +190,42 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     ;(usable ? target : headingRef.current)?.focus({ preventScroll: true })
   }
 
-  const focusField = (field: BioProfileField) => {
-    if (!largeScreen && tab !== "edit") flushSync(() => setTab("edit"))
-    document.getElementById(profileFieldId(idPrefix, field))?.focus()
+  const clearButtonError = (urlId: number) => {
+    setButtonErrors((current) => {
+      if (!Object.prototype.hasOwnProperty.call(current, urlId)) return current
+      const next = { ...current }
+      delete next[urlId]
+      return next
+    })
   }
 
-  const showFieldErrors = (errors: BioFieldErrors) => {
-    setFieldErrors(errors)
-    const first = PROFILE_FIELD_ORDER.find((field) => errors[field])
-    if (first) focusField(first)
+  const focusById = (id: string) => {
+    if (!largeScreen && tab !== "edit") flushSync(() => setTab("edit"))
+    document.getElementById(id)?.focus()
+  }
+
+  const showSaveErrors = (errors: BioSaveErrors, buttons: BioDraft["buttons"]) => {
+    flushSync(() => {
+      setFieldErrors(errors.profile)
+      setButtonErrors(errors.buttons)
+    })
+    const field = PROFILE_FIELD_ORDER.find((key) => errors.profile[key])
+    if (field) {
+      focusById(profileFieldId(idPrefix, field))
+      return
+    }
+    const button = buttons.find((candidate) => Object.prototype.hasOwnProperty.call(errors.buttons, candidate.urlId))
+    if (button) focusById(bioButtonFieldId(idPrefix, button.urlId, errors.buttons[button.urlId].field === "title" ? "title" : "remove"))
   }
 
   const handleSave = async () => {
     if (submitting.current) return
-    if (draft.avatarKind === "EMOJI" && !isSingleEmoji(draft.avatarEmoji.trim())) {
-      showFieldErrors({ avatarEmoji: AVATAR_EMOJI_REQUIRED })
+    const localErrors: BioSaveErrors = {
+      profile: draft.avatarKind === "EMOJI" && !isSingleEmoji(draft.avatarEmoji.trim()) ? { avatarEmoji: AVATAR_EMOJI_REQUIRED } : {},
+      buttons: bioButtonTitleErrors(draft.buttons),
+    }
+    if (Object.keys(localErrors.profile).length > 0 || Object.keys(localErrors.buttons).length > 0) {
+      showSaveErrors(localErrors, draft.buttons)
       return
     }
     submitting.current = true
@@ -248,6 +236,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       flushSync(() => {
         setDraft((current) => rebaseSavedBioDraft(current, sent, saved))
         setFieldErrors({})
+        setButtonErrors({})
         setSaving(false)
       })
       submitting.current = false
@@ -257,9 +246,9 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       submitting.current = false
       setSaving(false)
       const message = errorText(error)
-      const errors = error instanceof ApiError && error.status === 400 ? bioSaveFieldErrors(message) : null
+      const errors = error instanceof ApiError && error.status === 400 ? bioSaveErrors(message, error.fields, sent.buttons) : null
       if (errors) {
-        showFieldErrors(errors)
+        showSaveErrors(errors, sent.buttons)
         return
       }
       toast.error(message)
@@ -271,6 +260,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     flushSync(() => {
       setDraft(bioDraftOf(page))
       setFieldErrors({})
+      setButtonErrors({})
     })
     focusAfterSaveBar()
   }
@@ -284,7 +274,14 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       </Section>
 
       <Section title="Buttons">
-        <SavedButtons buttons={draft.buttons} />
+        <ButtonsEditor
+          idPrefix={idPrefix}
+          buttons={draft.buttons}
+          onChange={(buttons) => change({ buttons })}
+          errors={buttonErrors}
+          onClearError={clearButtonError}
+          busy={saving}
+        />
       </Section>
 
       <Section title="Search engines">

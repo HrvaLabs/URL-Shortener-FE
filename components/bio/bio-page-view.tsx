@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react"
 import Link from "next/link"
 import { BioIconGlyph } from "@/components/bio/bio-icons"
-import { BIO_ACCENTS, initialsOf } from "@/lib/bio"
+import { BIO_ACCENTS, BIO_ICON_LABELS, initialsOf } from "@/lib/bio"
 import type { BioAccent, BioAvatarKind, BioIcon, BioTheme } from "@/lib/types"
 
 export type BioPageViewModel = {
@@ -22,11 +22,21 @@ const BUTTON_CLASSES = `flex min-h-12 w-full items-center gap-3 rounded-xl px-4 
 
 const FOOTER_LINK_CLASSES = `rounded-sm underline-offset-4 hover:underline ${FOCUS_OUTLINE}`
 
+const platformLabelFor = (title: string, icon: BioIcon | null): string | null => {
+  if (!icon || icon === "WEBSITE") return null
+  const label = BIO_ICON_LABELS[icon]
+  return title.trim().toLowerCase() === label.toLowerCase() ? null : label
+}
+
 function ButtonContent({ title, icon }: { title: string; icon: BioIcon | null }) {
+  const platformLabel = platformLabelFor(title, icon)
   return (
     <>
       {icon && <BioIconGlyph icon={icon} className="size-5 shrink-0" />}
-      <span className="min-w-0 flex-1 text-center">{title}</span>
+      <span className="min-w-0 flex-1 text-center">
+        {platformLabel && <span className="sr-only">{platformLabel}: </span>}
+        {title}
+      </span>
       {icon && <span className="size-5 shrink-0" aria-hidden="true" />}
     </>
   )

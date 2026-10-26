@@ -48,7 +48,8 @@ const toViewModel = (page: PublicBioPage): BioPageViewModel => ({
 export async function generateMetadata({ params }: BioRouteProps): Promise<Metadata> {
   const { handle: segment } = await params
   const canonical = canonicalHandleOf(segment)
-  const page = canonical ? await loadPublicBioPage(canonical) : null
+  if (!canonical || canonical !== segment) return UNAVAILABLE_METADATA
+  const page = await loadPublicBioPage(canonical)
   if (!page) return UNAVAILABLE_METADATA
   const handleLabel = `@${page.handle}`
   const name = page.displayName || handleLabel
@@ -59,7 +60,7 @@ export async function generateMetadata({ params }: BioRouteProps): Promise<Metad
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { type: "profile", title, description, url },
+    openGraph: { type: "profile", siteName: "hrva.cc", title, description, url },
     twitter: { card: "summary_large_image", title, description, images: [`/bio/${page.handle}/opengraph-image`] },
     robots: page.indexable ? { index: true, follow: true } : { index: false, follow: false },
   }

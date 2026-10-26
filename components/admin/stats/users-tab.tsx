@@ -23,7 +23,7 @@ interface UsersBodyProps {
 }
 
 function UsersBody({ data, days }: UsersBodyProps) {
-  const { signups, now, apiKeys, mcp } = data
+  const { signups, now, apiKeys, mcp, bioPages } = data
 
   return (
     <>
@@ -81,6 +81,15 @@ function UsersBody({ data, days }: UsersBodyProps) {
           },
         ]}
       />
+      {bioPages && (
+        <StatGrid
+          title="Bio pages"
+          items={[
+            { label: "Pages", value: bioPages.total.toLocaleString() },
+            { label: "Hidden", value: bioPages.hidden.toLocaleString() },
+          ]}
+        />
+      )}
     </>
   )
 }

@@ -53,6 +53,12 @@ function TrafficBody({ data, days }: TrafficBodyProps) {
       value: data.allTimeVisits.toLocaleString(),
       hint: `Unique visitors per link per day, added up since each link was created. Counts from before ${historyStart} used an older method.`,
     },
+    ...(data.bioPageViews
+      ? [
+          { label: "Bio page views", value: data.bioPageViews.views.toLocaleString(), hint: "Each visitor counts once a day per page." },
+          { label: "Bio page bot views", value: data.bioPageViews.botViews.toLocaleString() },
+        ]
+      : []),
   ]
 
   return (

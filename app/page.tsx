@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
+  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Contact, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -413,6 +413,39 @@ function FeatureGrid() {
                     >
                       {kind}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </FeatureCell>
+
+          <FeatureCell
+            className="lg:col-span-3"
+            icon={Contact}
+            title="Bio pages"
+            description={
+              <>
+                One page with all your links at hrva.cc/@yourname, for your Instagram, TikTok or any other bio. Every button
+                is one of your checked short links.{" "}
+                <Link href="/help/link-in-bio" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about bio pages</span>
+                </Link>
+              </>
+            }
+          >
+            <div aria-hidden="true" className="mx-auto w-[260px] max-w-full rounded-[2rem] border-2 bg-background px-5 pb-6 pt-8 text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#0f766e] text-lg font-semibold text-white dark:bg-[#5eead4] dark:text-[#0b0b0e]">
+                AH
+              </div>
+              <p className="mt-3 font-semibold [overflow-wrap:anywhere]">Ana Horvat</p>
+              <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">@ana</p>
+              <ul className="mt-5 space-y-2.5">
+                {["Instagram", "Portfolio", "Newsletter"].map((label) => (
+                  <li
+                    key={label}
+                    className="rounded-xl bg-[#0f766e] px-4 py-2.5 text-sm font-medium text-white [overflow-wrap:anywhere] dark:bg-[#5eead4] dark:text-[#0b0b0e]"
+                  >
+                    {label}
                   </li>
                 ))}
               </ul>

@@ -362,6 +362,24 @@ Dark zinc-950 figures that hold real source or API calls in both themes: a heade
 ### Product Preview
 The landing's framed dashboard: real table markup (short link, destination, visits, status pills) in a 16px top-rounded card that fades out through a bottom mask, captioned "Example data" above its right edge. Any illustrative data on a marketing surface is labelled as an example.
 
+### Bio pages
+The public page at `/bio/[handle]` and its previews (the editor's phone preview and the landing's Bio pages card) are the one surface outside the One Blue Rule. The owner picks an accent, and it fills only the buttons and the avatar; text, the handle, the bio and the footer links stay in the page colours, and the accent never colours text on the page ground, borders or decoration. Buttons are full width, at least 48px tall, 12px radius, medium weight; the avatar is a 96px circle. The page follows its own theme (`.bio-theme-light`, `.bio-theme-dark`, and `.bio-theme-auto` on `prefers-color-scheme`), never the site's `.dark` class. The landing card's mock uses the Teal pair with the site's `dark:` variant, because it sits on a site surface.
+
+| Accent | Light theme button (white text) | Dark theme button (`#0b0b0e` text) |
+|---|---|---|
+| Blue | `#1d4ed8` (6.70) | `#93c5fd` (10.90) |
+| Violet | `#6d28d9` (7.10) | `#c4b5fd` (10.65) |
+| Pink | `#be185d` (6.04) | `#f9a8d4` (10.84) |
+| Red | `#b91c1c` (6.47) | `#fca5a5` (10.36) |
+| Orange | `#c2410c` (5.18) | `#fdba74` (11.65) |
+| Green | `#15803d` (5.02) | `#86efac` (14.00) |
+| Teal | `#0f766e` (5.47) | `#5eead4` (13.29) |
+| Slate | `#334155` (10.35) | `#cbd5e1` (13.24) |
+
+Page colours, with WCAG contrast against the background (`scripts/check-bio.mjs` pins every ratio):
+- **Light:** background `#ffffff`, text `#0e0e11` (19.27), muted `#5c5c66` (6.61).
+- **Dark:** background `#0b0b0e`, text `#f5f5f5` (18.03), muted `#a1a1aa` (7.67).
+
 ## Do's and Don'ts
 
 ### Do:

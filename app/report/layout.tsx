@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Report a link",
+  title: "Report a link or bio page",
   description: "Report a hrva.cc short link or bio page that leads to phishing, malware, spam or other abuse.",
   alternates: { canonical: "https://app.hrva.cc/report" },
   openGraph: {
     url: "https://app.hrva.cc/report",
-    title: "Report a link — hrva.cc",
+    title: "Report a link or bio page — hrva.cc",
     description: "Report a hrva.cc short link or bio page that leads to phishing, malware, spam or other abuse.",
   },
 }

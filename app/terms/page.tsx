@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "October 21, 2026"
+const LAST_UPDATED = "October 26, 2026"
 
 export default function TermsPage() {
   return (
@@ -81,10 +81,19 @@ export default function TermsPage() {
                 without notice and at the operator&apos;s sole discretion.
               </p>
 
+              <h2>Bio pages</h2>
+              <p>
+                A bio page is public. Don&apos;t use it to pretend to be another person, a company or
+                hrva.cc, to collect passwords or payment details, or for anything the acceptable use
+                rules above forbid. Handles that imitate a person, a brand or hrva.cc may be refused or
+                taken back. The operator may hide a bio page or revoke its handle at any time, with or
+                without notice; you&apos;ll see the reason in the editor.
+              </p>
+
               <h2>Reporting abuse</h2>
               <p>
                 To report a short link that leads to phishing, malware, scams or spam, use the{" "}
-                <Link href="/report">report form</Link> or email{" "}
+                <Link href="/report">report form</Link> (it also takes a bio page, as hrva.cc/@name) or email{" "}
                 <a href="mailto:abuse@hrva.cc">abuse@hrva.cc</a> with the short link. The operator may
                 disable links that lead to phishing, malware, scams or spam, and may block the accounts
                 that create them.

@@ -103,6 +103,35 @@ export default function PrivacyPage() {
                 basic, privacy-preserving usage statistics and protecting the service from abuse.
               </p>
 
+              <h3>Bio pages</h3>
+              <p>
+                If you create a bio page, we store what you enter for it: your handle, display name,
+                bio, avatar choice (initials or an emoji), colour and theme, and which of your short
+                links appear as buttons, with their titles and icons. Everything on the page is public
+                at hrva.cc/@yourhandle, so add only what you want anyone to see. Your email address is
+                never shown. Search engines are asked not to list the page unless you turn on
+                &quot;Allow search engines to index this page&quot;.
+              </p>
+              <p>
+                When someone opens a bio page, their browser tells hrva.cc once that the page was
+                viewed. We count each visitor at most once a day with the same one-way hash as link
+                statistics: the IP address and browser identifier are combined with the page and a key
+                that changes every day, kept only in Redis and deleted a few hours after the day ends.
+                We store only daily totals per page: views, and views by bots. The page sets no cookies
+                and loads no third-party scripts, fonts or trackers. Clicks on its buttons are ordinary
+                short link clicks, counted as described above.
+              </p>
+              <p>
+                When you change your handle or delete your page, we keep the old handle for 30 days, so
+                nobody can take it to pretend to be you, and then delete it. If an admin revokes a
+                handle, it stays reserved until the admin releases it. Reports about a bio page, and an
+                admin&apos;s reason for hiding it, are kept with the page.
+              </p>
+              <p>
+                Legal basis: performance of a contract (Art. 6(1)(b) GDPR) for the page you publish;
+                legitimate interest (Art. 6(1)(f) GDPR) for the view counts and for keeping old handles.
+              </p>
+
               <h3>Storage in your browser</h3>
               <p>
                 After you log in, we keep a single authentication token in your browser&apos;s{" "}
@@ -302,6 +331,11 @@ export default function PrivacyPage() {
                   deleting a link also deletes its daily counts.
                 </li>
                 <li>
+                  <strong>Bio pages</strong> — kept until you delete the page or your account; their
+                  daily view counts go with them. An old handle is kept for 30 days after a change or
+                  deletion; a handle an admin revoked stays reserved until the admin releases it.
+                </li>
+                <li>
                   <strong>Connected-app token records</strong>{" "}
                   — deleted when you disconnect the app in Settings → Connected apps, or automatically
                   once the app&apos;s refresh token has gone unused for 30 days.
@@ -321,6 +355,7 @@ export default function PrivacyPage() {
                 within one month. You can also download a copy of your data yourself in Settings → Your
                 data; the export includes your passkeys&apos; names, types, sync state and dates, never key
                 material.
+                It also includes your bio page and its buttons.
                 You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or

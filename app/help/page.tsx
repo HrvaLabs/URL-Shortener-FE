@@ -38,6 +38,11 @@ const guides = [
     title: "QR scans and other clicks",
     description: "How hrva.cc counts scans of its QR codes, and why older printed codes count as other clicks.",
   },
+  {
+    href: "/help/link-in-bio",
+    title: "Bio pages",
+    description: "One page with all your links at hrva.cc/@yourname, for your Instagram, TikTok or any other bio.",
+  },
 ]
 
 export default function HelpPage() {

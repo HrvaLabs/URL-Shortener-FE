@@ -107,10 +107,11 @@ export default function PrivacyPage() {
               <p>
                 If you create a bio page, we store what you enter for it: your handle, display name,
                 bio, avatar choice (initials or an emoji), colour and theme, and which of your short
-                links appear as buttons, with their titles and icons. Everything on the page is public
-                at hrva.cc/@yourhandle, so add only what you want anyone to see. Your email address is
-                never shown. Search engines are asked not to list the page unless you turn on
-                &quot;Allow search engines to index this page&quot;.
+                links appear as buttons, with their titles, icons, order and whether each is shown,
+                your search-engine setting, and when the page was created and last changed. Everything
+                on the page is public at hrva.cc/@yourhandle, so add only what you want anyone to see.
+                Your email address is never shown on the page. Search engines are asked not to list the
+                page unless you turn on &quot;Allow search engines to index this page&quot;.
               </p>
               <p>
                 When someone opens a bio page, their browser tells hrva.cc once that the page was
@@ -123,13 +124,18 @@ export default function PrivacyPage() {
               </p>
               <p>
                 When you change your handle or delete your page, we keep the old handle for 30 days, so
-                nobody can take it to pretend to be you, and then delete it. If an admin revokes a
-                handle, it stays reserved until the admin releases it. Reports about a bio page, and an
-                admin&apos;s reason for hiding it, are kept with the page.
+                nobody can take it to pretend to be you, and then delete it. Like links, a bio
+                page&apos;s text (handle, name, bio and button titles) is checked automatically for brand
+                names and phishing words; a hit sends the page to an admin, and the notes, any visitor
+                reports, and an admin&apos;s reason for hiding the page or taking back its handle are
+                kept with the page and deleted with it. A handle an admin takes back is also kept on the
+                reserved list, with the admin&apos;s reason but without a link to you, until an admin
+                releases it.
               </p>
               <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) for the page you publish;
-                legitimate interest (Art. 6(1)(f) GDPR) for the view counts and for keeping old handles.
+                legitimate interest (Art. 6(1)(f) GDPR) for the view counts, for keeping old handles,
+                and for checking and reviewing pages to protect visitors and the service from abuse.
               </p>
 
               <h3>Storage in your browser</h3>
@@ -225,7 +231,7 @@ export default function PrivacyPage() {
                 never IP addresses or visit details.
               </p>
               <p>
-                If you <Link href="/report">report a link</Link>, we store the short link, the
+                If you <Link href="/report">report a link or bio page</Link>, we store the link or handle, the
                 category and the details you write, and nothing about you beyond a rate-limit
                 counter for your network, which expires after an hour. Reports are also posted to
                 the admin&apos;s Discord channel, as described under <em>Who else receives data</em>.
@@ -332,8 +338,10 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Bio pages</strong> — kept until you delete the page or your account; their
-                  daily view counts go with them. An old handle is kept for 30 days after a change or
-                  deletion; a handle an admin revoked stays reserved until the admin releases it.
+                  daily view counts, review notes, visitor reports and an admin&apos;s reasons go with
+                  them. An old handle is kept for 30 days after a change or deletion. A handle an admin
+                  takes back is also kept on the reserved list, with the admin&apos;s reason but without a
+                  link to you, until an admin releases it.
                 </li>
                 <li>
                   <strong>Connected-app token records</strong>{" "}

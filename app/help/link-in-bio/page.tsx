@@ -224,7 +224,7 @@ export default function LinkInBioHelpPage() {
               <p>
                 Select <strong>Report this page</strong> at the bottom of any bio page, or enter{" "}
                 <code>hrva.cc/@name</code> on the <Link href="/report">report form</Link>. Say which button
-                is the problem in the details. Reports go to a person; nothing is hidden automatically.
+                is the problem in the details. Reports go to a person; a report never hides a page by itself.
               </p>
               <p>
                 An admin may hide a page that breaks the <Link href="/terms">terms</Link>. Visitors then see
@@ -236,7 +236,7 @@ export default function LinkInBioHelpPage() {
               <h2 id="privacy">Bio pages and your privacy</h2>
               <ul>
                 <li>
-                  Everything on your page is public. Your email address is never shown.
+                  Everything on your page is public. Your email address is never shown on the page.
                 </li>
                 <li>
                   Views are daily counts, made with the same one-way hash as link statistics: a visitor
@@ -247,8 +247,9 @@ export default function LinkInBioHelpPage() {
                 </li>
                 <li>
                   <strong>Delete bio page</strong>, at the bottom of the editor, deletes the page and its
-                  view counts; your short links stay. The handle is kept for 30 days, so nobody can take
-                  it to pretend to be you. Deleting your account does the same.
+                  view counts right away, but not while an admin has hidden it; your short links stay.
+                  The handle is kept for 30 days so nobody can pretend to be you, and that includes you:
+                  you won&apos;t be able to use it again until then. Deleting your account does the same.
                 </li>
                 <li>
                   The data export in Settings includes your bio page and its buttons.

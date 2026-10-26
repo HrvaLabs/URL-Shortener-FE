@@ -56,7 +56,6 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const entryRowRef = useRef<HTMLTableRowElement>(null)
   const scrolledEntry = useRef<number | null>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
-  const scrollToSection = useRef(false)
   const firstRemaining = useCallback(
     () => document.querySelector<HTMLElement>("[data-bio-review-table] tbody [data-remove-row]") ?? fallbackFocusRef.current,
     [fallbackFocusRef],
@@ -65,10 +64,11 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const restoreFocus = removalFocus.restore
   const restoreAfterRefetch = useRef(false)
   const settled = !isFetching && !(data && data.totalPages > 0 && page >= data.totalPages)
-  const loadFailed = !!error && !data
+  const loadFailed = !!error
   const showTable = entries.length > 0 || loadFailed
   const notInQueue = bioId != null && !!data && !error && !entryShown
   const [linkedHere] = useState(openedAtSection)
+  const scrollToSection = useRef(linkedHere)
   const nothingWaiting = linkedHere && bioId == null && !!data && !error && entries.length === 0
 
   useEffect(() => {
@@ -82,10 +82,6 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
     entryRowRef.current?.scrollIntoView({ block: "center" })
     scrolledEntry.current = bioId
   }, [entryShown, bioId])
-
-  useEffect(() => {
-    if (openedAtSection()) scrollToSection.current = true
-  }, [])
 
   useEffect(() => {
     if (!scrollToSection.current || bioId != null || (entries.length === 0 && !nothingWaiting)) return

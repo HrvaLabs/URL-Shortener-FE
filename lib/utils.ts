@@ -79,6 +79,15 @@ export function truncateUrl(url: string, maxLen = 50): string {
   return url.slice(0, maxLen) + "..."
 }
 
+const removeRowSelector = "[data-remove-row]"
+
+export function focusTargetAfterRemoving(trigger: HTMLElement | null, fallback: HTMLElement | null): HTMLElement | null {
+  const buttons = Array.from(trigger?.closest("table")?.querySelectorAll<HTMLElement>(removeRowSelector) ?? [])
+  const index = trigger ? buttons.indexOf(trigger) : -1
+  const neighbour = index === -1 ? undefined : (buttons[index + 1] ?? buttons[index - 1])
+  return neighbour ?? fallback
+}
+
 const MAX_DESTINATION_LENGTH = 2048
 
 export function destinationLengthError(url: string): string | null {

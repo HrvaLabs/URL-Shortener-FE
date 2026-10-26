@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState, type RefObject } from "react"
 import Link from "next/link"
 import { Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -15,7 +15,7 @@ import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { ApiError } from "@/lib/api-client"
 import { useReservedAliases, useUnreserveAlias } from "@/lib/hooks/useReservedAliases"
 import type { ReservedAlias, ReservedAliasLink } from "@/lib/types"
-import { cn, formatDateTime } from "@/lib/utils"
+import { cn, focusTargetAfterRemoving, formatDateTime } from "@/lib/utils"
 
 const matches = (entry: ReservedAlias, query: string) =>
   [entry.alias, entry.reason, entry.createdBy ?? ""].some((value) => value.toLowerCase().includes(query))
@@ -23,6 +23,7 @@ const matches = (entry: ReservedAlias, query: string) =>
 export function ReservedAliasTable() {
   const { data: aliases, isLoading, error, refetch, isRefetching } = useReservedAliases()
   const [search, setSearch] = useState("")
+  const searchRef = useRef<HTMLInputElement>(null)
   const query = search.trim().toLowerCase()
   const rows = (aliases ?? []).filter((entry) => matches(entry, query))
 
@@ -32,6 +33,7 @@ export function ReservedAliasTable() {
         <div className="relative max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            ref={searchRef}
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -72,7 +74,7 @@ export function ReservedAliasTable() {
           </TableHeader>
           <TableBody>
             {rows.map((entry) => (
-              <ReservedAliasRow key={entry.alias} entry={entry} />
+              <ReservedAliasRow key={entry.alias} entry={entry} fallbackFocusRef={searchRef} />
             ))}
           </TableBody>
         </Table>
@@ -81,7 +83,7 @@ export function ReservedAliasTable() {
   )
 }
 
-function ReservedAliasRow({ entry }: { entry: ReservedAlias }) {
+function ReservedAliasRow({ entry, fallbackFocusRef }: { entry: ReservedAlias; fallbackFocusRef: RefObject<HTMLElement | null> }) {
   return (
     <TableRow>
       <TableCell>
@@ -104,7 +106,7 @@ function ReservedAliasRow({ entry }: { entry: ReservedAlias }) {
         <InUseBy links={entry.inUse} />
       </TableCell>
       <TableCell className="text-right">
-        {!entry.builtIn && entry.id != null && <RemoveButton id={entry.id} alias={entry.alias} />}
+        {!entry.builtIn && entry.id != null && <RemoveButton id={entry.id} alias={entry.alias} fallbackFocusRef={fallbackFocusRef} />}
       </TableCell>
     </TableRow>
   )
@@ -129,15 +131,27 @@ function InUseBy({ links }: { links: ReservedAliasLink[] }) {
   )
 }
 
-function RemoveButton({ id, alias }: { id: number; alias: string }) {
+function RemoveButton({ id, alias, fallbackFocusRef }: { id: number; alias: string; fallbackFocusRef: RefObject<HTMLElement | null> }) {
   const unreserve = useUnreserveAlias()
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const focusAfterClose = useRef<HTMLElement | null>(null)
 
   const remove = () => {
     if (unreserve.isPending) return
+    focusAfterClose.current = focusTargetAfterRemoving(triggerRef.current, fallbackFocusRef.current)
     unreserve.mutateAsync(id).then(
       () => toast.success(`Removed ${alias}`),
       (error) => toast.error(error instanceof ApiError ? error.message : "Couldn't remove the reservation. Try again."),
     )
+  }
+
+  const focusOffTheRow = (event: Event) => {
+    const target = focusAfterClose.current
+    if (!target) return
+    focusAfterClose.current = null
+    event.preventDefault()
+    const next = target.isConnected ? target : fallbackFocusRef.current
+    next?.focus()
   }
 
   return (
@@ -146,6 +160,8 @@ function RemoveButton({ id, alias }: { id: number; alias: string }) {
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
             <button
+              ref={triggerRef}
+              data-remove-row
               aria-label={`Remove the reservation for ${alias}`}
               disabled={unreserve.isPending}
               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
@@ -156,14 +172,14 @@ function RemoveButton({ id, alias }: { id: number; alias: string }) {
         </TooltipTrigger>
         <TooltipContent side="top">Remove</TooltipContent>
       </Tooltip>
-      <AlertDialogContent>
+      <AlertDialogContent onCloseAutoFocus={focusOffTheRow}>
         <AlertDialogHeader>
           <AlertDialogTitle className="[overflow-wrap:anywhere]">Remove the reservation for {alias}?</AlertDialogTitle>
           <AlertDialogDescription>Anyone will be able to create a link with this alias again.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={remove} disabled={unreserve.isPending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogAction onClick={remove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
             Remove
           </AlertDialogAction>
         </AlertDialogFooter>

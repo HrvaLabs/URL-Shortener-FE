@@ -33,8 +33,8 @@ function formatMs(ms: number | null): string {
   return ms == null ? "—" : `${ms.toFixed(1)} ms`
 }
 
-function formatSlowest({ count, maxMs }: RedirectTiming): string {
-  return count > 0 && maxMs === 0 ? "—" : formatMs(maxMs)
+function formatSlowest({ maxMs }: RedirectTiming): string {
+  return maxMs === 0 ? "—" : formatMs(maxMs)
 }
 
 interface SystemTabProps {

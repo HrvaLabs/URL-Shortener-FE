@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useRef, useState, type FormEvent, type RefObject } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { adminApi } from "@/lib/api-client"
 import type { DomainRule, DomainRuleCreated, DomainRuleType } from "@/lib/types"
-import { formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
+import { focusTargetAfterRemoving, formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 import { ruleTypeLabels } from "./labels"
 
 const ruleTypes: DomainRuleType[] = ["BLOCK", "ALLOW"]
@@ -45,11 +45,13 @@ const normalizeDomain = (input: string) => {
 }
 
 export function DomainRulesSection() {
+  const headingRef = useRef<HTMLHeadingElement>(null)
+
   return (
     <section className="overflow-hidden rounded-xl border bg-card">
       <Tabs defaultValue="BLOCK">
         <div className="flex min-h-13 flex-wrap items-center justify-between gap-3 border-b px-5 py-2.5">
-          <h2 className="text-sm font-semibold">Domain rules</h2>
+          <h2 ref={headingRef} tabIndex={-1} className="rounded-sm text-sm font-semibold">Domain rules</h2>
           <TabsList>
             {ruleTypes.map((type) => (
               <TabsTrigger key={type} value={type}>{ruleTypeLabels[type]}</TabsTrigger>
@@ -58,7 +60,7 @@ export function DomainRulesSection() {
         </div>
         {ruleTypes.map((type) => (
           <TabsContent key={type} value={type} className="mt-0">
-            <DomainRulesPanel type={type} />
+            <DomainRulesPanel type={type} fallbackFocusRef={headingRef} />
           </TabsContent>
         ))}
       </Tabs>
@@ -66,7 +68,7 @@ export function DomainRulesSection() {
   )
 }
 
-function DomainRulesPanel({ type }: { type: DomainRuleType }) {
+function DomainRulesPanel({ type, fallbackFocusRef }: { type: DomainRuleType; fallbackFocusRef: RefObject<HTMLElement | null> }) {
   const queryClient = useQueryClient()
   const { data: rules, isLoading, error, refetch } = useQuery<DomainRule[]>({
     queryKey: ["admin", "domain-rules", type],
@@ -156,7 +158,7 @@ function DomainRulesPanel({ type }: { type: DomainRuleType }) {
           </TableHeader>
           <TableBody>
             {rules.map((rule) => (
-              <DomainRuleRow key={rule.id} rule={rule} />
+              <DomainRuleRow key={rule.id} rule={rule} fallbackFocusRef={fallbackFocusRef} />
             ))}
           </TableBody>
         </Table>
@@ -165,8 +167,10 @@ function DomainRulesPanel({ type }: { type: DomainRuleType }) {
   )
 }
 
-function DomainRuleRow({ rule }: { rule: DomainRule }) {
+function DomainRuleRow({ rule, fallbackFocusRef }: { rule: DomainRule; fallbackFocusRef: RefObject<HTMLElement | null> }) {
   const queryClient = useQueryClient()
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const focusAfterClose = useRef<HTMLElement | null>(null)
   const remove = useMutation({
     mutationFn: () => adminApi.deleteDomainRule(rule.id),
     onSuccess: () => toast.success(`Removed ${rule.domain}`),
@@ -174,6 +178,20 @@ function DomainRuleRow({ rule }: { rule: DomainRule }) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules", rule.type] }),
   })
   const ruleName = rule.type === "BLOCK" ? "block" : "trust"
+
+  const startRemoving = () => {
+    focusAfterClose.current = focusTargetAfterRemoving(triggerRef.current, fallbackFocusRef.current)
+    remove.mutate()
+  }
+
+  const focusOffTheRow = (event: Event) => {
+    const target = focusAfterClose.current
+    if (!target) return
+    focusAfterClose.current = null
+    event.preventDefault()
+    const next = target.isConnected ? target : fallbackFocusRef.current
+    next?.focus()
+  }
 
   return (
     <TableRow>
@@ -196,6 +214,8 @@ function DomainRuleRow({ rule }: { rule: DomainRule }) {
             <TooltipTrigger asChild>
               <AlertDialogTrigger asChild>
                 <button
+                  ref={triggerRef}
+                  data-remove-row
                   aria-label={`Remove ${rule.domain}`}
                   disabled={remove.isPending}
                   className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
@@ -206,14 +226,14 @@ function DomainRuleRow({ rule }: { rule: DomainRule }) {
             </TooltipTrigger>
             <TooltipContent side="top">Remove</TooltipContent>
           </Tooltip>
-          <AlertDialogContent>
+          <AlertDialogContent onCloseAutoFocus={focusOffTheRow}>
             <AlertDialogHeader>
               <AlertDialogTitle className="break-all">Remove {rule.domain}?</AlertDialogTitle>
               <AlertDialogDescription>This removes the {ruleName} rule for {rule.domain} and its subdomains.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remove</AlertDialogAction>
+              <AlertDialogAction onClick={startRemoving} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remove</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

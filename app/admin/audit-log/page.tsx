@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
+import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import type { AuditAction, AuditLog, Page } from "@/lib/types"
@@ -148,7 +149,7 @@ export default function AdminAuditLogPage() {
             <TableBody>
               {data.content.map((entry) => (
                 <TableRow key={entry.id}>
-                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(entry.performedAt)}</TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">{formatDateTime(parseServerDateTime(entry.performedAt))}</TableCell>
                   <TableCell className="font-medium">{entry.performedBy}</TableCell>
                   <TableCell>
                     <Badge variant={actionColor(entry)} className="whitespace-nowrap">

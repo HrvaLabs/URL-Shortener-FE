@@ -235,17 +235,26 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc
-                  posts short alerts to a private Discord channel that only the admin reads: when a
-                  link is flagged for review, reported by a visitor or blocked automatically, when
-                  someone signs up, and when a blocklist fails to load or loads again. An alert can
-                  include the short link, the domain it points to (never the full address), the
-                  owner&apos;s account number (not their email address or name), the reasons for the
-                  flag or block, and for a visitor report its category and up to 200 characters
-                  of the details, with anything that looks like an email or IP address removed. A
-                  sign-up alert shows only the account number and whether the account uses email,
-                  Google or GitHub. Discord Inc., based in the United States, processes these
-                  messages under its own terms, and they stay in the channel until the admin
-                  deletes them.
+                  posts alerts to a private Discord channel that only the admin reads: when a link
+                  is flagged for review, reported by a visitor or blocked automatically, when
+                  someone signs up, when a blocklist fails to load or loads again, and when many new
+                  links to the same new domain appear in a short time (a possible phishing wave). An
+                  alert can include the short link, the domain it points to (never the full
+                  address), the owner&apos;s account number (not their email address or name), the
+                  reasons for the flag or block, and for a visitor report its category and the full
+                  details, with anything that looks like an email or IP address removed. A sign-up
+                  alert shows only the account number and whether the account uses email, Google or
+                  GitHub. A phishing-wave alert names the domain and its age, if known, and counts
+                  the new links and the different accounts or networks that made them, without
+                  saying which ones. Every Monday the channel also gets the weekly summary:
+                  site-wide totals for the past week, such as clicks, visitors, new links and users,
+                  reviews and automatic blocks, how many reviews are still open, and the top 5 links
+                  by clicks, each with its short link, the domain it points to and its click count.
+                  Nothing in a message is cut short: when more alerts come in at once than fit in
+                  one message, the rest aren&apos;t posted and the message ends with how many were
+                  left out (&ldquo;and N more&rdquo;). Discord Inc., based in the United States,
+                  processes these messages under its own terms, and they stay in the channel until
+                  the admin deletes them.
                 </li>
                 {/* TODO: name the email delivery provider (and its location/safeguards) */}
                 <li>

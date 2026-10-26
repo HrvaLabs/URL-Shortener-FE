@@ -91,6 +91,7 @@ spacing:
   section: "96px"
   section-lg: "112px"
   container-max: "1200px"
+  container-admin: "1536px"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
@@ -258,7 +259,7 @@ A zinc neutral scale with a single saturated electric-blue accent and three mute
 
 ## Layout
 
-Single centred container capped at 1200px with 20px side padding, 24px from `sm`, 32px from `lg`. Landing sections stack vertically with 96px vertical padding (112px from `sm`) and are separated by hairline `border-t`/`border-y`, with one muted band (the privacy section) for rhythm. Two-column splits use asymmetric `minmax(0,1fr) minmax(0,1.2fr)` or `1fr 1.5fr` grids at `lg`, collapsing to one column below.
+Single centred container capped at 1200px with 20px side padding, 24px from `sm`, 32px from `lg`. Admin pages are the exception: their header and content use a 1536px container (`max-w-(--breakpoint-2xl)`, 20px side padding) with a 13rem sidebar beside the content from `md`, and `main` is the single `@container`, so admin tables choose their columns with container queries on the content area, not viewport breakpoints. Landing sections stack vertically with 96px vertical padding (112px from `sm`) and are separated by hairline `border-t`/`border-y`, with one muted band (the privacy section) for rhythm. Two-column splits use asymmetric `minmax(0,1fr) minmax(0,1.2fr)` or `1fr 1.5fr` grids at `lg`, collapsing to one column below.
 
 The first viewport is centred: headline, one lede sentence, then the hero shorten field at max ~42rem (672px) with a 56px input and button, followed by the framed dashboard preview that starts above the fold and fades out through a bottom mask.
 
@@ -328,10 +329,18 @@ Quiet and solid; ink on paper, never coloured.
 
 ### Tables
 - Header row on zinc-wash at 50% with 12px medium muted labels; 40px header, 12px by 16px cells; rows divided by hairlines, hover at muted 40%, selected rows on brand-soft. Numerals are tabular.
+- **Columns by container:** admin tables show or hide columns with container variants on `main` (`@3xl:table-cell`, `@5xl:table-cell`), each threshold the smallest container size at which that column set fits without overlap. A hidden column's value moves to a muted line under the first cell.
+- **Wrap, never truncate:** every value is shown in full and wraps (`[overflow-wrap:anywhere]` for URLs, emails and aliases); nothing is cut off with "…" and a tooltip. Wrapping columns get a `min-w-*` so they never fall to one word per line, short values (dates, counts, badges) stay on one line, and a table wider than its card scrolls inside the card, never the page.
 
 ### Navigation
 - **Public header:** sticky, 64px, hairline bottom border, LogoMark plus `hrva` with a muted `.cc`; text links 14px muted turning ink on hover; ghost "Sign in" and primary "Get started" at the small size; below `md` the links fold into a dropdown behind a menu icon.
-- **Dashboard nav:** sticky, 56px, solid paper ground. Items are 32px, 6px radius; active is zinc-hover fill with medium ink text and `aria-current`; inactive is muted, hovering to a 60% zinc-hover fill. Admin routes sit behind one dropdown.
+- **Dashboard nav:** sticky, 56px, solid paper ground. Items are 32px, 6px radius; active is zinc-hover fill with medium ink text and `aria-current`; inactive is muted, hovering to a 60% zinc-hover fill. Admin is one link, carrying the open review count, active on every admin route.
+- **Admin sidebar:** the admin pages sit in a sticky 13rem sidebar in four groups, Overview, Moderation, Content and Logs, each under a 12px muted group label, with dashboard-nav items (icon, label, the review count on Review queue). Below `md` the same items become a horizontally scrolling chip row of bordered nav items above the content, with a hairline divider between groups and the active chip scrolled into view.
+
+### Charts
+- **Stacked daily bars** (`StackedDailyChart`, admin stats) stay inside the One Blue Rule. A series is one of three brand lightness steps, 100, 55 and 25 (brand mixed in oklab toward the card; in dark 100, 60 and 20 toward the foreground), each solid or with a 45° hatch (a 6px pattern with a 1px card-coloured line), so up to six series stay apart without a second hue or colour vision. Where the series have structure, lightness carries one dimension and hatch the other (links created: lightness is the channel, hatch is "no account"); a chart of two or three plain series uses the solid steps in order.
+- `unknown`, and any key the chart has no fill for, is muted (`muted-foreground` at 0.75 alpha) and stacks last.
+- In light mode the palest step gets a 1px brand edge wherever the segment has at least 5px of room (the sides when it's at least 5px wide, top and bottom when it's at least 5px tall), so it holds 3:1 against the card; the dark palest step needs no edge. Stacked segments are split by a 2px gap (1px under 6px tall). Legend and tooltip swatches render the same fill, hatch and edge.
 
 ### Overlays
 - **Dialog:** paper ground, 12px radius from `sm`, 24px padding, Modal shadow, 50% black scrim, Radix fade and 95% zoom.
@@ -367,6 +376,7 @@ The landing's framed dashboard: real table markup (short link, destination, visi
 - **Don't** use gradient text, blurred colour blobs, glows or amber-on-dark lighting.
 - **Don't** make cards, dialogs or sections translucent glass panels.
 - **Don't** nest a bordered card inside another card.
+- **Don't** cut a value off with "…" and a tooltip (`truncate` plus `title`); show it in full and let it wrap.
 - **Don't** add section entrance animations or scroll-triggered reveals; the shortened result is the only authored entrance.
 - **Don't** use a serif or a separate display family; display is Host Grotesk at 650 with -0.03em.
 - **Don't** load fonts or assets from third-party hosts; fonts are self-hosted through `next/font`.

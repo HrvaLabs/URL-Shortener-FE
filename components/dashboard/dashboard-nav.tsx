@@ -112,7 +112,7 @@ export function DashboardNav({ wide = false }: { wide?: boolean }) {
 
         <nav
           aria-label="Dashboard"
-          className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 scrollbar-none md:hidden [&::-webkit-scrollbar]:hidden"
+          className="-mx-1 flex flex-wrap items-center gap-1 px-1 pb-2 md:hidden"
         >
           {links}
           {isAdmin && <AdminLink pathname={pathname} />}

@@ -46,10 +46,21 @@ interface BioPageReasonDialogProps {
 
 export function BioPageReasonDialog({ mode, page, open, onOpenChange, onConfirm, onCloseAutoFocus }: BioPageReasonDialogProps) {
   const [busy, setBusy] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  const focusReason = (event: Event) => {
+    const field = contentRef.current?.querySelector("textarea")
+    if (!field) return
+    event.preventDefault()
+    field.focus()
+    field.select()
+  }
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next || !busy) onOpenChange(next) }}>
       <DialogContent
+        ref={contentRef}
+        onOpenAutoFocus={focusReason}
         onEscapeKeyDown={(event) => { if (busy) event.preventDefault() }}
         onInteractOutside={(event) => { if (busy) event.preventDefault() }}
         onCloseAutoFocus={onCloseAutoFocus}

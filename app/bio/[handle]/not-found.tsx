@@ -2,7 +2,7 @@ import Link from "next/link"
 
 export default function BioPageNotFound() {
   return (
-    <div className="bio-theme-auto flex min-h-dvh w-full flex-col">
+    <div className="bio-public bio-theme-auto flex min-h-dvh w-full flex-col">
       <main className="mx-auto flex w-full max-w-[34rem] flex-1 flex-col items-center justify-center px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold">This page isn&apos;t available</h1>
         <p className="mt-3 text-[var(--bio-muted)]">The address may be wrong, or the page was removed.</p>

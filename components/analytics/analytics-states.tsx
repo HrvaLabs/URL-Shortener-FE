@@ -40,11 +40,11 @@ export function AnalyticsError({
   const refusal = refusals && error instanceof ApiError ? refusals[error.status] : undefined
   return (
     <div className="rounded-xl border bg-card px-6 py-12 text-center">
-      <p className={cn("text-sm", refusal ? "text-muted-foreground" : "text-destructive")}>
+      <p role="alert" className={cn("text-sm", refusal ? "text-muted-foreground" : "text-destructive")}>
         {refusal ?? message}
       </p>
       {!refusal && (
-        <Button variant="outline" size="sm" onClick={onRetry} disabled={retrying} className="mt-4">
+        <Button variant="outline" size="sm" onClick={retrying ? undefined : onRetry} aria-disabled={retrying} className="mt-4 aria-disabled:opacity-50">
           Retry
         </Button>
       )}

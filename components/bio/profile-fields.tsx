@@ -156,7 +156,7 @@ export function ProfileFields({
         <SegmentedRadios legend="Avatar" value={draft.avatarKind} options={AVATAR_OPTIONS} onChange={(avatarKind) => onChange({ avatarKind })} />
         {draft.avatarKind === "EMOJI" && (
           <div className="space-y-2">
-            <Label htmlFor={emojiId}>Emoji</Label>
+            <Label htmlFor={emojiId}>Your emoji</Label>
             <Input
               id={emojiId}
               value={draft.avatarEmoji}

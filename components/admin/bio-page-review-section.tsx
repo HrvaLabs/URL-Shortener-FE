@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useId, useRef, useState, type RefObject } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { BioPageReasonDialog, errorText } from "@/components/admin/bio-pages/bio-page-reason-dialog"
@@ -12,6 +12,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
 import { useBioPageReviews, useResolveBioPageReview } from "@/lib/hooks/useAdminBioPages"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useClampedPage } from "@/lib/hooks/usePagination"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { BioPageReviewEntry } from "@/lib/types"
@@ -65,11 +66,19 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const restoreAfterRefetch = useRef(false)
   const settled = !isFetching && !(data && data.totalPages > 0 && page >= data.totalPages)
   const loadFailed = !!error
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const retryFocusTarget = useMemo<RefObject<HTMLElement | null>>(
+    () => ({ get current() { return headingRef.current ?? fallbackFocusRef.current } }),
+    [fallbackFocusRef],
+  )
+  const retry = useFocusAfterRetry(retryFocusTarget, !!data && !loadFailed)
   const showTable = entries.length > 0 || loadFailed
-  const notInQueue = bioId != null && !!data && !error && !entryShown
+  const [resolvedIds, setResolvedIds] = useState<ReadonlySet<number>>(() => new Set())
+  const deepLinked = bioId != null && !resolvedIds.has(bioId)
+  const notInQueue = deepLinked && !!data && !error && !entryShown
   const [linkedHere] = useState(openedAtSection)
   const scrollToSection = useRef(linkedHere)
-  const nothingWaiting = linkedHere && bioId == null && !!data && !error && entries.length === 0
+  const nothingWaiting = (linkedHere || resolvedIds.size > 0) && !deepLinked && !!data && !error && entries.length === 0
 
   useEffect(() => {
     if (!restoreAfterRefetch.current || !settled) return
@@ -89,6 +98,8 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
     sectionRef.current?.scrollIntoView({ block: "start" })
   }, [bioId, entries.length, nothingWaiting])
 
+  const markResolved = (pageId: number) => setResolvedIds((previous) => new Set(previous).add(pageId))
+
   const setBusy = (pageId: number, busy: boolean) => {
     if (busy) pendingIds.current.add(pageId)
     else pendingIds.current.delete(pageId)
@@ -107,6 +118,7 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
     restoreAfterRefetch.current = true
     try {
       await resolve.mutateAsync({ pageId: entry.pageId, action: "OK" })
+      markResolved(entry.pageId)
       toast.success(`Marked ${entryName(entry)} as fine`)
     } catch (resolveError) {
       toast.error(errorText(resolveError))
@@ -135,6 +147,7 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
     } finally {
       setBusy(entry.pageId, false)
     }
+    markResolved(entry.pageId)
     toast.success(`Hid ${entryName(entry)}`)
     setHideOpen(false)
   }
@@ -151,11 +164,26 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
 
       {showTable && (
         <section aria-labelledby={headingId} className="min-w-0 overflow-hidden rounded-xl border bg-card">
-          <h2 id={headingId} className="border-b px-5 py-3.5 text-sm font-semibold">Bio pages</h2>
+          <h2
+            ref={headingRef}
+            id={headingId}
+            tabIndex={-1}
+            className="border-b px-5 py-3.5 text-sm font-semibold focus-visible:ring-0 focus-visible:ring-offset-0"
+          >
+            Bio pages
+          </h2>
           {loadFailed ? (
             <div className="px-6 py-10 text-center">
-              <p className="text-sm font-medium text-destructive">Failed to load the bio page reviews</p>
-              <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+              <p role="alert" className="text-sm font-medium text-destructive">Failed to load the bio page reviews</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 aria-disabled:opacity-50"
+                onClick={() => { if (!isFetching) retry(refetch) }}
+                aria-disabled={isFetching}
+              >
+                Retry
+              </Button>
             </div>
           ) : (
             <>
@@ -187,7 +215,7 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
                               <BioPageLink handle={entry.handle} />
                               {entry.hidden && <Badge variant="destructive">Hidden</Badge>}
                             </div>
-                            {entry.displayName && <p className="mt-0.5 [overflow-wrap:anywhere]">{entry.displayName}</p>}
+                            {entry.displayName && <p dir="auto" className="mt-0.5 [overflow-wrap:anywhere]">{entry.displayName}</p>}
                           </div>
                           <div className="mt-1 min-w-36 space-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[57rem]:hidden">
                             <p className="[overflow-wrap:anywhere]">{entry.ownerEmail}</p>
@@ -281,7 +309,7 @@ function ReasonList({ reasons, className }: { reasons: string[]; className?: str
   return (
     <ul className={cn("space-y-0.5 text-xs", className)}>
       {reasons.map((reason, index) => (
-        <li key={`${index}-${reason}`} className="[overflow-wrap:anywhere]">{reason}</li>
+        <li key={`${index}-${reason}`} dir="auto" className="[overflow-wrap:anywhere]">{reason}</li>
       ))}
     </ul>
   )

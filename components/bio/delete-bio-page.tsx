@@ -94,7 +94,7 @@ export function DeleteBioPage({ handle, hidden }: { handle: string | null; hidde
               <AlertDialogTitle>Delete your bio page?</AlertDialogTitle>
               <AlertDialogDescription className="[overflow-wrap:anywhere]">
                 {handle
-                  ? `Your page at ${displayShareUrl(handle, getShortBaseUrl())} stops working right away and its view counts are deleted. Your short links stay. Nobody else can take @${handle} for 30 days.`
+                  ? `Your page at ${displayShareUrl(handle, getShortBaseUrl())} stops working right away and its view counts are deleted. Your short links stay. @${handle} is kept for 30 days so nobody can pretend to be you, and that includes you: you won't be able to use it again until then.`
                   : "Your page and its view counts are deleted. Your short links stay."}
               </AlertDialogDescription>
             </AlertDialogHeader>

@@ -105,6 +105,9 @@ const actionLabel = ({ action, failed }: AuditLog): string => {
   return failed ? `${label} (failed)` : label
 }
 
+const detailsText = ({ action, details }: AuditLog): string | null =>
+  action === "REVOKE_BIO_HANDLE" && details ? details.replace(/(^|, )expectedHandle: /, "$1Handle: ") : details
+
 export default function AdminAuditLogPage() {
   const { page, size, setPage, setSize } = usePagination()
   const [action, setAction] = useState<AuditAction | "">("")
@@ -188,7 +191,7 @@ export default function AdminAuditLogPage() {
                         {targetTypeLabel(entry.targetType)}
                         {entry.targetIdentifier && <span className="font-mono text-foreground"> {entry.targetIdentifier}</span>}
                       </p>
-                      {entry.details && <p className="[overflow-wrap:anywhere]">{entry.details}</p>}
+                      {entry.details && <p className="[overflow-wrap:anywhere]">{detailsText(entry)}</p>}
                     </div>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground @4xl:table-cell">{targetTypeLabel(entry.targetType)}</TableCell>
@@ -196,7 +199,7 @@ export default function AdminAuditLogPage() {
                     <span className="block min-w-28 font-mono text-[13px] [overflow-wrap:anywhere]">{entry.targetIdentifier || "—"}</span>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground @4xl:table-cell">
-                    <span className="block min-w-40 [overflow-wrap:anywhere]">{entry.details || "—"}</span>
+                    <span className="block min-w-40 [overflow-wrap:anywhere]">{detailsText(entry) || "—"}</span>
                   </TableCell>
                 </TableRow>
               ))}

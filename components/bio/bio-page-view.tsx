@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react"
 import Link from "next/link"
 import { BioIconGlyph } from "@/components/bio/bio-icons"
-import { BIO_ACCENTS, BIO_ICON_LABELS, initialsOf, isBioIcon } from "@/lib/bio"
+import { BIO_ACCENTS, BIO_ICON_LABELS, BIO_PAGE_NAME_ID, initialsOf, isBioIcon } from "@/lib/bio"
 import type { BioAccent, BioAvatarKind, BioIcon, BioTheme } from "@/lib/types"
 
 export type BioPageViewModel = {
@@ -36,7 +36,7 @@ function ButtonContent({ title, icon }: { title: string; icon: BioIcon | null })
       {knownIcon && <BioIconGlyph icon={knownIcon} className="size-5 shrink-0" />}
       <span className="min-w-0 flex-1 text-center">
         {platformLabel && <span className="sr-only">{platformLabel}: </span>}
-        {title}
+        <span dir="auto">{title}</span>
       </span>
       {knownIcon && <span className="size-5 shrink-0" aria-hidden="true" />}
     </>
@@ -64,7 +64,7 @@ export function BioPageView({
 
   return (
     <div
-      className={`bio-theme-${page.theme.toLowerCase()} ${isPublic ? "min-h-dvh" : "min-h-full"} w-full`}
+      className={`bio-theme-${page.theme.toLowerCase()} ${isPublic ? "bio-public min-h-dvh" : "min-h-full"} w-full`}
       style={accentStyle}
     >
       <Content className="mx-auto w-full max-w-[34rem] px-4 py-10">
@@ -79,13 +79,22 @@ export function BioPageView({
               <span className="text-3xl font-semibold">{initialsOf(page.displayName, page.handle)}</span>
             )}
           </div>
-          <Name className={`mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere] ${name ? "" : "text-[var(--bio-muted)]"}`}>
+          <Name
+            id={isPublic ? BIO_PAGE_NAME_ID : undefined}
+            tabIndex={isPublic ? -1 : undefined}
+            dir="auto"
+            className={`mt-5 w-full text-2xl font-semibold [overflow-wrap:anywhere] focus-visible:ring-0 focus-visible:ring-offset-0 ${name ? "" : "text-[var(--bio-muted)]"}`}
+          >
             {name || "Your name"}
           </Name>
           {page.displayName && handleLabel && (
             <p className="mt-1 w-full text-[var(--bio-muted)] [overflow-wrap:anywhere]">{handleLabel}</p>
           )}
-          {page.bio && <p className="mt-4 w-full [overflow-wrap:anywhere]">{page.bio}</p>}
+          {page.bio && (
+            <p dir="auto" className="mt-4 w-full [overflow-wrap:anywhere]">
+              {page.bio}
+            </p>
+          )}
         </div>
 
         {page.buttons.length > 0 ? (

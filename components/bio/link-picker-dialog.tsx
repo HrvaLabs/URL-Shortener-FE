@@ -22,6 +22,9 @@ const DISABLED_CLASSES = "aria-disabled:pointer-events-none aria-disabled:opacit
 
 const pickerFilters = (search: string): UrlFilters => ({ search: search || undefined, active: true })
 
+const needsMoreRows = (list: HTMLUListElement | null, wanted: number, count: number, totalPages: number | undefined) =>
+  totalPages !== undefined && count < totalPages && (list?.childElementCount ?? 0) < wanted
+
 export const ignoreKeyRepeat = (event: KeyboardEvent<HTMLElement>) => {
   if (event.repeat) event.preventDefault()
 }
@@ -90,7 +93,7 @@ function PickerBody({
   const limitId = useId()
   const [input, setInput] = useState("")
   const [search, setSearch] = useState("")
-  const [paging, setPaging] = useState({ search: "", count: 1 })
+  const [paging, setPaging] = useState({ search: "", count: 1, wanted: PAGE_SIZE })
   const [announcement, setAnnouncement] = useState({ text: "", id: 0 })
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -103,9 +106,16 @@ function PickerBody({
   }, [input])
 
   const count = paging.search === search ? paging.count : 1
+  const wanted = paging.search === search ? paging.wanted : PAGE_SIZE
   const filters = pickerFilters(search)
   const first = useMyUrls(filters, 0, PAGE_SIZE)
   const lastPage = useMyUrls(filters, count - 1, PAGE_SIZE)
+
+  useLayoutEffect(() => {
+    if (!lastPage.isPending && needsMoreRows(listRef.current, wanted, count, lastPage.data?.totalPages)) {
+      setPaging({ search, count: count + 1, wanted })
+    }
+  }, [lastPage.isPending, lastPage.data, wanted, count, search])
 
   useLayoutEffect(() => {
     const picked = focusAfterPick.current
@@ -113,10 +123,13 @@ function PickerBody({
       focusAfterPick.current = null
       ;(picked.isConnected ? picked : searchRef.current)?.focus()
     }
+    if (lastPage.isPending || needsMoreRows(listRef.current, wanted, count, lastPage.data?.totalPages)) return
     const loadedPage = focusPageAfterLoad.current
-    if (loadedPage === null || lastPage.isPending) return
+    if (loadedPage === null) return
     focusPageAfterLoad.current = null
-    const firstNew = listRef.current?.querySelector<HTMLElement>(`${ADD_SELECTOR}[data-page="${loadedPage}"]`)
+    const firstNew = Array.from(listRef.current?.querySelectorAll<HTMLElement>(ADD_SELECTOR) ?? []).find(
+      (button) => Number(button.dataset.page) >= loadedPage,
+    )
     const active = document.activeElement
     const focusLost = !active || active === document.body || !active.isConnected
     ;(firstNew ?? (focusLost ? searchRef.current : null))?.focus()
@@ -137,10 +150,11 @@ function PickerBody({
   const loadMore = () => {
     if (lastPage.isPending) return
     focusPageAfterLoad.current = count
-    setPaging({ search, count: count + 1 })
+    setPaging({ search, count: count + 1, wanted: (listRef.current?.childElementCount ?? 0) + PAGE_SIZE })
   }
 
   const loadingMore = count > 1 && lastPage.isPending
+  const hidesUsedLinks = exclude.size > 0 && !first.isPending && !first.isError && first.data.totalElements > 0
 
   let listState: ReactNode = null
   if (first.isPending) listState = <p role="status" className="py-3 text-sm text-muted-foreground">Loading your links…</p>
@@ -166,6 +180,7 @@ function PickerBody({
         </div>
       </div>
       {full && <p id={limitId} className="text-sm text-muted-foreground">{limitText}</p>}
+      {hidesUsedLinks && <p className="-mt-2 text-xs text-muted-foreground">Links already on your page aren&apos;t listed.</p>}
       <div className="-mx-6 min-h-0 overflow-y-auto px-6">
         {listState ?? (
           <>
@@ -191,7 +206,16 @@ function PickerBody({
                 </Button>
               </div>
             ) : (
-              <p className="hidden py-3 text-sm text-muted-foreground peer-empty:block">No active links match.</p>
+              <p className="hidden py-3 text-sm text-muted-foreground peer-empty:block">
+                {search ? (
+                  "No active links match."
+                ) : (
+                  <>
+                    All your active links are already on your page. Shorten another on the{" "}
+                    <Link href="/dashboard" className="text-brand-link">URLs page</Link>.
+                  </>
+                )}
+              </p>
             )}
           </>
         )}

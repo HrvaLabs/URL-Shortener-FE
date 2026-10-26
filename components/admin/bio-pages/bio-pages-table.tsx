@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ExternalLink, Search } from "lucide-react"
@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
 import { useAdminBioPages, useChangeBioPageHandle, useHideBioPage, useRevokeBioPageHandle, useUnhideBioPage, type AdminBioPageFilters } from "@/lib/hooks/useAdminBioPages"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { AdminBioPage } from "@/lib/types"
@@ -54,7 +55,7 @@ const rowSelector = (pageId: number) => `[data-bio-page-row="${pageId}"]`
 const pageName = (page: Pick<AdminBioPage, "id" | "handle" | "displayName">) =>
   page.handle ? `@${page.handle}` : page.displayName || `bio page ${page.id}`
 
-export function BioPagesTable() {
+export function BioPagesTable({ headingRef }: { headingRef: RefObject<HTMLElement | null> }) {
   const searchParams = useSearchParams()
   const { page, size, setPage, setSize } = usePagination()
   const [searchInput, setSearchInput] = useState(() => searchParams.get(SEARCH_PARAM) ?? "")
@@ -74,6 +75,7 @@ export function BioPagesTable() {
   const searchRef = useRef<HTMLInputElement>(null)
   const removalFocus = useRowRemovalFocus(searchRef)
   const pendingFocus = useRef<{ pageId: number; key: FocusKey } | null>(null)
+  const retry = useFocusAfterRetry(headingRef, !!data && !error)
 
   const applySearch = (value: string) => {
     const next = value.trim()
@@ -202,8 +204,16 @@ export function BioPagesTable() {
         <BioPagesLoading />
       ) : error ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm font-medium text-destructive">Failed to load bio pages</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+          <p role="alert" className="text-sm font-medium text-destructive">Failed to load bio pages</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 aria-disabled:opacity-50"
+            onClick={() => { if (!isFetching) retry(refetch) }}
+            aria-disabled={isFetching}
+          >
+            Retry
+          </Button>
         </div>
       ) : pages.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
@@ -365,7 +375,7 @@ function PageIdentity({ page }: { page: AdminBioPage }) {
   return (
     <div className="min-w-36 @lg:min-w-56">
       <BioPageLink handle={page.handle} />
-      {page.displayName && <p className="mt-0.5 [overflow-wrap:anywhere]">{page.displayName}</p>}
+      {page.displayName && <p dir="auto" className="mt-0.5 [overflow-wrap:anywhere]">{page.displayName}</p>}
     </div>
   )
 }

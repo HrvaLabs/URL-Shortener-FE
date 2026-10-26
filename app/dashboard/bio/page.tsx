@@ -8,12 +8,14 @@ import { errorText } from "@/components/bio/handle-field"
 import { PageMeta } from "@/components/page-meta"
 import { Button } from "@/components/ui/button"
 import { useBioPage } from "@/lib/hooks/useBioPage"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 
 export default function BioPageRoute() {
   const { data: page, error, refetch, isFetching } = useBioPage()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const hadPage = useRef<boolean | null>(null)
   const hasPage = page === undefined ? null : page !== null
+  const retry = useFocusAfterRetry(headingRef, page !== undefined)
 
   useLayoutEffect(() => {
     if (hasPage === null) return
@@ -34,8 +36,16 @@ export default function BioPageRoute() {
       {page === undefined ? (
         error ? (
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm text-destructive [overflow-wrap:anywhere]">Couldn&apos;t load your bio page. {errorText(error)}</p>
-            <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>Retry</Button>
+            <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">Couldn&apos;t load your bio page. {errorText(error)}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-disabled={isFetching}
+              onClick={() => { if (!isFetching) retry(refetch) }}
+              className="aria-disabled:opacity-50"
+            >
+              Retry
+            </Button>
           </div>
         ) : (
           <div role="status" className="flex min-h-[40vh] items-center justify-center">

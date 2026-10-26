@@ -434,3 +434,31 @@
     color-scheme: dark;
   }
 }
+
+/* A public bio page sets its own theme on the whole document, for overscroll and the browser's own controls.
+   next-themes writes the site's color-scheme inline on <html>, so these rules need !important to win. */
+html:has(> body .bio-public.bio-theme-light),
+html:has(> body .bio-public.bio-theme-light) > body {
+  background: #ffffff;
+  color-scheme: light !important;
+}
+
+html:has(> body .bio-public.bio-theme-dark),
+html:has(> body .bio-public.bio-theme-dark) > body {
+  background: #0b0b0e;
+  color-scheme: dark !important;
+}
+
+html:has(> body .bio-public.bio-theme-auto),
+html:has(> body .bio-public.bio-theme-auto) > body {
+  background: #ffffff;
+  color-scheme: light !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:has(> body .bio-public.bio-theme-auto),
+  html:has(> body .bio-public.bio-theme-auto) > body {
+    background: #0b0b0e;
+    color-scheme: dark !important;
+  }
+}

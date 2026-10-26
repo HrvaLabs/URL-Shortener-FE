@@ -1,10 +1,11 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { notFound, permanentRedirect } from "next/navigation"
 import { BioPageView, type BioPageViewModel } from "@/components/bio/bio-page-view"
+import { BioRetryFocus } from "@/components/bio/bio-retry-focus"
 import { BioViewBeacon } from "@/components/bio/bio-view-beacon"
-import { handleFormatError, normalizeHandle } from "@/lib/bio"
+import { BIO_PAGE_COLORS, BIO_PAGE_NAME_ID, handleFormatError, normalizeHandle } from "@/lib/bio"
 import { loadPublicBioPage } from "@/lib/bio-server"
-import type { PublicBioPage } from "@/lib/types"
+import type { BioTheme, PublicBioPage } from "@/lib/types"
 import { formatShortUrl } from "@/lib/utils"
 
 export const dynamic = "force-dynamic"
@@ -14,6 +15,18 @@ type BioRouteProps = { params: Promise<{ handle: string }> }
 const UNAVAILABLE_METADATA: Metadata = {
   title: "This page isn't available",
   robots: { index: false, follow: false },
+}
+
+const THEME_VIEWPORTS: Record<BioTheme, Viewport> = {
+  LIGHT: { themeColor: BIO_PAGE_COLORS.light.bg, colorScheme: "light" },
+  DARK: { themeColor: BIO_PAGE_COLORS.dark.bg, colorScheme: "dark" },
+  AUTO: {
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: BIO_PAGE_COLORS.light.bg },
+      { media: "(prefers-color-scheme: dark)", color: BIO_PAGE_COLORS.dark.bg },
+    ],
+    colorScheme: "light dark",
+  },
 }
 
 const decodeSegment = (segment: string): string => {
@@ -44,6 +57,14 @@ const toViewModel = (page: PublicBioPage): BioPageViewModel => ({
     href: formatShortUrl(button.shortUrl),
   })),
 })
+
+export async function generateViewport({ params }: BioRouteProps): Promise<Viewport> {
+  const { handle: segment } = await params
+  const canonical = canonicalHandleOf(segment)
+  if (!canonical || canonical !== segment) return {}
+  const page = await loadPublicBioPage(canonical).catch(() => null)
+  return page ? (THEME_VIEWPORTS[page.theme] ?? {}) : {}
+}
 
 export async function generateMetadata({ params }: BioRouteProps): Promise<Metadata> {
   const { handle: segment } = await params
@@ -83,6 +104,7 @@ export default async function BioRoutePage({ params }: BioRouteProps) {
         reportHref={`/report?s=${encodeURIComponent(`@${page.handle}`)}`}
       />
       <BioViewBeacon handle={page.handle} />
+      <BioRetryFocus targetId={BIO_PAGE_NAME_ID} />
     </>
   )
 }

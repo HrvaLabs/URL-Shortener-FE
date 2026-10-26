@@ -40,6 +40,8 @@ const LEAVE_WARNING = "You have unsaved changes. Leave this page without saving 
 
 const SAVE_BAR_ROOM = "8rem"
 
+const SAVED_NOTE_MS = 2000
+
 const PROFILE_FIELD_ORDER: BioProfileField[] = ["displayName", "bio", "avatarEmoji"]
 
 const SECTION_CLASS = "rounded-xl border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
@@ -147,6 +149,8 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const [fieldErrors, setFieldErrors] = useState<BioFieldErrors>({})
   const [buttonErrors, setButtonErrors] = useState<BioButtonErrors>({})
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
   const [tab, setTab] = useState("edit")
   const submitting = useRef(false)
   const lastEdited = useRef<HTMLElement | null>(null)
@@ -163,7 +167,13 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const dirty = !sameBioDraft(draft, bioDraftOf(synced))
 
   useLeaveWarning(dirty)
-  useRoomForSaveBar(dirty)
+  useRoomForSaveBar(dirty || justSaved)
+
+  useEffect(() => {
+    if (!justSaved) return
+    const timer = setTimeout(() => setJustSaved(false), SAVED_NOTE_MS)
+    return () => clearTimeout(timer)
+  }, [justSaved])
 
   useLayoutEffect(() => {
     const hasHandle = synced.handle !== null
@@ -173,6 +183,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
 
   const change = (patch: Partial<BioDraft>) => {
     setDraft((current) => ({ ...current, ...patch }))
+    setJustSaved(false)
     setFieldErrors((current) => {
       const next = { ...current }
       for (const key of Object.keys(patch)) delete next[key as BioProfileField]
@@ -231,6 +242,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     }
     submitting.current = true
     setSaving(true)
+    setSaveError(null)
     const sent = draft
     try {
       const saved = await save.mutateAsync(bioUpdateOf(sent))
@@ -240,10 +252,10 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
         setFieldErrors({})
         setButtonErrors({})
         setSaving(false)
+        setJustSaved(true)
       })
       submitting.current = false
       focusAfterSaveBar()
-      toast.success("Bio page saved")
     } catch (error) {
       submitting.current = false
       setSaving(false)
@@ -253,8 +265,13 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
         showSaveErrors(errors, sent.buttons)
         return
       }
-      toast.error(message)
-      if (error instanceof ApiError && (error.status === 404 || error.status === 409)) void refresh()
+      if (error instanceof ApiError && error.status === 404) {
+        toast.error(message)
+        void refresh()
+        return
+      }
+      setSaveError(message)
+      if (error instanceof ApiError && error.status === 409) void refresh()
     }
   }
 
@@ -263,6 +280,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       setDraft(bioDraftOf(synced))
       setFieldErrors({})
       setButtonErrors({})
+      setSaveError(null)
     })
     focusAfterSaveBar()
   }
@@ -337,7 +355,9 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
           <TabsContent value="preview">{preview}</TabsContent>
         </Tabs>
       )}
-      {dirty && <SaveBar saving={saving} onSave={handleSave} onDiscard={handleDiscard} />}
+      {(dirty || justSaved) && (
+        <SaveBar dirty={dirty} saving={saving} error={dirty ? saveError : null} onSave={handleSave} onDiscard={handleDiscard} />
+      )}
     </div>
   )
 }

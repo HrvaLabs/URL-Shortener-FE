@@ -87,7 +87,10 @@ function ReportForm({ initialShort }: { initialShort: string }) {
   const typedBioPage = toReportTarget(shortLink)?.kind === "bio"
 
   const refuseLink = (message: string) => {
-    flushSync(() => setLinkError(message))
+    flushSync(() => {
+      setLinkError(message)
+      setStatus({ kind: "idle" })
+    })
     linkInput.current?.focus()
   }
 

@@ -40,6 +40,8 @@ export const handleFormatError = (handle: string): string | null => {
 
 export const bioShareUrl = (handle: string, shortBase: string): string => `${shortBase}/@${handle}`
 
+export const BIO_PAGE_NAME_ID = "bio-page-name"
+
 export const displayShareUrl = (handle: string, shortBase: string): string =>
   bioShareUrl(handle, shortBase).replace(/^[a-z][a-z0-9+.-]*:\/\//i, "")
 

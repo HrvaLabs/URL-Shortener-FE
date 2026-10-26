@@ -56,6 +56,7 @@ function ButtonRow({
   const label = bioButtonLabel(button)
   const titleError = error?.field === "title" ? error.text : null
   const linkError = error?.field === "link" ? error.text : null
+  const forButton = <span className="sr-only"> for /{button.shortUrl}</span>
 
   return (
     <li
@@ -86,7 +87,7 @@ function ButtonRow({
         <div className="min-w-0 flex-1 space-y-3">
           <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem]">
             <div>
-              <Label htmlFor={fieldId("title")}>Title</Label>
+              <Label htmlFor={fieldId("title")}>Title{forButton}</Label>
               <Input
                 id={fieldId("title")}
                 value={button.title}
@@ -103,7 +104,7 @@ function ButtonRow({
               )}
             </div>
             <div>
-              <Label htmlFor={fieldId("icon")}>Icon</Label>
+              <Label htmlFor={fieldId("icon")}>Icon{forButton}</Label>
               <select
                 id={fieldId("icon")}
                 value={isBioIcon(button.icon) ? button.icon : NO_ICON}
@@ -141,7 +142,7 @@ function ButtonRow({
                 onCheckedChange={(visible) => onUpdate({ visible })}
                 aria-disabled={busy || undefined}
               />
-              <Label htmlFor={fieldId("visible")}>Visible</Label>
+              <Label htmlFor={fieldId("visible")}>Visible{forButton}</Label>
             </div>
             {!button.visible && <Badge variant="outline">Hidden</Badge>}
             <LinkStateBadge state={button.linkState} />

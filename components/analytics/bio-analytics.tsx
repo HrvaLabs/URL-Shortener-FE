@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react"
 import Link from "next/link"
 import { PageMeta } from "@/components/page-meta"
 import { AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
@@ -10,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ApiError } from "@/lib/api-client"
 import { bioButtonLabel, displayShareUrl } from "@/lib/bio"
 import { useBioAnalytics } from "@/lib/hooks/useBioAnalytics"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import type { AnalyticsRange, BioButtonClicks, BioPageAnalytics } from "@/lib/types"
 import { cn, getShortBaseUrl } from "@/lib/utils"
 
@@ -23,12 +25,16 @@ const panelClass = "min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_
 export function BioAnalytics({ days, onDaysChange }: BioAnalyticsProps) {
   const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useBioAnalytics(days)
   const noPage = error instanceof ApiError && error.status === 404
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const retry = useFocusAfterRetry(headingRef, !!data && !error)
 
   return (
     <div className="space-y-6">
       <PageMeta title="Dashboard — Bio page analytics" description="Views and button clicks for your hrva.cc bio page." />
       <div>
-        <h1 className="font-display text-2xl">Bio page</h1>
+        <h1 ref={headingRef} tabIndex={-1} className="font-display text-2xl focus-visible:ring-0 focus-visible:ring-offset-0">
+          Bio page
+        </h1>
         {data && !error && <PageLine handle={data.handle} />}
       </div>
 
@@ -42,7 +48,7 @@ export function BioAnalytics({ days, onDaysChange }: BioAnalyticsProps) {
           </Link>
         </div>
       ) : error ? (
-        <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} />
+        <AnalyticsError error={error} retrying={isRefetching} onRetry={() => retry(refetch)} />
       ) : (
         <BioAnalyticsBody data={data} onDaysChange={onDaysChange} refreshing={isPlaceholderData} days={days} />
       )}

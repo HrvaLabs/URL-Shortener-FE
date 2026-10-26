@@ -7,9 +7,12 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { UtmFields } from "@/components/utm-fields"
+import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import type { UrlResponse } from "@/lib/types"
 import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { destinationToSend, rememberUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
   withOptions?: boolean
@@ -22,10 +25,15 @@ export function ShortenForm({ withOptions = false, size = "default", className }
   const [customAlias, setCustomAlias] = useState("")
   const [visitLimit, setVisitLimit] = useState("")
   const [expirationDate, setExpirationDate] = useState("")
+  const [utm, setUtm] = useState<UtmValues>({})
+  const [utmOpen, setUtmOpen] = useState(false)
   const [result, setResult] = useState<UrlResponse | null>(null)
   const [copied, setCopied] = useState(false)
 
+  const { user } = useAuth()
   const createUrl = useCreateUrl()
+  const showUtm = withOptions && Boolean(user)
+  const tagging = showUtm && utmOpen
   const isLarge = size === "lg"
   const shortBase = getShortBaseUrl().replace(/^https?:\/\//, "")
   const longUrlError = destinationLengthError(longUrl)
@@ -35,15 +43,21 @@ export function ShortenForm({ withOptions = false, size = "default", className }
     e.preventDefault()
     if (!longUrl || longUrlError) return
 
+    const destination = destinationToSend(longUrl, tagging, utm)
+    if (destination === null) {
+      toast.error("Add a valid destination first")
+      return
+    }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
 
     try {
       const url = await createUrl.mutateAsync({
-        longUrl,
+        longUrl: destination,
         shortUrl: customAlias || undefined,
         visitLimit: visitLimit ? parseInt(visitLimit) : undefined,
         expirationDate: expDate,
       })
+      if (tagging) rememberUtm(utm)
       setResult(url)
       setCopied(false)
       toast.success("Link shortened")
@@ -126,6 +140,12 @@ export function ShortenForm({ withOptions = false, size = "default", className }
               <Label htmlFor="expires" className="text-xs text-muted-foreground">Expires</Label>
               <Input id="expires" type="datetime-local" value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} className={cn("mt-1.5 h-9", !expirationDate && "text-muted-foreground")} />
             </div>
+          </div>
+        )}
+
+        {showUtm && (
+          <div className="border-t pt-3">
+            <UtmFields destination={longUrl} value={utm} onChange={setUtm} open={utmOpen} onOpenChange={setUtmOpen} />
           </div>
         )}
       </form>

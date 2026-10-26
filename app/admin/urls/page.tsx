@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge, badgeVariants } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
+import { UtmFields } from "@/components/utm-fields"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -21,6 +22,7 @@ import { cn, destinationLengthError, formatDateTime, getShortBaseUrl, plural } f
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
+import { destinationToSend, hasUtm, readUtm, rememberUtm, withUtm, type UtmValues } from "@/lib/utm"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
@@ -78,6 +80,8 @@ export default function AdminUrlsPage() {
   const [editTags, setEditTags] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [removePassword, setRemovePassword] = useState(false)
+  const [editUtm, setEditUtm] = useState<UtmValues>({})
+  const [editUtmOpen, setEditUtmOpen] = useState(false)
   const editLongUrlError = destinationLengthError(editLongUrl.trim())
   const editId = useId()
   const searchRef = useRef<HTMLInputElement>(null)
@@ -166,28 +170,37 @@ export default function AdminUrlsPage() {
     setEditTags(url.tags?.join(", ") || "")
     setEditPassword("")
     setRemovePassword(false)
+    setEditUtm(readUtm(url.longUrl))
+    setEditUtmOpen(hasUtm(url.longUrl))
   }
 
   const handleEditSave = async () => {
     if (!editUrl) return
-    const longUrl = editLongUrl.trim()
-    if (!longUrl) {
+    const typed = editLongUrl.trim()
+    if (!typed) {
       toast.error("Destination URL is required")
       return
     }
     if (editLongUrlError) return
+    const longUrl = destinationToSend(typed, editUtmOpen, editUtm)
+    if (longUrl === null) {
+      toast.error("Add a valid destination first")
+      return
+    }
+    const unchanged = longUrl === editUrl.longUrl || longUrl === withUtm(editUrl.longUrl, readUtm(editUrl.longUrl))
     try {
       await updateUrl.mutateAsync({
         id: editUrl.id,
         data: {
           id: editUrl.id,
-          longUrl: longUrl !== editUrl.longUrl ? longUrl : undefined,
+          longUrl: unchanged ? undefined : longUrl,
           visitLimit: editVisitLimit ? parseInt(editVisitLimit) : 0,
           expirationDate: editExpiration ? new Date(editExpiration).toISOString() : undefined,
           tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
           password: removePassword ? "" : (editPassword || undefined),
         },
       })
+      if (editUtmOpen) rememberUtm(editUtm)
       toast.success("URL updated")
       setEditUrl(null)
     } catch (err) {
@@ -491,7 +504,7 @@ export default function AdminUrlsPage() {
       />
 
       <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>
-        <DialogContent>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit URL — /{editUrl?.shortUrl}</DialogTitle>
           </DialogHeader>
@@ -513,6 +526,7 @@ export default function AdminUrlsPage() {
                 />
                 {editLongUrlError && <p id={`${editId}-long-url-error`} className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
               </div>
+              <UtmFields destination={editLongUrl} value={editUtm} onChange={setEditUtm} open={editUtmOpen} onOpenChange={setEditUtmOpen} />
               <div>
                 <label htmlFor={`${editId}-visit-limit`} className="text-sm font-medium">Visit limit</label>
                 <Input

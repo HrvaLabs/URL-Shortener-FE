@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useMyUrls, useActivateUrl, useDeactivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
   const [tagFilter, setTagFilter] = useState<string>("")
-  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter, tagFilter])
+  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter, tagFilter, setPage])
   const filterKey = `${search}-${activeFilter}-${expiredFilter}-${tagFilter}`
   const filters: UrlFilters = {
     search: search || undefined,
@@ -63,7 +63,22 @@ export default function DashboardPage() {
   const totalKeys = apiKeys?.length ?? 0
   const activeKeys = apiKeys?.filter(k => k.active).length ?? 0
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const newUrlButtonRef = useRef<HTMLButtonElement>(null)
+  const createOpenerRef = useRef<HTMLElement | null>(null)
   const [copyPulseId, setCopyPulseId] = useState<number | null>(null)
+
+  const openCreateDialog = (event: React.MouseEvent<HTMLElement>) => {
+    createOpenerRef.current = event.currentTarget
+    setShowCreateDialog(true)
+  }
+
+  const focusCreateOpener = (event: Event) => {
+    event.preventDefault()
+    const opener = createOpenerRef.current
+    createOpenerRef.current = null
+    const target = opener?.isConnected ? opener : newUrlButtonRef.current
+    target?.focus()
+  }
 
   const copyToClipboard = (text: string, id?: number) => {
     navigator.clipboard.writeText(text)
@@ -87,8 +102,8 @@ export default function DashboardPage() {
     try {
       await deactivateUrl.mutateAsync(id)
       toast.success("URL deactivated")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to deactivate")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to deactivate")
     }
   }
 
@@ -96,8 +111,8 @@ export default function DashboardPage() {
     try {
       await deleteUrl.mutateAsync(id)
       toast.success("URL deleted permanently")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to delete")
     }
   }
 
@@ -114,14 +129,14 @@ export default function DashboardPage() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button onClick={() => setShowCreateDialog(true)} size="sm" className="gap-1.5">
+          <Button ref={newUrlButtonRef} onClick={openCreateDialog} size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" />
             New URL
           </Button>
         </div>
       </div>
 
-      <CreateUrlDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
+      <CreateUrlDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onCloseAutoFocus={focusCreateOpener} />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
@@ -189,7 +204,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <h2 className="font-semibold">No URLs yet</h2>
           <p className="mt-1 text-sm text-muted-foreground">Shorten your first URL to get started!</p>
-          <Button onClick={() => setShowCreateDialog(true)} size="sm" className="mt-6 gap-1.5">
+          <Button onClick={openCreateDialog} size="sm" className="mt-6 gap-1.5">
             <Plus className="h-4 w-4" />
             Shorten a URL
           </Button>

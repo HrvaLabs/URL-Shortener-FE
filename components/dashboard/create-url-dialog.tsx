@@ -16,9 +16,10 @@ import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongW
 interface CreateUrlDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onCloseAutoFocus?: (event: Event) => void
 }
 
-export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
+export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: CreateUrlDialogProps) {
   const [longUrl, setLongUrl] = useState("")
   const [customAlias, setCustomAlias] = useState("")
   const [visitLimit, setVisitLimit] = useState("")
@@ -80,7 +81,7 @@ export function CreateUrlDialog({ open, onOpenChange }: CreateUrlDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto" onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>{result ? "URL Created!" : "Create Short URL"}</DialogTitle>
           {!result && <DialogDescription>Enter a long URL to shorten it.</DialogDescription>}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react"
 import Link from "next/link"
 import { actionVariants } from "@/components/admin/blocklists/labels"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
@@ -35,13 +35,27 @@ const tileClass = "h-[7.5rem] rounded-xl"
 export function PublicStats() {
   const query = usePublicStats()
   const [lastError, setLastError] = useState<Error | null>(null)
-  const [focusPeriod, setFocusPeriod] = useState(false)
+  const focusAfterError = useRef(false)
   if (query.error && query.error !== lastError) setLastError(query.error)
   const error = query.error ?? (query.isFetching ? lastError : null)
 
+  const keepFocusAfterError = useCallback(() => {
+    focusAfterError.current = true
+  }, [])
+
+  const takeFocus = useCallback(() => {
+    const wanted = focusAfterError.current
+    focusAfterError.current = false
+    const active = document.activeElement
+    return wanted && (active === null || active === document.body)
+  }, [])
+
   const retry = () => {
     if (query.isFetching) return
-    void query.refetch().then((result) => setFocusPeriod(result.data !== undefined))
+    focusAfterError.current = true
+    void query.refetch().then((result) => {
+      if (result.data === undefined && refusalOf(result.error) === null) focusAfterError.current = false
+    })
   }
 
   return (
@@ -54,9 +68,15 @@ export function PublicStats() {
 
       <div id="numbers" className="mt-4 scroll-mt-24">
         {query.data ? (
-          <Numbers data={query.data} focusPeriod={focusPeriod} />
+          <Numbers data={query.data} takeFocus={takeFocus} />
         ) : error ? (
-          <LoadError error={error} retrying={query.isFetching} onRetry={retry} />
+          <LoadError
+            error={error}
+            retrying={query.isFetching}
+            onRetry={retry}
+            onRemovedWithFocus={keepFocusAfterError}
+            takeFocus={takeFocus}
+          />
         ) : (
           <NumbersSkeleton />
         )}
@@ -77,13 +97,26 @@ export function PublicStats() {
   )
 }
 
-function Numbers({ data, focusPeriod }: { data: PublicStatsResponse; focusPeriod: boolean }) {
+function useReportRemovalWithFocus(ref: RefObject<HTMLElement | null>, onRemovedWithFocus: () => void) {
+  useLayoutEffect(() => {
+    const element = ref.current
+    return () => {
+      if (element?.contains(document.activeElement)) onRemovedWithFocus()
+    }
+  }, [ref, onRemovedWithFocus])
+}
+
+function refusalOf(error: Error | null): string | null {
+  return error instanceof ApiError && error.status === 429 ? error.message : null
+}
+
+function Numbers({ data, takeFocus }: { data: PublicStatsResponse; takeFocus: () => boolean }) {
   const periodRef = useRef<HTMLParagraphElement>(null)
   const updatedAt = parseServerDateTime(data.updatedAt)
 
   useEffect(() => {
-    if (focusPeriod) periodRef.current?.focus()
-  }, [focusPeriod])
+    if (takeFocus()) periodRef.current?.focus()
+  }, [takeFocus])
 
   return (
     <>
@@ -194,29 +227,61 @@ function Blocklists({ blocklists }: { blocklists: Blocklist[] }) {
   )
 }
 
-function LoadError({ error, retrying, onRetry }: { error: Error; retrying: boolean; onRetry: () => void }) {
-  const refusal = error instanceof ApiError && error.status === 429 ? error.message : null
+interface LoadErrorProps {
+  error: Error
+  retrying: boolean
+  onRetry: () => void
+  onRemovedWithFocus: () => void
+  takeFocus: () => boolean
+}
+
+function LoadError({ error, retrying, onRetry, onRemovedWithFocus, takeFocus }: LoadErrorProps) {
+  const boxRef = useRef<HTMLDivElement>(null)
+  const alertRef = useRef<HTMLDivElement>(null)
+  const refusal = refusalOf(error)
+  useReportRemovalWithFocus(boxRef, onRemovedWithFocus)
+
+  useEffect(() => {
+    if (refusal && takeFocus()) alertRef.current?.focus()
+  }, [refusal, takeFocus])
+
   return (
-    <div className="mt-8 rounded-xl border bg-card px-6 py-12 text-center">
-      <div role="alert">
+    <div ref={boxRef} className="mt-8 rounded-xl border bg-card px-6 py-12 text-center">
+      <div ref={alertRef} role="alert" tabIndex={-1} className="focus-visible:ring-0 focus-visible:ring-offset-0">
         <p className="text-sm text-destructive">Couldn&apos;t load the numbers.</p>
         {refusal && <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{refusal}</p>}
       </div>
       <p role="status" className="sr-only">
         {retrying ? "Trying again" : ""}
       </p>
-      {!refusal && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRetry}
-          aria-disabled={retrying}
-          className="mt-4 aria-disabled:opacity-50"
-        >
-          Try again
-        </Button>
-      )}
+      {!refusal && <TryAgainButton retrying={retrying} onRetry={onRetry} onRemovedWithFocus={onRemovedWithFocus} />}
     </div>
+  )
+}
+
+function TryAgainButton({
+  retrying,
+  onRetry,
+  onRemovedWithFocus,
+}: {
+  retrying: boolean
+  onRetry: () => void
+  onRemovedWithFocus: () => void
+}) {
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  useReportRemovalWithFocus(buttonRef, onRemovedWithFocus)
+
+  return (
+    <Button
+      ref={buttonRef}
+      variant="outline"
+      size="sm"
+      onClick={onRetry}
+      aria-disabled={retrying}
+      className="mt-4 aria-disabled:opacity-50"
+    >
+      Try again
+    </Button>
   )
 }
 

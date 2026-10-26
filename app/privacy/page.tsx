@@ -187,7 +187,8 @@ export default function PrivacyPage() {
                 A weekly summary of site-wide totals, and an alert when many new links to the same new
                 domain appear in a short time, go only to the admin and never identify a visitor. For
                 links made without an account, the check behind that alert keeps a one-way hash of the
-                creator&apos;s network for up to an hour, to spot phishing waves.
+                creator&apos;s network, together with the link, for one to two hours, to spot phishing
+                waves.
               </p>
               <p>
                 The admin can also moderate through the hrva.cc MCP connector in an AI app. The

@@ -74,11 +74,6 @@ export function maskApiKey(key: string): string {
   return key.slice(0, 4) + "••••" + key.slice(-4)
 }
 
-export function truncateUrl(url: string, maxLen = 50): string {
-  if (url.length <= maxLen) return url
-  return url.slice(0, maxLen) + "..."
-}
-
 const removeRowSelector = "[data-remove-row]"
 
 export function focusTargetAfterRemoving(trigger: HTMLElement | null, fallback: HTMLElement | null): HTMLElement | null {

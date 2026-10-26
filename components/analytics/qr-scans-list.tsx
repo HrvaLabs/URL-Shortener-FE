@@ -22,7 +22,7 @@ export function QrScansList({ totals, sources, passwordProtected }: QrScansListP
         <>
           {passwordProtected
             ? "This link has a password, so every visit, scans included, counts as another click."
-            : `QR scans count scans of QR codes you downloaded from hrva.cc on or after ${qrScansStart}. Older codes, other QR generators, and links that were typed, clicked or pasted count as other clicks.`}{" "}
+            : `QR scans count scans of hrva.cc QR codes made on or after ${qrScansStart}. Older codes, other QR generators, and links that were typed, clicked or pasted count as other clicks.`}{" "}
           <Link href="/help/stats#qr-scans" className="text-brand-link">
             How QR scans are counted
           </Link>

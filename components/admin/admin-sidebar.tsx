@@ -141,7 +141,9 @@ export function AdminSidebar() {
                   ref={isActive ? activeChipRef : undefined}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  onFocus={(event) => revealInRow(event.currentTarget, fadePx)}
+                  onFocus={(event) => {
+                    if (event.currentTarget.matches(":focus-visible")) revealInRow(event.currentTarget, fadePx)
+                  }}
                   className={cn(navItemClass, "border", navItemState(isActive))}
                 >
                   {item.label}

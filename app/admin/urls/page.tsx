@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { Suspense, useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { Pagination } from "@/components/ui/pagination"
@@ -53,9 +54,44 @@ const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
   }
 }
 
+const SEARCH_PARAM = "search"
+
+function useAddressSearch() {
+  const initial = useSearchParams().get(SEARCH_PARAM)
+  const [search, setSearch] = useState(() => initial ?? "")
+
+  const update = (next: string) => {
+    setSearch(next)
+    const params = new URLSearchParams(window.location.search)
+    if (next.trim()) params.set(SEARCH_PARAM, next)
+    else params.delete(SEARCH_PARAM)
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`)
+  }
+
+  return [search, update] as const
+}
+
+function AdminUrlsLoading() {
+  return (
+    <div className="space-y-3 rounded-xl border bg-card p-5">
+      {[...Array(5)].map((_, i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
+  )
+}
+
 export default function AdminUrlsPage() {
+  return (
+    <Suspense fallback={<AdminUrlsLoading />}>
+      <AdminUrls />
+    </Suspense>
+  )
+}
+
+function AdminUrls() {
   const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useAddressSearch()
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
   const [anonymousFilter, setAnonymousFilter] = useState(false)
@@ -303,11 +339,7 @@ export default function AdminUrlsPage() {
       )}
 
       {isLoading ? (
-        <div className="space-y-3 rounded-xl border bg-card p-5">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
-          ))}
-        </div>
+        <AdminUrlsLoading />
       ) : error ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load URLs</p>

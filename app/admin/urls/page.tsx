@@ -57,11 +57,22 @@ const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
 const SEARCH_PARAM = "search"
 
 function useAddressSearch() {
-  const initial = useSearchParams().get(SEARCH_PARAM)
-  const [search, setSearch] = useState(() => initial ?? "")
+  const address = useSearchParams().get(SEARCH_PARAM) ?? ""
+  const [search, setSearch] = useState(address)
+  const [written, setWritten] = useState(address)
+  const [seen, setSeen] = useState(address)
+
+  if (address !== seen) {
+    setSeen(address)
+    if (address !== written) {
+      setWritten(address)
+      setSearch(address)
+    }
+  }
 
   const update = (next: string) => {
     setSearch(next)
+    setWritten(next.trim() ? next : "")
     const params = new URLSearchParams(window.location.search)
     if (next.trim()) params.set(SEARCH_PARAM, next)
     else params.delete(SEARCH_PARAM)

@@ -1,15 +1,18 @@
 import type { AnalyticsTotals } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 interface StatTotalsProps {
   totals: AnalyticsTotals
   uniqueVisitorsLabel?: string
   uniqueVisitorsHint?: string
+  className?: string
 }
 
 export function StatTotals({
   totals,
   uniqueVisitorsLabel = "Daily unique visitors",
   uniqueVisitorsHint = "Counted per day, so one person on two different days counts twice.",
+  className = "sm:grid-cols-3",
 }: StatTotalsProps) {
   const stats = [
     { label: "Clicks", value: totals.clicks },
@@ -26,7 +29,7 @@ export function StatTotals({
   ]
 
   return (
-    <dl className="grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_1px_2px_rgb(0_0_0/0.04)] sm:grid-cols-3">
+    <dl className={cn("grid gap-px overflow-hidden rounded-xl border bg-border shadow-[0_1px_2px_rgb(0_0_0/0.04)]", className)}>
       {stats.map((stat) => (
         <div key={stat.label} className="min-w-0 bg-card p-5">
           <dt className="text-sm text-muted-foreground">{stat.label}</dt>

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
@@ -26,7 +25,7 @@ interface TrafficTabProps {
 export function TrafficTab({ days }: TrafficTabProps) {
   const { data, error, isPending, isPlaceholderData, refetch, isRefetching } = useTrafficStats(days)
 
-  if (isPending) return <AnalyticsSkeleton variant="overview" />
+  if (isPending) return <AnalyticsSkeleton variant="panel" />
   if (error) {
     return (
       <AnalyticsError error={error} retrying={isRefetching} onRetry={() => refetch()} message="Couldn't load these stats. Try again." />
@@ -66,6 +65,7 @@ function TrafficBody({ data, days, refreshing }: TrafficBodyProps) {
     <div className={cn("space-y-6 transition-opacity", refreshing && "opacity-60")} aria-busy={refreshing}>
       <StatTotals
         totals={totals}
+        className="@2xl:grid-cols-3"
         uniqueVisitorsLabel={uniqueVisitorsLabel}
         uniqueVisitorsHint="Each link's unique visitors per day, added up. One person on two links or two days counts more than once."
       />
@@ -109,8 +109,6 @@ interface TopLinksProps {
 }
 
 function TopLinks({ links, days }: TopLinksProps) {
-  const router = useRouter()
-
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
       <h2 className="border-b px-5 py-3.5 text-sm font-semibold">Top links</h2>
@@ -128,36 +126,30 @@ function TopLinks({ links, days }: TopLinksProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {links.map((link) => {
-              const href = analyticsHref({ link: link.id, days })
-              return (
-                <TableRow
-                  key={link.id}
-                  className="cursor-pointer"
-                  onClick={(event) => {
-                    if (!(event.target as HTMLElement).closest("a")) router.push(href)
-                  }}
-                >
-                  <TableCell>
-                    <Link href={href} className="whitespace-nowrap font-mono text-[13px] font-medium text-brand hover:underline">
-                      /{link.shortUrl}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="max-w-[240px] text-muted-foreground">
-                    <span className="block truncate" title={link.destinationHost || undefined}>
-                      {link.destinationHost || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-[220px]">
-                    <span className={cn("block truncate", link.ownerEmail == null && "text-muted-foreground")} title={link.ownerEmail ?? undefined}>
-                      {link.ownerEmail ?? "Anonymous"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{link.clicks.toLocaleString()}</TableCell>
-                  <TableCell className="text-right tabular-nums">{link.uniqueVisitors.toLocaleString()}</TableCell>
-                </TableRow>
-              )
-            })}
+            {links.map((link) => (
+              <TableRow key={link.id}>
+                <TableCell>
+                  <Link
+                    href={analyticsHref({ link: link.id, days })}
+                    className="whitespace-nowrap font-mono text-[13px] font-medium text-brand hover:underline"
+                  >
+                    /{link.shortUrl}
+                  </Link>
+                </TableCell>
+                <TableCell className="max-w-[240px] text-muted-foreground">
+                  <span className="block truncate" title={link.destinationHost || undefined}>
+                    {link.destinationHost || "—"}
+                  </span>
+                </TableCell>
+                <TableCell className="max-w-[220px]">
+                  <span className={cn("block truncate", link.ownerEmail == null && "text-muted-foreground")} title={link.ownerEmail ?? undefined}>
+                    {link.ownerEmail ?? "Anonymous"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{link.clicks.toLocaleString()}</TableCell>
+                <TableCell className="text-right tabular-nums">{link.uniqueVisitors.toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       )}

@@ -19,8 +19,8 @@ export function LoginRateLimits() {
       await adminApi.clearLoginAttempts()
       toast.success("Rate limits cleared")
       refetch()
-    } catch (err: any) {
-      toast.error(err.message || "Failed to clear")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to clear")
     }
   }
 

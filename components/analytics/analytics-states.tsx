@@ -53,24 +53,25 @@ export function AnalyticsError({
 }
 
 interface AnalyticsSkeletonProps {
-  variant: "link" | "overview"
+  variant: "link" | "overview" | "panel"
 }
 
 export function AnalyticsSkeleton({ variant }: AnalyticsSkeletonProps) {
   return (
     <div className="space-y-6" aria-busy="true">
-      {variant === "link" ? (
+      {variant === "link" && (
         <div className="space-y-2">
           <Skeleton className="h-7 w-56 max-w-full" />
           <Skeleton className="h-5 w-40 max-w-full" />
         </div>
-      ) : (
+      )}
+      {variant === "overview" && (
         <div className="space-y-3">
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-10 w-96 max-w-full" />
         </div>
       )}
-      <Skeleton className="h-9 w-72 max-w-full" />
+      {variant !== "panel" && <Skeleton className="h-9 w-72 max-w-full" />}
       <Skeleton className="h-28 w-full rounded-xl" />
       <Skeleton className="h-72 w-full rounded-xl" />
     </div>

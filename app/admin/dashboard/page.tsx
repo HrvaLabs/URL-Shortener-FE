@@ -1,12 +1,13 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, type FocusEvent } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
 import { AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { LoginRateLimits } from "@/components/admin/stats/login-rate-limits"
 import { TrafficTab } from "@/components/admin/stats/traffic-tab"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { STATS_TABS, adminStatsHref, parseStatsTab, statsTabLabels, type StatsTab } from "@/lib/admin-stats"
 import { parseAnalyticsRange } from "@/lib/analytics"
@@ -18,6 +19,16 @@ export default function AdminStatsPage() {
       <Stats />
     </Suspense>
   )
+}
+
+const focusRingRoom = 4
+
+function revealFocusedTab(event: FocusEvent<HTMLDivElement>) {
+  const scroller = event.currentTarget
+  const tab = event.target.getBoundingClientRect()
+  const view = scroller.getBoundingClientRect()
+  if (tab.left - focusRingRoom < view.left) scroller.scrollLeft -= view.left - tab.left + focusRingRoom
+  else if (tab.right + focusRingRoom > view.right) scroller.scrollLeft += tab.right + focusRingRoom - view.right
 }
 
 function PageTitle() {
@@ -33,7 +44,8 @@ function StatsLoading() {
   return (
     <div className="space-y-6">
       <PageTitle />
-      <AnalyticsSkeleton variant="overview" />
+      <Skeleton className="h-9 w-72 max-w-full" />
+      <AnalyticsSkeleton variant="panel" />
     </div>
   )
 }
@@ -52,13 +64,15 @@ function Stats() {
 
       <Tabs value={tab} onValueChange={(next) => show({ tab: parseStatsTab(next), days })}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList aria-label="Stats">
-            {STATS_TABS.map((value) => (
-              <TabsTrigger key={value} value={value}>
-                {statsTabLabels[value]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="flex max-w-full overflow-x-auto" onFocus={revealFocusedTab}>
+            <TabsList aria-label="Stats">
+              {STATS_TABS.map((value) => (
+                <TabsTrigger key={value} value={value}>
+                  {statsTabLabels[value]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
           <RangePicker value={days} onChange={(next) => show({ tab, days: next })} />
         </div>
         <TabsContent value="traffic" className="mt-6">

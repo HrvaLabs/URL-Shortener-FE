@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useReviewCount } from "@/lib/hooks/useReviewCount"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { Users, LinkIcon, Shield, LogOut, Activity, History, Mail, LayoutDashboard, ChevronDown, ShieldAlert, ListFilter } from "lucide-react"
+import { ReviewCountBadge } from "@/components/admin/review-count-badge"
+import { LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -18,66 +18,27 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings" },
 ]
 
-const adminItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin", label: "Users", icon: Users },
-  { href: "/admin/urls", label: "All URLs", icon: LinkIcon },
-  { href: "/admin/review", label: "Review queue", icon: ShieldAlert },
-  { href: "/admin/blocklists", label: "Blocklists", icon: ListFilter },
-  { href: "/admin/api-keys", label: "All API keys", icon: Shield },
-  { href: "/admin/health", label: "Health", icon: Activity },
-  { href: "/admin/audit-log", label: "Audit log", icon: History },
-  { href: "/admin/email-log", label: "Email log", icon: Mail },
-]
+export const navItemClass = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm transition-colors"
 
-const navItemClass = "inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm transition-colors"
-
-function navItemState(isActive: boolean) {
+export function navItemState(isActive: boolean) {
   return isActive
     ? "bg-accent font-medium text-foreground"
     : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
 }
 
-function ReviewCountBadge({ count, className }: { count: number; className?: string }) {
-  return (
-    <span className={cn("relative rounded-md bg-warning/10 px-1.5 text-xs font-medium tabular-nums text-warning", className)}>
-      {count > 99 ? "99+" : count}
-      <span className="sr-only"> waiting</span>
-    </span>
-  )
-}
-
-function AdminMenu({ pathname }: { pathname: string }) {
+function AdminLink({ pathname }: { pathname: string }) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
   const { data: reviewCount } = useReviewCount()
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className={cn(navItemClass, navItemState(isAdminRoute), "outline-hidden data-[state=open]:bg-accent data-[state=open]:text-foreground")}>
-        Admin
-        {!!reviewCount && <ReviewCountBadge count={reviewCount} />}
-        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48 focus-visible:ring-0 focus-visible:ring-offset-0">
-        {adminItems.map((item) => {
-          const Icon = item.icon
-          const isActive = pathname === item.href
-          return (
-            <DropdownMenuItem
-              key={item.href}
-              asChild
-              className={cn("cursor-pointer gap-2", isActive ? "bg-accent font-medium text-foreground" : "text-muted-foreground focus:text-foreground")}
-            >
-              <Link href={item.href} aria-current={isActive ? "page" : undefined}>
-                <Icon className="h-4 w-4" />
-                {item.label}
-                {item.href === "/admin/review" && !!reviewCount && <ReviewCountBadge count={reviewCount} className="ml-auto" />}
-              </Link>
-            </DropdownMenuItem>
-          )
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Link
+      href="/admin/dashboard"
+      aria-current={isAdminRoute ? "true" : undefined}
+      className={cn(navItemClass, navItemState(isAdminRoute))}
+    >
+      Admin
+      {!!reviewCount && <ReviewCountBadge count={reviewCount} />}
+    </Link>
   )
 }
 
@@ -107,7 +68,7 @@ export function DashboardNav() {
             <Logo showText className="shrink-0" />
             <nav aria-label="Dashboard" className="hidden items-center gap-1 md:flex">
               {links}
-              {isAdmin && <AdminMenu pathname={pathname} />}
+              {isAdmin && <AdminLink pathname={pathname} />}
             </nav>
           </div>
 
@@ -133,7 +94,7 @@ export function DashboardNav() {
           className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 pb-2 scrollbar-none md:hidden [&::-webkit-scrollbar]:hidden"
         >
           {links}
-          {isAdmin && <AdminMenu pathname={pathname} />}
+          {isAdmin && <AdminLink pathname={pathname} />}
         </nav>
       </div>
     </header>

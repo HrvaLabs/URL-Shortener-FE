@@ -142,12 +142,35 @@ export default function PrivacyPage() {
 
               <h3>Storage in your browser</h3>
               <p>
-                After you log in, we keep a single authentication token in your browser&apos;s{" "}
-                <em>localStorage</em> so you stay signed in. It is strictly necessary to provide the
-                service you requested, which is why no consent banner is required for it (Art. 5(3)
-                of the ePrivacy Directive, implemented in Croatia by the Electronic Communications
-                Act). We set no tracking cookies and use no analytics or advertising scripts. Fonts
-                are self-hosted — your browser does not contact third-party font services.
+                We keep a few small items in your browser, only so the site works the way you asked,
+                and none of them leaves your browser except the sign-in token, which is sent to
+                hrva.cc with your requests:
+              </p>
+              <ul>
+                <li>
+                  your sign-in token, in <em>localStorage</em>, so you stay signed in after you log in
+                </li>
+                <li>your light or dark theme choice, in <em>localStorage</em>, if you pick one</li>
+                <li>
+                  the last five campaign (UTM) tags you used, in <em>localStorage</em>, so the link
+                  form can suggest them again
+                </li>
+                <li>
+                  the page to return to after you sign in with Google or GitHub, in{" "}
+                  <em>sessionStorage</em>, removed once you are back
+                </li>
+                <li>
+                  after <em>Try again</em> on a bio page that couldn&apos;t load, that page&apos;s
+                  handle, in <em>sessionStorage</em>, so keyboard focus can return to it; removed
+                  straight away
+                </li>
+              </ul>
+              <p>
+                These are strictly necessary to provide the service you requested, which is why no
+                consent banner is required for them (Art. 5(3) of the ePrivacy Directive, implemented
+                in Croatia by the Electronic Communications Act). We set no tracking cookies and use
+                no analytics or advertising scripts. Fonts are self-hosted — your browser does not
+                contact third-party font services.
               </p>
 
               <h3>Emails we send</h3>

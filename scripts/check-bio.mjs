@@ -4,11 +4,14 @@ import "./resolve-ts-imports.mjs"
 const {
   AVATAR_EMOJI_REQUIRED,
   BIO_ACCENTS,
+  BIO_LINK_DELETED,
+  BIO_PAGE_CHANGED,
   BIO_ICON_LABELS,
   BIO_LIMITS,
   BIO_PAGE_COLORS,
   EMOJI_SUGGESTIONS,
   LINK_STATE_LABELS,
+  bioConflictText,
   bioDraftOf,
   bioSaveFieldErrors,
   bioShareUrl,
@@ -430,6 +433,23 @@ check("suggestHandle offers a usable handle for dots, spaces and accents", () =>
   for (const raw of ["Ana Horvat", "ana.horvat", text(0x160, "imi", 0x107, " Ana"), "ana!horvat"]) assert.equal(handleFormatError(suggestHandle(raw)), null, raw)
 })
 
+check("suggestHandle spells out letters that have no accent to strip, so Đurđa becomes durda, not ura", () => {
+  const durda = text(0x0110, "ur", 0x0111, "a")
+  assert.equal(suggestHandle(durda), "durda")
+  assert.equal(suggestHandle(text(0x0111, "ur", 0x0111, "a")), "durda")
+  assert.equal(suggestHandle(text(0x0110, "UR", 0x0110, "A")), "durda")
+  assert.equal(suggestHandle(text("Stra", 0x00df, "e")), "strasse")
+  assert.equal(suggestHandle(text("STRA", 0x1e9e, "E")), "strasse")
+  assert.equal(suggestHandle(text(0x0141, 0x00f3, "d", 0x017a)), "lodz")
+  assert.equal(suggestHandle(text("Pawe", 0x0142)), "pawel")
+  assert.equal(suggestHandle(text("S", 0x00f8, "ren")), "soren")
+  assert.equal(suggestHandle(text(0x00d8, "ster")), "oster")
+  assert.equal(suggestHandle(text("Ana ", 0x0110, "ur", 0x0111, "i", 0x0107)), "ana-durdic")
+  for (const raw of [durda, text("Stra", 0x00df, "e"), text(0x0141, 0x00f3, "d", 0x017a), text("S", 0x00f8, "ren")]) {
+    assert.equal(handleFormatError(suggestHandle(raw)), null, raw)
+  }
+})
+
 const samplePage = (overrides = {}) => ({
   id: 1,
   handle: "ana",
@@ -533,6 +553,15 @@ check("rebaseBioDraft merges newer link states into touched buttons and keeps th
     ],
   )
   assert.deepEqual(bioUpdateOf(rebased).buttons, bioUpdateOf(edited).buttons)
+})
+
+check("bioConflictText says a deleted link's button was removed instead of asking for a reload", () => {
+  assert.equal(BIO_PAGE_CHANGED, "This page changed. Reload and try again.")
+  assert.equal(bioConflictText(BIO_PAGE_CHANGED), BIO_LINK_DELETED)
+  assert.equal(BIO_LINK_DELETED, "A link on your page was deleted, so its button was removed. Check your page and save again.")
+  const outdated = "Your bio page changed in another tab or window. We loaded the latest version; check your changes and save again."
+  assert.equal(bioConflictText(outdated), outdated)
+  assert.equal(bioConflictText("This page changed."), "This page changed.")
 })
 
 check("isOlderBioPage spots a page from before the one on screen, so a late read can't undo a save", () => {

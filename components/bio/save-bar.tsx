@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button"
 export function SaveBar({
   dirty,
   saving,
+  checking,
   error,
   onSave,
   onDiscard,
 }: {
   dirty: boolean
   saving: boolean
+  checking: boolean
   error: string | null
   onSave: () => void
   onDiscard: () => void
@@ -27,23 +29,27 @@ export function SaveBar({
         <p id={statusId} role="status" className="text-sm font-medium">
           {dirty ? "You have unsaved changes" : "Saved"}
         </p>
-        {error && (
-          <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">
-            {error}
-          </p>
+        {checking ? (
+          <p role="status" className="text-sm text-muted-foreground">Checking the latest version…</p>
+        ) : (
+          error && (
+            <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">
+              {error}
+            </p>
+          )
         )}
       </div>
       {dirty && (
         <div className="flex shrink-0 gap-2">
-          <Button type="button" variant="outline" size="sm" disabled={saving} onClick={onDiscard}>
+          <Button type="button" variant="outline" size="sm" disabled={saving || checking} onClick={onDiscard}>
             Discard
           </Button>
           <Button
             type="button"
             size="sm"
             onClick={onSave}
-            aria-disabled={saving}
-            aria-busy={saving}
+            aria-disabled={saving || checking}
+            aria-busy={saving || checking}
             className="aria-disabled:pointer-events-none aria-disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save changes"}

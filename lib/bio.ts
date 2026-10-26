@@ -38,9 +38,23 @@ export const handleFormatError = (handle: string): string | null => {
   return null
 }
 
+const LETTERS_WITHOUT_MARKS = new Map([
+  [character(0x0111), "d"],
+  [character(0x0110), "d"],
+  [character(0x00df), "ss"],
+  [character(0x1e9e), "ss"],
+  [character(0x0142), "l"],
+  [character(0x0141), "l"],
+  [character(0x00f8), "o"],
+  [character(0x00d8), "o"],
+])
+
+const LETTER_WITHOUT_MARK = new RegExp(`[${[...LETTERS_WITHOUT_MARKS.keys()].join("")}]`, "gu")
+
 export const suggestHandle = (raw: string): string | null => {
   const handle = normalizeHandle(raw)
   const suggestion = handle
+    .replace(LETTER_WITHOUT_MARK, (letter) => LETTERS_WITHOUT_MARKS.get(letter) ?? "")
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .replace(/[\s.]+/gu, "-")
@@ -297,6 +311,12 @@ export const rebaseSavedBioDraft = (draft: BioDraft, sent: BioDraft, saved: BioP
 
 export const isOlderBioPage = (page: Pick<BioPage, "updatedAt">, than: Pick<BioPage, "updatedAt">): boolean =>
   parseServerDateTime(page.updatedAt).getTime() < parseServerDateTime(than.updatedAt).getTime()
+
+export const BIO_PAGE_CHANGED = "This page changed. Reload and try again."
+
+export const BIO_LINK_DELETED = "A link on your page was deleted, so its button was removed. Check your page and save again."
+
+export const bioConflictText = (message: string): string => (message === BIO_PAGE_CHANGED ? BIO_LINK_DELETED : message)
 
 export type BioProfileField = "displayName" | "bio" | "avatarEmoji"
 

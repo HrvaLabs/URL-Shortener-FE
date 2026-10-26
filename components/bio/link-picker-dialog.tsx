@@ -70,7 +70,7 @@ function PickerPage({ page, search, exclude, full, limitId, onAdd }: PickProps &
     })
 }
 
-function NoLinksYet({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
+function NoLinksYet({ error, retrying, onRetry }: { error: string | null; retrying: boolean; onRetry: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
       <p className="text-sm text-muted-foreground">
@@ -90,6 +90,7 @@ function NoLinksYet({ retrying, onRetry }: { retrying: boolean; onRetry: () => v
       >
         Retry
       </Button>
+      {error && <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{error}</p>}
     </div>
   )
 }
@@ -172,16 +173,21 @@ function PickerBody({
   }
 
   const loadingMore = count > 1 && lastPage.isPending
-  const hidesUsedLinks = exclude.size > 0 && !first.isPending && !first.isError && first.data.totalElements > 0
+  const hidesUsedLinks = exclude.size > 0 && first.data !== undefined && first.data.totalElements > 0
 
   let listState: ReactNode = null
   if (first.isPending) listState = <p role="status" className="py-3 text-sm text-muted-foreground">Loading your links…</p>
-  else if (first.isError) listState = <LoadError error={first.error} onRetry={() => retryFirst(first.refetch)} />
-  else if (first.data.totalElements === 0) {
+  else if (first.data === undefined) {
+    listState = <LoadError error={first.error} retrying={first.isFetching} onRetry={() => retryFirst(first.refetch)} />
+  } else if (first.data.totalElements === 0) {
     listState = search ? (
       <p className="py-3 text-sm text-muted-foreground">No active links match.</p>
     ) : (
-      <NoLinksYet retrying={first.isFetching} onRetry={() => retryEmpty(first.refetch)} />
+      <NoLinksYet
+        error={first.isError && !first.isFetching ? errorText(first.error) : null}
+        retrying={first.isFetching}
+        onRetry={() => retryEmpty(first.refetch)}
+      />
     )
   }
 
@@ -214,7 +220,7 @@ function PickerBody({
               ))}
             </ul>
             {lastPage.isError ? (
-              <LoadError error={lastPage.error} onRetry={() => void lastPage.refetch()} />
+              <LoadError error={lastPage.error} retrying={lastPage.isFetching} onRetry={() => void lastPage.refetch()} />
             ) : loadingMore || (lastPage.data !== undefined && count < lastPage.data.totalPages) ? (
               <div className="pt-3">
                 <Button
@@ -251,11 +257,18 @@ function PickerBody({
   )
 }
 
-function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+function LoadError({ error, retrying, onRetry }: { error: unknown; retrying: boolean; onRetry: () => void }) {
   return (
     <div className="flex flex-wrap items-center gap-3 py-3">
       <p className="text-sm text-destructive [overflow-wrap:anywhere]">{errorText(error)}</p>
-      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-disabled={retrying || undefined}
+        onClick={() => { if (!retrying) onRetry() }}
+        className={DISABLED_CLASSES}
+      >
         Retry
       </Button>
     </div>

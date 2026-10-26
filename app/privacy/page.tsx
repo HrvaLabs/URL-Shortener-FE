@@ -128,9 +128,11 @@ export default function PrivacyPage() {
                 page&apos;s text (handle, name, bio and button titles) is checked automatically for brand
                 names and phishing words; a hit sends the page to an admin, and the notes, any visitor
                 reports, and an admin&apos;s reason for hiding the page or taking back its handle are
-                kept with the page and deleted with it. A handle an admin takes back is also kept on the
-                reserved list, with the admin&apos;s reason but without a link to you, until an admin
-                releases it.
+                kept with the page and deleted with it. Admin actions on a page, such as hiding it or
+                taking back its handle, are also recorded in the admin audit log (see{" "}
+                <a href="#security-and-audit-logs">Security and audit logs</a>). A handle an admin takes
+                back is also kept on the reserved list, with the admin&apos;s reason but without a link
+                to you, until an admin releases it.
               </p>
               <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) for the page you publish;
@@ -156,7 +158,7 @@ export default function PrivacyPage() {
                 troubleshoot delivery. We do not send marketing email.
               </p>
 
-              <h3>Security and audit logs</h3>
+              <h3 id="security-and-audit-logs">Security and audit logs</h3>
               <p>
                 We keep internal audit logs of security-relevant events (such as logins and
                 administrative actions) to protect the service and its users. Legal basis:
@@ -339,9 +341,10 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Bio pages</strong> — kept until you delete the page or your account; their
                   daily view counts, review notes, visitor reports and an admin&apos;s reasons go with
-                  them. An old handle is kept for 30 days after a change or deletion. A handle an admin
-                  takes back is also kept on the reserved list, with the admin&apos;s reason but without a
-                  link to you, until an admin releases it.
+                  them. The audit log&apos;s record of admin actions on the page is kept as listed for
+                  audit logs below. An old handle is kept for 30 days after a change or deletion. A
+                  handle an admin takes back is also kept on the reserved list, with the admin&apos;s
+                  reason but without a link to you, until an admin releases it.
                 </li>
                 <li>
                   <strong>Connected-app token records</strong>{" "}

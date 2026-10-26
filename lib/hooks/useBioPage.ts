@@ -32,7 +32,7 @@ export function useBioPage() {
 
 export function useRefreshBioPage() {
   const queryClient = useQueryClient()
-  return () => queryClient.invalidateQueries({ queryKey: BIO_PAGE_KEY })
+  return (options?: { throwOnError?: boolean }) => queryClient.invalidateQueries({ queryKey: BIO_PAGE_KEY }, options)
 }
 
 function useCancelBioPageFetch() {

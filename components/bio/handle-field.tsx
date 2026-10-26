@@ -57,6 +57,7 @@ export function HandleField({
   const statusId = `${id}-status`
   const invalid = status?.tone === "error"
   const suggestion = invalid && handleFormatError(normalizeHandle(value)) ? suggestHandle(value) : null
+  const hasDotsOrSpaces = /[\s.]/u.test(normalizeHandle(value))
 
   const applySuggestion = (next: string) => {
     onChange(next)
@@ -91,21 +92,21 @@ export function HandleField({
         />
       </div>
       {hint && <p id={hintId} className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
-      <p id={statusId} aria-live="polite" className={cn("mt-1.5 min-h-5 text-sm [overflow-wrap:anywhere]", status && STATUS_TONES[status.tone])}>
-        {status?.text}
-      </p>
-      {suggestion && (
-        <p className="mt-1 text-sm text-muted-foreground">
-          Dots and spaces aren&apos;t allowed.{" "}
-          <button
-            type="button"
-            onClick={() => applySuggestion(suggestion)}
-            className="rounded-sm font-medium text-brand-link underline-offset-4 [overflow-wrap:anywhere] hover:underline"
-          >
-            Try @{suggestion}
-          </button>
-        </p>
-      )}
+      <div id={statusId} aria-live="polite" className="mt-1.5 min-h-5 text-sm [overflow-wrap:anywhere]">
+        {status && <p className={STATUS_TONES[status.tone]}>{status.text}</p>}
+        {suggestion && (
+          <p className="mt-1 text-muted-foreground">
+            {hasDotsOrSpaces && <>Dots and spaces aren&apos;t allowed.{" "}</>}
+            <button
+              type="button"
+              onClick={() => applySuggestion(suggestion)}
+              className="rounded-sm font-medium text-brand-link underline-offset-4 [overflow-wrap:anywhere] hover:underline"
+            >
+              Try @{suggestion}
+            </button>
+          </p>
+        )}
+      </div>
     </div>
   )
 }

@@ -31,10 +31,10 @@ export function useFocusAfterRetry(target: RefObject<HTMLElement | null>, ready:
   }, [])
 }
 
-/** For a route error boundary, whose state doesn't survive the retry: remembers the retry for the next page. */
-export function markPageRetry() {
+/** For a route error boundary, whose state doesn't survive the retry: remembers the retry of `handle`'s page. */
+export function markPageRetry(handle: string) {
   try {
-    window.sessionStorage.setItem(PAGE_RETRY_KEY, "1")
+    window.sessionStorage.setItem(PAGE_RETRY_KEY, handle)
   } catch {}
 }
 
@@ -44,15 +44,15 @@ export function clearPageRetry() {
   } catch {}
 }
 
-/** Moves focus to the element with `targetId` when the page replaced an error boundary after its retry. */
-export function useFocusAfterPageRetry(targetId: string) {
+/** Moves focus to the element with `targetId` when `handle`'s page replaced its error boundary after a retry. */
+export function useFocusAfterPageRetry(targetId: string, handle: string) {
   useLayoutEffect(() => {
     let wanted = false
     try {
-      wanted = window.sessionStorage.getItem(PAGE_RETRY_KEY) === "1"
+      wanted = window.sessionStorage.getItem(PAGE_RETRY_KEY) === handle
     } catch {}
     if (!wanted) return
     clearPageRetry()
     if (focusIsLost()) document.getElementById(targetId)?.focus()
-  }, [targetId])
+  }, [targetId, handle])
 }

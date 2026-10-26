@@ -1,9 +1,13 @@
 "use client"
 
 import { useEffect } from "react"
+import { useParams } from "next/navigation"
+import { normalizeHandle } from "@/lib/bio"
 import { clearPageRetry, markPageRetry } from "@/lib/hooks/useFocusAfterRetry"
 
 export default function BioPageError({ error, retry }: { error: unknown; retry: () => void }) {
+  const { handle } = useParams<{ handle: string }>()
+
   useEffect(() => {
     clearPageRetry()
   }, [error])
@@ -17,7 +21,7 @@ export default function BioPageError({ error, retry }: { error: unknown; retry: 
         <button
           type="button"
           onClick={() => {
-            markPageRetry()
+            markPageRetry(normalizeHandle(handle))
             retry()
           }}
           className="mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--bio-fg)] px-5 font-medium text-[var(--bio-bg)] focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-[var(--bio-fg)] focus-visible:ring-0 focus-visible:ring-offset-0"

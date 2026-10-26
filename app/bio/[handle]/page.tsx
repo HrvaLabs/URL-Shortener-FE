@@ -104,7 +104,7 @@ export default async function BioRoutePage({ params }: BioRouteProps) {
         reportHref={`/report?s=${encodeURIComponent(`@${page.handle}`)}`}
       />
       <BioViewBeacon handle={page.handle} />
-      <BioRetryFocus targetId={BIO_PAGE_NAME_ID} />
+      <BioRetryFocus targetId={BIO_PAGE_NAME_ID} handle={canonical} />
     </>
   )
 }

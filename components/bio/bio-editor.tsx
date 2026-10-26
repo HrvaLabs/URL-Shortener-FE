@@ -18,6 +18,7 @@ import { ApiError } from "@/lib/api-client"
 import {
   AVATAR_EMOJI_REQUIRED,
   bioButtonTitleErrors,
+  bioConflictText,
   bioDraftOf,
   bioSaveErrors,
   bioUpdateOf,
@@ -43,6 +44,8 @@ const LEAVE_WARNING = "You have unsaved changes. Leave this page without saving 
 const SAVE_BAR_ROOM = "8rem"
 
 const SAVED_NOTE_MS = 2000
+
+const LATEST_VERSION_FAILED = "Couldn't load the latest version."
 
 const PROFILE_FIELD_ORDER: BioProfileField[] = ["displayName", "bio"]
 
@@ -152,8 +155,10 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const [buttonErrors, setButtonErrors] = useState<BioButtonErrors>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [checkingLatest, setCheckingLatest] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
   const [tab, setTab] = useState("edit")
+  const [acceptNextPage, setAcceptNextPage] = useState(false)
   const submitting = useRef(false)
   const lastEdited = useRef<HTMLElement | null>(null)
   const handleTitleRef = useRef<HTMLHeadingElement>(null)
@@ -161,7 +166,8 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
   const save = useSaveBioPage()
   const refresh = useRefreshBioPage()
 
-  if (synced !== page && !isOlderBioPage(page, synced)) {
+  if (synced !== page && (acceptNextPage || !isOlderBioPage(page, synced))) {
+    setAcceptNextPage(false)
     setSynced(page)
     setDraft((current) => rebaseBioDraft(current, synced, page))
   }
@@ -236,6 +242,18 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     if (errors.profile.avatarEmoji) focusById(profileFieldId(idPrefix, "avatarEmoji"))
   }
 
+  const loadLatestAfterConflict = async (message: string) => {
+    setAcceptNextPage(true)
+    setCheckingLatest(true)
+    try {
+      await refresh({ throwOnError: true })
+      setSaveError(bioConflictText(message))
+    } catch (refreshError) {
+      setSaveError(`${LATEST_VERSION_FAILED} ${errorText(refreshError)}`)
+    }
+    setCheckingLatest(false)
+  }
+
   const handleSave = async () => {
     if (submitting.current) return
     const localErrors: BioSaveErrors = {
@@ -253,6 +271,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     try {
       const saved = await save.mutateAsync({ ...bioUpdateOf(sent), expectedUpdatedAt: synced.updatedAt })
       flushSync(() => {
+        setAcceptNextPage(false)
         setDraft((current) => rebaseSavedBioDraft(current, sent, saved))
         setSynced(saved)
         setFieldErrors({})
@@ -263,9 +282,14 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       submitting.current = false
       focusAfterSaveBar()
     } catch (error) {
-      submitting.current = false
       setSaving(false)
       const message = errorText(error)
+      if (error instanceof ApiError && error.status === 409) {
+        await loadLatestAfterConflict(message)
+        submitting.current = false
+        return
+      }
+      submitting.current = false
       const errors = error instanceof ApiError && error.status === 400 ? bioSaveErrors(message, error.fields, sent.buttons) : null
       if (errors) {
         showSaveErrors(errors, sent.buttons)
@@ -277,7 +301,6 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
         return
       }
       setSaveError(message)
-      if (error instanceof ApiError && error.status === 409) void refresh()
     }
   }
 
@@ -373,7 +396,14 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
         </Tabs>
       )}
       {(dirty || justSaved) && (
-        <SaveBar dirty={dirty} saving={saving} error={dirty ? saveError : null} onSave={handleSave} onDiscard={handleDiscard} />
+        <SaveBar
+          dirty={dirty}
+          saving={saving}
+          checking={checkingLatest}
+          error={dirty ? saveError : null}
+          onSave={handleSave}
+          onDiscard={handleDiscard}
+        />
       )}
     </div>
   )

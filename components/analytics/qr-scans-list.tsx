@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/utils"
 
 interface QrScansListProps {
   totals: AnalyticsTotals
-  sources: BreakdownEntry[]
+  sources?: BreakdownEntry[]
   passwordProtected?: boolean
 }
 

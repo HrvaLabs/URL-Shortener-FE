@@ -69,8 +69,8 @@ const fixedLabels: Record<Exclude<BreakdownDimension, "countries" | "referrers">
   sources: { qr: "QR scans", direct: "Direct" },
 }
 
-export function qrSplit(totals: AnalyticsTotals, sources: BreakdownEntry[]): BreakdownEntry[] {
-  const qr = sources.find((entry) => entry.value === "qr")?.clicks ?? 0
+export function qrSplit(totals: AnalyticsTotals, sources: BreakdownEntry[] | undefined): BreakdownEntry[] {
+  const qr = (sources ?? []).find((entry) => entry.value === "qr")?.clicks ?? 0
   return [
     { value: "qr", clicks: qr },
     { value: "direct", clicks: Math.max(0, totals.clicks - qr) },

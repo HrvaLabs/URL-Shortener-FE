@@ -82,7 +82,8 @@ export default function PrivacyPage() {
                 For each link and day it keeps only totals: clicks, unique visitors, clicks from bots
                 and link previews, and how many clicks came from each referring site&apos;s domain
                 (for example t.co), each country, each device type (mobile, tablet or desktop), and
-                each browser and operating system family. The country comes from Cloudflare, which
+                each browser and operating system family, and whether the click came from a QR code
+                made by hrva.cc. The country comes from Cloudflare, which
                 carries our traffic; we don&apos;t look up locations ourselves. Full addresses of
                 referring pages, full browser identifiers and IP addresses are never stored, and
                 nothing is recorded about an individual click. Short links set no cookies and run no
@@ -136,10 +137,9 @@ export default function PrivacyPage() {
                 beyond the links it creates.
               </p>
               <p>
-                To limit abuse, anonymous links created through the MCP server and new AI app
-                registrations are rate-limited per network. For this we keep a hash of your IP
-                address (for IPv6, of its network prefix) in our cache for at most an hour. The
-                plain IP address is not stored.
+                To limit abuse, new AI app registrations are rate-limited per network. For this we
+                keep a hash of your IP address (for IPv6, of its network prefix) in our cache for at
+                most an hour. The plain IP address is not stored.
               </p>
               <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this is required to
@@ -184,6 +184,10 @@ export default function PrivacyPage() {
                 them, and the checks never block an account on their own.
               </p>
               <p>
+                A weekly summary of site-wide totals, and an alert when many new links to the same new
+                domain appear in a short time, go only to the admin and never identify a visitor.
+              </p>
+              <p>
                 The admin can also moderate through the hrva.cc MCP connector in an AI app. The
                 connector only receives masked user data, such as a partly hidden email address, and
                 never IP addresses or visit details.
@@ -193,6 +197,11 @@ export default function PrivacyPage() {
                 category and the details you write, and nothing about you beyond a rate-limit
                 counter for your network, which expires after an hour. Reports are also posted to
                 the admin&apos;s Discord channel, as described under <em>Who else receives data</em>.
+              </p>
+              <p>
+                The <Link href="/stats">hrva.cc in numbers</Link> page shows only site-wide totals.
+                Opening it stores nothing about you beyond a rate-limit counter for your network,
+                which expires after an hour.
               </p>
               <p>
                 Legal basis: legitimate interest (Art. 6(1)(f) GDPR) — protecting visitors and the

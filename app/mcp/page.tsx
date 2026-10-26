@@ -95,6 +95,10 @@ export default function McpPage() {
                 password and two-factor code or with Google, then allow the app on the consent screen at{" "}
                 <InlineCode>app.hrva.cc/connect</InlineCode>.
               </Paragraph>
+              <Paragraph className="mt-4">
+                There&apos;s no server without an account anymore. If you added <InlineCode>hrva.cc/mcp/anon</InlineCode>{" "}
+                before, remove it and add <InlineCode>hrva.cc/mcp</InlineCode> instead.
+              </Paragraph>
             </Section>
 
             <Section title="Set it up">

@@ -6,7 +6,7 @@ export const DEFAULT_ANALYTICS_RANGE: AnalyticsRange = 30
 
 export const ANALYTICS_HISTORY_START = "2026-10-24"
 
-export const QR_SCANS_START = "2026-10-27"
+export const QR_SCANS_START = "2026-10-26"
 
 export const rangeLabels: Record<AnalyticsRange, string> = {
   7: "7 days",

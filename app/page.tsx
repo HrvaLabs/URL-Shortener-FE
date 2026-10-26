@@ -220,7 +220,18 @@ function FeatureGrid() {
             </div>
           </FeatureCell>
 
-          <FeatureCell icon={QrCode} title="QR codes" description="Pick colours and size, then download as PNG or SVG.">
+          <FeatureCell
+            icon={QrCode}
+            title="QR codes"
+            description={
+              <>
+                Pick colours and size, then download as PNG or SVG. Link analytics count scans apart from direct clicks.{" "}
+                <Link href="/help/stats#qr-scans" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about QR scans</span>
+                </Link>
+              </>
+            }
+          >
             <div aria-hidden="true">
               <div className="flex items-start gap-5">
                 <div className="shrink-0 rounded-xl border bg-white p-2.5">
@@ -414,7 +425,11 @@ function FeatureGrid() {
           <Link href="/validate" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             see where a link goes before opening it
           </Link>
-          .
+          . The public{" "}
+          <Link href="/stats" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+            hrva.cc in numbers
+          </Link>{" "}
+          page shows how many harmful links are blocked and how fast reports are reviewed.
         </p>
       </div>
     </section>

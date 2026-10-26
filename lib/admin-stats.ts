@@ -1,5 +1,5 @@
 import { DEFAULT_ANALYTICS_RANGE } from "./analytics"
-import type { AnalyticsRange, AnalyticsTotals } from "./types"
+import type { AnalyticsRange, AnalyticsTotals, CreatedVia } from "./types"
 
 export type StatsTab = "traffic" | "links" | "users" | "safety" | "system"
 
@@ -11,9 +11,27 @@ export const statsTabLabels: Record<StatsTab, string> = {
   system: "System",
 }
 
-export const STATS_TABS: StatsTab[] = ["traffic"]
+export const STATS_TABS: StatsTab[] = ["traffic", "links", "users"]
 
 export const DEFAULT_STATS_TAB: StatsTab = "traffic"
+
+export const createdViaLabels: Record<CreatedVia | "unknown", string> = {
+  WEB: "Website, signed in",
+  API_KEY: "API key",
+  BULK: "Bulk",
+  MCP: "AI connector, signed in",
+  ANONYMOUS_WEB: "Website, no account",
+  ANONYMOUS_MCP: "AI connector, no account",
+  unknown: "Unknown (made before this was recorded)",
+}
+
+export type SignInProvider = "local" | "google" | "github"
+
+export const providerLabels: Record<SignInProvider, string> = {
+  local: "Email and password",
+  google: "Google",
+  github: "GitHub",
+}
 
 export function parseStatsTab(value: string | null): StatsTab {
   return STATS_TABS.find((tab) => tab === value) ?? DEFAULT_STATS_TAB

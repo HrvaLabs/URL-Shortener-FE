@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
 import { AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { RangePicker } from "@/components/analytics/range-picker"
+import { LinksTab } from "@/components/admin/stats/links-tab"
 import { LoginRateLimits } from "@/components/admin/stats/login-rate-limits"
 import { TrafficTab } from "@/components/admin/stats/traffic-tab"
+import { UsersTab } from "@/components/admin/stats/users-tab"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { STATS_TABS, adminStatsHref, parseStatsTab, statsTabLabels, type StatsTab } from "@/lib/admin-stats"
@@ -77,6 +79,12 @@ function Stats() {
         </div>
         <TabsContent value="traffic" className="mt-6">
           <TrafficTab days={days} />
+        </TabsContent>
+        <TabsContent value="links" className="mt-6">
+          <LinksTab days={days} />
+        </TabsContent>
+        <TabsContent value="users" className="mt-6">
+          <UsersTab days={days} />
         </TabsContent>
       </Tabs>
 

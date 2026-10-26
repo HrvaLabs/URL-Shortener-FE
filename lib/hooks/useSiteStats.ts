@@ -13,3 +13,21 @@ export function useTrafficStats(days: AnalyticsRange) {
     retry: retryUnlessRefused,
   })
 }
+
+export function useLinksStats(days: AnalyticsRange) {
+  return useQuery({
+    queryKey: ["admin", "stats", "links", days],
+    queryFn: () => adminApi.getLinksStats(days),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessRefused,
+  })
+}
+
+export function useUsersStats(days: AnalyticsRange) {
+  return useQuery({
+    queryKey: ["admin", "stats", "users", days],
+    queryFn: () => adminApi.getUsersStats(days),
+    placeholderData: keepPreviousData,
+    retry: retryUnlessRefused,
+  })
+}

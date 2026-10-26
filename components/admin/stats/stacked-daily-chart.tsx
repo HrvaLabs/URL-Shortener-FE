@@ -1,10 +1,18 @@
 "use client"
 
+import { useId } from "react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, type BarShapeProps, type TooltipContentProps } from "recharts"
 import { axisTick, compactNumber, dailyTicks, formatTick } from "@/components/analytics/clicks-chart"
 import { analyticsDay, rangeLabels } from "@/lib/analytics"
 import type { AnalyticsRange, StackedSeries } from "@/lib/types"
 import { formatDate } from "@/lib/utils"
+
+export type StackStep = 100 | 55 | 25
+
+export interface StackFill {
+  step: StackStep
+  hatch?: boolean
+}
 
 interface StackedDailyChartProps {
   title: string
@@ -12,40 +20,67 @@ interface StackedDailyChartProps {
   labels: Record<string, string>
   days: AnalyticsRange
   hint?: string
+  fills?: Record<string, StackFill>
 }
 
 interface Segment {
   key: string
   field: string
   label: string
-  color: string
+  fill: StackFill | null
 }
 
 type Row = Record<string, string | number> & { date: string }
 
 const UNKNOWN_KEY = "unknown"
 
-const mutedColor = "hsl(var(--muted-foreground) / 0.35)"
+const defaultSteps: StackStep[] = [100, 55, 25]
 
-const brandSteps = [100, 49, 83, 32, 66, 15]
+const stepColors: Record<StackStep, string> = {
+  100: "hsl(var(--brand))",
+  55: "color-mix(in oklab, hsl(var(--brand)) var(--stack-mid), hsl(var(--stack-toward)))",
+  25: "color-mix(in oklab, hsl(var(--brand)) var(--stack-low), hsl(var(--stack-toward)))",
+}
+
+const mutedColor = "hsl(var(--muted-foreground) / 0.5)"
+
+const hatchSize = 6
 
 const barGap: Record<AnalyticsRange, string | number> = { 7: "20%", 30: "20%", 90: "10%", 365: 0 }
 
-function segmentsOf(keys: string[], labels: Record<string, string>): Segment[] {
-  let step = 0
+function segmentsOf(keys: string[], labels: Record<string, string>, fills?: Record<string, StackFill>): Segment[] {
+  let position = 0
   return keys.map((key, index) => ({
     key,
     field: `s${index}`,
     label: labels[key] ?? key,
-    color:
-      key === UNKNOWN_KEY
-        ? mutedColor
-        : `color-mix(in oklab, hsl(var(--brand)) ${brandSteps[Math.min(step++, brandSteps.length - 1)]}%, hsl(var(--stack-toward)))`,
+    fill: key === UNKNOWN_KEY ? null : fills ? (fills[key] ?? null) : defaultFill(position++),
   }))
 }
 
-export function StackedDailyChart({ title, series, labels, days, hint }: StackedDailyChartProps) {
-  const segments = segmentsOf(series.keys, labels)
+function defaultFill(position: number): StackFill | null {
+  return position < defaultSteps.length ? { step: defaultSteps[position] } : null
+}
+
+function solidColor(fill: StackFill | null): string {
+  return fill ? stepColors[fill.step] : mutedColor
+}
+
+function hatchId(patternBase: string, step: StackStep): string {
+  return `${patternBase}-hatch-${step}`
+}
+
+function paint(fill: StackFill | null, patternBase: string): string {
+  return fill?.hatch ? `url(#${hatchId(patternBase, fill.step)})` : solidColor(fill)
+}
+
+function useSvgId(): string {
+  return useId().replace(/[^\w-]/g, "")
+}
+
+export function StackedDailyChart({ title, series, labels, days, hint, fills }: StackedDailyChartProps) {
+  const patternBase = useSvgId()
+  const segments = segmentsOf(series.keys, labels, fills)
   const rows: Row[] = series.daily.map((day) => {
     const row: Row = { date: day.date }
     segments.forEach((segment) => {
@@ -58,7 +93,7 @@ export function StackedDailyChart({ title, series, labels, days, hint }: Stacked
   const summary = `${title} for the last ${rangeLabels[days]}: ${totals.length > 0 ? totals.join(", ") : "none"}`
 
   return (
-    <section className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)] [--stack-toward:var(--card)] dark:[--stack-toward:var(--foreground)]">
+    <section className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)] [--stack-low:25%] [--stack-mid:55%] [--stack-toward:var(--card)] dark:[--stack-low:20%] dark:[--stack-mid:60%] dark:[--stack-toward:var(--foreground)]">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b px-5 py-3.5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold">{title}</h2>
@@ -67,7 +102,7 @@ export function StackedDailyChart({ title, series, labels, days, hint }: Stacked
         <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {segments.map((segment) => (
             <li key={segment.key} className="flex items-center gap-1.5">
-              <Swatch color={segment.color} />
+              <Swatch fill={segment.fill} />
               {segment.label}
             </li>
           ))}
@@ -76,6 +111,11 @@ export function StackedDailyChart({ title, series, labels, days, hint }: Stacked
       <div role="img" aria-label={summary} className="h-64 min-w-0 px-2 pb-3 pt-5 sm:px-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={rows} margin={{ top: 4, right: 20, left: 0, bottom: 0 }} barCategoryGap={barGap[days]}>
+            <defs>
+              {defaultSteps.map((step) => (
+                <HatchPattern key={step} id={hatchId(patternBase, step)} step={step} />
+              ))}
+            </defs>
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
             <XAxis
               dataKey="date"
@@ -101,7 +141,7 @@ export function StackedDailyChart({ title, series, labels, days, hint }: Stacked
                 dataKey={segment.field}
                 name={segment.label}
                 stackId="day"
-                fill={segment.color}
+                fill={paint(segment.fill, patternBase)}
                 shape={SegmentShape}
                 maxBarSize={28}
                 isAnimationActive={false}
@@ -114,10 +154,19 @@ export function StackedDailyChart({ title, series, labels, days, hint }: Stacked
   )
 }
 
+function HatchPattern({ id, step }: { id: string; step: StackStep }) {
+  return (
+    <pattern id={id} width={hatchSize} height={hatchSize} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width={hatchSize} height={hatchSize} style={{ fill: stepColors[step] }} />
+      <rect width={1} height={hatchSize} style={{ fill: "hsl(var(--card))" }} />
+    </pattern>
+  )
+}
+
 function SegmentShape({ x, y, width, height, fill }: BarShapeProps) {
   if (!(width > 0) || !(height > 0)) return null
   const gap = height >= 6 ? 2 : height >= 3 ? 1 : 0
-  return <rect x={x} y={y + gap} width={width} height={height - gap} fill={fill} />
+  return <rect x={x} y={y + gap} width={width} height={height - gap} style={{ fill }} />
 }
 
 function StackedTooltip({ active, payload, label, segments }: TooltipContentProps & { segments: Segment[] }) {
@@ -130,7 +179,7 @@ function StackedTooltip({ active, payload, label, segments }: TooltipContentProp
       <ul className="space-y-1">
         {segments.map((segment) => (
           <li key={segment.key} className="flex items-center gap-2">
-            <Swatch color={segment.color} />
+            <Swatch fill={segment.fill} />
             <span className="font-semibold tabular-nums">{Number(row[segment.field]).toLocaleString()}</span>
             <span className="text-muted-foreground">{segment.label}</span>
           </li>
@@ -140,6 +189,16 @@ function StackedTooltip({ active, payload, label, segments }: TooltipContentProp
   )
 }
 
-function Swatch({ color }: { color: string }) {
-  return <span aria-hidden="true" className="size-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: color }} />
+function Swatch({ fill }: { fill: StackFill | null }) {
+  const patternBase = useSvgId()
+  return (
+    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10" className="shrink-0">
+      {fill?.hatch && (
+        <defs>
+          <HatchPattern id={hatchId(patternBase, fill.step)} step={fill.step} />
+        </defs>
+      )}
+      <rect width="10" height="10" rx="3" style={{ fill: paint(fill, patternBase) }} />
+    </svg>
+  )
 }

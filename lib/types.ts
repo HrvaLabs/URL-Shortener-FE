@@ -201,6 +201,71 @@ export interface TrafficStats {
   allTimeVisits: number
 }
 
+export type CreatedVia = "WEB" | "API_KEY" | "BULK" | "MCP" | "ANONYMOUS_WEB" | "ANONYMOUS_MCP"
+
+export interface NewestLink {
+  id: number
+  shortUrl: string
+  destinationHost: string
+  ownerEmail: string | null
+  createdVia: CreatedVia | "unknown"
+  createDate: string
+  status: string
+}
+
+export interface LinksStats {
+  days: AnalyticsRange
+  from: string
+  to: string
+  created: StackedSeries
+  createdInRange: {
+    total: number
+    account: number
+    anonymous: number
+    aiTagged: number
+  }
+  now: {
+    total: number
+    active: number
+    inactive: number
+    expired: number
+    passwordProtected: number
+    withVisitLimit: number
+    withExpiry: number
+    blockedByReason: CountEntry[]
+  }
+  topTags: CountEntry[]
+  topDomains: CountEntry[]
+  newest: NewestLink[]
+}
+
+export interface UsersStats {
+  days: AnalyticsRange
+  from: string
+  to: string
+  signups: StackedSeries
+  now: {
+    total: number
+    active: number
+    deactivated: number
+    admins: number
+    emailVerified: number
+    twoFactorEnabled: number
+    byProvider: CountEntry[]
+  }
+  activeLast7Days: number
+  activeLast30Days: number
+  apiKeys: {
+    active: number
+    expired: number
+    callsUsed: number
+  }
+  mcp: {
+    connectedUsers: number
+    registeredClients: number
+  }
+}
+
 export interface PeekUrl {
   longUrl: string | null
   shortUrl: string

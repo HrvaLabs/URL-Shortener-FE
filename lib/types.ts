@@ -164,6 +164,43 @@ export interface AnalyticsOverview {
   totalVisits: number
 }
 
+export interface CountEntry {
+  value: string
+  count: number
+}
+
+export interface DailyCounts {
+  date: string
+  counts: Record<string, number>
+}
+
+export interface StackedSeries {
+  keys: string[]
+  daily: DailyCounts[]
+}
+
+export interface TrafficTopLink {
+  id: number
+  shortUrl: string
+  destinationHost: string
+  ownerEmail: string | null
+  clicks: number
+  uniqueVisitors: number
+}
+
+export interface TrafficStats {
+  days: AnalyticsRange
+  from: string
+  to: string
+  totals: AnalyticsTotals
+  daily: AnalyticsDay[]
+  anonymousClicks: number
+  accountClicks: number
+  topLinks: TrafficTopLink[]
+  breakdowns: AnalyticsBreakdowns
+  allTimeVisits: number
+}
+
 export interface PeekUrl {
   longUrl: string | null
   shortUrl: string

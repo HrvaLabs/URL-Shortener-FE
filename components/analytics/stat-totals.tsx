@@ -2,17 +2,19 @@ import type { AnalyticsTotals } from "@/lib/types"
 
 interface StatTotalsProps {
   totals: AnalyticsTotals
+  uniqueVisitorsLabel?: string
   uniqueVisitorsHint?: string
 }
 
 export function StatTotals({
   totals,
+  uniqueVisitorsLabel = "Daily unique visitors",
   uniqueVisitorsHint = "Counted per day, so one person on two different days counts twice.",
 }: StatTotalsProps) {
   const stats = [
     { label: "Clicks", value: totals.clicks },
     {
-      label: "Daily unique visitors",
+      label: uniqueVisitorsLabel,
       value: totals.uniqueVisitors,
       hint: uniqueVisitorsHint,
     },

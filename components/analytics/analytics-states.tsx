@@ -27,14 +27,21 @@ interface AnalyticsErrorProps {
   retrying: boolean
   onRetry: () => void
   refusals?: Record<number, string>
+  message?: string
 }
 
-export function AnalyticsError({ error, retrying, onRetry, refusals }: AnalyticsErrorProps) {
+export function AnalyticsError({
+  error,
+  retrying,
+  onRetry,
+  refusals,
+  message = "Couldn't load analytics. Try again.",
+}: AnalyticsErrorProps) {
   const refusal = refusals && error instanceof ApiError ? refusals[error.status] : undefined
   return (
     <div className="rounded-xl border bg-card px-6 py-12 text-center">
       <p className={cn("text-sm", refusal ? "text-muted-foreground" : "text-destructive")}>
-        {refusal ?? "Couldn't load analytics. Try again."}
+        {refusal ?? message}
       </p>
       {!refusal && (
         <Button variant="outline" size="sm" onClick={onRetry} disabled={retrying} className="mt-4">

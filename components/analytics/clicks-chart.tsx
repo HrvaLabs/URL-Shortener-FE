@@ -8,28 +8,43 @@ import { formatDate } from "@/lib/utils"
 interface ClicksChartProps {
   daily: AnalyticsDay[]
   days: AnalyticsRange
+  uniqueVisitorsLabel?: string
+  showBots?: boolean
 }
 
-const series = [
-  { key: "clicks", label: "Clicks", stroke: "hsl(var(--brand))", dash: undefined },
-  { key: "uniqueVisitors", label: "Daily unique visitors", stroke: "hsl(var(--brand) / 0.5)", dash: "4 3" },
-] as const
+interface Series {
+  key: "clicks" | "uniqueVisitors" | "botClicks"
+  label: string
+  stroke: string
+  dash: string | undefined
+}
 
-type Series = (typeof series)[number]
+const botStroke = "hsl(var(--muted-foreground))"
+
+const chartSeries = (uniqueVisitorsLabel: string, showBots: boolean): Series[] => [
+  { key: "clicks", label: "Clicks", stroke: "hsl(var(--brand))", dash: undefined },
+  { key: "uniqueVisitors", label: uniqueVisitorsLabel, stroke: "hsl(var(--brand) / 0.5)", dash: "4 3" },
+  ...(showBots ? [{ key: "botClicks", label: "Bot clicks", stroke: botStroke, dash: undefined } as const] : []),
+]
 
 const tickStep: Record<AnalyticsRange, number> = { 7: 1, 30: 7, 90: 15, 365: 61 }
 
-const compactNumber = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
+export const dailyTicks = (dates: string[], days: AnalyticsRange) =>
+  dates.filter((_, index) => (dates.length - 1 - index) % tickStep[days] === 0)
 
-const axisTick = { fontSize: 11, fill: "hsl(var(--muted-foreground))" }
+export const compactNumber = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
 
-const formatTick = (date: string) => analyticsDay(date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+export const axisTick = { fontSize: 11, fill: "hsl(var(--muted-foreground))" }
 
-export function ClicksChart({ daily, days }: ClicksChartProps) {
-  const ticks = daily.filter((_, index) => (daily.length - 1 - index) % tickStep[days] === 0).map((day) => day.date)
+export const formatTick = (date: string) => analyticsDay(date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+
+export function ClicksChart({ daily, days, uniqueVisitorsLabel = "Daily unique visitors", showBots = false }: ClicksChartProps) {
+  const series = chartSeries(uniqueVisitorsLabel, showBots)
+  const ticks = dailyTicks(daily.map((day) => day.date), days)
   const clicks = daily.reduce((sum, day) => sum + day.clicks, 0)
   const uniqueVisitors = daily.reduce((sum, day) => sum + day.uniqueVisitors, 0)
-  const summary = `Clicks per day for the last ${rangeLabels[days]}: ${clicks.toLocaleString()} clicks, ${uniqueVisitors.toLocaleString()} daily unique visitors`
+  const botClicks = daily.reduce((sum, day) => sum + day.botClicks, 0)
+  const summary = `Clicks per day for the last ${rangeLabels[days]}: ${clicks.toLocaleString()} clicks, ${uniqueVisitors.toLocaleString()} ${uniqueVisitorsLabel.toLowerCase()}${showBots ? `, ${botClicks.toLocaleString()} bot clicks` : ""}`
 
   return (
     <div className="min-w-0 rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -65,7 +80,10 @@ export function ClicksChart({ daily, days }: ClicksChartProps) {
               axisLine={false}
               width={36}
             />
-            <Tooltip content={ChartTooltip} cursor={{ stroke: "hsl(var(--muted-foreground) / 0.4)", strokeWidth: 1 }} />
+            <Tooltip
+              content={(props) => <ChartTooltip {...props} series={series} />}
+              cursor={{ stroke: "hsl(var(--muted-foreground) / 0.4)", strokeWidth: 1 }}
+            />
             <Area
               type="monotone"
               dataKey="clicks"
@@ -78,10 +96,22 @@ export function ClicksChart({ daily, days }: ClicksChartProps) {
               activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: series[0].stroke }}
               isAnimationActive={false}
             />
+            {showBots && (
+              <Line
+                type="monotone"
+                dataKey="botClicks"
+                name="Bot clicks"
+                stroke={botStroke}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--card))", fill: botStroke }}
+                isAnimationActive={false}
+              />
+            )}
             <Line
               type="monotone"
               dataKey="uniqueVisitors"
-              name="Daily unique visitors"
+              name={uniqueVisitorsLabel}
               stroke={series[1].stroke}
               strokeWidth={2}
               strokeDasharray={series[1].dash}
@@ -96,7 +126,7 @@ export function ClicksChart({ daily, days }: ClicksChartProps) {
   )
 }
 
-function ChartTooltip({ active, payload, label }: TooltipContentProps) {
+function ChartTooltip({ active, payload, label, series }: TooltipContentProps & { series: Series[] }) {
   if (!active || !payload?.length) return null
   const day = payload[0].payload as AnalyticsDay
 

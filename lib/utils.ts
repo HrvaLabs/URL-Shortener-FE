@@ -123,3 +123,7 @@ export function safeNext(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || /[\\\t\n\r]/.test(next)) return "/dashboard"
   return next
 }
+
+export function isLocalAccount(user: { authProvider?: string } | null | undefined): boolean {
+  return !user?.authProvider || user.authProvider === "local"
+}

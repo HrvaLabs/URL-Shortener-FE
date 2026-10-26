@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { CircleAlert } from "lucide-react"
-import { SecondStep } from "@/components/auth/second-step"
+import { SIGN_IN_EXPIRED, SecondStep } from "@/components/auth/second-step"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
@@ -13,12 +13,11 @@ import { useAuth } from "@/lib/auth-context"
 import { TWO_STEP_METHODS, type SignedIn, type TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
 
-const EXPIRED = "Your sign-in expired. Sign in again."
-
 const messages: Record<string, string> = {
   no_email: "Could not retrieve email from provider.",
   account_inactive: "Your account is deactivated. Contact an administrator.",
   two_step_unavailable: "Two-step sign-in isn't available right now. Try again in a minute.",
+  invalid_email: "This account's email address can't be used on hrva.cc. Sign in with another account or with your email and password.",
 }
 
 type Callback =
@@ -40,7 +39,7 @@ function readCallback(searchParams: URLSearchParams): Callback {
     const methods = (searchParams.get("methods") ?? "").split(",").filter(isTwoStepMethod)
     return { kind: "second-step", pendingToken, methods }
   }
-  if (err) return { kind: "error", error: messages[err] ?? "Authentication failed.", fromProvider: true }
+  if (err) return { kind: "error", error: Object.hasOwn(messages, err) ? messages[err] : "Authentication failed.", fromProvider: true }
   return { kind: "error", error: "Invalid callback — no token received.", fromProvider: false }
 }
 
@@ -74,7 +73,7 @@ export function AuthCallbackContent() {
   const [callback] = useState(() => readCallback(searchParams))
   const [error, setError] = useState<string | null>(() => {
     if (callback.kind === "error") return callback.error
-    if (callback.kind === "second-step" && callback.methods.length === 0) return EXPIRED
+    if (callback.kind === "second-step" && callback.methods.length === 0) return SIGN_IN_EXPIRED
     return null
   })
   const errorHeadingRef = useRef<HTMLHeadingElement>(null)
@@ -108,7 +107,7 @@ export function AuthCallbackContent() {
     sessionStorage.removeItem("post-login-next")
   }, [completeSignIn, router])
 
-  const handleExpired = useCallback(() => setError(EXPIRED), [])
+  const handleExpired = useCallback((message: string) => setError(message), [])
 
   const handleBackToSignIn = useCallback(() => router.push("/login"), [router])
 

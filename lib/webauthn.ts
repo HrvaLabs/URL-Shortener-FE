@@ -6,12 +6,14 @@ import type {
   RequestOptionsJSON,
 } from "./types"
 
-type PasskeyErrorContext = "sign-in" | "register" | "verify"
+type PasskeyErrorContext = "sign-in" | "register" | "verify" | "second-step" | "second-step-no-code"
 
 const CANCELLED_MESSAGES: Record<PasskeyErrorContext, string> = {
-  "sign-in": "Passkey sign-in was cancelled, or no passkey for hrva.cc was found.",
+  "sign-in": 'Passkey sign-in was cancelled, or no passkey for hrva.cc was found. Security keys marked "second step only" work after your password.',
   register: "Adding the passkey was cancelled or timed out.",
   verify: "The passkey check was cancelled or timed out.",
+  "second-step": "That didn't work. Use a passkey or security key you added to this account, or enter a recovery code.",
+  "second-step-no-code": "That didn't work. Use a passkey or security key you added to this account.",
 }
 
 let pendingRequest: AbortController | null = null

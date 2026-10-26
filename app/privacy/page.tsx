@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   },
 }
 
-const LAST_UPDATED = "October 24, 2026"
+const LAST_UPDATED = "October 26, 2026"
 
 export default function PrivacyPage() {
   return (
@@ -56,11 +56,20 @@ export default function PrivacyPage() {
               <h3>Account data</h3>
               <p>
                 When you register, we process your email address, an optional display name, and your
-                password, which is stored only as a salted one-way hash. If you sign in with Google,
-                we receive your name and email address from your Google account instead of a
-                password. If you enable two-factor authentication, we store the shared secret and
-                recovery codes needed to verify your codes. We also record when your account was
-                created and when you last logged in.
+                password, which is stored only as a salted one-way hash. If you sign in with Google or
+                GitHub, we receive your name and email address from that account instead of a
+                password. Two-step verification is available whether you sign in with a password,
+                Google or GitHub. If you turn it on, we store the shared secret of your authenticator
+                app, if you use one, and one-way hashes of your recovery codes, so we can verify your
+                codes. If you add a passkey or security key, we store its public key and a few
+                details: the name you give it, when it was added and last used, which connection types
+                it supports (such as USB or NFC), whether it&apos;s synced between your devices, and its
+                model identifier when the device shares one. We also keep the technical data needed to
+                check it when you sign in, such as its credential ID, a sign-in counter and the data
+                your device sent when you added it. We also store a random identifier that
+                links your passkeys to your account. Your fingerprint, face or PIN never leaves your
+                device, and hrva.cc never receives it. When you add a passkey, we email you a security
+                notice. We also record when your account was created and when you last logged in.
               </p>
               <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this data is required to
@@ -105,8 +114,9 @@ export default function PrivacyPage() {
 
               <h3>Emails we send</h3>
               <p>
-                We send transactional emails only: address verification, password reset, and
-                notifications about your expiring links. We keep a log of emails sent to operate and
+                We send transactional emails only: address verification, password reset, security
+                notices (for example when a passkey is added to your account), and notifications about
+                your expiring links. We keep a log of emails sent to operate and
                 troubleshoot delivery. We do not send marketing email.
               </p>
 
@@ -246,6 +256,9 @@ export default function PrivacyPage() {
                   accounts are deactivated automatically after a period of inactivity.
                 </li>
                 <li>
+                  <strong>Passkeys</strong> — until you remove them or delete your account.
+                </li>
+                <li>
                   <strong>Password reset tokens</strong> — deleted as soon as they expire.
                 </li>
                 <li>
@@ -269,7 +282,10 @@ export default function PrivacyPage() {
                 personal data, ask us to restrict or object to processing, and receive your data in
                 a portable format (Arts. 15–21 GDPR). Write to{" "}
                 <a href="mailto:privacy@hrvalabs.net">privacy@hrvalabs.net</a> and we will respond
-                within one month. You also have the right to lodge a complaint with the Croatian
+                within one month. You can also download a copy of your data yourself in Settings → Your
+                data; the export includes your passkeys&apos; names, types, sync state and dates, never key
+                material.
+                You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or
                 your local supervisory authority.

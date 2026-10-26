@@ -3,6 +3,8 @@ import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto,
 
 export const REQUEST_FAILED = "Request failed"
 
+export const CANT_REACH = "Can't reach hrva.cc right now. Check your connection and try again."
+
 export class ApiError extends Error {
   status: number
   constructor(message: string, status: number) {
@@ -33,12 +35,13 @@ async function readBody(response: Response): Promise<unknown> {
   }
 }
 
-function errorMessage(body: unknown): string {
-  if (typeof body !== "object" || body === null) return REQUEST_FAILED
+function errorMessage(body: unknown, status: number): string {
+  const fallback = status >= 500 ? CANT_REACH : REQUEST_FAILED
+  if (typeof body !== "object" || body === null) return fallback
   const fields = body as Record<string, unknown>
   // New API: { "error": "message" }, old API: { "message": "..." }, validation: { "field": "message" }
   const message = fields.error ?? fields.message ?? Object.values(fields).filter((value) => typeof value === "string").join(". ")
-  return typeof message === "string" && message ? message : REQUEST_FAILED
+  return typeof message === "string" && message ? message : fallback
 }
 
 async function request<T>(
@@ -62,15 +65,20 @@ async function request<T>(
     Object.assign(reqHeaders, headers)
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    method,
-    headers: reqHeaders,
-    body: body ? JSON.stringify(body) : undefined,
-  })
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method,
+      headers: reqHeaders,
+      body: body ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    throw new ApiError(CANT_REACH, 0)
+  }
 
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
-    throw new ApiError(errorMessage(errorBody), response.status)
+    throw new ApiError(errorMessage(errorBody, response.status), response.status)
   }
 
   if (response.status === 204 || response.status === 202) return {} as T
@@ -108,8 +116,6 @@ export const authApi = {
     request<{ secret: string; otpauthUri: string }>("POST", "/auth/2fa/setup"),
   enableTwoFactor: (code: string) =>
     request<{ recoveryCodes: string[] }>("POST", "/auth/2fa/enable", { code }),
-  disableTwoFactor: (code: string) =>
-    request<void>("POST", "/auth/2fa/disable", { code }),
   register: (data: { email: string; password: string }) =>
     request<string>("POST", "/auth/register", data),
   requestPasswordReset: (data: { email: string }) =>

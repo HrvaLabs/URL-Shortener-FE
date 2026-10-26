@@ -2,8 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { ApiError, REQUEST_FAILED, authApi, userApi } from "./api-client"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
+
+export const REAUTH_TOAST_ID = "passkeys-reauth"
 
 export type LoginResult =
   | { status: "signed-in" }
@@ -17,6 +20,8 @@ interface AuthContextType {
   completeSignIn: (signedIn: SignedIn) => void
   register: (email: string, password: string) => Promise<void>
   logout: () => void
+  logoutTo: (destination: string) => void
+  logoutDestination: string | null
   refreshUser: () => Promise<void>
 }
 
@@ -26,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [user, setUser] = useState<UserDto | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [logoutDestination, setLogoutDestination] = useState<string | null>(null)
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem("auth-token")
@@ -55,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const completeSignIn = useCallback((signedIn: SignedIn) => {
     queryClient.clear()
     localStorage.setItem("auth-token", signedIn.token)
+    setLogoutDestination(null)
     setUser(signedIn.user)
   }, [queryClient])
 
@@ -72,16 +79,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.register({ email, password })
   }, [])
 
-  const logout = useCallback(() => {
+  const endSession = useCallback((destination: string | null) => {
+    toast.dismiss(REAUTH_TOAST_ID)
     localStorage.removeItem("auth-token")
     queryClient.clear()
+    setLogoutDestination(destination)
     setUser(null)
   }, [queryClient])
+
+  const logout = useCallback(() => endSession(null), [endSession])
+
+  const logoutTo = useCallback((destination: string) => endSession(destination), [endSession])
 
   const isAdmin = user?.authorities?.some((a) => a.name === "ROLE_ADMIN") ?? false
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAdmin, login, completeSignIn, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isAdmin, login, completeSignIn, register, logout, logoutTo, logoutDestination, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

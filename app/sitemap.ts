@@ -44,6 +44,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     {
+      url: `${baseUrl}/help/passkeys`,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
       url: `${baseUrl}/report`,
       changeFrequency: "yearly",
       priority: 0.3,

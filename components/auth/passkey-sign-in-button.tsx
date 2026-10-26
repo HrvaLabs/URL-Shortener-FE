@@ -20,9 +20,11 @@ export function PasskeySignInButton({
   onBusyChange: (busy: boolean) => void
 }) {
   const supported = useWebAuthnSupported()
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<"waiting" | "signing-in" | null>(null)
   const ceremonyInFlight = useRef(false)
   const mounted = useRef(true)
+  const focusAfterFailure = useRef(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const rememberMeRef = useRef(rememberMe)
   const router = useRouter()
 
@@ -38,10 +40,16 @@ export function PasskeySignInButton({
     }
   }, [])
 
+  useEffect(() => {
+    if (busy !== null || !focusAfterFailure.current) return
+    focusAfterFailure.current = false
+    buttonRef.current?.focus()
+  }, [busy])
+
   if (!supported) return null
 
   const handleClick = async () => {
-    setBusy(true)
+    setBusy("waiting")
     onBusyChange(true)
     try {
       const { ceremonyId, options } = await authApi.passkeyOptions()
@@ -53,29 +61,32 @@ export function PasskeySignInButton({
       } finally {
         ceremonyInFlight.current = false
       }
+      if (!mounted.current) return
+      setBusy("signing-in")
       const signedIn = await authApi.passkeySignIn(ceremonyId, credential, rememberMeRef.current)
       if (!mounted.current) return
       onSignedIn(signedIn)
     } catch (error) {
       if (!mounted.current) return
       toastPasskeySignInError(error, router)
-    } finally {
-      setBusy(false)
+      focusAfterFailure.current = true
+      setBusy(null)
       onBusyChange(false)
     }
   }
 
   return (
     <Button
+      ref={buttonRef}
       type="button"
       variant="outline"
       className="h-auto min-h-10 w-full gap-2 whitespace-normal"
       onClick={handleClick}
-      disabled={busy}
-      aria-busy={busy}
+      disabled={busy !== null}
+      aria-busy={busy !== null}
     >
       <KeyRound className="h-4 w-4 shrink-0" />
-      Sign in with a passkey
+      {busy === "waiting" ? "Waiting for your passkey…" : busy === "signing-in" ? "Signing in…" : "Sign in with a passkey"}
     </Button>
   )
 }

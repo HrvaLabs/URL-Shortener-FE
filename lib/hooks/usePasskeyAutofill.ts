@@ -46,6 +46,7 @@ export function usePasskeyAutofill({
     let active = true
     let latestRun = 0
     let ceremonyRun = 0
+    let missedWhileHidden = false
     let refreshTimer: ReturnType<typeof setTimeout> | undefined
 
     const scheduleRefresh = () => {
@@ -54,6 +55,12 @@ export function usePasskeyAutofill({
     }
 
     const run = async () => {
+      if (document.visibilityState !== "visible") {
+        missedWhileHidden = true
+        clearTimeout(refreshTimer)
+        return
+      }
+      missedWhileHidden = false
       const thisRun = ++latestRun
       const isCurrent = () => active && thisRun === latestRun
       scheduleRefresh()
@@ -89,12 +96,18 @@ export function usePasskeyAutofill({
       }
     }
 
+    const handleVisibilityChange = () => {
+      if (active && missedWhileHidden && document.visibilityState === "visible") void run()
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     void (async () => {
       if ((await isConditionalMediationAvailable()) && active) void run()
     })()
 
     return () => {
       active = false
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
       clearTimeout(refreshTimer)
       if (ceremonyRun) abortPasskeyRequest()
     }

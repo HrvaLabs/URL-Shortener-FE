@@ -17,6 +17,7 @@ import { ArrowLeft } from "lucide-react"
 import { PasskeySignInButton } from "@/components/auth/passkey-sign-in-button"
 import { SecondStep } from "@/components/auth/second-step"
 import { usePasskeyAutofill } from "@/lib/hooks/usePasskeyAutofill"
+import { useWebAuthnSupported } from "@/lib/hooks/useWebAuthnSupported"
 import type { SignedIn, TwoStepMethod } from "@/lib/types"
 import { abortPasskeyRequest } from "@/lib/webauthn"
 
@@ -27,33 +28,44 @@ function LoginForm({ next }: { next: string | null }) {
   const [rememberMe, setRememberMe] = useState(false)
   const [secondStep, setSecondStep] = useState<{ pendingToken: string; methods: TwoStepMethod[] } | null>(null)
   const [passkeyBusy, setPasskeyBusy] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
-  const focusEmailOnReturn = useRef(false)
+  const focusEmailOnReturn = useRef<"focus" | "select" | null>(null)
   const { login, completeSignIn } = useAuth()
   const router = useRouter()
+  const passkeysSupported = useWebAuthnSupported()
 
   const finishSignIn = useCallback(() => {
+    setSignedIn(true)
     toast.success("Welcome back!")
     router.push(safeNext(next))
   }, [router, next])
 
-  const handleSignedIn = useCallback((signedIn: SignedIn) => {
-    completeSignIn(signedIn)
+  const handleSignedIn = useCallback((result: SignedIn) => {
+    completeSignIn(result)
     finishSignIn()
   }, [completeSignIn, finishSignIn])
 
-  usePasskeyAutofill({ enabled: !secondStep && !passkeyBusy && !loading, rememberMe, onSignedIn: handleSignedIn })
+  usePasskeyAutofill({ enabled: !secondStep && !passkeyBusy && !loading && !signedIn, rememberMe, onSignedIn: handleSignedIn })
 
   useEffect(() => {
-    if (secondStep || !focusEmailOnReturn.current) return
-    focusEmailOnReturn.current = false
+    const focusMode = focusEmailOnReturn.current
+    if (secondStep || !focusMode) return
+    focusEmailOnReturn.current = null
     emailRef.current?.focus()
+    if (focusMode === "select") emailRef.current?.select()
   }, [secondStep])
 
-  const handleExpired = () => {
-    focusEmailOnReturn.current = true
+  const handleExpired = (message: string) => {
+    focusEmailOnReturn.current = "focus"
     setSecondStep(null)
-    toast.error("Your sign-in expired. Sign in again.")
+    toast.error(message)
+  }
+
+  const handleUseDifferentAccount = () => {
+    focusEmailOnReturn.current = "select"
+    setPassword("")
+    setSecondStep(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,10 +76,12 @@ function LoginForm({ next }: { next: string | null }) {
       const result = await login(email, password, rememberMe)
       if (result.status === "two-step") {
         setSecondStep({ pendingToken: result.pendingToken, methods: result.methods })
+        setLoading(false)
         return
       }
       finishSignIn()
     } catch (err) {
+      setLoading(false)
       const message = (err instanceof Error && err.message) || "Invalid credentials"
       if (message.toLowerCase().includes("verify")) {
         toast.error(message, {
@@ -76,8 +90,6 @@ function LoginForm({ next }: { next: string | null }) {
       } else {
         toast.error(message)
       }
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -105,6 +117,7 @@ function LoginForm({ next }: { next: string | null }) {
                 methods={secondStep.methods}
                 onSignedIn={handleSignedIn}
                 onExpired={handleExpired}
+                onUseDifferentAccount={handleUseDifferentAccount}
               />
             ) : (
               <>
@@ -165,6 +178,11 @@ function LoginForm({ next }: { next: string | null }) {
                     onSignedIn={handleSignedIn}
                     onBusyChange={setPasskeyBusy}
                   />
+                  {passkeysSupported && (
+                    <p className="mt-2 text-center text-sm">
+                      <Link href="/help/passkeys" className="text-brand-link">How passkeys work</Link>
+                    </p>
+                  )}
                 </div>
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">

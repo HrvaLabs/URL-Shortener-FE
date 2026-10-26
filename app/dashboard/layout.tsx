@@ -1,20 +1,21 @@
 "use client"
 
 import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logoutDestination } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login")
+      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router, pathname, logoutDestination])
 
   if (isLoading) {
     return (

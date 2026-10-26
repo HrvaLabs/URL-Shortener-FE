@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Copy, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
+  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -355,6 +355,56 @@ function FeatureGrid() {
                   https://shop.example/sale?<span className="text-brand">utm_source=instagram&amp;utm_medium=social&amp;utm_campaign=autumn-sale</span>
                 </p>
               </div>
+            </div>
+          </FeatureCell>
+
+          <FeatureCell
+            className="lg:col-span-3"
+            icon={KeyRound}
+            title="Passkeys"
+            description={
+              <>
+                Sign in with your fingerprint, face, screen lock or a security key. No password to type, and two-step
+                verification works with them too.{" "}
+                <Link href="/help/passkeys" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about passkeys</span>
+                </Link>
+              </>
+            }
+          >
+            <div className="grid gap-3 sm:grid-cols-2" aria-hidden="true">
+              <div className="rounded-xl border bg-background p-4">
+                <p className="text-sm font-medium">Sign in to hrva.cc</p>
+                <div className="mt-3 flex h-9 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground">
+                  <KeyRound className="h-3.5 w-3.5" />
+                  Sign in with a passkey
+                </div>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Fingerprint className="h-3.5 w-3.5 shrink-0" />
+                  Touch the sensor to continue
+                </p>
+              </div>
+              <ul className="divide-y self-start rounded-lg border bg-background text-sm">
+                {[
+                  { label: "MacBook", kind: "Synced passkey", synced: true },
+                  { label: "YubiKey", kind: "Device-bound passkey", synced: false },
+                ].map(({ label, kind, synced }) => (
+                  <li key={label} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                    <span className="flex items-center gap-2">
+                      <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                      {label}
+                    </span>
+                    <span
+                      className={cn(
+                        "rounded-md border px-2 py-0.5 text-xs",
+                        synced ? "border-brand/40 bg-brand-soft text-brand" : "bg-background text-muted-foreground",
+                      )}
+                    >
+                      {kind}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </FeatureCell>
         </div>

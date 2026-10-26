@@ -23,6 +23,11 @@ const guides = [
     title: "Campaign tracking (UTM)",
     description: "Add UTM tags to a link so your analytics tool can see where visitors came from.",
   },
+  {
+    href: "/help/passkeys",
+    title: "Passkeys and security keys",
+    description: "Sign in without a password, and use a passkey or security key as your second step.",
+  },
 ]
 
 export default function HelpPage() {

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { userApi } from "@/lib/api-client"
+import { useReauthToast } from "@/lib/hooks/useReauthToast"
+import { isLocalAccount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,14 +12,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { Download } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
-import { TwoFactorCard } from "@/components/two-factor-card"
+import { PasskeysCard } from "@/components/passkeys-card"
+import { TwoStepCard } from "@/components/two-step-card"
 import { ConnectedAppsCard } from "@/components/connected-apps-card"
 
 export default function SettingsPage() {
-  const { user, refreshUser, logout, isAdmin } = useAuth()
-  const router = useRouter()
+  const { user, refreshUser, logout, logoutTo, isAdmin } = useAuth()
   const [email, setEmail] = useState(user?.email || "")
   const [profileLoading, setProfileLoading] = useState(false)
   const [oldPassword, setOldPassword] = useState("")
@@ -27,34 +28,34 @@ export default function SettingsPage() {
   const [deletePassword, setDeletePassword] = useState("")
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
+  const showError = useReauthToast()
 
   const handleExport = async () => {
     setExportLoading(true)
     try {
       await userApi.exportMyData()
       toast.success("Your data has been downloaded.")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to export data")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to export data")
     } finally {
       setExportLoading(false)
     }
   }
 
-  const isLocalAccount = !user?.authProvider || user.authProvider === "local"
-  const canEditEmail = isAdmin && isLocalAccount
+  const isLocal = isLocalAccount(user)
+  const canEditEmail = isAdmin && isLocal
 
   const handleDeleteAccount = async () => {
-    if (!confirm("Permanently delete your account, all your URLs and API keys? This cannot be undone.")) {
+    if (!confirm("Permanently delete your account, all your links, API keys and passkeys? This cannot be undone.")) {
       return
     }
     setDeleteLoading(true)
     try {
-      await userApi.deleteMe(isLocalAccount ? { password: deletePassword } : undefined)
+      await userApi.deleteMe(isLocal ? { password: deletePassword } : undefined)
       toast.success("Your account has been deleted.")
-      logout()
-      router.push("/")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete account")
+      logoutTo("/login")
+    } catch (err) {
+      showError(err, err instanceof Error && err.message ? err.message : "Failed to delete account")
     } finally {
       setDeleteLoading(false)
     }
@@ -69,8 +70,8 @@ export default function SettingsPage() {
       await refreshUser()
       toast.success("Profile updated! Please sign in again.")
       logout()
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update profile")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to update profile")
     } finally {
       setProfileLoading(false)
     }
@@ -89,8 +90,8 @@ export default function SettingsPage() {
       setOldPassword("")
       setNewPassword("")
       setConfirmPassword("")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to change password")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to change password")
     } finally {
       setPasswordLoading(false)
     }
@@ -122,7 +123,7 @@ export default function SettingsPage() {
             </form>
           ) : (
             <div className="space-y-1">
-              <p className="text-sm font-medium">{user?.email}</p>
+              <p className="text-sm font-medium wrap-anywhere">{user?.email}</p>
               <p className="text-sm text-muted-foreground">
                 To change it, email <a href="mailto:privacy@hrvalabs.net" className="text-brand underline-offset-4 hover:underline">privacy@hrvalabs.net</a>.
               </p>
@@ -131,7 +132,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {isLocalAccount && (
+      {isLocal && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Change Password</CardTitle>
@@ -160,14 +161,16 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      <TwoFactorCard />
+      <PasskeysCard />
+
+      <TwoStepCard />
 
       <ConnectedAppsCard />
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Your data</CardTitle>
-          <CardDescription>Download all your data (profile, URLs, API keys, emails) as JSON</CardDescription>
+          <CardDescription>Download all your data (profile, URLs, API keys, passkeys, emails) as JSON</CardDescription>
         </CardHeader>
         <CardContent>
           <Button type="button" variant="outline" size="sm" disabled={exportLoading} onClick={handleExport} className="gap-1.5">
@@ -180,11 +183,11 @@ export default function SettingsPage() {
       <Card className="border-destructive/30">
         <CardHeader>
           <CardTitle className="text-base text-destructive">Delete account</CardTitle>
-          <CardDescription>Permanently delete your account, URLs and API keys. This cannot be undone.</CardDescription>
+          <CardDescription>Permanently delete your account, links, API keys and passkeys. This cannot be undone.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {isLocalAccount && (
+            {isLocal && (
               <div>
                 <Label htmlFor="deletePassword">Confirm with your password</Label>
                 <Input id="deletePassword" type="password" autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
@@ -194,7 +197,7 @@ export default function SettingsPage() {
               type="button"
               variant="destructive"
               size="sm"
-              disabled={deleteLoading || (isLocalAccount && !deletePassword)}
+              disabled={deleteLoading || (isLocal && !deletePassword)}
               onClick={handleDeleteAccount}
             >
               {deleteLoading ? "Deleting…" : "Delete my account"}

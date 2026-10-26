@@ -124,8 +124,8 @@ lib/          — Shared logic
 - React Context provider wrapping the tree under `Providers`
 - On mount: reads `auth-token` from localStorage, calls `GET /users/me` to hydrate user
 - `login()` returns a `LoginResult`: `{ status: "signed-in" }` (token stored, user set) or `{ status: "two-step", pendingToken, methods }`. `completeSignIn(signedIn)` stores the token and user for every other way in (passkey, second step, callback)
-- `logout()` removes the token, clears the query cache and the user, and dismisses the `Sign in again` toast (`REAUTH_TOAST_ID`). `logoutTo(destination)` does the same and sends the dashboard layout to `destination` instead of the sign-in page with `next` (account deletion → `/login`)
-- Signed out on a dashboard page → `router.replace("/login?next=" + encodeURIComponent(pathname + search))`, so signing in returns to the same page and Back doesn't loop
+- `logout()` removes the token, clears the query cache and the user, and dismisses the `Sign in again` toast (`REAUTH_TOAST_ID`). `logoutTo(destination)` does the same and sends the dashboard and admin layouts (and `ProtectedRoute`) to `destination` instead of the sign-in page with `next` (account deletion → `/login`)
+- Signed out on a dashboard or admin page (or inside `ProtectedRoute`) → `router.replace("/login?next=" + encodeURIComponent(pathname + search))`, so signing in returns to the same page, query included (a link to `/admin/urls?search=<domain>` opens with the search filled in), and Back doesn't loop. A signed-in non-admin on an admin page is still pushed to `/dashboard`
 - `useReauthToast()`: a 401 for a Google or GitHub account shows one persistent `Sign in again` toast (id `REAUTH_TOAST_ID`) with the backend's text (passkey add and remove, account deletion); its action is `logout()`
 - `isAdmin` derived from `user.authorities` containing `{ name: "ROLE_ADMIN" }`
 - **No route protection middleware** — dashboard/admin layouts redirect client-side via `useEffect`

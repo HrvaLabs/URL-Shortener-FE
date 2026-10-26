@@ -1,18 +1,19 @@
 "use client"
 
 import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, logoutDestination } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login")
+      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
     }
-  }, [user, isLoading, router])
+  }, [user, isLoading, router, pathname, logoutDestination])
 
   if (isLoading) {
     return (

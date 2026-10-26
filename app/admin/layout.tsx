@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { DashboardNav, wideContainerClass } from "@/components/dashboard/dashboard-nav"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
@@ -9,15 +9,16 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAdmin } = useAuth()
+  const { user, isLoading, isAdmin, logoutDestination } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user) router.push("/login")
+      if (!user) router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
       else if (!isAdmin) router.push("/dashboard")
     }
-  }, [user, isLoading, isAdmin, router])
+  }, [user, isLoading, isAdmin, router, pathname, logoutDestination])
 
   if (isLoading) {
     return (

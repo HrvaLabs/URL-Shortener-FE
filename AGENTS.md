@@ -16,6 +16,8 @@ Next.js 16 App Router + React 19, deployed on Cloudflare Workers via `@opennextj
 | `npm run cf-typegen` | Regenerate `cloudflare-env.d.ts` from wrangler config |
 | `npm run lint` | ESLint (`eslint .`) |
 
+`npm run dev` proxies to `http://localhost:8080`; set `DEV_API_ORIGIN` to target another backend, e.g. `DEV_API_ORIGIN=http://localhost:18080 npm run dev`.
+
 No test framework is set up.
 
 ---
@@ -210,7 +212,7 @@ Every user-facing change here also needs an entry in the public changelog, which
 ## Gotchas
 
 - **No `.env` files** — API base URL is hardcoded in `lib/utils.ts` and switches on `NODE_ENV`
-- **Pointing dev at another backend port**: change the four `localhost:8080` rewrites in `next.config.mjs` and `getShortBaseUrl()` in `lib/utils.ts`, and don't commit it. Run the dev server on 3000, where the backend's `app.frontend-url` sends `/unavailable` redirects
+- **Pointing dev at another backend port**: start it with `DEV_API_ORIGIN` (see Commands) instead of editing `next.config.mjs` or `lib/utils.ts`. Run the dev server on 3000, where the backend's `app.frontend-url` sends `/unavailable` redirects
 - **Auth token is stored with its `Bearer ` prefix** — `request()` adds nothing, so a token injected into `auth-token` by hand must include it
 - **No middleware-based route protection** — dashboard/admin check auth in a client `useEffect`, creating a flash of unauthenticated content
 - **`@/*` maps to root** — unlike the common Next.js pattern of mapping to `src/*`

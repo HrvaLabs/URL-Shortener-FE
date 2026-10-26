@@ -27,8 +27,14 @@ const redirectSourceLabels: Record<RedirectTiming["source"], string> = {
 
 const UP = "UP"
 
+const UNKNOWN_VERSION = "unknown"
+
 function formatMs(ms: number | null): string {
   return ms == null ? "—" : `${ms.toFixed(1)} ms`
+}
+
+function formatSlowest({ count, maxMs }: RedirectTiming): string {
+  return count > 0 && maxMs === 0 ? "—" : formatMs(maxMs)
 }
 
 interface SystemTabProps {
@@ -66,7 +72,7 @@ function SystemBody({ data, days }: SystemBodyProps) {
       <StatGrid
         title="App"
         items={[
-          { label: "Version", value: data.appVersion === "unknown" ? "Unknown" : `v${data.appVersion}` },
+          { label: "Version", value: data.appVersion === UNKNOWN_VERSION ? "Unknown" : `v${data.appVersion}` },
           { label: "Started", value: formatDateTime(parseServerDateTime(data.startedAt)) },
           { label: "Uptime", value: data.uptime },
           { label: "Java", value: data.javaVersion },
@@ -153,7 +159,7 @@ function Redirects({ timings }: { timings: RedirectTiming[] }) {
               <TableCell>{redirectSourceLabels[timing.source] ?? timing.source}</TableCell>
               <TableCell className="text-right tabular-nums">{timing.count.toLocaleString()}</TableCell>
               <TableCell className="whitespace-nowrap text-right tabular-nums">{formatMs(timing.meanMs)}</TableCell>
-              <TableCell className="whitespace-nowrap text-right tabular-nums">{formatMs(timing.maxMs)}</TableCell>
+              <TableCell className="whitespace-nowrap text-right tabular-nums">{formatSlowest(timing)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -166,7 +172,7 @@ function RedisKeys({ keys }: { keys: RedisKeyCounts | null }) {
   const count = (value: number) => `${keys?.capped ? "≥ " : ""}${value.toLocaleString()}`
   const rows = keys
     ? [
-        ...Object.entries(redisPrefixLabels).map(([prefix, label]) => ({ label, value: keys.counts[prefix] ?? 0 })),
+        ...Object.entries(keys.counts).map(([prefix, value]) => ({ label: redisPrefixLabels[prefix] ?? prefix, value })),
         { label: "Other", value: keys.other },
       ]
     : []

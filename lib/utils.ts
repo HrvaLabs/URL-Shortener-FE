@@ -89,7 +89,7 @@ export function getApiBaseUrl(): string {
   if (process.env.NODE_ENV === "production") {
     return "https://hrva.cc/api/v1"
   }
-  // Relative path — proxied to localhost:8080 via next.config.mjs rewrites during dev.
+  // Relative path — proxied to DEV_API_ORIGIN (default localhost:8080) via next.config.mjs rewrites during dev.
   return "/api/v1"
 }
 
@@ -103,7 +103,7 @@ export function getShortBaseUrl(): string {
   if (process.env.NODE_ENV === "production") {
     return "https://hrva.cc"
   }
-  return "http://localhost:8080"
+  return process.env.DEV_API_ORIGIN ?? "http://localhost:8080"
 }
 
 export function formatShortUrl(short: string): string {

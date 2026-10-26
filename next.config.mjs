@@ -1,5 +1,10 @@
+const devApiOrigin = process.env.DEV_API_ORIGIN ?? "http://localhost:8080";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    DEV_API_ORIGIN: devApiOrigin,
+  },
   turbopack: {
     root: process.cwd(),
   },
@@ -10,19 +15,19 @@ const nextConfig = {
       return [
         {
           source: "/api/v1/:path*",
-          destination: "http://localhost:8080/api/v1/:path*",
+          destination: `${devApiOrigin}/api/v1/:path*`,
         },
         {
           source: "/oauth2/:path*",
-          destination: "http://localhost:8080/oauth2/:path*",
+          destination: `${devApiOrigin}/oauth2/:path*`,
         },
         {
           source: "/login/:path*",
-          destination: "http://localhost:8080/login/:path*",
+          destination: `${devApiOrigin}/login/:path*`,
         },
         {
           source: "/api/changelog",
-          destination: "http://localhost:8080/api/changelog",
+          destination: `${devApiOrigin}/api/changelog`,
         },
       ];
     }

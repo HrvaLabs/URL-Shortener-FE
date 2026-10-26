@@ -42,7 +42,7 @@ const stepColors: Record<StackStep, string> = {
   25: "color-mix(in oklab, hsl(var(--brand)) var(--stack-low), hsl(var(--stack-toward)))",
 }
 
-const mutedColor = "hsl(var(--muted-foreground) / 0.5)"
+const mutedColor = "hsl(var(--muted-foreground) / 0.75)"
 
 const palestStep: StackStep = 25
 

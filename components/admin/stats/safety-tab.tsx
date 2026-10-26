@@ -11,7 +11,7 @@ import { formatBytes, formatMinutes, resolutionLabels, reviewSourceLabels } from
 import { parseServerDateTime } from "@/lib/analytics"
 import { useSafetyStats } from "@/lib/hooks/useSiteStats"
 import { blockReasonLabels } from "@/lib/labels"
-import type { AnalyticsRange, BlockReason, ReviewResolution, SafetyStats, SourceHealth } from "@/lib/types"
+import type { AnalyticsRange, BlockReason, SafetyStats, SourceHealth } from "@/lib/types"
 import { formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 
 const blockReasonFills: Record<BlockReason, StackFill> = {
@@ -24,6 +24,8 @@ const blockReasonFills: Record<BlockReason, StackFill> = {
 }
 
 const blockedLabels: Record<string, string> = { ...blockReasonLabels, unknown: "Unknown" }
+
+const resolvedLabels: Record<string, string> = { ...resolutionLabels, unknown: "Unknown" }
 
 interface SafetyTabProps {
   days: AnalyticsRange
@@ -66,7 +68,7 @@ function SafetyBody({ data, days }: SafetyBodyProps) {
         title="Resolved in this range"
         valueLabel="Reviews"
         entries={data.resolved}
-        label={(value) => resolutionLabels[value as ReviewResolution] ?? (value === "unknown" ? "Unknown" : value)}
+        label={(value) => resolvedLabels[value] ?? value}
         emptyText="No reviews resolved in this range."
       />
       <StatGrid
@@ -130,8 +132,15 @@ function Blocklists({ sources }: { sources: SourceHealth[] }) {
                   <TableCell className={source.enabled ? undefined : "text-muted-foreground"}>{source.enabled ? "Yes" : "No"}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">{source.domainCount?.toLocaleString() ?? "—"}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">{formatBytes(source.memoryBytes)}</TableCell>
-                  <TableCell className="whitespace-nowrap tabular-nums text-muted-foreground">
-                    <span title={loaded ? formatDateTime(loaded) : undefined}>{loaded ? formatTimeAgo(loaded) : "Never"}</span>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {loaded ? (
+                      <span className="block min-w-40">
+                        <span className="whitespace-nowrap">{formatTimeAgo(loaded)}</span> ·{" "}
+                        <span className="whitespace-nowrap">{formatDateTime(loaded)}</span>
+                      </span>
+                    ) : (
+                      "Never"
+                    )}
                   </TableCell>
                   <TableCell>
                     {source.lastError ? (

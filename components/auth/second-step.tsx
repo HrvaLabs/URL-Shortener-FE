@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { ApiError, REQUEST_FAILED, authApi } from "@/lib/api-client"
 import { useWebAuthnSupported } from "@/lib/hooks/useWebAuthnSupported"
 import type { SignedIn, TwoStepMethod } from "@/lib/types"
+import { cn } from "@/lib/utils"
 import { abortPasskeyRequest, getPasskey, passkeyErrorMessage } from "@/lib/webauthn"
 
 export const SIGN_IN_EXPIRED = "Your sign-in expired. Sign in again."
@@ -159,7 +160,7 @@ export function SecondStep({
       </div>
       <div className="mt-8 space-y-6">
         {showPasskey && (
-          <div className="space-y-2">
+          <div>
             <Button
               ref={passkeyButtonRef}
               type="button"
@@ -176,7 +177,7 @@ export function SecondStep({
                   ? "Signing in…"
                   : "Use a passkey or security key"}
             </Button>
-            <p id="passkeyError" role="alert" className="text-center text-sm text-destructive empty:hidden">
+            <p id="passkeyError" role="alert" className={cn("text-center text-sm text-destructive", passkeyError && "mt-2")}>
               {passkeyError}
             </p>
           </div>

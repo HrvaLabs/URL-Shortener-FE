@@ -5,7 +5,7 @@ import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import { KeyRound, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
-import { RecoveryCodes } from "@/components/recovery-codes"
+import { RECOVERY_CODES_PANEL_ID, RecoveryCodes } from "@/components/recovery-codes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -88,10 +88,16 @@ export function TwoStepCard() {
   }, [])
 
   useEffect(() => {
-    const openTurnOff = () => setTurningOff(true)
+    const openTurnOff = () => {
+      if (recoveryCodes) {
+        document.getElementById(RECOVERY_CODES_PANEL_ID)?.focus()
+        return
+      }
+      setTurningOff(true)
+    }
     window.addEventListener(OPEN_TURN_OFF_EVENT, openTurnOff)
     return () => window.removeEventListener(OPEN_TURN_OFF_EVENT, openTurnOff)
-  }, [])
+  }, [recoveryCodes])
 
   useEffect(() => {
     const opener = focusAfterClose.current

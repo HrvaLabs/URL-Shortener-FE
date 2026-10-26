@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { userApi } from "@/lib/api-client"
 import { useReauthToast } from "@/lib/hooks/useReauthToast"
@@ -28,7 +28,22 @@ export default function SettingsPage() {
   const [deletePassword, setDeletePassword] = useState("")
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
+  const deletePasswordRef = useRef<HTMLInputElement>(null)
+  const deleteButtonRef = useRef<HTMLButtonElement>(null)
+  const focusAfterRefusedDeletion = useRef(false)
   const showError = useReauthToast()
+
+  useEffect(() => {
+    if (deleteLoading || !focusAfterRefusedDeletion.current) return
+    focusAfterRefusedDeletion.current = false
+    const field = deletePasswordRef.current
+    if (field) {
+      field.focus()
+      field.select()
+    } else {
+      deleteButtonRef.current?.focus()
+    }
+  }, [deleteLoading])
 
   const handleExport = async () => {
     setExportLoading(true)
@@ -56,6 +71,7 @@ export default function SettingsPage() {
       logoutTo("/login")
     } catch (err) {
       showError(err, err instanceof Error && err.message ? err.message : "Failed to delete account")
+      focusAfterRefusedDeletion.current = true
     } finally {
       setDeleteLoading(false)
     }
@@ -190,10 +206,11 @@ export default function SettingsPage() {
             {isLocal && (
               <div>
                 <Label htmlFor="deletePassword">Confirm with your password</Label>
-                <Input id="deletePassword" type="password" autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
+                <Input ref={deletePasswordRef} id="deletePassword" type="password" autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
               </div>
             )}
             <Button
+              ref={deleteButtonRef}
               type="button"
               variant="destructive"
               size="sm"

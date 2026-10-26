@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 
+export const RECOVERY_CODES_PANEL_ID = "recovery-codes-panel"
+
 const FILE_NAME = "hrva-cc-recovery-codes.txt"
 const COPIED_FEEDBACK_MS = 2000
 
@@ -67,7 +69,7 @@ export function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () =
   }
 
   return (
-    <div ref={panelRef} tabIndex={-1} className="space-y-4 outline-none">
+    <div ref={panelRef} id={RECOVERY_CODES_PANEL_ID} tabIndex={-1} className="space-y-4 outline-none">
       <p className="text-sm text-muted-foreground">
         Save these 10 recovery codes somewhere safe, such as your password manager. Each works once if you can&apos;t use
         your passkeys, security keys or authenticator app. You won&apos;t see them again.

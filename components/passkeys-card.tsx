@@ -65,6 +65,7 @@ export function PasskeysCard() {
   const { data: passkeys, isLoading, isFetching, error, refetch } = usePasskeys()
   const { data: twoStep } = useTwoStepStatus()
   const [adding, setAdding] = useState(false)
+  const [addBusy, setAddBusy] = useState(false)
   const [renaming, setRenaming] = useState<Passkey | null>(null)
   const [removing, setRemoving] = useState<Passkey | null>(null)
   const [removeBusy, setRemoveBusy] = useState(false)
@@ -82,6 +83,16 @@ export function PasskeysCard() {
   const openFrom = (event: React.MouseEvent<HTMLElement>, open: () => void) => {
     openedFrom.current = event.currentTarget
     open()
+  }
+
+  const openAdd = () => {
+    setAddBusy(false)
+    setAdding(true)
+  }
+
+  const closeAdd = () => {
+    setAddBusy(false)
+    setAdding(false)
   }
 
   const openRemove = (passkey: Passkey) => {
@@ -158,7 +169,7 @@ export function PasskeysCard() {
         )}
 
         {supported ? (
-          <Button ref={addButtonRef} size="sm" className="h-auto min-h-8 gap-1.5 whitespace-normal" onClick={(event) => openFrom(event, () => setAdding(true))}>
+          <Button ref={addButtonRef} size="sm" className="h-auto min-h-8 gap-1.5 whitespace-normal" onClick={(event) => openFrom(event, openAdd)}>
             <Plus className="h-4 w-4 shrink-0" />
             Add a passkey or security key
           </Button>
@@ -169,9 +180,9 @@ export function PasskeysCard() {
         )}
       </CardContent>
 
-      <Dialog open={adding} onOpenChange={setAdding}>
+      <Dialog open={adding} onOpenChange={(open) => { if (!open && !addBusy) closeAdd() }}>
         <DialogContent onCloseAutoFocus={restoreFocus}>
-          <AddPasskeyForm isLocal={isLocal} onDone={() => setAdding(false)} />
+          <AddPasskeyForm isLocal={isLocal} busy={addBusy} onBusyChange={setAddBusy} onDone={closeAdd} />
         </DialogContent>
       </Dialog>
 
@@ -255,16 +266,31 @@ function PasskeyRow({
   )
 }
 
-function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => void }) {
+function AddPasskeyForm({
+  isLocal,
+  busy,
+  onBusyChange,
+  onDone,
+}: {
+  isLocal: boolean
+  busy: boolean
+  onBusyChange: (busy: boolean) => void
+  onDone: () => void
+}) {
   const [label, setLabel] = useState("")
   const [password, setPassword] = useState("")
-  const [busy, setBusy] = useState<"waiting" | "adding" | null>(null)
+  const [stage, setStage] = useState<"waiting" | "adding" | null>(null)
   const mounted = useRef(true)
   const submitting = useRef(false)
   const ceremonyInFlight = useRef(false)
   const passwordRef = useRef<HTMLInputElement>(null)
   const refreshTwoStep = useRefreshTwoStep()
   const showError = useReauthToast()
+
+  const changeStage = (next: "waiting" | "adding" | null) => {
+    setStage(next)
+    onBusyChange(next !== null)
+  }
 
   useEffect(() => {
     mounted.current = true
@@ -278,7 +304,7 @@ function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => v
     event.preventDefault()
     if (submitting.current || !isWebAuthnSupported()) return
     submitting.current = true
-    setBusy("waiting")
+    changeStage("waiting")
     let ceremony
     try {
       ceremony = await passkeyApi.registrationOptions(isLocal ? password : undefined)
@@ -289,7 +315,7 @@ function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => v
         return
       }
       submitting.current = false
-      setBusy(null)
+      changeStage(null)
       passwordRef.current?.focus()
       passwordRef.current?.select()
       return
@@ -303,7 +329,7 @@ function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => v
       } finally {
         ceremonyInFlight.current = false
       }
-      if (mounted.current) setBusy("adding")
+      if (mounted.current) setStage("adding")
       await passkeyApi.register(ceremony.ceremonyId, credential, label.trim())
       toast.success("Passkey added. We've emailed you about it.")
       await refreshTwoStep()
@@ -313,7 +339,7 @@ function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => v
       const message = passkeyErrorMessage(error, "register")
       if (message) toast.error(message)
       submitting.current = false
-      setBusy(null)
+      changeStage(null)
     }
   }
 
@@ -353,14 +379,14 @@ function AddPasskeyForm({ isLocal, onDone }: { isLocal: boolean; onDone: () => v
         </div>
       )}
       <DialogFooter className="gap-2 sm:gap-0">
-        <Button type="button" variant="outline" onClick={onDone}>Cancel</Button>
+        <Button type="button" variant="outline" disabled={busy} onClick={onDone}>Cancel</Button>
         <Button
           type="submit"
           className="h-auto min-h-10 whitespace-normal aria-disabled:pointer-events-none aria-disabled:opacity-50"
-          aria-disabled={busy !== null}
-          aria-busy={busy !== null}
+          aria-disabled={stage !== null}
+          aria-busy={stage !== null}
         >
-          {busy === "waiting" ? "Waiting for your passkey…" : busy === "adding" ? "Adding…" : "Continue"}
+          {stage === "waiting" ? "Waiting for your passkey…" : stage === "adding" ? "Adding…" : "Continue"}
         </Button>
       </DialogFooter>
     </form>

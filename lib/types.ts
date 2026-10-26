@@ -28,6 +28,7 @@ export interface UserDto {
   lastLogin: string
   authProvider?: string
   twoFactorEnabled?: boolean
+  twoStepEnabled?: boolean
 }
 
 export interface Url {
@@ -376,6 +377,102 @@ export interface LoginDto {
   email: string
   password: string
   rememberMe?: boolean
+}
+
+export type TwoStepMethod = "TOTP" | "WEBAUTHN" | "RECOVERY_CODE"
+
+export type PasskeyKind = "SYNCED" | "DEVICE_BOUND" | "SECOND_STEP_ONLY" | "UNKNOWN"
+
+export interface LoginResponse {
+  token?: string | null
+  user?: UserDto | null
+  twoFactorRequired?: boolean | null
+  twoStepRequired?: boolean | null
+  pendingToken?: string | null
+  methods?: TwoStepMethod[] | null
+}
+
+export interface SignedIn {
+  token: string
+  user: UserDto
+}
+
+export interface PasskeyOptions<T> {
+  ceremonyId: string
+  options: T
+}
+
+export interface CredentialDescriptorJSON {
+  type: "public-key"
+  id: string
+  transports?: string[]
+}
+
+export interface CreationOptionsJSON {
+  rp: { id?: string; name: string }
+  user: { id: string; name: string; displayName: string }
+  challenge: string
+  pubKeyCredParams: { type: "public-key"; alg: number }[]
+  timeout?: number
+  excludeCredentials?: CredentialDescriptorJSON[]
+  authenticatorSelection?: AuthenticatorSelectionCriteria
+  attestation?: AttestationConveyancePreference
+  extensions?: { credProps?: boolean }
+}
+
+export interface RequestOptionsJSON {
+  challenge: string
+  timeout?: number
+  rpId?: string
+  allowCredentials?: CredentialDescriptorJSON[]
+  userVerification?: UserVerificationRequirement
+  extensions?: AuthenticationExtensionsClientInputs
+}
+
+export interface RegistrationCredentialJSON {
+  id: string
+  rawId: string
+  type: "public-key"
+  authenticatorAttachment: string | null
+  clientExtensionResults: { credProps?: { rk?: boolean } }
+  response: {
+    clientDataJSON: string
+    attestationObject: string
+    transports: string[]
+  }
+}
+
+export interface AssertionCredentialJSON {
+  id: string
+  rawId: string
+  type: "public-key"
+  authenticatorAttachment: string | null
+  clientExtensionResults: { credProps?: { rk?: boolean } }
+  response: {
+    authenticatorData: string
+    clientDataJSON: string
+    signature: string
+    userHandle: string | null
+  }
+}
+
+export interface Passkey {
+  id: number
+  label: string
+  kind: PasskeyKind
+  backupEligible: boolean
+  backedUp: boolean
+  discoverable: boolean | null
+  transports: string[]
+  createdAt: string
+  lastUsedAt: string | null
+}
+
+export interface TwoStepStatus {
+  enabled: boolean
+  totp: boolean
+  passkeys: number
+  recoveryCodesRemaining: number
 }
 
 /** New API — name field removed */

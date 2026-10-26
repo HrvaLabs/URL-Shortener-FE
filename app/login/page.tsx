@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { ApiError, authApi } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,25 +22,34 @@ function LoginForm({ next }: { next: string | null }) {
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [code, setCode] = useState("")
-  const [twoFactorRequired, setTwoFactorRequired] = useState(false)
-  const { login } = useAuth()
+  const [pendingToken, setPendingToken] = useState<string | null>(null)
+  const { login, completeSignIn } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await login(email, password, rememberMe, twoFactorRequired ? code : undefined)
-      if (res.twoFactorRequired) {
-        setTwoFactorRequired(true)
-        toast.info("Enter the code from your authenticator app")
-        setLoading(false)
-        return
+      if (pendingToken) {
+        completeSignIn(await authApi.secondStepTotp(pendingToken, code))
+      } else {
+        const result = await login(email, password, rememberMe)
+        if (result.status === "two-step") {
+          setPendingToken(result.pendingToken)
+          toast.info("Enter the code from your authenticator app")
+          return
+        }
       }
       toast.success("Welcome back!")
       router.push(safeNext(next))
-    } catch (err: any) {
-      const message = err.message || "Invalid credentials"
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 410) {
+        setPendingToken(null)
+        setCode("")
+        toast.error("Your sign-in expired. Sign in again.")
+        return
+      }
+      const message = (err instanceof Error && err.message) || "Invalid credentials"
       if (message.toLowerCase().includes("verify")) {
         toast.error(message, {
           action: { label: "Resend", onClick: () => router.push("/verify-email/resend") },
@@ -83,6 +93,7 @@ function LoginForm({ next }: { next: string | null }) {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  readOnly={!!pendingToken}
                   required
                   className="mt-2"
                 />
@@ -102,10 +113,11 @@ function LoginForm({ next }: { next: string | null }) {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  readOnly={!!pendingToken}
                   required
                 />
               </div>
-              {twoFactorRequired && (
+              {pendingToken && (
                 <div>
                   <Label htmlFor="code">Authenticator code</Label>
                   <Input
@@ -126,12 +138,13 @@ function LoginForm({ next }: { next: string | null }) {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={!!pendingToken}
                   className="h-4 w-4 rounded border-input accent-brand"
                 />
                 <span className="text-sm text-muted-foreground">Remember me</span>
               </label>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in…" : twoFactorRequired ? "Verify & sign in" : "Sign in"}
+                {loading ? "Signing in…" : pendingToken ? "Verify & sign in" : "Sign in"}
               </Button>
             </form>
             <div className="relative my-6">

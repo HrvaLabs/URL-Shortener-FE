@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -92,8 +92,18 @@ async function request<T>(
 
 // Auth
 export const authApi = {
-  login: (data: { email: string; password: string; rememberMe?: boolean; code?: string }) =>
-    request<{ token?: string; user?: UserDto; twoFactorRequired?: boolean }>("POST", "/auth/login", data),
+  login: (data: { email: string; password: string; rememberMe?: boolean }) =>
+    request<LoginResponse>("POST", "/auth/login", data),
+  secondStepTotp: (pendingToken: string, code: string) =>
+    request<SignedIn>("POST", "/auth/2fa/totp", { pendingToken, code }),
+  secondStepPasskeyOptions: (pendingToken: string) =>
+    request<PasskeyOptions<RequestOptionsJSON>>("POST", "/auth/2fa/webauthn/options", { pendingToken }),
+  secondStepPasskey: (pendingToken: string, ceremonyId: string, credential: AssertionCredentialJSON) =>
+    request<SignedIn>("POST", "/auth/2fa/webauthn/verify", { pendingToken, ceremonyId, credential }),
+  passkeyOptions: () =>
+    request<PasskeyOptions<RequestOptionsJSON>>("POST", "/auth/passkeys/options"),
+  passkeySignIn: (ceremonyId: string, credential: AssertionCredentialJSON, rememberMe: boolean) =>
+    request<SignedIn>("POST", "/auth/passkeys/verify", { ceremonyId, credential, rememberMe }),
   setupTwoFactor: () =>
     request<{ secret: string; otpauthUri: string }>("POST", "/auth/2fa/setup"),
   enableTwoFactor: (code: string) =>
@@ -110,6 +120,32 @@ export const authApi = {
     request<void>("POST", "/auth/verify-email/confirm", { token }),
   resendVerification: (email: string) =>
     request<void>("POST", "/auth/verify-email/resend", { email }),
+}
+
+export const passkeyApi = {
+  list: () =>
+    request<Passkey[]>("GET", "/users/me/passkeys"),
+  registrationOptions: (password?: string) =>
+    request<PasskeyOptions<CreationOptionsJSON>>("POST", "/users/me/passkeys/registration/options", { password }),
+  register: (ceremonyId: string, credential: RegistrationCredentialJSON, label: string) =>
+    request<Passkey>("POST", "/users/me/passkeys", { ceremonyId, credential, label }),
+  rename: (id: number, label: string) =>
+    request<Passkey>("PATCH", `/users/me/passkeys/${id}`, { label }),
+  remove: (id: number, password?: string) =>
+    request<void>("DELETE", `/users/me/passkeys/${id}`, { password }),
+}
+
+export const twoStepApi = {
+  status: () =>
+    request<TwoStepStatus>("GET", "/users/me/two-step"),
+  enable: () =>
+    request<{ recoveryCodes: string[] }>("POST", "/users/me/two-step/enable"),
+  disableOptions: () =>
+    request<PasskeyOptions<RequestOptionsJSON>>("POST", "/users/me/two-step/disable/options"),
+  disable: (confirmation: { code: string } | { ceremonyId: string; credential: AssertionCredentialJSON }) =>
+    request<void>("POST", "/users/me/two-step/disable", confirmation),
+  removeTotp: (code: string) =>
+    request<void>("DELETE", "/users/me/two-step/totp", { code }),
 }
 
 // URL

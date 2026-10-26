@@ -2,14 +2,19 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { ApiError, authApi, userApi } from "./api-client"
-import type { UserDto } from "./types"
+import { ApiError, REQUEST_FAILED, authApi, userApi } from "./api-client"
+import type { SignedIn, TwoStepMethod, UserDto } from "./types"
+
+export type LoginResult =
+  | { status: "signed-in" }
+  | { status: "two-step"; pendingToken: string; methods: TwoStepMethod[] }
 
 interface AuthContextType {
   user: UserDto | null
   isLoading: boolean
   isAdmin: boolean
-  login: (email: string, password: string, rememberMe?: boolean, code?: string) => Promise<{ twoFactorRequired: boolean }>
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<LoginResult>
+  completeSignIn: (signedIn: SignedIn) => void
   register: (email: string, password: string) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
@@ -43,19 +48,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    refreshUser()
+    void Promise.resolve().then(refreshUser)
   }, [refreshUser])
 
-  const login = useCallback(async (email: string, password: string, rememberMe?: boolean, code?: string) => {
-    const res = await authApi.login({ email, password, rememberMe, code })
-    if (res.twoFactorRequired) {
-      return { twoFactorRequired: true }
-    }
+  const completeSignIn = useCallback((signedIn: SignedIn) => {
     queryClient.clear()
-    localStorage.setItem("auth-token", res.token!)
-    setUser(res.user!)
-    return { twoFactorRequired: false }
+    localStorage.setItem("auth-token", signedIn.token)
+    setUser(signedIn.user)
   }, [queryClient])
+
+  const login = useCallback(async (email: string, password: string, rememberMe?: boolean): Promise<LoginResult> => {
+    const response = await authApi.login({ email, password, rememberMe })
+    if (response.twoStepRequired && response.pendingToken) {
+      return { status: "two-step", pendingToken: response.pendingToken, methods: response.methods ?? [] }
+    }
+    if (!response.token || !response.user) throw new Error(REQUEST_FAILED)
+    completeSignIn({ token: response.token, user: response.user })
+    return { status: "signed-in" }
+  }, [completeSignIn])
 
   const register = useCallback(async (email: string, password: string) => {
     await authApi.register({ email, password })
@@ -70,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.authorities?.some((a) => a.name === "ROLE_ADMIN") ?? false
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAdmin, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isAdmin, login, completeSignIn, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

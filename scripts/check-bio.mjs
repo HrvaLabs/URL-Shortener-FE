@@ -22,7 +22,9 @@ const {
   insertionIndex,
   isBioIcon,
   isOlderBioPage,
+  isLinkNotWorkingError,
   isSingleEmoji,
+  linkStateHint,
   moveItem,
   normalizeHandle,
   ogInitials,
@@ -30,6 +32,7 @@ const {
   rebaseBioDraft,
   rebaseSavedBioDraft,
   sameBioDraft,
+  suggestHandle,
   BUTTON_TITLE_REQUIRED,
   BUTTON_TITLE_TOO_LONG,
   bioButtonLabel,
@@ -383,14 +386,46 @@ check("emoji suggestions are each one emoji", () => {
 })
 
 check("link state labels", () => {
-  const stopped = "Not shown on your page until the link works again."
   assert.deepEqual(LINK_STATE_LABELS, {
     IN_REVIEW: { badge: "Waiting for review", hint: "Not shown on your page until an admin has checked the link." },
-    DEACTIVATED: { badge: "Link turned off", hint: stopped },
-    EXPIRED: { badge: "Link expired", hint: stopped },
-    LIMIT_REACHED: { badge: "Visit limit reached", hint: stopped },
-    BLOCKED: { badge: "Link blocked", hint: "Not shown on your page. Blocked links can't be shown." },
+    DEACTIVATED: { badge: "Link turned off", hint: "Turn {alias} back on on the URLs page to show it again." },
+    EXPIRED: { badge: "Link expired", hint: "Give {alias} a later expiry date on the URLs page to show it again." },
+    LIMIT_REACHED: { badge: "Visit limit reached", hint: "Raise the visit limit of {alias} on the URLs page to show it again." },
+    BLOCKED: { badge: "Link blocked", hint: "Blocked links can't be shown. Remove this button." },
   })
+})
+
+check("link state hints name the link and say how to fix it", () => {
+  assert.equal(linkStateHint("DEACTIVATED", "turnoff"), "Turn /turnoff back on on the URLs page to show it again.")
+  assert.equal(linkStateHint("EXPIRED", "willexpire"), "Give /willexpire a later expiry date on the URLs page to show it again.")
+  assert.equal(linkStateHint("LIMIT_REACHED", "limit1"), "Raise the visit limit of /limit1 on the URLs page to show it again.")
+  assert.equal(linkStateHint("BLOCKED", "bad"), "Blocked links can't be shown. Remove this button.")
+  assert.equal(linkStateHint("IN_REVIEW", "wa"), "Not shown on your page until an admin has checked the link.")
+  assert.equal(linkStateHint("LIVE", "ok"), null)
+  assert.equal(linkStateHint("toString", "ok"), null)
+})
+
+check("isLinkNotWorkingError matches only the dead-link refusal", () => {
+  assert.equal(isLinkNotWorkingError("Only working links can be added. /blog isn't working right now."), true)
+  assert.equal(isLinkNotWorkingError("Each link can be on your page only once."), false)
+  assert.equal(isLinkNotWorkingError(""), false)
+})
+
+check("suggestHandle offers a usable handle for dots, spaces and accents", () => {
+  assert.equal(suggestHandle("Ana Horvat"), "ana-horvat")
+  assert.equal(suggestHandle("ana.horvat"), "ana-horvat")
+  assert.equal(suggestHandle("@Ana.Horvat"), "ana-horvat")
+  assert.equal(suggestHandle("  ana . horvat  "), "ana-horvat")
+  assert.equal(suggestHandle(text(0x160, "imi", 0x107, " Ana")), "simic-ana")
+  assert.equal(suggestHandle("ana!horvat"), "anahorvat")
+  assert.equal(suggestHandle(".ana."), "ana")
+  assert.equal(suggestHandle("ana-horvat"), null)
+  assert.equal(suggestHandle("a.b"), "a-b")
+  assert.equal(suggestHandle("a.."), null)
+  assert.equal(suggestHandle("..."), null)
+  assert.equal(suggestHandle(""), null)
+  assert.equal(suggestHandle("x".repeat(31)), null)
+  for (const raw of ["Ana Horvat", "ana.horvat", text(0x160, "imi", 0x107, " Ana"), "ana!horvat"]) assert.equal(handleFormatError(suggestHandle(raw)), null, raw)
 })
 
 const samplePage = (overrides = {}) => ({

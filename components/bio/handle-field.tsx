@@ -3,7 +3,7 @@
 import { useRef, useState, type FormEvent, type Ref } from "react"
 import { Label } from "@/components/ui/label"
 import { REQUEST_FAILED } from "@/lib/api-client"
-import { displayShareUrl, handleFormatError, normalizeHandle } from "@/lib/bio"
+import { displayShareUrl, handleFormatError, normalizeHandle, suggestHandle } from "@/lib/bio"
 import { useHandleAvailability, useKnownHandleAvailability } from "@/lib/hooks/useBioPage"
 import { cn, getShortBaseUrl } from "@/lib/utils"
 
@@ -24,7 +24,8 @@ function useHandleStatus(value: string, currentHandle: string | null, error: str
   const { query, settled } = useHandleAvailability(handle, Boolean(handle) && !unchanged && formatError === null)
 
   if (error) return { text: error, tone: "error" }
-  if (!handle || unchanged) return null
+  if (!handle) return null
+  if (unchanged) return { text: "That's your current handle.", tone: "muted" }
   if (formatError) return settled ? { text: formatError, tone: "error" } : null
   if (!settled || query.isPending) return { text: "Checking…", tone: "muted" }
   if (query.isError) return { text: errorText(query.error), tone: "error" }
@@ -55,6 +56,12 @@ export function HandleField({
   const hintId = `${id}-hint`
   const statusId = `${id}-status`
   const invalid = status?.tone === "error"
+  const suggestion = invalid && handleFormatError(normalizeHandle(value)) ? suggestHandle(value) : null
+
+  const applySuggestion = (next: string) => {
+    onChange(next)
+    document.getElementById(id)?.focus()
+  }
 
   return (
     <div>
@@ -87,6 +94,18 @@ export function HandleField({
       <p id={statusId} aria-live="polite" className={cn("mt-1.5 min-h-5 text-sm [overflow-wrap:anywhere]", status && STATUS_TONES[status.tone])}>
         {status?.text}
       </p>
+      {suggestion && (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Dots and spaces aren&apos;t allowed.{" "}
+          <button
+            type="button"
+            onClick={() => applySuggestion(suggestion)}
+            className="rounded-sm font-medium text-brand-link underline-offset-4 [overflow-wrap:anywhere] hover:underline"
+          >
+            Try @{suggestion}
+          </button>
+        </p>
+      )}
     </div>
   )
 }

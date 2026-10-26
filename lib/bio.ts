@@ -38,6 +38,18 @@ export const handleFormatError = (handle: string): string | null => {
   return null
 }
 
+export const suggestHandle = (raw: string): string | null => {
+  const handle = normalizeHandle(raw)
+  const suggestion = handle
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[\s.]+/gu, "-")
+    .replace(/[^a-z0-9_-]/g, "")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "")
+  return suggestion !== handle && handleFormatError(suggestion) === null ? suggestion : null
+}
+
 export const bioShareUrl = (handle: string, shortBase: string): string => `${shortBase}/@${handle}`
 
 export const BIO_PAGE_NAME_ID = "bio-page-name"
@@ -197,14 +209,16 @@ export const isSingleEmoji = (value: string): boolean => {
 
 export const EMOJI_SUGGESTIONS = ["✨", "🎨", "📸", "🎵", "🎮", "💼", "🌿", "☕", "🚀", "💡", `❤${VARIATION_SELECTOR_16}`, "🐾"] as const
 
-const LINK_STOPPED_HINT = "Not shown on your page until the link works again."
+const ALIAS = "{alias}"
+
+export const URLS_PAGE = "URLs page"
 
 export const LINK_STATE_LABELS: Record<Exclude<BioLinkState, "LIVE">, { badge: string; hint: string }> = {
   IN_REVIEW: { badge: "Waiting for review", hint: "Not shown on your page until an admin has checked the link." },
-  DEACTIVATED: { badge: "Link turned off", hint: LINK_STOPPED_HINT },
-  EXPIRED: { badge: "Link expired", hint: LINK_STOPPED_HINT },
-  LIMIT_REACHED: { badge: "Visit limit reached", hint: LINK_STOPPED_HINT },
-  BLOCKED: { badge: "Link blocked", hint: "Not shown on your page. Blocked links can't be shown." },
+  DEACTIVATED: { badge: "Link turned off", hint: `Turn ${ALIAS} back on on the ${URLS_PAGE} to show it again.` },
+  EXPIRED: { badge: "Link expired", hint: `Give ${ALIAS} a later expiry date on the ${URLS_PAGE} to show it again.` },
+  LIMIT_REACHED: { badge: "Visit limit reached", hint: `Raise the visit limit of ${ALIAS} on the ${URLS_PAGE} to show it again.` },
+  BLOCKED: { badge: "Link blocked", hint: "Blocked links can't be shown. Remove this button." },
 }
 
 export const AVATAR_EMOJI_REQUIRED = "Pick one emoji for the avatar."
@@ -390,6 +404,9 @@ export const linkStateLabel = (state: unknown): { badge: string; hint: string } 
     ? LINK_STATE_LABELS[state as Exclude<BioLinkState, "LIVE">]
     : null
 
+export const linkStateHint = (state: unknown, shortUrl: string): string | null =>
+  linkStateLabel(state)?.hint.replace(ALIAS, `/${shortUrl}`) ?? null
+
 export type BioSaveErrors = { profile: Partial<Record<BioProfileField, string>>; buttons: BioButtonErrors }
 
 const PROFILE_FIELD_KEYS = new Set<string>(["displayName", "bio"])
@@ -397,6 +414,8 @@ const PROFILE_FIELD_KEYS = new Set<string>(["displayName", "bio"])
 const BUTTON_FIELD_KEY = /^buttons\[(0|[1-9][0-9]*)\](?:\.(title|urlId))?$/
 
 const LINK_NOT_WORKING = /^Only working links can be added\. \/(.+) isn't working right now\.$/
+
+export const isLinkNotWorkingError = (text: string): boolean => LINK_NOT_WORKING.test(text)
 
 type SentButton = Pick<BioPageButton, "urlId" | "shortUrl" | "title">
 

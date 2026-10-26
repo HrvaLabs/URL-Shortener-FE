@@ -68,7 +68,9 @@ export default function LinkInBioHelpPage() {
               <p>
                 A reserved word, such as <code>admin</code> or <code>help</code>, gets{" "}
                 <strong>This handle is reserved. Try another.</strong> A handle someone else has gets{" "}
-                <strong>This handle is taken. Try another.</strong>
+                <strong>This handle is taken. Try another.</strong> If you type dots or spaces, as in{" "}
+                <code>ana.horvat</code>, the editor offers a handle you can use instead, such as{" "}
+                <strong>Try @ana-horvat</strong>.
               </p>
 
               <h2 id="add-buttons">Add buttons</h2>
@@ -102,8 +104,8 @@ export default function LinkInBioHelpPage() {
                   it to the top or the bottom.
                 </li>
                 <li>
-                  Turn off <strong>Visible</strong> to hide a button without removing it. It&apos;s marked{" "}
-                  <strong>Hidden</strong> in the editor and doesn&apos;t show on your page.
+                  Turn off <strong>Show on page</strong> to hide a button without removing it. It stays in
+                  the editor but doesn&apos;t show on your page.
                 </li>
               </ul>
               <p>
@@ -113,6 +115,11 @@ export default function LinkInBioHelpPage() {
               </p>
 
               <h2 id="look">Name, bio, avatar and colours</h2>
+              <p>
+                <strong>Display name</strong> and <strong>Bio</strong> are under <strong>Profile</strong>, at
+                the top of the editor. <strong>Avatar</strong>, <strong>Accent colour</strong> and{" "}
+                <strong>Theme</strong> are under <strong>Look</strong>, after your buttons.
+              </p>
               <ul>
                 <li>
                   <strong>Display name</strong>: up to 50 characters.
@@ -128,7 +135,7 @@ export default function LinkInBioHelpPage() {
                 </li>
                 <li>
                   <strong>Accent colour</strong>: the colour of your buttons and avatar. Each of the eight
-                  colours is easy to read in both themes.
+                  colours has a shade for light pages and one for dark pages, and both are easy to read.
                 </li>
                 <li>
                   <strong>Theme</strong>: <strong>Auto</strong> follows each visitor&apos;s device;{" "}
@@ -144,13 +151,15 @@ export default function LinkInBioHelpPage() {
               <p>
                 The bar at the top of the editor shows your page&apos;s address.{" "}
                 <strong>Copy link</strong> copies it, <strong>QR code</strong> opens a QR code you can
-                colour and download, and <strong>View page</strong> opens your page in a new tab. Paste{" "}
-                <code>hrva.cc/@yourname</code> into the link field of your profile.
+                colour and download, <strong>View page</strong> opens your page in a new tab, and{" "}
+                <strong>Views</strong> opens its analytics. Paste <code>hrva.cc/@yourname</code> into the
+                link field of your profile.
               </p>
 
               <h2 id="views">Views and clicks</h2>
               <p>
-                Open <strong>Analytics</strong> and choose <strong>Bio page</strong>. For the range you pick:
+                Select <strong>Views</strong> in the editor, or open <strong>Analytics</strong> and choose{" "}
+                <strong>Bio page</strong>. For the range you pick:
               </p>
               <ul>
                 <li>
@@ -166,25 +175,30 @@ export default function LinkInBioHelpPage() {
 
               <h2 id="missing-buttons">Why a button isn&apos;t showing</h2>
               <p>
-                A button shows only when <strong>Visible</strong> is on and its short link works. When
-                it doesn&apos;t, the editor marks the button with one of these:
+                A button shows only when <strong>Show on page</strong> is on and its short link works.
+                When the link doesn&apos;t work, the editor marks the button with one of these and says
+                how to fix it:
               </p>
               <ul>
                 <li>
-                  <strong>Link turned off</strong>: the link was deactivated.
+                  <strong>Link turned off</strong>: the link was deactivated. Turn it back on on the URLs
+                  page.
                 </li>
                 <li>
-                  <strong>Link expired</strong>: the link passed its expiry date.
+                  <strong>Link expired</strong>: the link passed its expiry date. Give it a later one on the
+                  URLs page.
                 </li>
                 <li>
-                  <strong>Visit limit reached</strong>: the link has had all the visits it allows.
+                  <strong>Visit limit reached</strong>: the link has had all the visits it allows. Raise its
+                  visit limit on the URLs page.
                 </li>
                 <li>
                   <strong>Waiting for review</strong>: the automatic checks flagged the link, and it stays
                   off your page until an admin has checked it.
                 </li>
                 <li>
-                  <strong>Link blocked</strong>: the link was blocked. Blocked links can&apos;t be shown.
+                  <strong>Link blocked</strong>: the link was blocked. Blocked links can&apos;t be shown, so
+                  remove the button.
                 </li>
               </ul>
               <p>

@@ -1,6 +1,7 @@
 "use client"
 
-import { Copy, ExternalLink, QrCode } from "lucide-react"
+import Link from "next/link"
+import { BarChart3, Copy, ExternalLink, QrCode } from "lucide-react"
 import { toast } from "sonner"
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,15 @@ import { bioShareUrl, displayShareUrl } from "@/lib/bio"
 import { getShortBaseUrl } from "@/lib/utils"
 
 const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>
+
+const VIEWS_LINK = (
+  <Button asChild variant="outline" size="sm" className="gap-1.5">
+    <Link href="/dashboard/analytics?view=bio">
+      <BarChart3 className="h-4 w-4" aria-hidden />
+      Views
+    </Link>
+  </Button>
+)
 
 export function ShareBar({ handle }: { handle: string | null }) {
   if (!handle) {
@@ -28,6 +38,7 @@ export function ShareBar({ handle }: { handle: string | null }) {
             <ExternalLink className="h-4 w-4" aria-hidden />
             View page
           </Button>
+          {VIEWS_LINK}
         </div>
       </section>
     )
@@ -84,6 +95,7 @@ export function ShareBar({ handle }: { handle: string | null }) {
             {NEW_TAB}
           </a>
         </Button>
+        {VIEWS_LINK}
       </div>
     </section>
   )

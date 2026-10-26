@@ -420,7 +420,7 @@ function FeatureGrid() {
           </FeatureCell>
 
           <FeatureCell
-            className="lg:col-span-3"
+            className="md:grid md:grid-cols-2 md:items-center lg:col-span-3"
             icon={Contact}
             title="Bio pages"
             description={

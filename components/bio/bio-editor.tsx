@@ -8,7 +8,7 @@ import { ChangeHandleDialog, ChooseHandleForm } from "@/components/bio/change-ha
 import { DeleteBioPage } from "@/components/bio/delete-bio-page"
 import { errorText } from "@/components/bio/handle-field"
 import { PhonePreview } from "@/components/bio/phone-preview"
-import { ProfileFields, profileFieldId, type BioFieldErrors } from "@/components/bio/profile-fields"
+import { LookFields, ProfileFields, profileFieldId, type BioFieldErrors } from "@/components/bio/profile-fields"
 import { SaveBar } from "@/components/bio/save-bar"
 import { ShareBar } from "@/components/bio/share-bar"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,7 @@ import {
   bioDraftOf,
   bioSaveErrors,
   bioUpdateOf,
+  displayShareUrl,
   isOlderBioPage,
   isSingleEmoji,
   rebaseBioDraft,
@@ -33,6 +34,7 @@ import {
 } from "@/lib/bio"
 import { useRefreshBioPage, useSaveBioPage } from "@/lib/hooks/useBioPage"
 import type { BioPage } from "@/lib/types"
+import { getShortBaseUrl } from "@/lib/utils"
 
 const LARGE_SCREEN_QUERY = "(min-width: 64rem)"
 
@@ -42,7 +44,7 @@ const SAVE_BAR_ROOM = "8rem"
 
 const SAVED_NOTE_MS = 2000
 
-const PROFILE_FIELD_ORDER: BioProfileField[] = ["displayName", "bio", "avatarEmoji"]
+const PROFILE_FIELD_ORDER: BioProfileField[] = ["displayName", "bio"]
 
 const SECTION_CLASS = "rounded-xl border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
 
@@ -227,7 +229,11 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
       return
     }
     const button = buttons.find((candidate) => Object.prototype.hasOwnProperty.call(errors.buttons, candidate.urlId))
-    if (button) focusById(bioButtonFieldId(idPrefix, button.urlId, errors.buttons[button.urlId].field === "title" ? "title" : "remove"))
+    if (button) {
+      focusById(bioButtonFieldId(idPrefix, button.urlId, errors.buttons[button.urlId].field === "title" ? "title" : "remove"))
+      return
+    }
+    if (errors.profile.avatarEmoji) focusById(profileFieldId(idPrefix, "avatarEmoji"))
   }
 
   const handleSave = async () => {
@@ -289,6 +295,13 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
     <div className="space-y-6" onFocusCapture={rememberFocus}>
       <ShareBar handle={synced.handle} />
 
+      {synced.handle !== null && synced.displayName === "" && synced.buttons.length === 0 && (
+        <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm [overflow-wrap:anywhere]">
+          Your page is live at {displayShareUrl(synced.handle, getShortBaseUrl())}. Add your name and a few buttons, then
+          select <strong className="font-medium">Save changes</strong>.
+        </p>
+      )}
+
       <Section title="Profile">
         <ProfileFields idPrefix={idPrefix} draft={draft} errors={fieldErrors} onChange={change} />
       </Section>
@@ -302,6 +315,10 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
           onClearError={clearButtonError}
           busy={saving}
         />
+      </Section>
+
+      <Section title="Look">
+        <LookFields idPrefix={idPrefix} draft={draft} errors={fieldErrors} onChange={change} />
       </Section>
 
       <Section title="Search engines">

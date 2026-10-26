@@ -43,18 +43,21 @@ export const profileFieldId = (prefix: string, field: BioProfileField) => `${pre
 
 function SegmentedRadios<T extends string>({
   legend,
+  hint,
   value,
   options,
   onChange,
 }: {
   legend: string
+  hint?: string
   value: T
   options: { value: T; label: string }[]
   onChange: (value: T) => void
 }) {
   const name = useId()
+  const hintId = `${name}-hint`
   return (
-    <fieldset>
+    <fieldset aria-describedby={hint ? hintId : undefined}>
       <legend className="text-sm font-medium">{legend}</legend>
       <div className="mt-2 inline-flex flex-wrap gap-1 rounded-lg bg-muted p-1">
         {options.map((option) => (
@@ -73,6 +76,7 @@ function SegmentedRadios<T extends string>({
           </label>
         ))}
       </div>
+      {hint && <p id={hintId} className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
     </fieldset>
   )
 }
@@ -90,22 +94,16 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return <p id={id} className="text-sm text-destructive [overflow-wrap:anywhere]">{message}</p>
 }
 
-export function ProfileFields({
-  idPrefix,
-  draft,
-  errors,
-  onChange,
-}: {
+type FieldsProps = {
   idPrefix: string
   draft: BioDraft
   errors: BioFieldErrors
   onChange: (patch: Partial<BioDraft>) => void
-}) {
+}
+
+export function ProfileFields({ idPrefix, draft, errors, onChange }: FieldsProps) {
   const nameId = profileFieldId(idPrefix, "displayName")
   const bioId = profileFieldId(idPrefix, "bio")
-  const emojiId = profileFieldId(idPrefix, "avatarEmoji")
-  const emoji = draft.avatarEmoji.trim()
-  const emojiLooksWrong = emoji !== "" && !isSingleEmoji(emoji)
 
   return (
     <div className="space-y-6">
@@ -120,6 +118,7 @@ export function ProfileFields({
           onChange={(event) => onChange({ displayName: event.target.value })}
           maxLength={BIO_LIMITS.displayName}
           autoComplete="off"
+          placeholder="Your name, as visitors should see it"
           aria-invalid={Boolean(errors.displayName)}
           aria-describedby={errors.displayName ? `${nameId}-error ${nameId}-count` : `${nameId}-count`}
           className="mt-1.5"
@@ -151,7 +150,17 @@ export function ProfileFields({
           </p>
         </div>
       </div>
+    </div>
+  )
+}
 
+export function LookFields({ idPrefix, draft, errors, onChange }: FieldsProps) {
+  const emojiId = profileFieldId(idPrefix, "avatarEmoji")
+  const emoji = draft.avatarEmoji.trim()
+  const emojiLooksWrong = emoji !== "" && !isSingleEmoji(emoji)
+
+  return (
+    <div className="space-y-6">
       <div className="space-y-3">
         <SegmentedRadios legend="Avatar" value={draft.avatarKind} options={AVATAR_OPTIONS} onChange={(avatarKind) => onChange({ avatarKind })} />
         {draft.avatarKind === "EMOJI" && (
@@ -199,7 +208,13 @@ export function ProfileFields({
 
       <AccentPicker value={draft.accent} onChange={(accent) => onChange({ accent })} />
 
-      <SegmentedRadios legend="Theme" value={draft.theme} options={THEME_OPTIONS} onChange={(theme) => onChange({ theme })} />
+      <SegmentedRadios
+        legend="Theme"
+        hint="Auto matches each visitor's device."
+        value={draft.theme}
+        options={THEME_OPTIONS}
+        onChange={(theme) => onChange({ theme })}
+      />
     </div>
   )
 }

@@ -3,13 +3,21 @@
 import { useLayoutEffect, useRef, useState, type HTMLAttributes, type MouseEvent, type RefCallback } from "react"
 import { GripVertical, Plus, Trash2 } from "lucide-react"
 import { LinkPickerDialog, ignoreKeyRepeat } from "@/components/bio/link-picker-dialog"
-import { LinkStateBadge, LinkStateHint } from "@/components/bio/link-state-badge"
-import { Badge } from "@/components/ui/badge"
+import { LinkStateBadge, LinkStateHint, UrlsPageText } from "@/components/bio/link-state-badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { BIO_ICON_LABELS, BIO_LIMITS, bioButtonLabel, isBioIcon, newBioButton, type BioButtonError, type BioButtonErrors } from "@/lib/bio"
+import {
+  BIO_ICON_LABELS,
+  BIO_LIMITS,
+  bioButtonLabel,
+  isBioIcon,
+  isLinkNotWorkingError,
+  newBioButton,
+  type BioButtonError,
+  type BioButtonErrors,
+} from "@/lib/bio"
 import { useReorder } from "@/lib/hooks/useReorder"
 import type { BioIcon, BioPageButton, UrlResponse } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -131,7 +139,15 @@ function ButtonRow({
             )}
           </p>
           {linkError && (
-            <p id={fieldId("error")} className="text-sm text-destructive [overflow-wrap:anywhere]">{linkError}</p>
+            <p id={fieldId("error")} className="text-sm text-destructive [overflow-wrap:anywhere]">
+              {linkError}
+              {isLinkNotWorkingError(linkError) && (
+                <>
+                  {" "}
+                  <UrlsPageText text="Remove it, or turn it back on on the URLs page." />
+                </>
+              )}
+            </p>
           )}
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -142,9 +158,8 @@ function ButtonRow({
                 onCheckedChange={(visible) => onUpdate({ visible })}
                 aria-disabled={busy || undefined}
               />
-              <Label htmlFor={fieldId("visible")}>Visible{forButton}</Label>
+              <Label htmlFor={fieldId("visible")}>Show on page{forButton}</Label>
             </div>
-            {!button.visible && <Badge variant="outline">Hidden</Badge>}
             <LinkStateBadge state={button.linkState} />
             <Button
               type="button"
@@ -162,7 +177,7 @@ function ButtonRow({
               Remove
             </Button>
           </div>
-          <LinkStateHint state={button.linkState} />
+          <LinkStateHint state={button.linkState} shortUrl={button.shortUrl} />
         </div>
       </div>
     </li>

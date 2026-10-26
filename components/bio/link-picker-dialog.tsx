@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BIO_LIMITS, destinationHostOf } from "@/lib/bio"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import type { UrlFilters, UrlResponse } from "@/lib/types"
 
@@ -69,12 +70,27 @@ function PickerPage({ page, search, exclude, full, limitId, onAdd }: PickProps &
     })
 }
 
-function NoLinksYet() {
+function NoLinksYet({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
   return (
-    <p className="py-3 text-sm text-muted-foreground">
-      You have no active short links yet. Shorten a link on the{" "}
-      <Link href="/dashboard" className="text-brand-link">URLs page</Link> first.
-    </p>
+    <div className="flex flex-wrap items-center gap-3 py-3">
+      <p className="text-sm text-muted-foreground">
+        You have no active short links yet.{" "}
+        <a href="/dashboard" target="_blank" rel="noopener" className="text-brand-link">
+          Shorten a link
+        </a>{" "}
+        in a new tab, then come back and select Retry.
+      </p>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        aria-disabled={retrying || undefined}
+        onClick={() => { if (!retrying) onRetry() }}
+        className={DISABLED_CLASSES}
+      >
+        Retry
+      </Button>
+    </div>
   )
 }
 
@@ -110,6 +126,8 @@ function PickerBody({
   const filters = pickerFilters(search)
   const first = useMyUrls(filters, 0, PAGE_SIZE)
   const lastPage = useMyUrls(filters, count - 1, PAGE_SIZE)
+  const retryEmpty = useFocusAfterRetry(searchRef, (first.data?.totalElements ?? 0) > 0)
+  const retryFirst = useFocusAfterRetry(searchRef, first.isSuccess)
 
   useLayoutEffect(() => {
     if (!lastPage.isPending && needsMoreRows(listRef.current, wanted, count, lastPage.data?.totalPages)) {
@@ -158,8 +176,14 @@ function PickerBody({
 
   let listState: ReactNode = null
   if (first.isPending) listState = <p role="status" className="py-3 text-sm text-muted-foreground">Loading your links…</p>
-  else if (first.isError) listState = <LoadError error={first.error} onRetry={() => void first.refetch()} />
-  else if (first.data.totalElements === 0) listState = search ? <p className="py-3 text-sm text-muted-foreground">No active links match.</p> : <NoLinksYet />
+  else if (first.isError) listState = <LoadError error={first.error} onRetry={() => retryFirst(first.refetch)} />
+  else if (first.data.totalElements === 0) {
+    listState = search ? (
+      <p className="py-3 text-sm text-muted-foreground">No active links match.</p>
+    ) : (
+      <NoLinksYet retrying={first.isFetching} onRetry={() => retryEmpty(first.refetch)} />
+    )
+  }
 
   return (
     <div className="flex min-h-0 flex-col gap-4">

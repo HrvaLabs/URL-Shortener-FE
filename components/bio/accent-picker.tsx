@@ -8,11 +8,13 @@ const ACCENT_KEYS = Object.keys(BIO_ACCENTS) as BioAccent[]
 
 export function AccentPicker({ value, onChange }: { value: BioAccent; onChange: (accent: BioAccent) => void }) {
   const name = useId()
+  const hintId = `${name}-hint`
   const selected = BIO_ACCENTS[value] ?? BIO_ACCENTS.BLUE
 
   return (
-    <fieldset>
+    <fieldset aria-describedby={hintId}>
       <legend className="text-sm font-medium">Accent colour</legend>
+      <p id={hintId} className="mt-1 text-xs text-muted-foreground">Each colour has a shade for light pages and one for dark pages.</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="flex flex-wrap gap-2">
           {ACCENT_KEYS.map((key) => {

@@ -206,7 +206,7 @@ function ReportForm({ initialShort }: { initialShort: string }) {
             type="submit"
             aria-disabled={sending}
             aria-busy={sending}
-            className="w-full aria-disabled:pointer-events-none aria-disabled:opacity-50 sm:w-auto"
+            className="w-full aria-disabled:opacity-50 sm:w-auto"
           >
             {sending ? "Sending…" : "Send"}
           </Button>

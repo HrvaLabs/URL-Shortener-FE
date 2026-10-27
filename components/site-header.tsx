@@ -12,54 +12,59 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
+import { NavLink } from "@/components/nav-link"
 import { useAuth } from "@/lib/auth-context"
 
 const navLinks = [
   { href: "/#features", label: "Features" },
-  { href: "/#developers", label: "API" },
-  { href: "/blog", label: "Blog" },
-  { href: "/changelog", label: "Changelog" },
+  { href: "/help/link-in-bio", label: "Bio pages" },
+  { href: "/#developers", label: "Developers" },
+  { href: "/help", label: "Help" },
 ]
+
+const checkLink = { href: "/validate", label: "Check a link" }
+
+const navLinkClass =
+  "rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground"
 
 export function SiteHeader() {
   const { user, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background">
-      <div className="container flex h-16 items-center justify-between gap-4">
-        <div className="flex items-center gap-8">
+      <div className="container flex min-h-16 items-center justify-between gap-4 py-2">
+        <div className="flex min-w-0 items-center gap-6">
           <Logo />
-          <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          <nav aria-label="Main" className="hidden flex-wrap items-center gap-x-1 lg:flex">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
+              <NavLink key={link.href} href={link.href} className={navLinkClass}>
                 {link.label}
-              </Link>
+              </NavLink>
             ))}
           </nav>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <NavLink href={checkLink.href} className={`hidden lg:inline-flex ${navLinkClass}`}>
+            {checkLink.label}
+          </NavLink>
           <ThemeToggle />
           {user ? (
             <>
-              <Button asChild variant="outline" size="sm" className="gap-1.5">
-                <Link href="/dashboard">
+              <Button asChild variant="outline" size="sm" className="relative gap-1.5">
+                <NavLink href="/dashboard">
                   <LayoutDashboard className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </Link>
+                  <span className="sr-only sm:not-sr-only">Dashboard</span>
+                </NavLink>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                className="relative gap-1.5 text-muted-foreground hover:text-foreground"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Log out</span>
+                <span className="sr-only sm:not-sr-only">Log out</span>
               </Button>
             </>
           ) : (
@@ -74,16 +79,20 @@ export function SiteHeader() {
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu" className="h-9 w-9 text-muted-foreground hover:text-foreground md:hidden">
+              <Button variant="ghost" size="icon" aria-label="Open menu" className="h-9 w-9 text-muted-foreground hover:text-foreground lg:hidden">
                 <Menu className="h-[1.15rem] w-[1.15rem]" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {navLinks.map((link) => (
-                <DropdownMenuItem key={link.href} asChild>
-                  <Link href={link.href}>{link.label}</Link>
+                <DropdownMenuItem key={link.href} asChild className="aria-[current=page]:font-medium">
+                  <NavLink href={link.href}>{link.label}</NavLink>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild className="aria-[current=page]:font-medium">
+                <NavLink href={checkLink.href}>{checkLink.label}</NavLink>
+              </DropdownMenuItem>
               {!user && (
                 <>
                   <DropdownMenuSeparator />

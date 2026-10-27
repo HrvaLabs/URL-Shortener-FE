@@ -1,34 +1,35 @@
-import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { NavLink } from "@/components/nav-link"
 
 const columns = [
   {
     title: "Product",
     links: [
       { href: "/#features", label: "Features" },
+      { href: "/help/link-in-bio", label: "Bio pages" },
       { href: "/validate", label: "Check a link" },
+      { href: "/stats", label: "Public stats" },
       { href: "/changelog", label: "Changelog" },
-      { href: "/stats", label: "hrva.cc in numbers" },
       { href: "https://status.hrva.cc/status/url", label: "Status", external: true },
     ],
   },
   {
     title: "Developers",
     links: [
-      { href: "/mcp", label: "MCP server" },
       { href: "https://hrva.cc/swagger-ui/index.html", label: "API docs", external: true },
+      { href: "/mcp", label: "AI connector (MCP)" },
       { href: "/dashboard/api-keys", label: "API keys" },
       { href: "https://github.com/karlohrvacic/url-shortener", label: "Source on GitHub", external: true },
     ],
   },
   {
-    title: "More",
+    title: "Help & legal",
     links: [
-      { href: "/blog", label: "Blog" },
       { href: "/help", label: "Help" },
+      { href: "/report", label: "Report abuse" },
+      { href: "/blog", label: "Blog" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
-      { href: "/report", label: "Report abuse" },
     ],
   },
 ]
@@ -60,9 +61,12 @@ export function SiteFooter() {
                         {link.label}
                       </a>
                     ) : (
-                      <Link href={link.href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <NavLink
+                        href={link.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+                      >
                         {link.label}
-                      </Link>
+                      </NavLink>
                     )}
                   </li>
                 ))}

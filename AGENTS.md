@@ -21,7 +21,7 @@ Next.js 16 App Router + React 19, deployed on Cloudflare Workers via `@opennextj
 
 No test framework is set up.
 
-`npm run lint` exits 1 on this branch: the baseline is **21 errors and 4 warnings**. A change passes lint when the totals don't rise and no file it touches has a problem. Count them with `npx eslint . -f json | jq '{errors: ([.[].errorCount] | add), warnings: ([.[].warningCount] | add)}'`.
+`npm run lint` exits 1 on this branch: the baseline is **14 errors and 4 warnings**. A change passes lint when the totals don't rise and no file it touches has a problem. Count them with `npx eslint . -f json | jq '{errors: ([.[].errorCount] | add), warnings: ([.[].warningCount] | add)}'`.
 
 ---
 

@@ -2,7 +2,6 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { QR_SCANS_START, analyticsDay } from "@/lib/analytics"
 
 const description = "What the public numbers mean, and how hrva.cc tells QR scans from other clicks."
 
@@ -16,12 +15,6 @@ export const metadata: Metadata = {
     description,
   },
 }
-
-const qrScansStart = analyticsDay(QR_SCANS_START).toLocaleDateString("en-US", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-})
 
 export default function StatsHelpPage() {
   return (
@@ -100,10 +93,6 @@ export default function StatsHelpPage() {
                   <strong>View stats</strong>) and look at <strong>QR scans and other clicks</strong>.
                 </li>
               </ol>
-              <p>
-                QR codes downloaded before {qrScansStart} don&apos;t carry the marker, so their scans count
-                as other clicks. To count scans from a printed code, download it again and replace the print.
-              </p>
               <p>
                 Codes made by other QR generators, and links that were typed, clicked or pasted, count as other
                 clicks. A link with a password counts every visit, scans included, as another click.

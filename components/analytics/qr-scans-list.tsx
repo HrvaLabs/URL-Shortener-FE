@@ -1,8 +1,7 @@
 import Link from "next/link"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
-import { QR_SCANS_START, analyticsDay, qrSplit } from "@/lib/analytics"
+import { qrSplit } from "@/lib/analytics"
 import type { AnalyticsTotals, BreakdownEntry } from "@/lib/types"
-import { formatDate } from "@/lib/utils"
 
 interface QrScansListProps {
   totals: AnalyticsTotals
@@ -11,8 +10,6 @@ interface QrScansListProps {
 }
 
 export function QrScansList({ totals, sources, passwordProtected }: QrScansListProps) {
-  const qrScansStart = formatDate(analyticsDay(QR_SCANS_START))
-
   return (
     <BreakdownList
       title="QR scans and other clicks"
@@ -22,7 +19,7 @@ export function QrScansList({ totals, sources, passwordProtected }: QrScansListP
         <>
           {passwordProtected
             ? "This link has a password, so every visit, scans included, counts as another click."
-            : `QR scans count scans of hrva.cc QR codes made on or after ${qrScansStart}. Older codes, other QR generators, and links that were typed, clicked or pasted count as other clicks.`}{" "}
+            : "QR scans count scans of QR codes made by hrva.cc. Links that were typed, clicked or pasted count as other clicks."}{" "}
           <Link href="/help/stats#qr-scans" className="text-brand-link">
             How QR scans are counted
           </Link>

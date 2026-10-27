@@ -5,8 +5,7 @@ import { QRCodeCanvas, QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Download } from "lucide-react"
-import { QR_SCANS_START, analyticsDay } from "@/lib/analytics"
-import { formatDate, withQrMarker } from "@/lib/utils"
+import { withQrMarker } from "@/lib/utils"
 
 type Level = "L" | "M" | "Q" | "H"
 
@@ -60,8 +59,7 @@ export function QrCustomizer({ value, filename = "qr-code" }: QrCustomizerProps)
         <QRCodeSVG value={withQrMarker(value)} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} />
       </div>
       <p className="text-center text-sm text-muted-foreground">
-        Scans of this code show as QR scans in the link&apos;s stats. Codes downloaded before{" "}
-        {formatDate(analyticsDay(QR_SCANS_START))} count as other clicks; download a new one to count scans.
+        Scans of this code show as QR scans in the link&apos;s stats.
       </p>
 
       <div className="w-full space-y-4">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { apiKeyApi, apiKeyCleanupApi } from "@/lib/api-client"
+import { apiKeyApi } from "@/lib/api-client"
 import type { ApiKeyUpdateDto } from "@/lib/types"
 
 export function useMyApiKeys() {
@@ -49,7 +49,7 @@ export function useRevokeApiKey() {
 export function useDeleteApiKey() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => apiKeyCleanupApi.delete(id),
+    mutationFn: (id: number) => apiKeyApi.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["apiKeys"] }),
   })
 }
@@ -57,7 +57,7 @@ export function useDeleteApiKey() {
 export function useDeleteInactiveApiKeys() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => apiKeyCleanupApi.deleteInactive(),
+    mutationFn: () => apiKeyApi.deleteInactive(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["apiKeys"] }),
   })
 }

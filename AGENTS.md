@@ -229,8 +229,8 @@ The local backend (`localhost:8080`) has an updated API that differs significant
 | `GET /api/v1/key` | `GET /api/v1/api-keys/all` | Now paginated |
 | `PUT /api/v1/key` | `PUT /api/v1/api-keys/{id}` | `id` moved from body to path |
 | `GET /api/v1/key/revoke/{id}` | `PATCH /api/v1/api-keys/{id}/revoke` | **GET → PATCH** |
-| — | `DELETE /api/v1/api-keys/{id}` | New in v2.13: owner or admin deletes an inactive key (`active: false`: expired, revoked or out of calls); `204`, `409` "Revoke this key before deleting it." for an active key, `403` for someone else's, `404`. `apiKeyCleanupApi.delete` |
-| — | `DELETE /api/v1/api-keys/inactive` | New in v2.13: deletes the caller's own inactive keys only (never other users', even for an admin); `200 {"deleted": N}`. `apiKeyCleanupApi.deleteInactive` |
+| — | `DELETE /api/v1/api-keys/{id}` | New in v2.13: owner or admin deletes an inactive key (`active: false`: expired, revoked or out of calls); `204`, `409` "Revoke this key before deleting it." for an active key, `403` for someone else's, `404`. `apiKeyApi.delete` |
+| — | `DELETE /api/v1/api-keys/inactive` | New in v2.13: deletes the caller's own inactive keys only (never other users', even for an admin); `200 {"deleted": N}`. `apiKeyApi.deleteInactive` |
 
 ### User Endpoints
 

@@ -988,3 +988,7 @@ export interface BioButtonClicks {
   visible?: boolean
   linkState?: BioLinkState
 }
+
+export interface ApiKeysDeleted {
+  deleted: number
+}

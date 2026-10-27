@@ -448,3 +448,10 @@ function validationFields(body: unknown): Record<string, string> {
   if (fields.error != null || fields.message != null) return {}
   return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
 }
+
+export const apiKeyCleanupApi = {
+  delete: (id: number) =>
+    request<void>("DELETE", `/api-keys/${id}`),
+  deleteInactive: () =>
+    request<import("./types").ApiKeysDeleted>("DELETE", "/api-keys/inactive"),
+}

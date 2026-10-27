@@ -321,15 +321,15 @@ export default function PrivacyPage() {
                   processes these messages under its own terms, and they stay in the channel until
                   the admin deletes them.
                 </li>
-                {/* TODO: name the email delivery provider (and its location/safeguards) */}
                 <li>
-                  <strong>Email delivery</strong> — transactional emails are sent via
-                  [email provider].
+                  <strong>SendPulse</strong> — the email delivery service we use to send
+                  transactional emails (verification, password reset, notifications and security
+                  notices). It receives your email address and the content of those emails, and
+                  handles them under its data processing terms.
                 </li>
-                {/* TODO: name the backend hosting provider and hosting location */}
                 <li>
-                  <strong>Backend hosting</strong> — the API and database are hosted by
-                  [hosting provider] in [location].
+                  <strong>Oracle Cloud Infrastructure</strong> — hosts the API, its database and its
+                  cache in Frankfurt, Germany (EU). Traffic to them goes through Cloudflare.
                 </li>
               </ul>
               <p>
@@ -370,7 +370,7 @@ export default function PrivacyPage() {
                   <strong>Bio pages</strong> — kept until you delete the page or your account; their
                   daily view counts, review notes, visitor reports and an admin&apos;s reasons go with
                   them. The audit log&apos;s record of admin actions on the page is kept as listed for
-                  audit logs below. An old handle is kept for 30 days after a change or deletion. A
+                  the admin audit log below. An old handle is kept for 30 days after a change or deletion. A
                   handle an admin takes back is also kept on the reserved list, with the admin&apos;s
                   reason but without a link to you, until an admin releases it.
                 </li>
@@ -379,9 +379,11 @@ export default function PrivacyPage() {
                   — deleted when you disconnect the app in Settings → Connected apps, or automatically
                   once the app&apos;s refresh token has gone unused for 30 days.
                 </li>
-                {/* TODO: confirm email/audit log retention period with the backend */}
                 <li>
-                  <strong>Email and audit logs</strong> — kept for [retention period].
+                  <strong>Email logs</strong> — kept for 90 days, then deleted automatically.
+                </li>
+                <li>
+                  <strong>Admin audit log</strong> — kept for 12 months, then deleted automatically.
                 </li>
               </ul>
 

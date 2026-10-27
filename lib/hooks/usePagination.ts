@@ -10,19 +10,13 @@ export function useClampedPage(page: number, totalPages: number | undefined, set
   }, [page, totalPages, setPage])
 }
 
-export function usePagination() {
-  const [page, setPageState] = useState(0)
-  const [size, setSizeState] = useState(DEFAULT_SIZE)
-  const [sort, setSortState] = useState("createDate")
-  const [order, setOrderState] = useState("desc")
+const addressParam = (name: string) => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name))
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    setPageState(Math.max(0, parseInt(params.get("page") ?? "0", 10) || 0))
-    setSizeState(parseInt(params.get("size") ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
-    setSortState(params.get("sort") ?? "createDate")
-    setOrderState(params.get("order") ?? "desc")
-  }, [])
+export function usePagination() {
+  const [page, setPageState] = useState(() => Math.max(0, parseInt(addressParam("page") ?? "0", 10) || 0))
+  const [size, setSizeState] = useState(() => parseInt(addressParam("size") ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
+  const [sort, setSortState] = useState(() => addressParam("sort") ?? "createDate")
+  const [order, setOrderState] = useState(() => addressParam("order") ?? "desc")
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -30,7 +24,7 @@ export function usePagination() {
     params.set("size", String(size))
     params.set("sort", sort)
     params.set("order", order)
-    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`)
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}${window.location.hash}`)
   }, [page, size, sort, order])
 
   const setPage = useCallback((p: number) => {

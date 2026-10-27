@@ -4,12 +4,12 @@ import { useId, useRef, useState } from "react"
 import { useMyApiKeys, useGenerateApiKey, useRevokeApiKey, useUpdateApiKey, useDeleteApiKey, useDeleteInactiveApiKeys } from "@/lib/hooks/useApiKeys"
 import { ApiError } from "@/lib/api-client"
 import type { ApiKeyResponse } from "@/lib/types"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -41,6 +41,12 @@ export default function ApiKeysPage() {
   const [bulkCount, setBulkCount] = useState(0)
   const [bulkError, setBulkError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [revokeTarget, setRevokeTarget] = useState<ApiKeyResponse | null>(null)
+  const [revokeError, setRevokeError] = useState<string | null>(null)
+  const [revoking, setRevoking] = useState(false)
+  const revokeTrigger = useRef<HTMLElement | null>(null)
+  const focusAfterRevoke = useRef<HTMLElement | null>(null)
+  const revoked = useRef(false)
   const submitting = useRef(false)
   const deleteTrigger = useRef<HTMLElement | null>(null)
   const focusAfterDelete = useRef<HTMLElement | null>(null)
@@ -96,20 +102,34 @@ export default function ApiKeysPage() {
     target?.focus()
   }
 
-  const handleRevoke = async (id: number) => {
+  const openRevoke = (key: ApiKeyResponse, trigger: HTMLElement) => {
+    revokeTrigger.current = trigger
+    focusAfterRevoke.current = null
+    revoked.current = false
+    setRevokeError(null)
+    setRevokeTarget(key)
+  }
+
+  const handleRevoke = async () => {
+    if (submitting.current || !revokeTarget) return
+    submitting.current = true
+    setRevoking(true)
+    setRevokeError(null)
     const revokeButtons = Array.from(document.querySelectorAll<HTMLElement>("[data-revoke-key]"))
-    const index = revokeButtons.findIndex((button) => button.dataset.revokeKey === String(id))
+    const index = revokeTrigger.current ? revokeButtons.indexOf(revokeTrigger.current) : -1
     const next = index === -1 ? null : (revokeButtons[index + 1] ?? revokeButtons[index - 1] ?? null)
     try {
-      await revokeKey.mutateAsync(id)
+      await revokeKey.mutateAsync(revokeTarget.id)
+      focusAfterRevoke.current = next
+      revoked.current = true
       toast.success("API key revoked")
-      window.requestAnimationFrame(() => {
-        const active = document.activeElement
-        if (active && active !== document.body && active.isConnected) return
-        focusOrFallback(next)
-      })
+      setRevokeTarget(null)
     } catch (err) {
-      toast.error(errorText(err, "Failed to revoke"))
+      setRevokeError(errorText(err, "Couldn't revoke the key. Try again."))
+      if (err instanceof ApiError && err.status === 404) void refetch()
+    } finally {
+      submitting.current = false
+      setRevoking(false)
     }
   }
 
@@ -259,36 +279,19 @@ export default function ApiKeysPage() {
             )}
             {key.active && (
               <Tooltip>
-                <AlertDialog>
-                  <TooltipTrigger asChild>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Revoke key"
-                        data-revoke-key={key.id}
-                        className={DELETE_BUTTON_CLASSES}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Revoke key</TooltipContent>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently revoke this API key. Any services using it will stop working.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleRevoke(key.id)} className={buttonVariants({ variant: "destructive" })}>
-                        Revoke
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Revoke key"
+                    data-revoke-key={key.id}
+                    onClick={(event) => openRevoke(key, event.currentTarget)}
+                    className={DELETE_BUTTON_CLASSES}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">Revoke key</TooltipContent>
               </Tooltip>
             )}
             {!key.active && (
@@ -384,6 +387,42 @@ export default function ApiKeysPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!revokeTarget} onOpenChange={(open) => { if (!open && !revoking) setRevokeTarget(null) }}>
+        <AlertDialogContent
+          onEscapeKeyDown={(event) => { if (revoking) event.preventDefault() }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            focusOrFallback(revoked.current ? focusAfterRevoke.current : revokeTrigger.current)
+          }}
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently revoke this API key. Any services using it will stop working.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {revokeTarget && (
+            <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{maskApiKey(revokeTarget.key)}</p>
+          )}
+          {revokeError && (
+            <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{revokeError}</p>
+          )}
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel disabled={revoking}>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleRevoke}
+              aria-disabled={revoking}
+              aria-busy={revoking}
+              className="aria-disabled:opacity-50"
+            >
+              {revoking ? "Revoking…" : "Revoke"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null) }}>
         <AlertDialogContent

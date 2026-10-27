@@ -24,7 +24,7 @@ The labels below are the ones in the site header and footer.
 - Everything is a daily total. Nothing identifies a visitor.
 
 ### Accounts
-- Sign in with email and password, Google or GitHub, or a passkey or security key.
+- Sign in with email and password, Google, or a passkey or security key.
 - Two-step verification with an authenticator app or a passkey, plus recovery codes.
 - Export your data and delete your account in Settings.
 

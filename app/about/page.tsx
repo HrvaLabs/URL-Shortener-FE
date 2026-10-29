@@ -5,7 +5,7 @@ import { StaticPage, SummaryBox } from "@/components/static-page"
 import { AUTHOR_NAME, AUTHOR_URL, ENTITY_SENTENCE, absoluteUrl, pageMetadata } from "@/lib/seo"
 
 const description =
-  "About hrva.cc: a free, privacy-first, open-source URL shortener run by one person in Croatia as a HrvaLabs hobby project. Who runs it and how it is paid for."
+  "About hrva.cc: a free, privacy-first, open-source URL shortener and HrvaLabs hobby project from Croatia. Who runs it and how it is paid for."
 
 export const metadata: Metadata = pageMetadata({ title: "About hrva.cc: who runs this free URL shortener", description, path: "/about", absolute: true })
 
@@ -31,7 +31,7 @@ export default function AboutPage() {
   return (
     <StaticPage title="About hrva.cc" after={<JsonLdScript data={aboutJsonLd} />}>
       <SummaryBox>
-        {ENTITY_SENTENCE} It is built and run by one person, {AUTHOR_NAME}, in Croatia.
+        {ENTITY_SENTENCE} It is built and run by {AUTHOR_NAME} in Croatia.
       </SummaryBox>
 
       <div className="prose-custom">
@@ -39,7 +39,7 @@ export default function AboutPage() {
         <p>
           hrva.cc is a non-commercial hobby project of <a href="https://hrvalabs.net/">HrvaLabs</a>, run since 2022 by{" "}
           <a href={AUTHOR_URL} rel="author">{AUTHOR_NAME}</a>, a software engineer from Zagreb. There is no company,
-          team or investor behind it: one person writes the code, runs the servers and reads the reports. His code is on{" "}
+          team or investor behind it. The code is on{" "}
           <a href="https://github.com/karlohrvacic">GitHub</a>.
         </p>
         <p>

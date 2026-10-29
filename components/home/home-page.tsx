@@ -556,7 +556,7 @@ const privacyClaims = [
   { title: "No IPs stored", text: "Link statistics count unique visitors with a one-way hash under a random key that changes every day." },
   { title: "Gone by morning", text: "The hashes and the day's key are kept only in Redis and deleted a few hours after midnight. Daily counts stay." },
   { title: "Open source", text: "The code is on GitHub, including the lines shown here." },
-  { title: "Free, no ads", text: "A non-commercial HrvaLabs project, built and run by one person in Croatia." },
+  { title: "Free, no ads", text: "A non-commercial HrvaLabs hobby project from Croatia." },
 ]
 
 const visitorHashUrl = VISITOR_HASH_SOURCE

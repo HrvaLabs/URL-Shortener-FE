@@ -178,7 +178,7 @@ export default function BitlyAlternativePage() {
             and no stored IP addresses. <Link href="/privacy-first-url-shortener">How visits are counted</Link>.
           </li>
           <li>
-            The code is public under the GPL-3.0 licence, and one person runs it in Croatia as a hobby project.{" "}
+            The code is public under the GPL-3.0 licence, and hrva.cc is a HrvaLabs hobby project from Croatia.{" "}
             <Link href="/about">About hrva.cc</Link>.
           </li>
           <li>

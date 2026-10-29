@@ -49,8 +49,8 @@ export default function PrivacyFirstPage() {
     <StaticPage title="A URL shortener that counts visits without tracking visitors" after={<JsonLdScript data={articleJsonLd} />}>
       <div className="mt-8 rounded-xl border bg-muted/40 p-5">
         <p className="leading-7 text-foreground">
-          hrva.cc is a free URL shortener that counts visits without tracking the people who make them. It is built and run
-          by one person in Croatia as a HrvaLabs hobby project, and its source code is public on GitHub. When someone
+          hrva.cc is a free URL shortener that counts visits without tracking the people who make them. It is a HrvaLabs
+          hobby project from Croatia, and its source code is public on GitHub. When someone
           opens a hrva.cc short link, that link&apos;s counts for the day go up: clicks, unique visitors, clicks from bots,
           and how many clicks came from each referring site&apos;s domain, country, device type, browser and operating
           system. Nothing is recorded about the individual click. Unique visitors are counted with a one-way hash of the

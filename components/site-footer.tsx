@@ -50,7 +50,7 @@ export function SiteFooter() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              {ENTITY_SENTENCE} Built and run by one person in Croatia.
+              {ENTITY_SENTENCE}
             </p>
           </div>
           {columns.map((column) => (

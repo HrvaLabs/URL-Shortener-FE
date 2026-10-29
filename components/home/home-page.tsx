@@ -82,6 +82,7 @@ function PublicHome() {
 
 const freeTools = [
   { href: "/qr", label: "QR code generator" },
+  { href: "/utm", label: "UTM builder" },
   { href: "/help/link-in-bio", label: "Bio pages" },
   { href: "/developers", label: "API" },
 ]
@@ -372,7 +373,12 @@ function FeatureGrid() {
                 from.{" "}
                 <Link href="/help/utm" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about campaign tracking</span>
+                </Link>{" "}
+                or use the{" "}
+                <Link href="/utm" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  free UTM builder
                 </Link>
+                , no account needed.
               </>
             }
           >

@@ -93,6 +93,11 @@ export default function UtmHelpPage() {
                 closes. The <strong>What are UTM tags?</strong> link in the section opens this page.
               </p>
 
+              <p>
+                Without an account, the free <Link href="/utm">UTM builder</Link> tags any link the same way and lets you
+                copy the result or shorten it.
+              </p>
+
               <h2>Who reads them</h2>
               <p>
                 The analytics tool on the destination site reads the tags. hrva.cc doesn&apos;t track or

@@ -52,9 +52,11 @@ export default function PrivacyPage() {
               <h3>Account data</h3>
               <p>
                 When you register, we process your email address, an optional display name, and your
-                password, which is stored only as a salted one-way hash. If you sign in with Google or
-                GitHub, we receive your name and email address from that account instead of a
-                password. Two-step verification is available whether you sign in with a password,
+                password, which is stored only as a salted one-way hash. If you sign in with Google,
+                we receive your name and email address from that account instead of a password. If
+                you sign in with GitHub, we receive your username, your name and the email addresses
+                on that account instead of a password, and use only its verified primary email
+                address. Two-step verification is available whether you sign in with a password,
                 Google or GitHub. If you turn it on, we store the shared secret of your authenticator
                 app, if you use one, and one-way hashes of your recovery codes, so we can verify your
                 codes. If you add a passkey or security key, we store its public key and a few
@@ -313,6 +315,10 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Google Sign-In</strong> — only if you choose to log in with Google; Google
                   acts as your identity provider under its own privacy policy.
+                </li>
+                <li>
+                  <strong>GitHub</strong> — only if you choose to log in with GitHub; GitHub acts as
+                  your identity provider under its own privacy policy.
                 </li>
                 <li>
                   <strong>Google Safe Browsing</strong> — destination URLs you shorten, and the

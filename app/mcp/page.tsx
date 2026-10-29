@@ -105,7 +105,7 @@ export default function McpPage() {
               </ul>
               <Paragraph className="mt-5">
                 When you add the account URL, your app opens the hrva.cc sign-in page. Sign in as usual, with your
-                password and two-factor code or with Google, then allow the app on the consent screen at{" "}
+                password and two-factor code or with Google or GitHub, then allow the app on the consent screen at{" "}
                 <InlineCode>app.hrva.cc/connect</InlineCode>.
               </Paragraph>
               <Paragraph className="mt-4">

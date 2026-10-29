@@ -395,6 +395,7 @@ export default function PrivacyPage() {
                 of the tools it uses (short links, link lists and visit stats). It is not our
                 processor; it handles that data under its own terms.
               </p>
+              <p>Donations go through Revolut or PayPal on their own sites; hrva.cc receives nothing about them.</p>
 
               <h2>How long we keep data</h2>
               <ul>

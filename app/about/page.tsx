@@ -3,12 +3,18 @@ import type { Metadata } from "next"
 import { JSON_LD_IDS, JsonLdScript, SOURCE_REPOSITORIES, pageBreadcrumbs, reference } from "@/components/json-ld"
 import { EntitySentence } from "@/components/entity-sentence"
 import { StaticPage, SummaryBox } from "@/components/static-page"
+import { Button } from "@/components/ui/button"
 import { AUTHOR_NAME, AUTHOR_URL, PUBLISHER_URL, absoluteUrl, pageMetadata } from "@/lib/seo"
 
 const description =
   "About hrva.cc: a free, open-source URL shortener from HrvaLabs. Who runs it and how it's paid for."
 
 export const metadata: Metadata = pageMetadata({ title: "About hrva.cc: who runs this free URL shortener", description, path: "/about", absolute: true })
+
+const supportLinks = [
+  { href: "https://hrva.cc/revolut", label: "Revolut" },
+  { href: "https://hrva.cc/paypal", label: "PayPal" },
+]
 
 const aboutJsonLd = {
   "@context": "https://schema.org",
@@ -86,6 +92,21 @@ export default function AboutPage() {
           </li>
         </ul>
 
+        <h2 id="support">Support hrva.cc</h2>
+        <p>If it&apos;s useful to you, you can support it.</p>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {supportLinks.map((link) => (
+          <Button key={link.href} asChild variant="outline">
+            <a href={link.href} target="_blank" rel="noopener noreferrer">
+              {link.label}
+            </a>
+          </Button>
+        ))}
+      </div>
+
+      <div className="prose-custom">
         <h2 id="contact">Contact</h2>
         <p>
           For anything about your data, write to <a href="mailto:privacy@hrvalabs.net">privacy@hrvalabs.net</a>. To

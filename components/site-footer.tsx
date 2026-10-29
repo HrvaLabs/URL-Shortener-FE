@@ -35,6 +35,7 @@ const columns = [
       { href: "/privacy-first-url-shortener", label: "How visits are counted" },
       { href: "/help", label: "Help" },
       { href: "/report", label: "Report abuse" },
+      { href: "/about#support", label: "Support" },
       { href: "/blog", label: "Blog" },
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },

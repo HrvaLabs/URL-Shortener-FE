@@ -101,12 +101,14 @@ function BlockDomainsForm({ urlIds, blocking, setBlocking, onCancel, onBlocked }
     if (ticked.length === 0 || !trimmedReason) return
     setBlocking(true)
     try {
-      reportResult(await adminApi.blockDomains(ticked.map((row) => row.domain), trimmedReason))
+      const result = await adminApi.blockDomains(ticked.map((row) => row.domain), trimmedReason)
+      reportResult(result)
+      if (result.blocked.length === 0) return
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["urls"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "domain-rules"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
-        queryClient.invalidateQueries({ queryKey: ["admin", "domain-block-preview"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "domain-block-preview"], refetchType: "none" }),
       ])
       onBlocked()
     } catch (err) {
@@ -148,6 +150,8 @@ function BlockDomainsForm({ urlIds, blocking, setBlocking, onCancel, onBlocked }
               const allowed = isAllowed(row)
               const checked = !allowed && !unticked.has(row.domain)
               const moreThanTicked = row.activeLinks > row.selectedLinks
+              const domainId = `${id}-${index}-domain`
+              const ruleId = `${id}-${index}-rule`
               const detailsId = `${id}-${index}-details`
               return (
                 <label
@@ -163,14 +167,15 @@ function BlockDomainsForm({ urlIds, blocking, setBlocking, onCancel, onBlocked }
                     checked={checked}
                     onChange={() => toggle(row.domain)}
                     disabled={allowed || blocking}
-                    aria-describedby={detailsId}
+                    aria-labelledby={domainId}
+                    aria-describedby={row.rule ? `${ruleId} ${detailsId}` : detailsId}
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-brand"
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">{row.domain}</span>
-                      {allowed && <Badge variant="secondary">Allowed by a rule</Badge>}
-                      {row.rule === "BLOCK" && <Badge variant="destructive">Already blocked</Badge>}
+                      <span id={domainId} className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">{row.domain}</span>
+                      {allowed && <Badge id={ruleId} variant="secondary">Allowed by a rule</Badge>}
+                      {row.rule === "BLOCK" && <Badge id={ruleId} variant="destructive">Already blocked</Badge>}
                     </span>
                     <span id={detailsId} className="mt-1 block space-y-0.5 text-xs text-muted-foreground">
                       {showsHosts(row) && (

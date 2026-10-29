@@ -1,5 +1,6 @@
 import { Logo } from "@/components/logo"
 import { NavLink } from "@/components/nav-link"
+import { BITLY_COMPARISON } from "@/lib/comparisons"
 import { ENTITY_SENTENCE } from "@/lib/seo"
 
 const columns = [
@@ -10,6 +11,7 @@ const columns = [
       { href: "/link-in-bio", label: "Bio pages" },
       { href: "/qr", label: "QR code generator" },
       { href: "/utm", label: "UTM builder" },
+      ...(BITLY_COMPARISON.published ? [{ href: BITLY_COMPARISON.path, label: "Bitly alternative" }] : []),
       { href: "/validate", label: "Check a link" },
       { href: "/stats", label: "Public stats" },
       { href: "/changelog", label: "Changelog" },

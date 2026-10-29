@@ -1,0 +1,211 @@
+import Link from "next/link"
+import type { Metadata } from "next"
+import { JSON_LD_IDS, JsonLdScript, pageBreadcrumbs, reference } from "@/components/json-ld"
+import { StaticPage } from "@/components/static-page"
+import { Button } from "@/components/ui/button"
+import { BITLY_COMPARISON } from "@/lib/comparisons"
+import { formatContentDate } from "@/lib/content-dates"
+import { absoluteUrl, pageMetadata } from "@/lib/seo"
+
+const { path, published, checkedOn, sources } = BITLY_COMPARISON
+const title = "Free Bitly alternative without tracking"
+const description =
+  "A free Bitly alternative with no ads and no visitor tracking: how hrva.cc compares with Bitly's Free plan on links, aliases, QR codes, bio pages, the API and what is stored about clicks."
+
+export const metadata: Metadata = {
+  ...pageMetadata({ title, description, path }),
+  ...(published ? {} : { robots: { index: false, follow: false } }),
+}
+
+const comparisonJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `${absoluteUrl(path)}#webpage`,
+      url: absoluteUrl(path),
+      name: title,
+      description,
+      inLanguage: "en",
+      dateModified: checkedOn,
+      about: reference(JSON_LD_IDS.app),
+      isPartOf: reference(JSON_LD_IDS.website),
+    },
+    pageBreadcrumbs("Bitly alternative", path),
+  ],
+}
+
+type Source = keyof typeof sources
+
+interface Row {
+  feature: string
+  hrva: string
+  bitly: string
+  source: Source
+}
+
+const rows: Row[] = [
+  {
+    feature: "Price",
+    hrva: "Free. There are no paid plans.",
+    bitly: "$0 on the Free plan. Paid plans start at $10 a month, billed annually ($120 a year).",
+    source: "pricing",
+  },
+  { feature: "Ads", hrva: "None.", bitly: "The Free plan is listed as \"With Ads\".", source: "pricing" },
+  {
+    feature: "Short links",
+    hrva: "No monthly cap. Creating links is rate-limited per hour.",
+    bitly: "5 links a month on the Free plan.",
+    source: "pricing",
+  },
+  {
+    feature: "Custom aliases",
+    hrva: "Yes, with a free account, with no monthly cap.",
+    bitly: "3 custom back-halves a month on the Free plan.",
+    source: "pricing",
+  },
+  {
+    feature: "QR codes",
+    hrva: "A QR code for every link, as PNG or SVG, and a QR code generator that needs no account.",
+    bitly: "2 QR codes a month on the Free plan.",
+    source: "pricing",
+  },
+  {
+    feature: "Link in bio",
+    hrva: "One bio page per account, with up to 30 buttons.",
+    bitly: "2 custom landing pages on the Free plan.",
+    source: "pricing",
+  },
+  {
+    feature: "API",
+    hrva: "Free, with API keys from your dashboard.",
+    bitly: "1,000 API requests a month on the Free plan.",
+    source: "pricing",
+  },
+  {
+    feature: "What is stored when someone clicks",
+    hrva: "Daily totals per link. No IP addresses, and nothing about a single click.",
+    bitly:
+      "The IP address and the location derived from it, referring websites, the time and date of each access, device settings such as browser, operating system and language, cookies and mobile advertising identifiers.",
+    source: "privacy",
+  },
+  {
+    feature: "Custom domains",
+    hrva: "Not available.",
+    bitly: "From the Growth plan, $29 a month billed annually, which includes a custom domain.",
+    source: "pricing",
+  },
+  {
+    feature: "Team accounts",
+    hrva: "Not available. One account per person.",
+    bitly: "Multiple users and group permissions on the Enterprise plan, with custom pricing.",
+    source: "pricing",
+  },
+]
+
+const sourceLabels: Record<Source, string> = {
+  pricing: "Bitly pricing",
+  privacy: "Bitly privacy policy",
+}
+
+export default function BitlyAlternativePage() {
+  const checked = formatContentDate(checkedOn)
+
+  return (
+    <StaticPage
+      title="A free Bitly alternative without ads or visitor tracking"
+      lead={
+        <p>
+          hrva.cc is a free, open-source URL shortener with no paid plans and no ads. Compared with Bitly&apos;s Free plan,
+          it has no monthly cap on links, custom aliases or QR codes, and it keeps only daily totals about clicks, with no
+          IP addresses. Bitly is the better choice when you need your own domain, a team account or its integrations.
+        </p>
+      }
+      after={<JsonLdScript data={comparisonJsonLd} />}
+    >
+      <section className="mt-10">
+        <h2 className="font-display text-2xl leading-tight">hrva.cc and Bitly&apos;s Free plan, side by side</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Bitly&apos;s facts were checked on {checked} on its <a href={sources.pricing} className="text-brand-link">pricing page</a>{" "}
+          and in its <a href={sources.privacy} className="text-brand-link">privacy policy</a>. They may have changed since.
+        </p>
+        <table className="mt-5 block w-full text-sm sm:table">
+          <thead className="hidden sm:table-header-group">
+            <tr className="border-b text-left">
+              <th scope="col" className="w-40 py-2 pr-4 font-semibold">Feature</th>
+              <th scope="col" className="py-2 pr-4 font-semibold">hrva.cc</th>
+              <th scope="col" className="py-2 font-semibold">Bitly Free plan</th>
+            </tr>
+          </thead>
+          <tbody className="block sm:table-row-group">
+            {rows.map((row) => (
+              <tr key={row.feature} className="block border-b py-3 sm:table-row sm:py-0">
+                <th scope="row" className="block pb-1 text-left font-semibold sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
+                  {row.feature}
+                </th>
+                <td className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
+                  <span className="font-medium text-muted-foreground sm:hidden">hrva.cc: </span>
+                  {row.hrva}
+                </td>
+                <td className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:align-top">
+                  <span className="font-medium text-muted-foreground sm:hidden">Bitly Free plan: </span>
+                  {row.bitly}{" "}
+                  <a href={sources[row.source]} className="whitespace-nowrap text-xs text-brand-link">
+                    {sourceLabels[row.source]}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <div className="prose-custom">
+        <h2 id="bitly-better">When Bitly is the better choice</h2>
+        <ul>
+          <li>You want short links on your own domain. hrva.cc only makes hrva.cc links.</li>
+          <li>Several people need to share one account with permissions. hrva.cc accounts are for one person.</li>
+          <li>
+            You rely on its extras, such as integrations with other apps, mobile deep linking, browser extensions and mobile
+            apps, which its pricing page lists.
+          </li>
+        </ul>
+
+        <h2 id="why-hrva">Why people pick hrva.cc</h2>
+        <ul>
+          <li>
+            Visits are counted without tracking visitors: daily totals, a one-way hash with a key that changes every day,
+            and no stored IP addresses. <Link href="/privacy-first-url-shortener">How visits are counted</Link>.
+          </li>
+          <li>
+            The code is public under the GPL-3.0 licence, and one person runs it in Croatia as a hobby project.{" "}
+            <Link href="/about">About hrva.cc</Link>.
+          </li>
+          <li>
+            Shortening works without an account, and the <Link href="/qr">QR code generator</Link> and{" "}
+            <Link href="/utm">UTM builder</Link> do too.
+          </li>
+          <li>
+            An <Link href="/developers">API</Link> and an <Link href="/mcp">MCP server</Link> for Claude and ChatGPT are free.
+          </li>
+        </ul>
+
+        <h2 id="moving">Moving links over</h2>
+        <p>
+          Links you already shared on bit.ly stay with Bitly; hrva.cc can&apos;t take them over. Use hrva.cc for new links,
+          and recreate the ones you still share. To recreate many at once, send each destination to the{" "}
+          <Link href="/developers">API</Link> with an API key, choosing a custom alias for each if you like.
+        </p>
+      </div>
+
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href="/#shorten">Shorten a link</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/register">Create a free account</Link>
+        </Button>
+      </div>
+    </StaticPage>
+  )
+}

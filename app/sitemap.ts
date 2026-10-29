@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { blogPosts } from "@/content/blog/posts"
 import { CONTENT_UPDATED, type DatedPath } from "@/lib/content-dates"
+import { BITLY_COMPARISON } from "@/lib/comparisons"
 import { absoluteUrl } from "@/lib/seo"
 
 const dated = (path: DatedPath): MetadataRoute.Sitemap[number] => ({
@@ -23,6 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/qr"),
     dated("/utm"),
     dated("/link-in-bio"),
+    ...(BITLY_COMPARISON.published ? [{ url: absoluteUrl(BITLY_COMPARISON.path), lastModified: BITLY_COMPARISON.checkedOn }] : []),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

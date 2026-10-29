@@ -16,21 +16,17 @@ type State = "loading" | "success" | "error"
 export default function VerifyEmailPage() {
   const params = useParams()
   const token = params.token as string
-  const [state, setState] = useState<State>("loading")
-  const [message, setMessage] = useState("")
+  const [state, setState] = useState<State>(token ? "loading" : "error")
+  const [message, setMessage] = useState(token ? "" : "Invalid verification link.")
 
   useEffect(() => {
-    if (!token) {
-      setState("error")
-      setMessage("Invalid verification link.")
-      return
-    }
+    if (!token) return
     authApi
       .verifyEmail(token)
       .then(() => setState("success"))
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         setState("error")
-        setMessage(err?.message || "Verification failed.")
+        setMessage(err instanceof Error && err.message ? err.message : "Verification failed.")
       })
   }, [token])
 
@@ -57,7 +53,7 @@ export default function VerifyEmailPage() {
                 <CircleCheck className="h-5 w-5 text-success" />
               </div>
               <h1 className="mt-4 font-display text-2xl">Email verified</h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">Your account is now active. You can sign in.</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Your account is ready. Sign in to shorten links, track clicks and set expiry dates, all from your dashboard.</p>
               <Button asChild className="mt-8 w-full">
                 <Link href="/login">Go to sign in</Link>
               </Button>

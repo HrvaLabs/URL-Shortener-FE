@@ -43,6 +43,11 @@ const guides = [
     title: "Bio pages",
     description: "One page with all your links at hrva.cc/@yourname, for your Instagram, TikTok or any other bio.",
   },
+  {
+    href: "/help/notifications",
+    title: "Notifications and webhooks",
+    description: "Dead-link checks, the weekly summary, and alerts to Discord, Slack, Telegram, ntfy, a webhook or email.",
+  },
 ]
 
 export default function HelpPage() {

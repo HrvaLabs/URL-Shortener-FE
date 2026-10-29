@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Check, Clock, Contact, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
+  ArrowRight, ArrowUpRight, BarChart3, Bell, Check, Clock, Contact, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -449,6 +449,31 @@ function FeatureGrid() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </FeatureCell>
+
+          <FeatureCell
+            className="md:grid md:grid-cols-2 md:items-center lg:col-span-3"
+            icon={Bell}
+            title="Notifications"
+            description={
+              <>
+                Know when a link breaks. Nightly dead-link checks, a weekly summary, and alerts to Discord, Slack, Telegram,
+                ntfy, a webhook or email. Everything is off until you turn it on.{" "}
+                <Link href="/help/notifications" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about notifications</span>
+                </Link>
+              </>
+            }
+          >
+            <div aria-hidden="true" className="mx-auto w-full max-w-sm rounded-xl border bg-background p-4">
+              <p className="flex items-start gap-2 text-sm font-medium [overflow-wrap:anywhere]">
+                <Bell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                hrva.cc: 1 link looks broken
+              </p>
+              <p className="mt-1.5 pl-5.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                hrva.cc/menu <span className="font-sans">to</span> example.com
+              </p>
             </div>
           </FeatureCell>
         </div>

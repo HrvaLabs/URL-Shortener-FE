@@ -175,10 +175,36 @@ export default function PrivacyPage() {
 
               <h3>Emails we send</h3>
               <p>
-                We send transactional emails only: address verification, password reset, security
-                notices (for example when a passkey is added to your account), and notifications about
-                your expiring links. We keep a log of emails sent to operate and
-                troubleshoot delivery. We do not send marketing email.
+                We send transactional emails: address verification, password reset, security
+                notices (for example when a passkey is added to your account), and a notice when one of
+                your links is blocked or your account is deactivated. We also send the notification emails
+                you turn on, as described under <a href="#notifications">Notifications</a>. We keep a log of
+                emails sent to operate and troubleshoot delivery; for a notification email, the log also
+                notes which notification it was. We do not send marketing email.
+              </p>
+
+              <h3 id="notifications">Notifications</h3>
+              <p>
+                If you turn on a notification email (dead links, the weekly summary or expiry reminders),
+                we record when you turned it on and off, and how (in Settings or with an unsubscribe link).
+                We keep that record as proof of your choice until you delete your account. Every such email
+                has a one-click unsubscribe link.
+              </p>
+              <p>
+                If you add a channel (Discord, Slack, Telegram, ntfy or your own webhook), we store its
+                name, its address or token, which we encrypt, and the events you picked. A webhook&apos;s
+                signing secret and an ntfy access token are encrypted too; a Telegram chat ID is stored as
+                it is. For each event you pick, we keep the same record of when you turned it on and off,
+                with the channel&apos;s type and name, also after you delete the channel. We send it only
+                what you picked: counts of clicks, your short links, their destination hosts and dates. We
+                never send visitors&apos; IP addresses, browsers or referrers, or your email address. Each
+                channel&apos;s provider receives what we send under its own privacy terms; you choose them,
+                and you can delete a channel at any time. We keep a record of each delivery for 30 days to
+                retry failures and show you the last result.
+              </p>
+              <p>
+                Legal basis: your consent (Art. 6(1)(a) GDPR) for notification emails and channels;
+                legitimate interest (Art. 6(1)(f) GDPR) for keeping the record of your consent.
               </p>
 
               <h3 id="security-and-audit-logs">Security and audit logs</h3>
@@ -271,6 +297,21 @@ export default function PrivacyPage() {
                 service from abuse.
               </p>
 
+              <h3 id="link-checker">Checking destinations</h3>
+              <p>
+                At most once a night, hrva.cc&apos;s server (Oracle Cloud, Frankfurt) asks each active short
+                link&apos;s destination whether it still exists, with a HEAD request or a small GET,
+                identified as <code>hrva.cc-linkcheck/1.0</code>. It follows up to 5 redirects. It sends no
+                cookies and no visitor data, and it doesn&apos;t count as a click. The result (when the
+                destination was checked, how many nights it has failed, since when it looks dead, and a
+                short status such as &ldquo;404&rdquo;) is stored with the link. The link&apos;s owner sees
+                when its destination looks dead; for links made without an account, only the admin does.
+              </p>
+              <p>
+                Legal basis: legitimate interest (Art. 6(1)(f) GDPR) &mdash; keeping short links working and
+                showing their owners when a destination is gone.
+              </p>
+
               <h2>Who else receives data</h2>
               <ul>
                 <li>
@@ -322,6 +363,13 @@ export default function PrivacyPage() {
                   the admin deletes them.
                 </li>
                 <li>
+                  <strong>The notification channels you add</strong> &mdash; only if you add one: Discord,
+                  Slack, Telegram, ntfy, or the address of your own webhook. hrva.cc sends each one the
+                  notifications you picked for it: counts of clicks, your short links, their destination
+                  hosts and dates. You choose these recipients; they aren&apos;t our processors and handle what
+                  they receive under their own terms. You can delete a channel at any time.
+                </li>
+                <li>
                   <strong>SendPulse</strong> — the email delivery service we use to send
                   transactional emails (verification, password reset, notifications and security
                   notices). It receives your email address and the content of those emails, and
@@ -334,7 +382,7 @@ export default function PrivacyPage() {
               </ul>
               <p>
                 We do not sell personal data and we do not share it with anyone beyond the
-                processors listed above.
+                processors listed above and the notification channels you choose.
               </p>
               <p>
                 Separately, if you connect an AI app to your account, that app receives the results
@@ -383,6 +431,22 @@ export default function PrivacyPage() {
                   <strong>Email logs</strong> — kept for 90 days, then deleted automatically.
                 </li>
                 <li>
+                  <strong>Notification consent records</strong> &mdash; when you turned each notification
+                  email or channel event on and off, and how; kept until you delete your account, also after
+                  you delete a channel.
+                </li>
+                <li>
+                  <strong>Notification channels</strong> &mdash; kept until you delete the channel or your
+                  account.
+                </li>
+                <li>
+                  <strong>Channel deliveries</strong> &mdash; kept for 30 days, then deleted automatically.
+                </li>
+                <li>
+                  <strong>Weekly summary markers</strong> &mdash; a note that a week&apos;s summary email was
+                  sent, so it&apos;s never sent twice; kept for 60 days.
+                </li>
+                <li>
                   <strong>Admin audit log</strong> — kept for 12 months, then deleted automatically.
                 </li>
               </ul>
@@ -397,6 +461,8 @@ export default function PrivacyPage() {
                 data; the export includes your passkeys&apos; names, types, sync state and dates, never key
                 material.
                 It also includes your bio page and its buttons.
+                It also includes your notification consent history and your channels, with masked
+                addresses only, never their secrets.
                 You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or

@@ -6,7 +6,8 @@ import { SiteFooter } from "@/components/site-footer"
 import { pageMetadata } from "@/lib/seo"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
-import { CopyButton } from "./copy-button"
+import { CodeBlock, InlineCode } from "@/components/code-block"
+import { CopyButton } from "@/components/copy-button"
 
 const description =
   "Connect Claude, ChatGPT, Cursor or VS Code to the hrva.cc MCP server and let your AI assistant shorten links into your account."
@@ -51,6 +52,12 @@ const toolGroups = [
   },
 ]
 
+const examplePrompts = [
+  { prompt: "Shorten https://example.com/autumn-sale as autumn-sale, and make it stop working after 500 visits.", tool: "shorten_url" },
+  { prompt: "Which of my links are tagged newsletter? Show the newest first.", tool: "list_links" },
+  { prompt: "How many clicks did hrva.cc/autumn-sale get in the last 30 days, and where did they come from?", tool: "link_stats" },
+]
+
 export default function McpPage() {
   return (
     <div className="flex min-h-screen flex-col">
@@ -64,6 +71,20 @@ export default function McpPage() {
               Connect the hrva.cc MCP server, and your assistant can shorten links into your account, list them and
               check their visits.
             </p>
+
+            <Section title="What it is">
+              <Paragraph>
+                MCP, the Model Context Protocol, is an open standard that lets an AI assistant use tools from other
+                services. The hrva.cc MCP server gives yours three tools, all working in your own account: shorten a URL,
+                list your links, and read a link&apos;s visit totals. You connect it once by signing in to hrva.cc, and you
+                can disconnect it at any time. It is free, like the rest of hrva.cc. To shorten links from your own code
+                instead, use the{" "}
+                <Link href="/developers" className="text-brand-link">
+                  API
+                </Link>
+                .
+              </Paragraph>
+            </Section>
 
             <Section title="Server URLs">
               <ul className="divide-y rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
@@ -178,6 +199,36 @@ export default function McpPage() {
               </div>
             </Section>
 
+            <Section title="Things to ask it">
+              <ul className="space-y-3">
+                {examplePrompts.map((example) => (
+                  <li key={example.prompt} className="rounded-xl border bg-card p-4">
+                    <p className="leading-7 text-foreground">&ldquo;{example.prompt}&rdquo;</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Uses <InlineCode>{example.tool}</InlineCode>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+
+            <Section title="What your assistant can see">
+              <Paragraph>
+                Only what the tools return from your account: your links, with their destinations, visits and status, and
+                for one link at a time its clicks, daily unique visitors and bot clicks, with its top referrers, countries
+                and devices. It can&apos;t see who clicked a link, because hrva.cc doesn&apos;t store visitors&apos; IP
+                addresses or anything about a single click (
+                <Link href="/privacy-first-url-shortener" className="text-brand-link">
+                  how visits are counted
+                </Link>
+                ). What hrva.cc keeps about the connection itself is in the{" "}
+                <Link href="/privacy" className="text-brand-link">
+                  privacy policy
+                </Link>
+                , under AI connectors.
+              </Paragraph>
+            </Section>
+
             <Section title="What it can't do">
               <Paragraph>
                 It can&apos;t edit, deactivate or delete links, and it can&apos;t change your account settings. Do those in
@@ -229,39 +280,6 @@ function Paragraph({ className, children }: { className?: string; children: Reac
   return <p className={cn("leading-7 text-foreground/80", className)}>{children}</p>
 }
 
-function InlineCode({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="whitespace-nowrap rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">
-      {children}
-    </code>
-  )
-}
-
 function MenuPath({ children }: { children: React.ReactNode }) {
   return <span className="font-medium text-foreground">{children}</span>
-}
-
-interface CodeBlockProps {
-  label: string
-  code: string
-  copyLabel: string
-  mono?: boolean
-  prompt?: boolean
-}
-
-function CodeBlock({ label, code, copyLabel, mono, prompt }: CodeBlockProps) {
-  return (
-    <div className="mt-4 min-w-0 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-800 py-1.5 pl-4 pr-2">
-        <span className={cn("min-w-0 text-xs text-zinc-400 [overflow-wrap:anywhere]", mono ? "font-mono" : "font-medium")}>{label}</span>
-        <CopyButton text={code} label={copyLabel} className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100" />
-      </div>
-      <pre className="whitespace-pre-wrap wrap-break-word p-4 font-mono text-[12.5px] leading-relaxed">
-        <code>
-          {prompt && <span className="select-none text-zinc-500">$ </span>}
-          {code}
-        </code>
-      </pre>
-    </div>
-  )
 }

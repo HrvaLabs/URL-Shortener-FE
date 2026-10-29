@@ -658,6 +658,9 @@ function DevelopersSection() {
             <Button asChild>
               <Link href="/dashboard/api-keys">Get an API key</Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href="/developers">API quickstart</Link>
+            </Button>
             <Button asChild variant="outline" className="gap-1.5">
               <a href="https://hrva.cc/swagger-ui/index.html" target="_blank" rel="noopener noreferrer">
                 API reference
@@ -692,7 +695,7 @@ function DevelopersSection() {
             </code>
           </pre>
           <div className="border-t border-zinc-800 px-5 py-4 font-mono text-[13px] leading-relaxed text-zinc-400">
-            <span className="text-zinc-500">{"// 201 Created"}</span>
+            <span className="text-zinc-500">{"// 200 OK"}</span>
             <br />
             {"{ "}<span className="text-sky-300">&quot;shortUrl&quot;</span>: <span className="text-emerald-300">&quot;k3Fx9&quot;</span>, <span className="text-sky-300">&quot;visits&quot;</span>: <span className="text-amber-200">0</span>, <span className="text-sky-300">&quot;active&quot;</span>: <span className="text-amber-200">true</span>{" }"}
           </div>

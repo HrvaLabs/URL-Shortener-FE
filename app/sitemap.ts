@@ -19,6 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/stats") },
     dated("/about"),
     dated("/privacy-first-url-shortener"),
+    dated("/developers"),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

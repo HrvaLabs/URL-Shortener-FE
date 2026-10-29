@@ -18,7 +18,7 @@ import { useAuth } from "@/lib/auth-context"
 const navLinks = [
   { href: "/#features", label: "Features" },
   { href: "/help/link-in-bio", label: "Bio pages" },
-  { href: "/#developers", label: "Developers" },
+  { href: "/developers", label: "Developers" },
   { href: "/help", label: "Help" },
 ]
 

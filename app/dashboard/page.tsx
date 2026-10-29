@@ -26,6 +26,7 @@ import { urlApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
 import { PageMeta } from "@/components/page-meta"
+import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 
 const selectClass =
   "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
@@ -266,6 +267,7 @@ export default function DashboardPage() {
                   </TableCell>
                   <TableCell className="hidden min-w-56 md:table-cell">
                     <span className="block break-all text-sm text-muted-foreground">{url.longUrl}</span>
+                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} />
                     {url.tags && url.tags.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {url.tags.map((t) => (

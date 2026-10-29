@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { PageMeta } from "@/components/page-meta"
 import { StatusBadge } from "@/components/status-badge"
+import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { BreakdownList } from "@/components/analytics/breakdown-list"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
@@ -77,6 +78,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
               <span className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">{link.destinationHost}</span>
             )}
           </div>
+          <DestinationHealthBadge health={link.destinationHealth} active={link.status === "ACTIVE"} />
         </div>
         <dl className="flex flex-wrap gap-x-10 gap-y-4 text-sm">
           <div>

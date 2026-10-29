@@ -1,0 +1,41 @@
+# hrva.cc
+
+> hrva.cc is a free, privacy-first, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants. It is ad-free, built and run by one person in Croatia, and counts visits without storing visitor IP addresses.
+
+Shortening works without an account. A free account adds custom aliases, visit limits, expiry dates, password protection, tags, QR codes that count their scans, per-link analytics, a campaign tracking (UTM) builder, API keys, passkeys and two-step verification, link-in-bio pages at hrva.cc/@yourname, and opt-in notifications. Link statistics are daily totals. Unique visitors are counted with a one-way hash under a random key that changes every day, kept only in Redis and deleted a few hours after the day ends. Every link is checked against Google Safe Browsing and blocklists, and visitors can report links.
+
+- Name: hrva.cc, a HrvaLabs project (https://hrvalabs.net/)
+- Author: Karlo Hrvačić (https://karlo.cc)
+- Contact: privacy@hrvalabs.net
+- Short links live at https://hrva.cc/<alias>; the web app is https://app.hrva.cc/
+
+## Use hrva.cc from AI assistants and code
+
+- [MCP server setup](https://app.hrva.cc/mcp): connect Claude, ChatGPT, Cursor or VS Code to https://hrva.cc/mcp and sign in with a free hrva.cc account. Tools: shorten_url, list_links and link_stats
+- [REST API reference (Swagger)](https://hrva.cc/swagger-ui/index.html): create links with an API key in the X-Api-Key header
+- [Backend source code](https://github.com/HrvaLabs/url-shortener): Spring Boot API
+- [Frontend source code](https://github.com/HrvaLabs/URL-Shortener-FE): Next.js web app
+- [Status page](https://status.hrva.cc/status/url): uptime and incidents
+
+## Guides
+
+- [Help index](https://app.hrva.cc/help): guides to every feature
+- [Bio pages (link-in-bio)](https://app.hrva.cc/help/link-in-bio): one page with all your links at hrva.cc/@yourname
+- [Campaign tracking (UTM)](https://app.hrva.cc/help/utm): add UTM tags to a short link
+- [Passkeys and security keys](https://app.hrva.cc/help/passkeys): sign in without a password, and two-step verification
+- [Notifications and webhooks](https://app.hrva.cc/help/notifications): opt-in emails (dead links, weekly summary, expiry reminders) and alerts to Discord, Slack, Telegram, ntfy or a signed webhook. Everything is off until you turn it on
+- [How to read the public stats](https://app.hrva.cc/help/stats): what the public numbers mean, and how QR scans are counted
+
+## Privacy and safety
+
+- [Privacy policy](https://app.hrva.cc/privacy): what is stored and for how long
+- [How hrva.cc stops phishing links](https://app.hrva.cc/blog/how-hrva-cc-stops-phishing-links): the checks every link goes through, and what they still miss
+- [Public statistics](https://app.hrva.cc/stats): site-wide totals, harmful links blocked and review times
+- [Check where a short link goes](https://app.hrva.cc/validate): see a link's destination before you open it
+- [Report a link or bio page](https://app.hrva.cc/report): phishing, malware, spam or impersonation
+
+## Optional
+
+- [Blog](https://app.hrva.cc/blog): how hrva.cc is built (caching, async visit counting, audit log, migrations)
+- [Changelog](https://app.hrva.cc/changelog): what changed and when
+- [Terms of use](https://app.hrva.cc/terms)

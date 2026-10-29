@@ -1,16 +1,16 @@
-import Link from "next/link"
 import { authorUrls } from "@/content/blog/posts"
 
 export function PostAuthor({ name }: { name: string }) {
-  if (!authorUrls[name]) return <span>{name}</span>
+  const url = authorUrls[name]
+  if (!url) return <span>{name}</span>
 
   return (
-    <Link
-      href="/about"
+    <a
+      href={url}
       rel="author"
       className="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
     >
       {name}
-    </Link>
+    </a>
   )
 }

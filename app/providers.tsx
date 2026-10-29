@@ -3,6 +3,7 @@
 import { ThemeProvider } from "next-themes"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/lib/auth-context"
+import { EM_DASH, SLOGAN } from "@/lib/seo"
 import { useState, useEffect, type ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -20,7 +21,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     console.log(
-      "%c🦆 hrva.cc — shaped by you.%c\n🔮 try /fortune  🥚 try /egg",
+      `%c${String.fromCodePoint(0x1f986)} hrva.cc ${EM_DASH} ${SLOGAN}%c\n${String.fromCodePoint(0x1f52e)} try /fortune  ${String.fromCodePoint(0x1f95a)} try /egg`,
       "color: #2251ff; font-size: 16px; font-weight: bold;",
       "color: #6b7280; font-size: 12px;"
     )

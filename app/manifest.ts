@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next"
-import { HOME_DESCRIPTION, HOME_HEADLINE, SITE_NAME } from "@/lib/seo"
+import { HOME_DESCRIPTION, HOME_TITLE_TEXT, SITE_NAME } from "@/lib/seo"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${SITE_NAME}: ${HOME_HEADLINE}`,
+    name: `${SITE_NAME}: ${HOME_TITLE_TEXT}`,
     short_name: SITE_NAME,
     description: HOME_DESCRIPTION,
     start_url: "/",

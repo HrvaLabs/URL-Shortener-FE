@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { AlertCircle } from "lucide-react"
 import { getBackendOrigin } from "@/lib/utils"
+import { EM_DASH, SLOGAN } from "@/lib/seo"
 
 interface ChangelogItem {
   title: string
@@ -127,7 +128,7 @@ export default function ChangelogPage() {
             {data && (
               <div className="mt-10 space-y-1 text-xs text-muted-foreground">
                 <p className="font-mono">{data.releases.length} releases · 1 URL shortener</p>
-                <p>hrva.cc — &#x1F648; shaped by you.</p>
+                <p>hrva.cc {EM_DASH} &#x1F648; {SLOGAN}</p>
               </div>
             )}
           </div>

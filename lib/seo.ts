@@ -13,18 +13,19 @@ export const AUTHOR_URL = "https://karlo.cc"
 export const PUBLISHER_NAME = "HrvaLabs"
 export const PUBLISHER_URL = "https://hrvalabs.net"
 
-export const HOME_HEADLINE = "Free URL shortener that counts visits, not visitors"
-export const HOME_TITLE = `${HOME_HEADLINE} ${MIDDLE_DOT} ${SITE_NAME}`
+export const SLOGAN = "Counts clicks, not people."
+export const HOME_TITLE_TEXT = "Free URL shortener that counts clicks, not people"
+export const HOME_TITLE = `${HOME_TITLE_TEXT} ${MIDDLE_DOT} ${SITE_NAME}`
 export const HOME_DESCRIPTION =
   "Free, ad-free URL shortener from Croatia. Visits are counted without storing IPs. Open source, with link-in-bio pages, QR codes and an MCP server for Claude and ChatGPT."
 export const ENTITY_SENTENCE =
-  "hrva.cc is a free, privacy-first, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants."
+  "hrva.cc is a free, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants."
 
 export const OG_IMAGE = {
   url: "/og-image.png",
   width: 1200,
   height: 630,
-  alt: `${HOME_HEADLINE}. hrva.cc`,
+  alt: `${HOME_TITLE_TEXT}. hrva.cc`,
   type: "image/png",
 }
 

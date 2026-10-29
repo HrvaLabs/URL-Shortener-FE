@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import { cn, formatShortUrl } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
-import { HOME_HEADLINE, MIDDLE_DOT } from "@/lib/seo"
+import { MIDDLE_DOT, SLOGAN } from "@/lib/seo"
 import { SALT_GRACE_SOURCE, VISITOR_HASH_SOURCE } from "@/lib/source-links"
 
 const PASSWORD_DOTS = String.fromCodePoint(0x2022).repeat(8)
@@ -39,9 +39,9 @@ function PublicHome() {
       <section className="overflow-hidden border-b">
         <div className="container pb-0 pt-16 sm:pt-24">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="font-display text-[clamp(2.5rem,7vw,4.5rem)] leading-[1.02]">{HOME_HEADLINE}</h1>
+            <h1 className="font-display text-[clamp(2.5rem,7vw,4.5rem)] leading-[1.02]">{SLOGAN}</h1>
             <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Short links, shaped by you. Free, open source and ad-free.
+              A free, open-source URL shortener with no ads.
             </p>
           </div>
 
@@ -567,9 +567,6 @@ function PrivacySection() {
       <div className="container grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-16">
         <div>
           <h2 className="font-display text-3xl leading-tight sm:text-4xl">Private by default</h2>
-          <p className="mt-3 max-w-md text-lg leading-relaxed text-muted-foreground">
-            Counting visits doesn&apos;t require knowing who your visitors are, so hrva.cc doesn&apos;t keep that.
-          </p>
           <dl className="mt-8 divide-y border-y">
             {privacyClaims.map((claim) => (
               <div key={claim.title} className="py-3.5 sm:grid sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-4">
@@ -767,7 +764,7 @@ function ClosingCta() {
       <div className="container">
         <div className="flex flex-col items-start gap-8 rounded-2xl bg-primary px-8 py-12 text-primary-foreground sm:px-12 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-display text-3xl leading-tight sm:text-4xl">Make your next link shorter</h2>
+            <h2 className="font-display text-3xl leading-tight sm:text-4xl">Shorten a link</h2>
             <p className="mt-2 max-w-md text-primary-foreground/70">
               Sign up when you want aliases, limits and analytics.
             </p>

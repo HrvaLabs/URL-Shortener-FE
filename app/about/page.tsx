@@ -1,8 +1,9 @@
 import Link from "next/link"
 import type { Metadata } from "next"
 import { JSON_LD_IDS, JsonLdScript, SOURCE_REPOSITORIES, pageBreadcrumbs, reference } from "@/components/json-ld"
+import { EntitySentence } from "@/components/entity-sentence"
 import { StaticPage, SummaryBox } from "@/components/static-page"
-import { AUTHOR_NAME, AUTHOR_URL, ENTITY_SENTENCE, absoluteUrl, pageMetadata } from "@/lib/seo"
+import { AUTHOR_NAME, AUTHOR_URL, PUBLISHER_URL, absoluteUrl, pageMetadata } from "@/lib/seo"
 
 const description =
   "About hrva.cc: a free, privacy-first, open-source URL shortener and HrvaLabs hobby project from Croatia. Who runs it and how it is paid for."
@@ -31,7 +32,7 @@ export default function AboutPage() {
   return (
     <StaticPage title="About hrva.cc" after={<JsonLdScript data={aboutJsonLd} />}>
       <SummaryBox>
-        {ENTITY_SENTENCE} It is built and run by {AUTHOR_NAME} in Croatia.
+        <EntitySentence linkClassName="text-brand-link" />
       </SummaryBox>
 
       <div className="prose-custom">
@@ -43,7 +44,8 @@ export default function AboutPage() {
           <a href="https://github.com/karlohrvacic">GitHub</a>.
         </p>
         <p>
-          hrva.cc is also the domain the other HrvaLabs apps live under, such as garage.hrva.cc and gableci.hrva.cc.
+          hrva.cc is also the domain the other <a href={PUBLISHER_URL}>HrvaLabs</a> apps live under, such as garage.hrva.cc
+          and gableci.hrva.cc.
         </p>
 
         <h2 id="why">Why it works the way it does</h2>

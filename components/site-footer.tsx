@@ -1,7 +1,7 @@
 import { Logo } from "@/components/logo"
 import { NavLink } from "@/components/nav-link"
 import { BITLY_COMPARISON } from "@/lib/comparisons"
-import { ENTITY_SENTENCE } from "@/lib/seo"
+import { EntitySentence } from "@/components/entity-sentence"
 
 const columns = [
   {
@@ -50,7 +50,7 @@ export function SiteFooter() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              {ENTITY_SENTENCE}
+              <EntitySentence linkClassName="underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground" />
             </p>
           </div>
           {columns.map((column) => (

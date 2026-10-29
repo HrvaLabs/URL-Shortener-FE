@@ -9,6 +9,8 @@ const CONSENTS_KEY = ["notifications", "consents"]
 
 const CHANNELS_KEY = ["notifications", "channels"]
 
+const SET_CONSENT_KEY = ["notifications", "set-consent"]
+
 export function useNotificationConsents() {
   return useQuery({
     queryKey: CONSENTS_KEY,
@@ -19,6 +21,7 @@ export function useNotificationConsents() {
 export function useSetConsent() {
   const queryClient = useQueryClient()
   return useMutation({
+    mutationKey: SET_CONSENT_KEY,
     mutationFn: ({ type, consented }: { type: EmailNotificationType; consented: boolean }) => notificationApi.setConsent(type, consented),
     onMutate: async ({ type, consented }) => {
       await queryClient.cancelQueries({ queryKey: CONSENTS_KEY })
@@ -32,7 +35,9 @@ export function useSetConsent() {
       if (context?.previous) queryClient.setQueryData(CONSENTS_KEY, context.previous)
       toast.error(error.message)
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: CONSENTS_KEY }),
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: SET_CONSENT_KEY }) === 1) return queryClient.invalidateQueries({ queryKey: CONSENTS_KEY })
+    },
   })
 }
 
@@ -63,7 +68,7 @@ export function useDeleteChannel() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => notificationApi.deleteChannel(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: CHANNELS_KEY }),
   })
 }
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import "./resolve-ts-imports.mjs"
 
 process.env.TZ = "UTC"
 
@@ -69,6 +70,8 @@ check("detectChannelType", () => {
   assert.equal(detectChannelType("https://ntfy.sh/abc"), "NTFY")
   assert.equal(detectChannelType("https://NTFY.SH/abc"), "NTFY")
   assert.equal(detectChannelType("https://discord.com.evil.example/x"), null)
+  assert.equal(detectChannelType("https://www.discord.com/api/webhooks/1/x"), null)
+  assert.equal(detectChannelType("https://discord.com:8443/api/webhooks/1/x"), "DISCORD")
   assert.equal(detectChannelType("https://evil.example/discord.com"), null)
   assert.equal(detectChannelType("https://example.com/hrva-webhook"), null)
   assert.equal(detectChannelType("not a url"), null)

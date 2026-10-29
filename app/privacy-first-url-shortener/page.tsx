@@ -35,7 +35,7 @@ const faqs = [
   {
     question: "Is it really free?",
     answer:
-      "Yes. hrva.cc is a non-commercial hobby project with no paid plans and no ads, and personal data is not sold. The code is public under the GPL-3.0 licence.",
+      "Yes. There are no paid plans and no ads, and personal data is not sold. The code is public under the GPL-3.0 licence.",
   },
   {
     question: "Where is the data kept?",
@@ -49,11 +49,10 @@ export default function PrivacyFirstPage() {
     <StaticPage title="A URL shortener that counts visits without tracking visitors" after={<JsonLdScript data={articleJsonLd} />}>
       <div className="mt-8 rounded-xl border bg-muted/40 p-5">
         <p className="leading-7 text-foreground">
-          hrva.cc is a free URL shortener that counts visits without tracking the people who make them. It is a HrvaLabs
-          hobby project from Croatia, and its source code is public on GitHub. When someone
-          opens a hrva.cc short link, that link&apos;s counts for the day go up: clicks, unique visitors, clicks from bots,
-          and how many clicks came from each referring site&apos;s domain, country, device type, browser and operating
-          system. Nothing is recorded about the individual click. Unique visitors are counted with a one-way hash of the
+          hrva.cc is a free URL shortener that counts visits without tracking the people who make them. Its source code
+          is public on GitHub. When someone opens a hrva.cc short link, that link&apos;s counts for the day go up: clicks,
+          unique visitors, clicks from bots, and how many clicks came from each referring site&apos;s domain, country,
+          device type, browser and operating system. Nothing is recorded about the individual click. Unique visitors are counted with a one-way hash of the
           visitor&apos;s IP address and browser identifier, the link and a random key that changes every day. The hashes
           and the key are kept only in Redis and expire a few hours after the day ends. Visitors&apos; IP addresses are
           never stored, and short links set no cookies and run no scripts.
@@ -65,8 +64,8 @@ export default function PrivacyFirstPage() {
         <p>
           A short link works by asking the shortener&apos;s server where to go. That request carries what every web
           request carries: the visitor&apos;s IP address, a browser identifier (the user agent), usually the page the
-          visitor came from, and the time. Every shortener sees this. The difference is what it keeps, for how long, and
-          whether it ties clicks together into a profile of a person.
+          visitor came from, and the time. Shorteners differ in what they keep of it, for how long, and whether they tie
+          clicks together into a profile of a person.
         </p>
         <p>
           hrva.cc runs behind Cloudflare, which delivers its traffic and tells it which country a request came from.
@@ -111,22 +110,21 @@ export default function PrivacyFirstPage() {
 
         <h2 id="check-it">Check it yourself</h2>
         <p>
-          You don&apos;t have to take this page&apos;s word for it. The code that makes the hash is{" "}
+          The code that makes the hash is{" "}
           <a href={VISITOR_HASH_SOURCE}>UniqueVisitorCounter.java, lines 58 to 62</a>, and the few hours the day&apos;s key
           is kept after midnight are set in <a href={SALT_GRACE_SOURCE}>AnalyticsDays.java</a>. The{" "}
           <Link href="/privacy">privacy policy</Link> lists everything hrva.cc collects, why, and for how long.
         </p>
 
-        <h2 id="safety">Safe to click, too</h2>
+        <h2 id="safety">Link safety</h2>
         <p>
           Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, and every click is
           checked against the blocklists that block outright. Anyone can <Link href="/report">report a link</Link> to a person. How that works, and what it still misses, is in{" "}
           <Link href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</Link>.
         </p>
 
-        <h2 id="for-you">What this means for you</h2>
+        <h2 id="for-you">The GDPR and your own obligations</h2>
         <p>
-          The people who click your hrva.cc links aren&apos;t profiled, and you see the same daily totals hrva.cc keeps.
           The privacy policy explains hrva.cc&apos;s legal bases and everyone&apos;s rights under the GDPR. This page is not
           legal advice: if you use short links for your own business, your own obligations depend on what you do with
           them.

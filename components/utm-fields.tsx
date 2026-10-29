@@ -200,9 +200,9 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
         <p className="text-xs leading-relaxed text-muted-foreground">
           {variant === "tool" ? (
             <>
-              Adds UTM parameters to the long URL so your analytics tool can tell where visitors came from. Your analytics
-              tool reads them. hrva.cc only sees them if you shorten the link; then it keeps them in the short link&apos;s
-              destination and, with an account, lists them on its analytics page.
+              Adds UTM parameters to the long URL so your analytics tool can tell where visitors came from. hrva.cc only
+              sees them if you shorten the link; then it keeps them in the short link&apos;s destination and, with an
+              account, lists them on its analytics page.
             </>
           ) : (
             <>

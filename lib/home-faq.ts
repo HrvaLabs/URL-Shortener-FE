@@ -17,13 +17,13 @@ export const HOME_FAQS: HomeFaq[] = [
   {
     question: "Is hrva.cc free to use?",
     answer: [
-      "Yes. Shortening is free and needs no account. A free account adds custom aliases, visit limits, expiry dates, passwords and analytics, also at no cost. There are no paid plans.",
+      "Yes. Shortening needs no account, and a free account adds custom aliases, visit limits, expiry dates, passwords and analytics. There are no paid plans.",
     ],
   },
   {
     question: "Can I track how many people clicked my link?",
     answer: [
-      "Yes. Creating a free account gives you access to click analytics for every link you shorten, including total visit counts and per-link performance data. You can view all your links and their analytics from your dashboard.",
+      "Yes, with a free account. Your dashboard shows each link's clicks and daily unique visitors, with referrers, countries and devices.",
     ],
   },
   {
@@ -33,13 +33,13 @@ export const HOME_FAQS: HomeFaq[] = [
       { strong: "visit limit" },
       " (the link stops working after N visits), an ",
       { strong: "expiration date" },
-      " (the link expires at a specific time), or both when you shorten a URL.",
+      " (the link stops working at a set time), or both when you shorten a URL.",
     ],
   },
   {
     question: "What is a URL shortener used for?",
     answer: [
-      "A URL shortener converts long web addresses into short, shareable links. They are commonly used on social media, in emails, and in marketing campaigns to make links cleaner, trackable, and easier to manage.",
+      "It turns a long web address into a short link that is easier to share on social media, in emails and in marketing campaigns, and it can count how often the link is opened.",
     ],
   },
 ]

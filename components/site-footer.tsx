@@ -90,7 +90,7 @@ export function SiteFooter() {
             </a>{" "}
             project
           </p>
-          <p>Free. No ads, no third-party trackers.</p>
+          <p>No ads and no third-party trackers.</p>
         </div>
       </div>
     </footer>

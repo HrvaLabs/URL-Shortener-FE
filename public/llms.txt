@@ -1,6 +1,6 @@
 # hrva.cc
 
-> hrva.cc is a free, privacy-first, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants. It is ad-free, a HrvaLabs hobby project from Croatia, and counts visits without storing visitor IP addresses.
+> hrva.cc is a free, privacy-first, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants. It has no ads and counts visits without storing visitor IP addresses.
 
 Shortening works without an account. A free account adds custom aliases, visit limits, expiry dates, password protection, tags, QR codes that count their scans, per-link analytics, a campaign tracking (UTM) builder, API keys, passkeys and two-step verification, link-in-bio pages at hrva.cc/@yourname, and opt-in notifications. Link statistics are daily totals. Unique visitors are counted with a one-way hash under a random key that changes every day, kept only in Redis and deleted a few hours after the day ends. Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, every click is checked against the blocklists that block outright, and visitors can report links.
 

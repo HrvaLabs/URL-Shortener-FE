@@ -118,7 +118,7 @@ export function QrGenerator() {
           ) : (
             <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
               <p className="text-muted-foreground">
-                Want a shorter code, with scans counted? Make it a hrva.cc short link first.
+                A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
               </p>
               {refusal ? (
                 <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>

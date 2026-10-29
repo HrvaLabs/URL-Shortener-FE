@@ -171,14 +171,14 @@ export default function BitlyAlternativePage() {
           </li>
         </ul>
 
-        <h2 id="why-hrva">Why people pick hrva.cc</h2>
+        <h2 id="why-hrva">More about hrva.cc</h2>
         <ul>
           <li>
             Visits are counted without tracking visitors: daily totals, a one-way hash with a key that changes every day,
             and no stored IP addresses. <Link href="/privacy-first-url-shortener">How visits are counted</Link>.
           </li>
           <li>
-            The code is public under the GPL-3.0 licence, and hrva.cc is a HrvaLabs hobby project from Croatia.{" "}
+            The code is public under the GPL-3.0 licence. Who runs hrva.cc and how it is paid for:{" "}
             <Link href="/about">About hrva.cc</Link>.
           </li>
           <li>

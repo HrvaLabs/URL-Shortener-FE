@@ -84,8 +84,8 @@ export default function UtmPage() {
 
         <h2 id="privacy">What hrva.cc does with your tags</h2>
         <p>
-          Nothing, unless you shorten the link. The tagged address is built in your browser and nothing is sent to hrva.cc
-          until you select <strong>Shorten it</strong>. Then hrva.cc saves the tagged address as the link&apos;s
+          The tagged address is built in your browser, and nothing is sent to hrva.cc until you select{" "}
+          <strong>Shorten it</strong>. Then hrva.cc saves the tagged address as the link&apos;s
           destination and sends visitors there; it doesn&apos;t store the tags separately or send them anywhere else.
         </p>
         <p>

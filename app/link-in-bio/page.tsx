@@ -52,7 +52,7 @@ export default function LinkInBioPage() {
       after={<JsonLdScript data={linkInBioJsonLd} />}
     >
       <div className="prose-custom">
-        <h2 id="what-you-get">What you get, free</h2>
+        <h2 id="what-you-get">What you get</h2>
         <ul>
           <li>Your own address, hrva.cc/@yourname, with a handle of 3 to 30 letters, numbers, hyphens and underscores</li>
           <li>A display name, a bio of up to 160 characters on up to five lines, and an avatar with your initials or an emoji</li>
@@ -60,7 +60,7 @@ export default function LinkInBioPage() {
           <li>Eight accent colours, each readable on light and dark pages, and a light, dark or automatic theme</li>
           <li>A QR code of your page that you can colour and download</li>
         </ul>
-        <p>Every account can have one page. There are no paid plans and no ads.</p>
+        <p>Every account can have one page, and there are no paid plans.</p>
 
         <h2 id="checked-links">Every button is a checked short link</h2>
         <p>
@@ -80,7 +80,7 @@ export default function LinkInBioPage() {
           <Link href="/privacy-first-url-shortener">How visits are counted</Link>.
         </p>
 
-        <h2 id="search-engines">Search engines only if you want them</h2>
+        <h2 id="search-engines">Search engines</h2>
         <p>
           Indexing is off by default: search engines are asked not to list your page. Turn on{" "}
           <strong>Allow search engines to index this page</strong> in the editor when you want people to find it through
@@ -94,7 +94,7 @@ export default function LinkInBioPage() {
           clickable; add them as buttons.
         </p>
         <p>
-          Ready? <Link href="/dashboard/bio">Create your page</Link>, or read the step-by-step guide,{" "}
+          <Link href="/dashboard/bio">Create your page</Link>, or read the step-by-step guide,{" "}
           <Link href="/help/link-in-bio">Bio pages</Link>.
         </p>
       </div>

@@ -183,7 +183,7 @@ function FeatureGrid() {
     <section id="features" className="scroll-mt-16 py-24 sm:py-28">
       <div className="container">
         <div className="max-w-2xl">
-          <h2 className="font-display text-3xl leading-tight sm:text-4xl">Everything a link needs</h2>
+          <h2 className="font-display text-3xl leading-tight sm:text-4xl">Features</h2>
           <p className="mt-3 text-lg text-muted-foreground">
             Shortening works without an account. A free account adds the rest.
           </p>
@@ -369,8 +369,7 @@ function FeatureGrid() {
             title="Campaign tracking"
             description={
               <>
-                Add UTM tags to any link in a few clicks with a free account, so your analytics tool can see where visitors came
-                from.{" "}
+                Add UTM tags to any link with a free account, so your analytics tool can see where visitors came from.{" "}
                 <Link href="/help/utm" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about campaign tracking</span>
                 </Link>{" "}
@@ -489,8 +488,8 @@ function FeatureGrid() {
             title="Notifications"
             description={
               <>
-                Know when a link breaks. Nightly dead-link checks, a weekly summary, and alerts to Discord, Slack, Telegram,
-                ntfy, a webhook or email. Everything is off until you turn it on.{" "}
+                Nightly dead-link checks, a weekly summary, and alerts to Discord, Slack, Telegram, ntfy, a webhook or email.
+                Everything is off until you turn it on.{" "}
                 <Link href="/help/notifications" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about notifications</span>
                 </Link>
@@ -556,7 +555,7 @@ const privacyClaims = [
   { title: "No IPs stored", text: "Link statistics count unique visitors with a one-way hash under a random key that changes every day." },
   { title: "Gone by morning", text: "The hashes and the day's key are kept only in Redis and deleted a few hours after midnight. Daily counts stay." },
   { title: "Open source", text: "The code is on GitHub, including the lines shown here." },
-  { title: "Free, no ads", text: "A non-commercial HrvaLabs hobby project from Croatia." },
+  { title: "Free, no ads", text: "There are no paid plans, and personal data is not sold." },
 ]
 
 const visitorHashUrl = VISITOR_HASH_SOURCE
@@ -739,9 +738,6 @@ function Faq() {
       <div className="container grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-20">
         <div>
           <h2 className="font-display text-3xl leading-tight sm:text-4xl">Questions</h2>
-          <p className="mt-3 text-lg text-muted-foreground">
-            The short version of how hrva.cc works.
-          </p>
         </div>
         <div className="divide-y border-y">
           {HOME_FAQS.map((faq) => (
@@ -773,7 +769,7 @@ function ClosingCta() {
           <div>
             <h2 className="font-display text-3xl leading-tight sm:text-4xl">Make your next link shorter</h2>
             <p className="mt-2 max-w-md text-primary-foreground/70">
-              Free, with no ads. Sign up when you want aliases, limits and analytics.
+              Sign up when you want aliases, limits and analytics.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">

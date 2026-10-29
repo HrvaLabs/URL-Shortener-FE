@@ -64,11 +64,11 @@ export default function QrPage() {
         <h2 id="static">This QR code is static</h2>
         <p>
           A code made here points straight at the address you typed. Nothing is sent to hrva.cc while you make it, and
-          the code doesn&apos;t pass through hrva.cc when someone scans it, so it never expires and needs no account. The
-          catch: you can&apos;t change where it goes after you print it.
+          the code doesn&apos;t pass through hrva.cc when someone scans it, so it never expires and needs no account. You
+          can&apos;t change where it goes after you print it.
         </p>
 
-        <h2 id="count-scans">Want scans counted? Make it a short link</h2>
+        <h2 id="count-scans">Counting scans with a short link</h2>
         <p>
           Select <strong>Use a short link</strong> and the code opens a hrva.cc short link instead, which is shorter and
           makes a simpler code. With a <Link href="/register">free account</Link>, the link&apos;s stats then show QR scans

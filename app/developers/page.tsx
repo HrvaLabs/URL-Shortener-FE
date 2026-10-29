@@ -183,8 +183,8 @@ export default function DevelopersPage() {
 
         <h2 id="status">Status and source</h2>
         <p>
-          Uptime and incidents are on the <a href="https://status.hrva.cc/status/url">status page</a>. The API is open
-          source: the <a href={SOURCE_REPOSITORIES[0]}>backend code</a> is on GitHub under the GPL-3.0 licence.
+          Uptime and incidents are on the <a href="https://status.hrva.cc/status/url">status page</a>. The{" "}
+          <a href={SOURCE_REPOSITORIES[0]}>backend code</a> is on GitHub under the GPL-3.0 licence.
         </p>
       </div>
     </StaticPage>

@@ -4,6 +4,7 @@ import { useId, useRef, useState, type RefObject } from "react"
 import { flushSync } from "react-dom"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
+import { ChannelDialog } from "@/components/notifications/channel-dialog"
 import { DeleteChannelDialog } from "@/components/notifications/delete-channel-dialog"
 import { SigningSecretPanel } from "@/components/notifications/signing-secret-panel"
 import { Badge } from "@/components/ui/badge"
@@ -62,6 +63,12 @@ interface ShownSecret {
   value: string
 }
 
+interface DialogState {
+  mode: "create" | "edit"
+  channel?: NotificationChannel
+  key: number
+}
+
 interface ChannelListProps {
   titleRef: RefObject<HTMLHeadingElement | null>
 }
@@ -79,6 +86,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
   const secretHeadingRef = useRef<HTMLHeadingElement>(null)
   const deleteTrigger = useRef<HTMLElement | null>(null)
   const rotateTrigger = useRef<HTMLElement | null>(null)
+  const dialogTrigger = useRef<HTMLElement | null>(null)
   const removal = useRowRemovalFocus(addButtonRef)
   const [switching, setSwitching] = useState<Record<number, boolean>>({})
   const [testing, setTesting] = useState<number[]>([])
@@ -88,6 +96,8 @@ export function ChannelList({ titleRef }: ChannelListProps) {
   const [rotating, setRotating] = useState<NotificationChannel | null>(null)
   const [rotateBusy, setRotateBusy] = useState(false)
   const [secret, setSecret] = useState<ShownSecret | null>(null)
+  const [dialog, setDialog] = useState<DialogState>({ mode: "create", key: 0 })
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const atLimit = (channels?.length ?? 0) >= MAX_CHANNELS
   const now = new Date()
@@ -161,17 +171,18 @@ export function ChannelList({ titleRef }: ChannelListProps) {
     setRotating(null)
   }
 
+  const openDialog = (mode: DialogState["mode"], trigger: HTMLElement, channel?: NotificationChannel) => {
+    dialogTrigger.current = trigger
+    setDialog((current) => ({ mode, channel, key: current.key + 1 }))
+    setDialogOpen(true)
+  }
+
   const focusSecretOrReturn = (event: Event, returnTo: HTMLElement | null) => {
     const heading = secretHeadingRef.current
-    if (heading?.isConnected) {
-      event.preventDefault()
-      heading.focus()
-      return
-    }
-    if (returnTo?.isConnected) {
-      event.preventDefault()
-      returnTo.focus()
-    }
+    const next = heading?.isConnected ? heading : returnTo?.isConnected ? returnTo : addButtonRef.current
+    if (!next) return
+    event.preventDefault()
+    next.focus()
   }
 
   const dismissSecret = () => {
@@ -190,6 +201,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
         size="sm"
         aria-disabled={atLimit}
         aria-describedby={atLimit ? limitHintId : undefined}
+        onClick={(event) => { if (!atLimit) openDialog("create", event.currentTarget) }}
         className="gap-1.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
       >
         <Plus className="h-4 w-4" aria-hidden="true" />
@@ -246,6 +258,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
                 testOutcome={tests[channel.id]}
                 onToggle={(enabled) => toggle(channel, enabled)}
                 onTest={() => sendTest(channel)}
+                onEdit={(trigger) => openDialog("edit", trigger, channel)}
                 onRotate={(trigger) => {
                   rotateTrigger.current = trigger
                   setRotating(channel)
@@ -260,6 +273,17 @@ export function ChannelList({ titleRef }: ChannelListProps) {
           {addButton}
         </>
       )}
+      <ChannelDialog
+        key={dialog.key}
+        mode={dialog.mode}
+        channel={dialog.channel}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onCreated={(signingSecret, created) => {
+          if (signingSecret) setSecret({ channelId: created.id, channelName: created.name, value: signingSecret })
+        }}
+        onCloseAutoFocus={(event) => focusSecretOrReturn(event, dialogTrigger.current)}
+      />
       <DeleteChannelDialog
         channelName={deleting?.name ?? null}
         busy={deleteBusy}
@@ -303,11 +327,12 @@ interface ChannelRowProps {
   testOutcome: TestOutcome | undefined
   onToggle: (enabled: boolean) => void
   onTest: () => void
+  onEdit: (trigger: HTMLElement) => void
   onRotate: (trigger: HTMLElement) => void
   onDelete: (trigger: HTMLElement) => void
 }
 
-function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, onToggle, onTest, onRotate, onDelete }: ChannelRowProps) {
+function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, onToggle, onTest, onEdit, onRotate, onDelete }: ChannelRowProps) {
   const id = useId()
   const switchId = `${id}-enabled`
   const failed = channel.autoDisabledAt !== null || channel.lastDelivery?.status === "FAILED"
@@ -359,7 +384,14 @@ function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, on
         >
           {testing ? "Sending..." : "Send test"}
         </Button>
-        <Button type="button" variant="outline" size="sm" aria-label={`Edit ${channel.name}`} className={rowButton}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`Edit ${channel.name}`}
+          onClick={(event) => onEdit(event.currentTarget)}
+          className={rowButton}
+        >
           Edit
         </Button>
         {channel.type === "WEBHOOK" && (

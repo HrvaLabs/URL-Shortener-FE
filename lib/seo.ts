@@ -4,8 +4,8 @@ export const SITE_URL = "https://app.hrva.cc"
 export const SITE_NAME = "hrva.cc"
 export const HOME_URL = `${SITE_URL}/`
 
-const EM_DASH = String.fromCodePoint(0x2014)
-const MIDDLE_DOT = String.fromCodePoint(0xb7)
+export const EM_DASH = String.fromCodePoint(0x2014)
+export const MIDDLE_DOT = String.fromCodePoint(0xb7)
 
 export const TITLE_SUFFIX = ` ${EM_DASH} ${SITE_NAME}`
 export const AUTHOR_NAME = `Karlo Hrva${String.fromCodePoint(0x10d)}i${String.fromCodePoint(0x107)}`
@@ -35,16 +35,17 @@ interface PageMetadataInput {
   description: string
   path: string
   socialTitle?: string
+  absolute?: boolean
   article?: { publishedTime: string; modifiedTime?: string; tags?: string[] }
 }
 
-export function pageMetadata({ title, description, path, socialTitle, article }: PageMetadataInput): Metadata {
+export function pageMetadata({ title, description, path, socialTitle, absolute = false, article }: PageMetadataInput): Metadata {
   const url = absoluteUrl(path)
-  const shareTitle = socialTitle ?? `${title}${TITLE_SUFFIX}`
+  const shareTitle = socialTitle ?? (absolute ? title : `${title}${TITLE_SUFFIX}`)
   const shared = { siteName: SITE_NAME, locale: "en_US", url, title: shareTitle, description, images: [OG_IMAGE] }
 
   return {
-    title,
+    title: absolute ? { absolute: title } : title,
     description,
     alternates: { canonical: url },
     openGraph: article

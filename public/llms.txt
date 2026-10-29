@@ -30,6 +30,7 @@ Shortening works without an account. A free account adds custom aliases, visit l
 
 ## Privacy and safety
 
+- [About hrva.cc](https://app.hrva.cc/about): who runs it, how it is paid for, where it runs and how to reach it
 - [Privacy policy](https://app.hrva.cc/privacy): what is stored and for how long
 - [How hrva.cc stops phishing links](https://app.hrva.cc/blog/how-hrva-cc-stops-phishing-links): the checks every link goes through, and what they still miss
 - [Public statistics](https://app.hrva.cc/stats): site-wide totals, harmful links blocked and review times

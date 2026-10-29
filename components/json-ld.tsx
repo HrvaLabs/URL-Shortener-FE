@@ -52,6 +52,28 @@ export const breadcrumbList = (crumbs: Crumb[]) => ({
   })),
 })
 
+export const pageBreadcrumbs = (name: string, path: string) =>
+  breadcrumbList([{ name: "Home", path: "/" }, { name, path }])
+
+export const techArticle = ({ path, headline, description, published, modified }: { path: string; headline: string; description: string; published: string; modified: string }) => {
+  const url = absoluteUrl(path)
+  return {
+    "@type": "TechArticle",
+    "@id": `${url}#article`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    headline,
+    description,
+    datePublished: published,
+    dateModified: modified,
+    inLanguage: "en",
+    author: reference(JSON_LD_IDS.person),
+    publisher: reference(JSON_LD_IDS.organization),
+    isPartOf: reference(JSON_LD_IDS.website),
+    about: reference(JSON_LD_IDS.app),
+  }
+}
+
 export function HelpBreadcrumbs({ name, path }: { name: string; path: string }) {
   const trail: Crumb[] = path === "/help" ? [{ name: "Home", path: "/" }, { name, path }] : [{ name: "Home", path: "/" }, { name: "Help", path: "/help" }, { name, path }]
   return <JsonLdScript data={{ "@context": "https://schema.org", ...breadcrumbList(trail) }} />
@@ -85,6 +107,7 @@ export function SiteJsonLd() {
             "@id": JSON_LD_IDS.person,
             name: AUTHOR_NAME,
             url: AUTHOR_URL,
+            sameAs: ["https://github.com/karlohrvacic"],
           },
         ],
       }}

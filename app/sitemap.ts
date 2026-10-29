@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...blogPosts.map((post) => ({ url: absoluteUrl(`/blog/${post.slug}`), lastModified: post.date })),
     { url: absoluteUrl("/changelog") },
     { url: absoluteUrl("/stats") },
+    dated("/about"),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

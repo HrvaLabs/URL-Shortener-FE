@@ -15,13 +15,14 @@ import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl, withQrMark
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
+  initialUrl?: string
   withOptions?: boolean
   size?: "default" | "lg"
   className?: string
 }
 
-export function ShortenForm({ withOptions = false, size = "default", className }: ShortenFormProps) {
-  const [longUrl, setLongUrl] = useState("")
+export function ShortenForm({ initialUrl = "", withOptions = false, size = "default", className }: ShortenFormProps) {
+  const [longUrl, setLongUrl] = useState(initialUrl)
   const [customAlias, setCustomAlias] = useState("")
   const [visitLimit, setVisitLimit] = useState("")
   const [expirationDate, setExpirationDate] = useState("")

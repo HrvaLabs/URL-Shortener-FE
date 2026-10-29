@@ -162,6 +162,10 @@ export default function PrivacyPage() {
                   handle, in <em>sessionStorage</em>, so keyboard focus can return to it; removed
                   straight away
                 </li>
+                <li>
+                  a copy of the offline page, in the browser&apos;s cache storage, kept by hrva.cc&apos;s
+                  service worker so the site can show it when you have no connection
+                </li>
               </ul>
               <p>
                 These are strictly necessary to provide the service you requested, which is why no

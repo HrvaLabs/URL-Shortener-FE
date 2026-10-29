@@ -7,7 +7,7 @@ import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
 const description =
-  "Guides to hrva.cc: bio pages, campaign tracking (UTM), passkeys and two-step sign-in, notifications and webhooks, and what the public numbers mean."
+  "Guides to hrva.cc: bio pages, campaign tracking (UTM), passkeys and two-step sign-in, notifications and webhooks, installing it as an app, and what the public numbers mean."
 
 export const metadata: Metadata = pageMetadata({ title: "Help", description, path: "/help" })
 
@@ -41,6 +41,11 @@ const guides = [
     href: "/help/notifications",
     title: "Notifications and webhooks",
     description: "Dead-link checks, the weekly summary, and alerts to Discord, Slack, Telegram, ntfy, a webhook or email.",
+  },
+  {
+    href: "/help/install-app",
+    title: "Install hrva.cc as an app",
+    description: "Install it on Android, iPhone or a computer, and share links to it from other Android apps.",
   },
 ]
 

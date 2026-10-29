@@ -33,6 +33,7 @@ const homeJsonLd = {
         "Link-in-bio pages",
         "Dead-link checks and notifications",
         "API keys and an MCP server for AI assistants",
+        "Installs as an app, with sharing from Android apps",
       ],
       offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
       author: reference(JSON_LD_IDS.person),

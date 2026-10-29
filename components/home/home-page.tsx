@@ -509,7 +509,11 @@ function FeatureGrid() {
         </div>
 
         <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Also included: custom aliases, two-factor sign-in, Google Safe Browsing checks on every destination, and a way to{" "}
+          Also included: custom aliases, two-factor sign-in, Google Safe Browsing checks on every destination,{" "}
+          <Link href="/help/install-app" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+            an app you can install
+          </Link>{" "}
+          on your phone or computer, and a way to{" "}
           <Link href="/validate" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             see where a link goes before opening it
           </Link>
@@ -807,7 +811,7 @@ function SignedInHome({ email }: { email: string }) {
         </div>
 
         <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="rounded-xl border bg-card p-5 sm:p-6">
+          <div id="shorten" className="scroll-mt-24 rounded-xl border bg-card p-5 sm:p-6">
             <ShortenForm withOptions />
           </div>
 

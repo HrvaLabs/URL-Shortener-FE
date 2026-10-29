@@ -101,7 +101,6 @@ export function SiteJsonLd() {
             url: HOME_URL,
             applicationCategory: "UtilityApplication",
             operatingSystem: "Any",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
             publisher: reference(JSON_LD_IDS.organization),
           },
           {

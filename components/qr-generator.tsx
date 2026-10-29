@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy, QrCode } from "lucide-react"
 import { toast } from "sonner"
@@ -31,24 +32,25 @@ export function QrGenerator() {
   const [copied, setCopied] = useState(false)
   const [refusal, setRefusal] = useState<string | null>(null)
   const resultRef = useRef<HTMLParagraphElement>(null)
+  const refusalRef = useRef<HTMLParagraphElement>(null)
   const address = withScheme(typed)
   const lengthError = destinationLengthError(typed)
   const useShort = shortLink !== null && shortLink.destination === address
   const value = useShort ? shortLink.url : address
 
-  useEffect(() => {
-    if (useShort) resultRef.current?.focus()
-  }, [useShort])
-
   const shorten = async () => {
     if (!address || lengthError || createUrl.isPending || refusal) return
     try {
       const created = await createUrl.mutateAsync({ longUrl: address })
-      setShortLink({ destination: address, url: formatShortUrl(created.shortUrl) })
-      setCopied(false)
+      flushSync(() => {
+        setShortLink({ destination: address, url: formatShortUrl(created.shortUrl) })
+        setCopied(false)
+      })
+      resultRef.current?.focus()
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
-        setRefusal(err.message)
+        flushSync(() => setRefusal(err.message))
+        refusalRef.current?.focus()
         return
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
@@ -119,7 +121,7 @@ export function QrGenerator() {
                 Want a shorter code, with scans counted? Make it a hrva.cc short link first.
               </p>
               {refusal ? (
-                <p role="alert" className="text-foreground">{refusal}</p>
+                <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
               ) : (
                 <Button
                   type="button"

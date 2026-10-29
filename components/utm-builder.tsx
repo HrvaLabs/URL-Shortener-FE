@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useId, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
@@ -49,6 +50,7 @@ export function UtmBuilder() {
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
   const resultRef = useRef<HTMLParagraphElement>(null)
+  const refusalRef = useRef<HTMLParagraphElement>(null)
   const lengthError = destinationLengthError(typed)
   const sent = typed.trim() ? destinationToSend(typed, open, utm) : null
   const tagged = sent === null ? null : withScheme(sent)
@@ -56,18 +58,16 @@ export function UtmBuilder() {
   const ready = Boolean(tagged) && !lengthError && !tooLong && open && hasUtmValues(utm)
   const shortFor = ready && shortLink?.destination === tagged ? shortLink.url : null
 
-  useEffect(() => {
-    if (shortFor) resultRef.current?.focus()
-  }, [shortFor])
-
   const shorten = async () => {
     if (!ready || !tagged || createUrl.isPending || refusal) return
     try {
       const created = await createUrl.mutateAsync({ longUrl: tagged })
-      setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl) })
+      flushSync(() => setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl) }))
+      resultRef.current?.focus()
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
-        setRefusal(err.message)
+        flushSync(() => setRefusal(err.message))
+        refusalRef.current?.focus()
         return
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
@@ -118,7 +118,7 @@ export function UtmBuilder() {
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
                 {refusal ? (
-                  <p role="alert" className="text-foreground">{refusal}</p>
+                  <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
                 ) : (
                   <Button
                     type="button"

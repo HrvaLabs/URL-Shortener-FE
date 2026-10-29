@@ -1,21 +1,13 @@
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { pageMetadata } from "@/lib/seo"
 import { PublicStats } from "@/components/public-stats"
 
 const description =
   "Site-wide totals for hrva.cc: active links, clicks, harmful links blocked and how fast reports are reviewed."
 
-export const metadata: Metadata = {
-  title: "hrva.cc in numbers",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/stats" },
-  openGraph: {
-    url: "https://app.hrva.cc/stats",
-    title: "hrva.cc in numbers — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "hrva.cc in numbers", description, path: "/stats" })
 
 export default function StatsPage() {
   return (

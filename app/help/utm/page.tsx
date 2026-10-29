@@ -2,20 +2,13 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
 const description =
   "What UTM tags are, how to add them to a hrva.cc link with the builder, and how to remove them."
 
-export const metadata: Metadata = {
-  title: "Campaign tracking (UTM)",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help/utm" },
-  openGraph: {
-    url: "https://app.hrva.cc/help/utm",
-    title: "Campaign tracking (UTM) — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "Campaign tracking (UTM)", description, path: "/help/utm" })
 
 const exampleUrl = "https://shop.example/sale?utm_source=instagram&utm_medium=social&utm_campaign=autumn-sale"
 
@@ -128,6 +121,7 @@ export default function UtmHelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="Campaign tracking (UTM)" path="/help/utm" />
     </div>
   )
 }

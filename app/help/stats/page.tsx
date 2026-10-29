@@ -2,19 +2,12 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
 const description = "What the public numbers mean, and how hrva.cc tells QR scans from other clicks."
 
-export const metadata: Metadata = {
-  title: "hrva.cc in numbers: help",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help/stats" },
-  openGraph: {
-    url: "https://app.hrva.cc/help/stats",
-    title: "hrva.cc in numbers: help — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "How to read the public stats", description, path: "/help/stats" })
 
 export default function StatsHelpPage() {
   return (
@@ -111,6 +104,7 @@ export default function StatsHelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="How to read the public stats" path="/help/stats" />
     </div>
   )
 }

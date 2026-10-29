@@ -3,6 +3,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { pageMetadata } from "@/lib/seo"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { CopyButton } from "./copy-button"
@@ -10,16 +11,7 @@ import { CopyButton } from "./copy-button"
 const description =
   "Connect Claude, ChatGPT, Cursor or VS Code to the hrva.cc MCP server and let your AI assistant shorten links into your account."
 
-export const metadata: Metadata = {
-  title: "MCP server",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/mcp" },
-  openGraph: {
-    url: "https://app.hrva.cc/mcp",
-    title: "MCP server — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "MCP server", description, path: "/mcp" })
 
 const accountUrl = "https://hrva.cc/mcp"
 

@@ -1,24 +1,20 @@
 import type { Metadata } from "next"
 import { BlogPostCard } from "@/components/blog/blog-post-card"
-import { PageMeta } from "@/components/page-meta"
+import { pageMetadata } from "@/lib/seo"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { blogPosts } from "@/content/blog/posts"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Blog",
-  description: "Updates and practical guides for hrva.cc URL shortener, link management, privacy and API integrations.",
-  alternates: { canonical: "https://app.hrva.cc/blog" },
-  openGraph: { url: "https://app.hrva.cc/blog" },
-}
+  description:
+    "How hrva.cc stops phishing links, counts visits, caches redirects and migrates its database without downtime, plus practical guides to short links.",
+  path: "/blog",
+})
 
 export default function BlogPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <PageMeta
-        title="Blog — hrva.cc"
-        description="Articles about URL shortening, link management, analytics, and best practices from the hrva.cc team."
-      />
       <SiteHeader />
 
       <main className="flex-1">

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { PageMeta } from "@/components/page-meta"
 import { ExternalLink, Copy, Check, Search, Calendar, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { formatDate, formatShortUrl } from "@/lib/utils"
@@ -30,8 +29,8 @@ export default function ValidatePage() {
     try {
       const result = await urlApi.peek(shortCode.trim())
       setData(result)
-    } catch (err: any) {
-      setError(err.message || "URL not found")
+    } catch (err: unknown) {
+      setError((err instanceof Error && err.message) || "URL not found")
       setData(null)
     } finally {
       setLoading(false)
@@ -47,7 +46,6 @@ export default function ValidatePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PageMeta title="Validate a short URL" description="Look up where a hrva.cc short URL redirects to. Enter a short code to check its destination." />
       <SiteHeader />
       <main className="flex-1">
         <div className="container py-16 sm:py-24">

@@ -1,22 +1,18 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { pageMetadata } from "@/lib/seo"
+import { CONTENT_UPDATED, formatContentDate } from "@/lib/content-dates"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — hrva.cc",
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
   description:
     "How hrva.cc handles your data: what we collect, why, how long we keep it, and your rights under the GDPR.",
-  alternates: { canonical: "https://app.hrva.cc/privacy" },
-  openGraph: {
-    url: "https://app.hrva.cc/privacy",
-    title: "Privacy Policy — hrva.cc",
-    description:
-      "How hrva.cc handles your data: what we collect, why, how long we keep it, and your rights under the GDPR.",
-  },
-}
+  path: "/privacy",
+})
 
-const LAST_UPDATED = "October 29, 2026"
+const LAST_UPDATED = formatContentDate(CONTENT_UPDATED["/privacy"])
 
 export default function PrivacyPage() {
   return (

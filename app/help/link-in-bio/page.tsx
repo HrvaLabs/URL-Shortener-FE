@@ -2,20 +2,13 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
 const description =
   "How to make a bio page at hrva.cc/@yourname, add your short links as buttons, share it, read its views, and what it keeps about visitors."
 
-export const metadata: Metadata = {
-  title: "Bio pages",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help/link-in-bio" },
-  openGraph: {
-    url: "https://app.hrva.cc/help/link-in-bio",
-    title: "Bio pages — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "Bio pages", description, path: "/help/link-in-bio" })
 
 export default function LinkInBioHelpPage() {
   return (
@@ -286,6 +279,7 @@ export default function LinkInBioHelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="Bio pages" path="/help/link-in-bio" />
     </div>
   )
 }

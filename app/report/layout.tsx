@@ -1,15 +1,11 @@
 import type { Metadata } from "next"
+import { pageMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Report a link or bio page",
   description: "Report a hrva.cc short link or bio page that leads to phishing, malware, spam or other abuse.",
-  alternates: { canonical: "https://app.hrva.cc/report" },
-  openGraph: {
-    url: "https://app.hrva.cc/report",
-    title: "Report a link or bio page — hrva.cc",
-    description: "Report a hrva.cc short link or bio page that leads to phishing, malware, spam or other abuse.",
-  },
-}
+  path: "/report",
+})
 
 export default function ReportLayout({ children }: { children: React.ReactNode }) {
   return children

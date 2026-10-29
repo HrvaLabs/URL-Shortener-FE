@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { PageMeta } from "@/components/page-meta"
 import { AlertCircle } from "lucide-react"
 import { getBackendOrigin } from "@/lib/utils"
 
@@ -45,7 +44,6 @@ export default function ChangelogPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PageMeta title="Changelog — hrva.cc" description="What's new in hrva.cc URL shortener." />
       <SiteHeader />
 
       <main className="flex-1">

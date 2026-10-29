@@ -1,6 +1,7 @@
 export interface BlogPost {
   slug: string
   title: string
+  shortTitle?: string
   date: string
   excerpt: string
   author: string
@@ -479,6 +480,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "how-we-built-it",
     title: "How hrva.cc Handles Security, Speed, Reliability, and Migration",
+    shortTitle: "How hrva.cc Is Built: Security, Speed, Reliability",
     date: "2026-05-18",
     excerpt:
       "A deep dive into the architecture behind hrva.cc — how we keep links fast, safe, and always available through Redis caching, JWT auth, Safe Browsing, and zero-downtime migrations.",
@@ -656,6 +658,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "zero-downtime-migrations",
     title: "Zero-Downtime Migrations: Evolving a Database Without Breaking Anything",
+    shortTitle: "Zero-Downtime Database Migrations",
     date: "2026-05-19",
     excerpt: "How we use Liquibase, backward-compatible schema changes, and careful deploy ordering to evolve our PostgreSQL schema without downtime.",
     author: "Karlo Hrvačić",
@@ -715,6 +718,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "async-everything",
     title: "Async Everything: Keeping Redirects Fast While Counting Millions of Visits",
+    shortTitle: "Async Visit Counting That Keeps Redirects Fast",
     date: "2026-05-19",
     excerpt: "How we use Spring's TaskExecutor to fire-and-forget visit tracking, email sending, and cache warmup — keeping the redirect path under 5ms.",
     author: "Karlo Hrvačić",
@@ -774,6 +778,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "caching-strategy-deep-dive",
     title: "Caching Strategy for a URL Shortener: TTL, Warmup, Priming, and Graceful Degradation",
+    shortTitle: "Caching Strategy for a URL Shortener",
     date: "2026-05-19",
     excerpt: "A deep dive into our Redis caching architecture — how we keep 99% of redirects cache-hot, validate stale data, and survive Redis outages.",
     author: "Karlo Hrvačić",
@@ -916,6 +921,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "building-audit-log",
     title: "Building an Audit Log That Doesn't Suck: AOP, Pointcuts, and Meaningful Events",
+    shortTitle: "Building an Audit Log with AOP Pointcuts",
     date: "2026-05-20",
     excerpt: "How we used Spring AOP to auto-log every admin action — and why we had to exclude read-only endpoints to avoid noise.",
     author: "Karlo Hrvačić",
@@ -976,6 +982,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "angular-to-react-rewrite",
     title: "Rewriting an Angular App to React Without Stopping Development",
+    shortTitle: "Rewriting an Angular App in React",
     date: "2026-05-20",
     excerpt: "How we migrated from Angular 14 to Next.js 16 while keeping the live app running — and the lessons we learned about incremental rewrites.",
     author: "Karlo Hrvačić",
@@ -1032,6 +1039,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "designing-url-shortener-ui",
     title: "Designing a URL Shortener UI That Works for Everyone",
+    shortTitle: "Designing a URL Shortener UI for Everyone",
     date: "2026-05-21",
     excerpt: "The design decisions behind hrva.cc's interface — why we removed the advanced options toggle, how we upsell without being pushy, and what we learned from user behavior.",
     author: "Karlo Hrvačić",

@@ -2,20 +2,13 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
 const description =
   "How to add a passkey or security key to hrva.cc, sign in with it, use it as your second step, and what to do if you lose one."
 
-export const metadata: Metadata = {
-  title: "Passkeys and security keys",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help/passkeys" },
-  openGraph: {
-    url: "https://app.hrva.cc/help/passkeys",
-    title: "Passkeys and security keys — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "Passkeys and security keys", description, path: "/help/passkeys" })
 
 export default function PasskeysHelpPage() {
   return (
@@ -236,6 +229,7 @@ export default function PasskeysHelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="Passkeys and security keys" path="/help/passkeys" />
     </div>
   )
 }

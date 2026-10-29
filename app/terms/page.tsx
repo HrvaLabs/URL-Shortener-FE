@@ -1,22 +1,18 @@
 import Link from "next/link"
 import type { Metadata } from "next"
+import { pageMetadata } from "@/lib/seo"
+import { CONTENT_UPDATED, formatContentDate } from "@/lib/content-dates"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 
-export const metadata: Metadata = {
-  title: "Terms of Use — hrva.cc",
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Use",
   description:
     "Terms of use for hrva.cc: a free, non-commercial URL shortener provided as is, without warranties.",
-  alternates: { canonical: "https://app.hrva.cc/terms" },
-  openGraph: {
-    url: "https://app.hrva.cc/terms",
-    title: "Terms of Use — hrva.cc",
-    description:
-      "Terms of use for hrva.cc: a free, non-commercial URL shortener provided as is, without warranties.",
-  },
-}
+  path: "/terms",
+})
 
-const LAST_UPDATED = "October 27, 2026"
+const LAST_UPDATED = formatContentDate(CONTENT_UPDATED["/terms"])
 
 export default function TermsPage() {
   return (

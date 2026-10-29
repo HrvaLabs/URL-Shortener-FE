@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next"
+import { HOME_DESCRIPTION, HOME_HEADLINE, SITE_NAME } from "@/lib/seo"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "hrva.cc — URL Shortener",
-    short_name: "hrva.cc",
-    description: "Shorten URLs, track visits, and manage your links with control and clarity.",
+    name: `${SITE_NAME}: ${HOME_HEADLINE}`,
+    short_name: SITE_NAME,
+    description: HOME_DESCRIPTION,
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
@@ -16,14 +17,20 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/svg+xml",
       },
       {
-        src: "/favicon-192.svg",
+        src: "/icon-192.png",
         sizes: "192x192",
-        type: "image/svg+xml",
+        type: "image/png",
       },
       {
-        src: "/favicon-512.svg",
+        src: "/icon-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
+      },
+      {
+        src: "/icon-maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   }

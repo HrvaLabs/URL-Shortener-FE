@@ -4,7 +4,9 @@ import type { Metadata } from "next"
 import { Badge } from "@/components/ui/badge"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { blogPosts } from "@/content/blog/posts"
+import { blogPosts, type BlogPost } from "@/content/blog/posts"
+import { JSON_LD_IDS, JsonLdScript, breadcrumbList, reference } from "@/components/json-ld"
+import { OG_IMAGE, absoluteUrl, pageMetadata } from "@/lib/seo"
 import { PostAuthor } from "@/components/blog/post-author"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
@@ -18,15 +20,42 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const post = blogPosts.find((p) => p.slug === slug)
   if (!post) return {}
-  return {
-    title: `${post.title} — hrva.cc Blog`,
+  return pageMetadata({
+    title: post.shortTitle ?? post.title,
+    socialTitle: post.title,
     description: post.excerpt,
-    alternates: { canonical: `https://app.hrva.cc/blog/${post.slug}` },
-    openGraph: {
-      url: `https://app.hrva.cc/blog/${post.slug}`,
-      title: post.title,
-      description: post.excerpt,
-    },
+    path: `/blog/${post.slug}`,
+    article: { publishedTime: post.date, tags: post.tags },
+  })
+}
+
+const postJsonLd = (post: BlogPost) => {
+  const url = absoluteUrl(`/blog/${post.slug}`)
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#article`,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        url,
+        headline: post.title,
+        description: post.excerpt,
+        datePublished: post.date,
+        dateModified: post.date,
+        inLanguage: "en",
+        keywords: post.tags.join(", "),
+        image: absoluteUrl(OG_IMAGE.url),
+        author: reference(JSON_LD_IDS.person),
+        publisher: reference(JSON_LD_IDS.organization),
+        isPartOf: reference(JSON_LD_IDS.website),
+      },
+      breadcrumbList([
+        { name: "Home", path: "/" },
+        { name: "Blog", path: "/blog" },
+        { name: post.shortTitle ?? post.title, path: `/blog/${post.slug}` },
+      ]),
+    ],
   }
 }
 
@@ -122,6 +151,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </main>
 
       <SiteFooter />
+      <JsonLdScript data={postJsonLd(post)} />
     </div>
   )
 }

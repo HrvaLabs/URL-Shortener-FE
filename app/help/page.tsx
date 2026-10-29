@@ -3,19 +3,13 @@ import type { Metadata } from "next"
 import { ArrowRight } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
-const description = "Short guides to hrva.cc features."
+const description =
+  "Guides to hrva.cc: bio pages, campaign tracking (UTM), passkeys and two-step sign-in, notifications and webhooks, and what the public numbers mean."
 
-export const metadata: Metadata = {
-  title: "Help",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help" },
-  openGraph: {
-    url: "https://app.hrva.cc/help",
-    title: "Help — hrva.cc",
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "Help", description, path: "/help" })
 
 const guides = [
   {
@@ -82,6 +76,7 @@ export default function HelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="Help" path="/help" />
     </div>
   )
 }

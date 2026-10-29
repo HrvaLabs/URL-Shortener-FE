@@ -1,5 +1,6 @@
 import { Logo } from "@/components/logo"
 import { NavLink } from "@/components/nav-link"
+import { ENTITY_SENTENCE } from "@/lib/seo"
 
 const columns = [
   {
@@ -19,7 +20,7 @@ const columns = [
       { href: "https://hrva.cc/swagger-ui/index.html", label: "API docs", external: true },
       { href: "/mcp", label: "AI connector (MCP)" },
       { href: "/dashboard/api-keys", label: "API keys" },
-      { href: "https://github.com/karlohrvacic/url-shortener", label: "Source on GitHub", external: true },
+      { href: "https://github.com/HrvaLabs/url-shortener", label: "Source on GitHub", external: true },
     ],
   },
   {
@@ -42,12 +43,12 @@ export function SiteFooter() {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              A free, open-source URL shortener. Built and run by one person in Croatia.
+              {ENTITY_SENTENCE} Built and run by one person in Croatia.
             </p>
           </div>
           {columns.map((column) => (
             <nav key={column.title} aria-label={column.title} className="space-y-3">
-              <h2 className="text-sm font-semibold">{column.title}</h2>
+              <p className="text-sm font-semibold">{column.title}</p>
               <ul className="space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.href}>

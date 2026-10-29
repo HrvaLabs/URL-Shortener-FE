@@ -2,22 +2,14 @@ import Link from "next/link"
 import type { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { HelpBreadcrumbs } from "@/components/json-ld"
+import { pageMetadata } from "@/lib/seo"
 
 const description =
   "Which emails and chat alerts hrva.cc can send you, how to turn them on and off, what a dead link is, and how to check a webhook's signature."
 
-const socialTitle = `Notifications and webhooks ${String.fromCodePoint(0x2014)} hrva.cc`
 
-export const metadata: Metadata = {
-  title: "Notifications and webhooks",
-  description,
-  alternates: { canonical: "https://app.hrva.cc/help/notifications" },
-  openGraph: {
-    url: "https://app.hrva.cc/help/notifications",
-    title: socialTitle,
-    description,
-  },
-}
+export const metadata: Metadata = pageMetadata({ title: "Notifications and webhooks", description, path: "/help/notifications" })
 
 const codeBlockClass =
   "mb-5 whitespace-pre-wrap rounded-lg border bg-muted px-4 py-3 font-mono text-[13px] leading-relaxed text-foreground [overflow-wrap:anywhere]"
@@ -476,6 +468,7 @@ export default function NotificationsHelpPage() {
       </main>
 
       <SiteFooter />
+      <HelpBreadcrumbs name="Notifications and webhooks" path="/help/notifications" />
     </div>
   )
 }

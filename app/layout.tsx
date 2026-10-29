@@ -3,7 +3,17 @@ import { Host_Grotesk, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "sonner"
 import "./globals.css"
 import { Providers } from "./providers"
-import { JsonLd } from "@/components/json-ld"
+import { SiteJsonLd } from "@/components/json-ld"
+import {
+  AUTHOR_NAME,
+  AUTHOR_URL,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
+  OG_IMAGE,
+  PUBLISHER_NAME,
+  SITE_NAME,
+  SITE_URL,
+} from "@/lib/seo"
 
 const sans = Host_Grotesk({
   subsets: ["latin", "latin-ext"],
@@ -16,28 +26,17 @@ const mono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 })
 
-const baseUrl = "https://app.hrva.cc"
-
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "hrva.cc — short links, shaped by you",
+    default: HOME_TITLE,
     template: "%s — hrva.cc",
   },
-  description:
-    "Shorten URLs, track visits, and manage your links with control and clarity. Free URL shortener with analytics, expiration control, and safe browsing checks.",
-  keywords: [
-    "URL shortener",
-    "link shortener",
-    "short links",
-    "link management",
-    "URL analytics",
-    "hrva.cc",
-    "free URL shortener",
-  ],
-  authors: [{ name: "hrva.cc" }],
-  creator: "hrva.cc",
-  publisher: "hrva.cc",
+  description: HOME_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: AUTHOR_NAME, url: AUTHOR_URL }],
+  creator: AUTHOR_NAME,
+  publisher: PUBLISHER_NAME,
   robots: {
     index: true,
     follow: true,
@@ -45,36 +44,28 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "hrva.cc",
-    url: baseUrl,
-    title: "hrva.cc — short links, shaped by you",
-    description:
-      "Shorten URLs, track visits, and manage your links with control and clarity. Free URL shortener with analytics, expiration control, and safe browsing checks.",
-    images: [
-      {
-        url: "/og-image.svg",
-        width: 1200,
-        height: 630,
-        alt: "hrva.cc — short links, shaped by you",
-      },
-    ],
+    siteName: SITE_NAME,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "hrva.cc — short links, shaped by you",
-    description:
-      "Shorten URLs, track visits, and manage your links with control and clarity.",
-    images: ["/og-image.svg"],
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "hrva.cc",
+    title: SITE_NAME,
     statusBarStyle: "default",
   },
   category: "technology",
@@ -106,7 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           }}
         />
-        <JsonLd />
+        <SiteJsonLd />
       </body>
     </html>
   )

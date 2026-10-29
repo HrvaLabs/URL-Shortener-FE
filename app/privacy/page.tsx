@@ -462,7 +462,7 @@ export default function PrivacyPage() {
                 material.
                 It also includes your bio page and its buttons.
                 It also includes your notification consent history and your channels, with masked
-                addresses only, never their secrets.
+                addresses and the Telegram chat ID, never their tokens or secrets.
                 You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or

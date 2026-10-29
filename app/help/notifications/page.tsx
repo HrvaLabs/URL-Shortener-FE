@@ -461,8 +461,9 @@ export default function NotificationsHelpPage() {
                   Each delivery to a channel is kept for 30 days, to retry failures and show you the last result.
                 </li>
                 <li>
-                  The data export in Settings includes your consent history and your channels, with masked
-                  addresses only.
+                  The data export in Settings includes your consent history and your channels: masked
+                  addresses, the Telegram chat ID, and when each channel last delivered or turned off. It never
+                  includes tokens or secrets.
                 </li>
               </ul>
               <p>

@@ -19,19 +19,27 @@ const TRAILING_PUNCTUATION = new Set([
 
 const CLOSING_BRACKETS: Record<string, string> = { ")": "(", "]": "[", "}": "{" }
 
+const MAX_CANDIDATE_LENGTH = 2048
+
 const count = (value: string, character: string) => value.split(character).length - 1
 
-const endsWithStray = (candidate: string) => {
-  const last = candidate.at(-1) ?? ""
-  if (TRAILING_PUNCTUATION.has(last)) return true
-  const opening = CLOSING_BRACKETS[last]
-  return opening !== undefined && count(candidate, last) > count(candidate, opening)
-}
-
 const trimTrailing = (candidate: string) => {
-  let trimmed = candidate
-  while (trimmed && endsWithStray(trimmed)) trimmed = trimmed.slice(0, -1)
-  return trimmed
+  const unmatched = new Map(
+    Object.entries(CLOSING_BRACKETS).map(([closing, opening]) => [closing, count(candidate, closing) - count(candidate, opening)]),
+  )
+  let end = candidate.length
+  while (end > 0) {
+    const last = candidate[end - 1]
+    if (TRAILING_PUNCTUATION.has(last)) {
+      end -= 1
+      continue
+    }
+    const surplus = unmatched.get(last)
+    if (surplus === undefined || surplus <= 0) break
+    unmatched.set(last, surplus - 1)
+    end -= 1
+  }
+  return candidate.slice(0, end)
 }
 
 const isHttpUrl = (candidate: string) => {
@@ -46,6 +54,7 @@ const isHttpUrl = (candidate: string) => {
 export const firstHttpUrl = (value: string | null | undefined): string | null => {
   if (!value) return null
   for (const match of value.matchAll(HTTP_URL)) {
+    if (match[0].length > MAX_CANDIDATE_LENGTH) continue
     const candidate = trimTrailing(match[0])
     if (isHttpUrl(candidate)) return candidate
   }

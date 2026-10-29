@@ -1,4 +1,5 @@
 // Bump VERSION whenever app/offline/route.ts changes, so installed copies fetch the new offline page.
+// /offline must stay a direct 200, never a redirect: a redirected response can't answer a navigation.
 const VERSION = "1"
 const CACHE_PREFIX = "hrva-offline-"
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`

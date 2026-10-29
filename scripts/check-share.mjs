@@ -74,6 +74,22 @@ check("the link is returned as typed, never re-encoded", () => {
   assert.equal(firstHttpUrl("http://example.com/a b"), "http://example.com/a")
 })
 
+check("a long run of brackets is trimmed in linear time", () => {
+  const brackets = ")".repeat(60000)
+  const started = performance.now()
+  const nearLimit = `https://example.com/a${")".repeat(2000)}`
+  for (let round = 0; round < 20; round += 1) assert.equal(firstHttpUrl(nearLimit), "https://example.com/a")
+  assert.equal(firstHttpUrl(`https://example.com/a${brackets} https://ok.example`), "https://ok.example")
+  assert.equal(firstHttpUrl(`(https://example.com/a${brackets}`), null)
+  const elapsed = performance.now() - started
+  assert.ok(elapsed < 50, `took ${elapsed.toFixed(1)} ms`)
+})
+
+check("a candidate over 2048 characters is skipped", () => {
+  assert.equal(firstHttpUrl(`https://example.com/${"a".repeat(2029)} https://ok.example`), "https://ok.example")
+  assert.equal(firstHttpUrl(`https://example.com/${"a".repeat(2028)}`), `https://example.com/${"a".repeat(2028)}`)
+})
+
 check("nothing shared gives no link", () => {
   assert.equal(sharedLink({}), null)
   assert.equal(sharedLink({ url: null, text: null, title: null }), null)

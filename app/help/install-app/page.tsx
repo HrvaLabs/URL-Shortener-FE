@@ -100,7 +100,7 @@ export default function InstallAppHelpPage() {
               </p>
 
               <h2 id="shortcuts">Shortcuts</h2>
-              <p>On Android, touch and hold the hrva.cc icon for two shortcuts:</p>
+              <p>On Android, touch and hold the hrva.cc icon, or right-click the app icon on a computer, for two shortcuts:</p>
               <ul>
                 <li>
                   <strong>New link</strong> opens the shorten form.
@@ -133,8 +133,9 @@ export default function InstallAppHelpPage() {
 
               <h2 id="privacy">The app and your privacy</h2>
               <p>
-                Installing changes nothing in your account. hrva.cc keeps one page in your browser, the
-                offline page, so it can show it without a connection. What an app shares arrives in the
+                Installing changes nothing in your account. Any browser that supports it keeps one page from
+                hrva.cc, the offline page, once you visit app.hrva.cc, whether or not you install the app, so
+                it can show that page without a connection. What an app shares arrives in the
                 address of the page that opens, so it can show up in your browser history. hrva.cc picks
                 the link out in your browser and saves nothing until you tap <strong>Shorten</strong>. The{" "}
                 <Link href="/privacy">Privacy Policy</Link> describes everything hrva.cc stores.

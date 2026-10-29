@@ -30,7 +30,8 @@ const FIELD_ORDER = ["type", "name", "target", "botToken", "chatId", "accessToke
 
 type FormField = (typeof FIELD_ORDER)[number]
 
-const SAVED_PLACEHOLDER = "Saved. Leave empty to keep it."
+const SAVED_HINT = "Saved. Leave empty to keep it."
+const NO_EVENTS_HINT = "Nothing is ticked, so this channel won't get any messages until you tick an event."
 
 const TYPE_HINTS: Record<ChannelType, string> = {
   DISCORD: "In Discord, open the channel's settings, then Integrations, then Webhooks, and copy the webhook URL.",
@@ -268,9 +269,9 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
                           setSuggestedType(detected && detected !== type ? detected : null)
                         }
                       }}
-                      placeholder={saved ? SAVED_PLACEHOLDER : field === "target" ? option.targetPlaceholder : FIELD_PLACEHOLDERS[field]}
+                      placeholder={saved ? undefined : field === "target" ? option.targetPlaceholder : FIELD_PLACEHOLDERS[field]}
                       aria-invalid={fieldErrors[field] ? true : undefined}
-                      aria-describedby={describedBy(field, savedMask && hintId(`${field}-saved`))}
+                      aria-describedby={describedBy(field, saved && hintId(`${field}-keep`), savedMask && hintId(`${field}-saved`))}
                       className="font-mono text-[13px] placeholder:font-sans"
                     />
                     {password && (
@@ -286,6 +287,11 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
                       </Button>
                     )}
                   </div>
+                  {saved && (
+                    <p id={hintId(`${field}-keep`)} className="mt-1.5 text-xs text-muted-foreground">
+                      {SAVED_HINT}
+                    </p>
+                  )}
                   {savedMask && (
                     <p id={hintId(`${field}-saved`)} className="mt-1.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
                       {savedMask}
@@ -309,7 +315,7 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
             </p>
           </div>
 
-          <fieldset>
+          <fieldset aria-describedby={events.length === 0 ? hintId("no-events") : undefined}>
             <legend className="text-sm font-medium">Send me</legend>
             <div className="mt-2 space-y-2.5">
               {EVENTS.map((eventType) => {
@@ -332,6 +338,9 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
                 )
               })}
             </div>
+            {events.length === 0 && (
+              <p id={hintId("no-events")} className="mt-2.5 text-xs text-muted-foreground">{NO_EVENTS_HINT}</p>
+            )}
           </fieldset>
 
           {formError && <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{formError}</p>}

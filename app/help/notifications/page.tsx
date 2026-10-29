@@ -251,7 +251,7 @@ export default function NotificationsHelpPage() {
                 </li>
                 <li>
                   Under <strong>Send me</strong>, tick the events this channel should get. None is ticked to start
-                  with, and a channel with none ticked gets nothing.
+                  with, and while none is, the dialog says the channel won&apos;t get any messages.
                 </li>
                 <li>
                   Select <strong>Add channel</strong>, then <strong>Send test</strong> on the new channel. It says{" "}
@@ -264,8 +264,8 @@ export default function NotificationsHelpPage() {
                 <strong>No deliveries yet.</strong>, <strong>Last delivered</strong> with the time, or{" "}
                 <strong>Last delivery failed</strong> with the time and the reason. Its switch pauses the channel
                 without deleting it: <strong>On</strong> turns to <strong>Off</strong>. <strong>Edit</strong> changes
-                its name, address and events; saved addresses and tokens stay hidden, so the fields say{" "}
-                <strong>Saved. Leave empty to keep it.</strong> A channel&apos;s type can&apos;t be changed: to
+                its name, address and events; saved addresses and tokens stay hidden, and under each of those fields it
+                says <strong>Saved. Leave empty to keep it.</strong> A channel&apos;s type can&apos;t be changed: to
                 change the type, add a new channel. <strong>Delete</strong> removes the channel, and it stops
                 getting notifications at once.
               </p>

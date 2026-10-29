@@ -64,9 +64,10 @@ export default function LinkInBioPage() {
 
         <h2 id="checked-links">Every button is a checked short link</h2>
         <p>
-          Each button is one of your own hrva.cc short links, so every click goes through hrva.cc like any other: it is
-          checked for phishing and malware, it counts towards the link&apos;s visit limit, and it shows up in the
-          link&apos;s statistics. A button shows only while its link works: when a link is turned off, expires or reaches
+          Each button is one of your own hrva.cc short links, so it goes through hrva.cc like any other: the link was
+          checked for phishing and malware when it was made and is checked again every night, every click is checked
+          against the blocklists that block outright, it counts towards the link&apos;s visit limit, and it shows up in
+          the link&apos;s statistics. A button shows only while its link works: when a link is turned off, expires or reaches
           its visit limit, its button disappears from your page until the link works again.
         </p>
 

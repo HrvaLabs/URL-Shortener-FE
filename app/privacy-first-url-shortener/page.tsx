@@ -92,6 +92,10 @@ export default function PrivacyFirstPage() {
             Rate-limit counters, such as the one that slows down password guessing on a protected link. They hold a
             hashed IP address, never the plain one, and expire within an hour.
           </li>
+          <li>
+            For links made without an account, the check behind the phishing-wave alert keeps a one-way hash of the
+            creator&apos;s network, together with the link, for one to two hours.
+          </li>
         </ul>
         <h3>Never stored</h3>
         <ul>
@@ -115,8 +119,8 @@ export default function PrivacyFirstPage() {
 
         <h2 id="safety">Safe to click, too</h2>
         <p>
-          Every new link, every click and a nightly rescan go through Google Safe Browsing and several blocklists, and
-          anyone can <Link href="/report">report a link</Link> to a person. How that works, and what it still misses, is in{" "}
+          Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, and every click is
+          checked against the blocklists that block outright. Anyone can <Link href="/report">report a link</Link> to a person. How that works, and what it still misses, is in{" "}
           <Link href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</Link>.
         </p>
 

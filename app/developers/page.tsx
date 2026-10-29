@@ -82,7 +82,7 @@ const fields = [
 ]
 
 const errors = [
-  { status: "400", text: "The link was refused, for example because a safety check blocked the destination, or a field is invalid. The body is {\"error\": \"...\"}, or one message per field." },
+  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; or the API key is expired, revoked or out of calls, or belongs to an inactive account. The body is {\"error\": \"...\"}, or one message per field." },
   { status: "404", text: "The API key doesn't exist." },
   { status: "409", text: "The custom alias is already taken." },
   { status: "429", text: "Too many links in a short time. The body says: You've created a lot of links in a short time. Try again in an hour." },
@@ -161,8 +161,9 @@ export default function DevelopersPage() {
         <ul>
           <li>
             <code className="[overflow-wrap:anywhere]">GET https://hrva.cc/api/v1/urls/&#123;short&#125;/peek</code> returns a link&apos;s{" "}
-            <code>longUrl</code> (empty for a password-protected link), <code>shortUrl</code> and{" "}
-            <code>createDate</code> without counting a visit, the same lookup as <Link href="/validate">Check a link</Link>.
+            <code>longUrl</code>, <code>shortUrl</code>, <code>createDate</code> and <code>passwordProtected</code>{" "}
+            without counting a visit, the same lookup as <Link href="/validate">Check a link</Link>. For a password-protected
+            link, <code>longUrl</code> is <code>null</code>.
           </li>
           <li>
             <code className="[overflow-wrap:anywhere]">GET https://hrva.cc/api/v1/urls/&#123;short&#125;/qr</code> returns a QR code PNG of the short link,

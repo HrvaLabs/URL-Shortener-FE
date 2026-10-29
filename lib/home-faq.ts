@@ -17,7 +17,7 @@ export const HOME_FAQS: HomeFaq[] = [
   {
     question: "Is hrva.cc free to use?",
     answer: [
-      "Yes, hrva.cc is completely free to use. You can shorten URLs, set visit limits and expiration dates, and track analytics without any cost. Creating an account unlocks additional features like link management and detailed analytics.",
+      "Yes. Shortening is free and needs no account. A free account adds custom aliases, visit limits, expiry dates, passwords and analytics, also at no cost. There are no paid plans.",
     ],
   },
   {

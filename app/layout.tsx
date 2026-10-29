@@ -37,10 +37,6 @@ export const metadata: Metadata = {
   authors: [{ name: AUTHOR_NAME, url: AUTHOR_URL }],
   creator: AUTHOR_NAME,
   publisher: PUBLISHER_NAME,
-  robots: {
-    index: true,
-    follow: true,
-  },
   openGraph: {
     type: "website",
     locale: "en_US",

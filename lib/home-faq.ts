@@ -9,9 +9,9 @@ export const HOME_FAQS: HomeFaq[] = [
   {
     question: "How do I shorten a URL?",
     answer: [
-      "Paste your long URL into the input field on the hrva.cc homepage and click ",
+      "Paste your long URL into the box at the top of the hrva.cc homepage and click ",
       { strong: "Shorten" },
-      ". You can optionally set a custom alias, visit limit, or expiration date before shortening. No account required for basic use.",
+      ". No account is needed, and you get a random short link. With a free account you can also choose a custom alias, a visit limit or an expiry date before shortening.",
     ],
   },
   {
@@ -29,11 +29,11 @@ export const HOME_FAQS: HomeFaq[] = [
   {
     question: "How do expiration dates and visit limits work?",
     answer: [
-      "When shortening a URL, you can optionally set a ",
+      "With a free account, you can set a ",
       { strong: "visit limit" },
-      " (the link stops working after N visits) or an ",
+      " (the link stops working after N visits), an ",
       { strong: "expiration date" },
-      " (the link expires at a specific time). Both features give you full control over your links.",
+      " (the link expires at a specific time), or both when you shorten a URL.",
     ],
   },
   {

@@ -70,7 +70,7 @@ function PublicHome() {
 
 const previewRows = [
   { alias: "cv", destination: "drive.google.com/file/d/1Xa9kQ2mZpL7/view", visits: "1,284", tags: ["personal"], status: "Active" },
-  { alias: "launch", destination: "github.com/karlohrvacic/url-shortener", visits: "312 / 500", tags: ["work"], status: "Limit 500" },
+  { alias: "launch", destination: "github.com/HrvaLabs/url-shortener", visits: "312 / 500", tags: ["work"], status: "Limit 500" },
   { alias: "menu", destination: "bistro.example.com/menu/october", visits: "96", tags: ["food"], status: "Expires 31 Oct" },
   { alias: "team-photos", destination: "photos.example.com/album/4f2c81", visits: "47", tags: [], status: "Password" },
   { alias: "summer-23", destination: "events.example.com/summer-2023", visits: "2,019", tags: ["events"], status: "Expired" },

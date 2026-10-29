@@ -25,6 +25,7 @@ import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
 import { CANT_TAKE_UTM, destinationToSend, hasUtm, readUtm, rememberUtm, tooLongMessage, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
 import { PageMeta } from "@/components/page-meta"
+import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
@@ -82,6 +83,29 @@ function useAddressSearch() {
   return [search, update] as const
 }
 
+const DEAD_DESTINATION_PARAM = "deadDestination"
+
+function useAddressDeadDestination() {
+  const address = useSearchParams().get(DEAD_DESTINATION_PARAM) === "true"
+  const [deadOnly, setDeadOnly] = useState(address)
+  const [seen, setSeen] = useState(address)
+
+  if (address !== seen) {
+    setSeen(address)
+    setDeadOnly(address)
+  }
+
+  const update = (next: boolean) => {
+    setDeadOnly(next)
+    const params = new URLSearchParams(window.location.search)
+    if (next) params.set(DEAD_DESTINATION_PARAM, "true")
+    else params.delete(DEAD_DESTINATION_PARAM)
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`)
+  }
+
+  return [deadOnly, update] as const
+}
+
 function AdminUrlsLoading() {
   return (
     <div className="space-y-3 rounded-xl border bg-card p-5">
@@ -106,15 +130,18 @@ function AdminUrls() {
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
   const [anonymousFilter, setAnonymousFilter] = useState(false)
-  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter, anonymousFilter])
-  const filterKey = `${search}-${activeFilter}-${expiredFilter}-${anonymousFilter}`
+  const [deadFilter, setDeadFilter] = useAddressDeadDestination()
+  useEffect(() => { setPage(0) }, [search, activeFilter, expiredFilter, anonymousFilter, deadFilter, setPage])
+  const filterKey = `${search}-${activeFilter}-${expiredFilter}-${anonymousFilter}-${deadFilter}`
   const filters: UrlFilters = {
     search: searchTerm(search) || undefined,
     active: activeFilter === "all" ? undefined : activeFilter === "active",
     expired: expiredFilter || undefined,
     anonymous: anonymousFilter || undefined,
+    deadDestination: deadFilter || undefined,
   }
   const { data: urls, isLoading, error } = useAllUrls(filters, page, size, sort, order)
+  const { data: deadCount } = useAllUrls({ deadDestination: true }, 0, 1)
   useClampedPage(page, urls?.totalPages, setPage)
   const deactivateUrl = useDeactivateUrl()
   const activateUrl = useActivateUrl()
@@ -134,7 +161,7 @@ function AdminUrls() {
   const searchRef = useRef<HTMLInputElement>(null)
   const removeTriggerRef = useRef<HTMLElement | null>(null)
   const removalFocus = useRowRemovalFocus(searchRef)
-  const filtered = !!search.trim() || activeFilter !== "all" || expiredFilter || anonymousFilter
+  const filtered = !!search.trim() || activeFilter !== "all" || expiredFilter || anonymousFilter || deadFilter
   const [blockTarget, setBlockTarget] = useState<UrlResponse | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
@@ -318,6 +345,15 @@ function AdminUrls() {
             className="h-4 w-4 rounded border-input accent-brand"
           />
           Anonymous only
+        </label>
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={deadFilter}
+            onChange={(e) => setDeadFilter(e.target.checked)}
+            className="h-4 w-4 rounded border-input accent-brand"
+          />
+          {deadCount?.totalElements != null ? `Dead destinations only (${deadCount.totalElements.toLocaleString()})` : "Dead destinations only"}
         </label>
         <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[57rem]:hidden" />
       </div>
@@ -644,6 +680,7 @@ function Destination({ url, className }: { url: UrlResponse; className?: string 
     <div className={cn("[overflow-wrap:anywhere]", className)}>
       <span className="block">{url.longUrl}</span>
       {endsAt && <span className="mt-1 block text-xs">Ends at {endsAt}</span>}
+      <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} />
     </div>
   )
 }

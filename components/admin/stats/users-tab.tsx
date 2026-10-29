@@ -5,8 +5,21 @@ import { StackedDailyChart } from "@/components/admin/stats/stacked-daily-chart"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
 import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
+import { CHANNEL_EVENT_LABELS, CHANNEL_TYPES, EMAIL_NOTIFICATION_LABELS } from "@/lib/notifications"
 import { useUsersStats } from "@/lib/hooks/useSiteStats"
-import type { AnalyticsRange, UsersStats } from "@/lib/types"
+import type { AnalyticsRange, ChannelEvent, CountEntry, EmailNotificationType, UsersStats } from "@/lib/types"
+
+const consentTile = ({ value, count }: CountEntry) => {
+  const emailLabel = EMAIL_NOTIFICATION_LABELS[value as EmailNotificationType]
+  if (emailLabel) return { label: `${emailLabel} email`, value: count.toLocaleString(), hint: "People who turned this email on." }
+  return { label: CHANNEL_EVENT_LABELS[value as ChannelEvent] ?? value, value: count.toLocaleString(), hint: "Channels getting this event." }
+}
+
+const channelTile = ({ value, count }: CountEntry) => ({
+  label: CHANNEL_TYPES.find((option) => option.type === value)?.label ?? value,
+  value: count.toLocaleString(),
+  hint: "Channels of this type.",
+})
 
 interface UsersTabProps {
   days: AnalyticsRange
@@ -81,6 +94,20 @@ function UsersBody({ data, days }: UsersBodyProps) {
           },
         ]}
       />
+      {data.notifications && (
+        <StatGrid
+          title="Notifications"
+          items={[
+            ...data.notifications.consents.map(consentTile),
+            ...data.notifications.channels.map(channelTile),
+            {
+              label: "Turned off after failing",
+              value: data.notifications.autoDisabledChannels.toLocaleString(),
+              hint: "Channels that turned themselves off after failing on 10 different days.",
+            },
+          ]}
+        />
+      )}
       {bioPages && (
         <StatGrid
           title="Bio pages"

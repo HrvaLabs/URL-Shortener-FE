@@ -71,6 +71,16 @@ function LinksBody({ data, days }: LinksBodyProps) {
           { label: "With an expiry date", value: now.withExpiry.toLocaleString() },
         ]}
       />
+      {data.deadDestinations && (
+        <StatGrid
+          title="Dead destinations"
+          hint="Links whose destination failed on three different nights."
+          items={[
+            { label: "Links", value: data.deadDestinations.total.toLocaleString(), href: "/admin/urls?deadDestination=true" },
+            { label: "Without an account", value: data.deadDestinations.anonymous.toLocaleString() },
+          ]}
+        />
+      )}
       <div className="grid gap-4 @3xl:grid-cols-2">
         <RankedList
           title="Blocked links by reason"

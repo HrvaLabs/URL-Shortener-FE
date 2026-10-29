@@ -13,7 +13,7 @@ export const AUTHOR_URL = "https://karlo.cc"
 export const PUBLISHER_NAME = "HrvaLabs"
 export const PUBLISHER_URL = "https://hrvalabs.net"
 
-export const SLOGAN = "Counts clicks, not people."
+export const SLOGAN = "Short links that count clicks, not people."
 export const HOME_TITLE_TEXT = "Free URL shortener that counts clicks, not people"
 export const HOME_TITLE = `${HOME_TITLE_TEXT} ${MIDDLE_DOT} ${SITE_NAME}`
 export const HOME_DESCRIPTION =

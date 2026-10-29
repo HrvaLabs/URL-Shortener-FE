@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -190,6 +190,7 @@ export const urlApi = {
     if (filters.anonymous) params.set("anonymous", "true")
     if (filters.dateFrom) params.set("dateFrom", filters.dateFrom)
     if (filters.dateTo) params.set("dateTo", filters.dateTo)
+    if (filters.deadDestination) params.set("deadDestination", "true")
     return request<Page<UrlResponse>>("GET", `/urls/all?${params}`)
   },
   getByShort: (short: string) =>
@@ -451,4 +452,25 @@ function validationFields(body: unknown): Record<string, string> {
   const fields = body as Record<string, unknown>
   if (fields.error != null || fields.message != null) return {}
   return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
+}
+
+export const notificationApi = {
+  consents: () =>
+    request<NotificationConsent[]>("GET", "/users/me/notifications"),
+  setConsent: (type: EmailNotificationType, consented: boolean) =>
+    request<NotificationConsent>("PUT", `/users/me/notifications/${type}`, { consented }),
+  channels: () =>
+    request<NotificationChannel[]>("GET", "/users/me/notification-channels"),
+  createChannel: (input: NotificationChannelInput) =>
+    request<NotificationChannel>("POST", "/users/me/notification-channels", input),
+  updateChannel: (id: number, input: NotificationChannelInput) =>
+    request<NotificationChannel>("PUT", `/users/me/notification-channels/${id}`, input),
+  deleteChannel: (id: number) =>
+    request<void>("DELETE", `/users/me/notification-channels/${id}`),
+  testChannel: (id: number) =>
+    request<ChannelTestResult>("POST", `/users/me/notification-channels/${id}/test`),
+  newSigningSecret: (id: number) =>
+    request<{ signingSecret: string }>("POST", `/users/me/notification-channels/${id}/signing-secret`),
+  unsubscribe: (token: string) =>
+    request<UnsubscribeResult>("POST", `/notifications/unsubscribe?token=${encodeURIComponent(token)}`),
 }

@@ -992,3 +992,92 @@ export interface BioButtonClicks {
 export interface ApiKeysDeleted {
   deleted: number
 }
+
+export type EmailNotificationType = "DEAD_LINK_EMAIL" | "WEEKLY_SUMMARY_EMAIL" | "EXPIRY_REMINDER_EMAIL"
+
+export type ChannelEvent = "LINK_DEAD" | "LINK_BACK" | "DAILY_SUMMARY" | "WEEKLY_SUMMARY"
+
+export type ChannelType = "DISCORD" | "SLACK" | "TELEGRAM" | "NTFY" | "WEBHOOK"
+
+export type DestinationStatus = "404" | "410" | "nxdomain" | "refused" | "tls"
+
+export interface NotificationConsent {
+  type: EmailNotificationType
+  consented: boolean
+  grantedAt: string | null
+  description: string
+}
+
+export interface ChannelLastDelivery {
+  status: "SENT" | "FAILED"
+  at: string
+  httpStatus: number | null
+  error: string | null
+}
+
+export interface NotificationChannel {
+  id: number
+  name: string
+  type: ChannelType
+  enabled: boolean
+  events: ChannelEvent[]
+  maskedTarget: string
+  chatId: string | null
+  hasAccessToken: boolean
+  autoDisabledAt: string | null
+  lastDelivery: ChannelLastDelivery | null
+  createdAt: string
+  updatedAt: string
+  signingSecret: string | null
+}
+
+export interface NotificationChannelInput {
+  name: string
+  type: ChannelType
+  enabled: boolean
+  events: ChannelEvent[]
+  target?: string | null
+  botToken?: string | null
+  chatId?: string | null
+  accessToken?: string | null
+}
+
+export interface ChannelTestResult {
+  delivered: boolean
+  httpStatus: number | null
+  error: string | null
+}
+
+export interface UnsubscribeResult {
+  type: EmailNotificationType
+  alreadyOff: boolean
+}
+
+export interface DestinationHealth {
+  deadSince: string
+  lastStatus: DestinationStatus
+}
+
+export interface Url {
+  destinationHealth?: DestinationHealth | null
+}
+
+export interface UrlResponse {
+  destinationHealth?: DestinationHealth | null
+}
+
+export interface AnalyticsLinkSummary {
+  destinationHealth?: DestinationHealth | null
+}
+
+export interface LinksStats {
+  deadDestinations?: { total: number; anonymous: number }
+}
+
+export interface UsersStats {
+  notifications?: { consents: CountEntry[]; channels: CountEntry[]; autoDisabledChannels: number }
+}
+
+export interface UrlFilters {
+  deadDestination?: boolean
+}

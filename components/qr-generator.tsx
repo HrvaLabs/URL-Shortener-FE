@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, Copy, QrCode } from "lucide-react"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { QrCustomizer } from "@/components/qr-customizer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
@@ -28,18 +29,28 @@ export function QrGenerator() {
   const [typed, setTyped] = useState("")
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
   const [copied, setCopied] = useState(false)
+  const [refusal, setRefusal] = useState<string | null>(null)
+  const resultRef = useRef<HTMLParagraphElement>(null)
   const address = withScheme(typed)
   const lengthError = destinationLengthError(typed)
   const useShort = shortLink !== null && shortLink.destination === address
   const value = useShort ? shortLink.url : address
 
+  useEffect(() => {
+    if (useShort) resultRef.current?.focus()
+  }, [useShort])
+
   const shorten = async () => {
-    if (!address || lengthError || createUrl.isPending) return
+    if (!address || lengthError || createUrl.isPending || refusal) return
     try {
       const created = await createUrl.mutateAsync({ longUrl: address })
       setShortLink({ destination: address, url: formatShortUrl(created.shortUrl) })
       setCopied(false)
     } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        setRefusal(err.message)
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     }
   }
@@ -86,7 +97,7 @@ export function QrGenerator() {
         <div className="mt-6 border-t pt-5">
           {useShort ? (
             <div className="space-y-2 text-sm">
-              <p className="font-medium">The code now opens your short link:</p>
+              <p ref={resultRef} tabIndex={-1} className="font-medium outline-hidden">The code now opens your short link:</p>
               <div className="flex items-center gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
                 <span className="min-w-0 flex-1 font-mono [overflow-wrap:anywhere]">{shortLink.url}</span>
                 <Button type="button" variant="ghost" size="sm" className="shrink-0 gap-1.5" onClick={() => copy(shortLink.url)}>
@@ -107,16 +118,20 @@ export function QrGenerator() {
               <p className="text-muted-foreground">
                 Want a shorter code, with scans counted? Make it a hrva.cc short link first.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={shorten}
-                aria-disabled={createUrl.isPending}
-                aria-busy={createUrl.isPending}
-                className="shrink-0"
-              >
-                {createUrl.isPending ? "Shortening..." : "Use a short link"}
-              </Button>
+              {refusal ? (
+                <p role="alert" className="text-foreground">{refusal}</p>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={shorten}
+                  aria-disabled={createUrl.isPending}
+                  aria-busy={createUrl.isPending}
+                  className="shrink-0"
+                >
+                  {createUrl.isPending ? "Shortening..." : "Use a short link"}
+                </Button>
+              )}
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { UtmFields } from "@/components/utm-fields"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
@@ -46,6 +47,8 @@ export function UtmBuilder() {
   const [utm, setUtm] = useState<UtmValues>({})
   const [open, setOpen] = useState(true)
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
+  const [refusal, setRefusal] = useState<string | null>(null)
+  const resultRef = useRef<HTMLParagraphElement>(null)
   const lengthError = destinationLengthError(typed)
   const sent = typed.trim() ? destinationToSend(typed, open, utm) : null
   const tagged = sent === null ? null : withScheme(sent)
@@ -53,12 +56,20 @@ export function UtmBuilder() {
   const ready = Boolean(tagged) && !lengthError && !tooLong && open && hasUtmValues(utm)
   const shortFor = ready && shortLink?.destination === tagged ? shortLink.url : null
 
+  useEffect(() => {
+    if (shortFor) resultRef.current?.focus()
+  }, [shortFor])
+
   const shorten = async () => {
-    if (!ready || !tagged || createUrl.isPending) return
+    if (!ready || !tagged || createUrl.isPending || refusal) return
     try {
       const created = await createUrl.mutateAsync({ longUrl: tagged })
       setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl) })
     } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        setRefusal(err.message)
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     }
   }
@@ -75,12 +86,13 @@ export function UtmBuilder() {
         placeholder="https://shop.example/sale"
         value={typed}
         onChange={(e) => setTyped(e.target.value)}
+        aria-describedby={lengthError ? `${id}-error` : undefined}
         className="mt-2 h-11"
       />
-      {lengthError && <p className="mt-2 text-sm text-destructive">{lengthError}</p>}
+      {lengthError && <p id={`${id}-error`} className="mt-2 text-sm text-destructive">{lengthError}</p>}
 
       <div className="mt-5">
-        <UtmFields destination={typed} value={utm} onChange={setUtm} open={open} onOpenChange={setOpen} />
+        <UtmFields destination={typed} value={utm} onChange={setUtm} open={open} onOpenChange={setOpen} variant="tool" />
       </div>
 
       <div className="mt-6 border-t pt-5">
@@ -92,7 +104,7 @@ export function UtmBuilder() {
             </div>
             {shortFor ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Short link</p>
+                <p ref={resultRef} tabIndex={-1} className="text-sm font-medium outline-hidden">Short link</p>
                 <CopyLine text={shortFor} label="short link" />
                 <p className="text-sm text-muted-foreground">
                   {user ? (
@@ -105,16 +117,20 @@ export function UtmBuilder() {
             ) : (
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={shorten}
-                  aria-disabled={createUrl.isPending}
-                  aria-busy={createUrl.isPending}
-                  className="shrink-0"
-                >
-                  {createUrl.isPending ? "Shortening..." : "Shorten it"}
-                </Button>
+                {refusal ? (
+                  <p role="alert" className="text-foreground">{refusal}</p>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={shorten}
+                    aria-disabled={createUrl.isPending}
+                    aria-busy={createUrl.isPending}
+                    className="shrink-0"
+                  >
+                    {createUrl.isPending ? "Shortening..." : "Shorten it"}
+                  </Button>
+                )}
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useEffectEvent, useId, useRef, useState, type ReactNode } from "react"
+import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react"
 import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ interface UtmFieldsProps {
   onChange: (next: UtmValues) => void
   open: boolean
   onOpenChange: (open: boolean) => void
-  variant?: "home" | "dialog" | "admin"
+  variant?: "home" | "tool" | "dialog" | "admin"
 }
 
 interface UtmField {
@@ -53,12 +53,30 @@ const OTHER_FIELDS: UtmField[] = [
 
 const chipLabels: Partial<Record<string, string>> = { x: "X (Twitter)" }
 
+type RecentValues = Record<UtmKey, string[]>
+
+let recentKey = ""
+let recentCache: RecentValues | null = null
+
+const readRecent = (): RecentValues => {
+  const next = recentUtm()
+  const key = JSON.stringify(next)
+  if (recentCache === null || key !== recentKey) {
+    recentKey = key
+    recentCache = next
+  }
+  return recentCache
+}
+
+const noRecent = (): RecentValues | null => null
+const subscribeToNothing = () => () => {}
+
 export function UtmFields({ destination, value, onChange, open, onOpenChange, variant = "home" }: UtmFieldsProps) {
   const id = useId()
   const panelId = `${id}-panel`
   const toggleRef = useRef<HTMLButtonElement>(null)
   const [chipMedium, setChipMedium] = useState<string | null>(null)
-  const inDialog = variant !== "home"
+  const inDialog = variant === "dialog" || variant === "admin"
   const noun = variant === "admin" ? "destination" : "long URL"
   const target = withScheme(destination)
   const found = readUtm(target)
@@ -70,7 +88,7 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
   const tooLong = tooLongWithUtm(destination, destinationToSend(destination, true, value))
   const missingSource = !value.utm_source?.trim() && Boolean(value.utm_medium?.trim() || value.utm_campaign?.trim())
   const notAdded = open ? 0 : valuesNotAdded(value, found)
-  const recent = open ? recentUtm() : null
+  const recent = useSyncExternalStore(subscribeToNothing, open ? readRecent : noRecent, noRecent)
   const canFill = !hasUtmValues(value) && hasUtmValues(found)
 
   const followFoundTags = useEffectEvent(() => {
@@ -180,8 +198,18 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
 
       <div id={panelId} hidden={!open} className="mt-3 space-y-3">
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Adds UTM parameters to the {noun} so your analytics tool can tell where visitors came from. Your analytics tool reads
-          them; hrva.cc keeps them in the link and lists them on its analytics page.{" "}
+          {variant === "tool" ? (
+            <>
+              Adds UTM parameters to the long URL so your analytics tool can tell where visitors came from. Your analytics
+              tool reads them. hrva.cc only sees them if you shorten the link; then it keeps them in the short link&apos;s
+              destination and, with an account, lists them on its analytics page.
+            </>
+          ) : (
+            <>
+              Adds UTM parameters to the {noun} so your analytics tool can tell where visitors came from. Your analytics tool
+              reads them; hrva.cc keeps them in the link and, with an account, lists them on its analytics page.
+            </>
+          )}{" "}
           <Link href="/help/utm" target="_blank" className="text-brand-link font-medium">
             What are UTM tags?<span className="sr-only"> (opens in a new tab)</span>
           </Link>

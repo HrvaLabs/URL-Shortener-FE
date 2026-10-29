@@ -16,6 +16,19 @@ export const EMAIL_NOTIFICATION_NOUNS: Record<EmailNotificationType, string> = {
   EXPIRY_REMINDER_EMAIL: "expiry reminder emails",
 }
 
+export const unsubscribeTokenType = (token: string): EmailNotificationType | null => {
+  const payload = token.split(".")[0] ?? ""
+  if (!/^[A-Za-z0-9_-]+$/.test(payload)) return null
+  let decoded: string
+  try {
+    decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "="))
+  } catch {
+    return null
+  }
+  const type = /^v1\.\d+\.([A-Z_]+)$/.exec(decoded)?.[1]
+  return type && Object.hasOwn(EMAIL_NOTIFICATION_NOUNS, type) ? (type as EmailNotificationType) : null
+}
+
 export const CHANNEL_EVENT_LABELS: Record<ChannelEvent, string> = {
   LINK_DEAD: "A link stopped working",
   LINK_BACK: "A link works again",

@@ -155,7 +155,8 @@ export default function NotificationsHelpPage() {
                 </li>
               </ol>
               <p>
-                If that email was already off, the page says <strong>These emails were already off.</strong> You
+                If that email was already off, the page says so, for example{" "}
+                <strong>Weekly summary emails were already off.</strong> You
                 don&apos;t need to sign in. Mail apps that show their own unsubscribe button turn the email off in
                 one click too. Or turn the switch off in <Link href="/dashboard/settings#notifications">Settings</Link>,
                 under <strong>Notifications</strong>.
@@ -187,8 +188,8 @@ export default function NotificationsHelpPage() {
               </p>
               <p>
                 The badge goes away by itself on the first night the destination works again. If the page moved,
-                edit the link and give it the new destination: that clears the badge at once, and the new
-                destination is checked from the next night.
+                shorten its new address and turn the old link off. You can&apos;t change where an existing short
+                link points; only an admin can, and that clears the badge at once.
               </p>
               <p>
                 Links made without an account are checked too, and only the admin sees their result.
@@ -261,9 +262,9 @@ export default function NotificationsHelpPage() {
               <p>
                 Each channel shows its address masked, its events and its last delivery:{" "}
                 <strong>No deliveries yet.</strong>, <strong>Last delivered</strong> with the time, or{" "}
-                <strong>Last delivery failed</strong> with the time and the reason. The <strong>On</strong>{" "}
-                switch pauses a channel without deleting it. <strong>Edit</strong> changes its name, address and
-                events; saved addresses and tokens stay hidden, so the fields say{" "}
+                <strong>Last delivery failed</strong> with the time and the reason. Its switch pauses the channel
+                without deleting it: <strong>On</strong> turns to <strong>Off</strong>. <strong>Edit</strong> changes
+                its name, address and events; saved addresses and tokens stay hidden, so the fields say{" "}
                 <strong>Saved. Leave empty to keep it.</strong> A channel&apos;s type can&apos;t be changed: to
                 change the type, add a new channel. <strong>Delete</strong> removes the channel, and it stops
                 getting notifications at once.
@@ -438,7 +439,7 @@ export default function NotificationsHelpPage() {
                   Use <strong>Send test</strong> to check it. Tests don&apos;t count towards the 10 days.
                 </li>
                 <li>
-                  Turn the channel back on with its <strong>On</strong> switch.
+                  Turn the channel back on with its switch, so it says <strong>On</strong> again.
                 </li>
               </ol>
 

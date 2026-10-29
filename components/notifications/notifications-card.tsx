@@ -22,7 +22,7 @@ export function NotificationsCard() {
   }, [isPending])
 
   return (
-    <Card ref={cardRef} id={CARD_ID} className="scroll-mt-24">
+    <Card ref={cardRef} id={CARD_ID} className="scroll-mt-40 md:scroll-mt-24">
       <CardHeader>
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <CardTitle ref={titleRef} tabIndex={-1} className="text-base focus-visible:ring-0 focus-visible:ring-offset-0">

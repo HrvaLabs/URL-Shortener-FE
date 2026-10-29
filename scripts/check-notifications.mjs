@@ -17,6 +17,7 @@ const {
   MAX_CHANNELS,
   deliveryLine,
   detectChannelType,
+  unsubscribeTokenType,
 } = notifications
 
 const check = (name, run) => {
@@ -206,6 +207,20 @@ check("deliveryLine for an auto-disabled channel", () => {
     lastDelivery: { status: "FAILED", at: "2026-10-20T03:00:00", httpStatus: 404, error: "The channel answered with HTTP 404. Check the URL." },
   })
   assert.equal(deliveryLine(disabled, NOW), "Turned off on Oct 20, 2026 after failing for 10 days. Fix the channel, then turn it on.")
+})
+
+check("unsubscribeTokenType reads the email type from the token", () => {
+  const token = (payload) => `${Buffer.from(payload).toString("base64url")}.c2lnbmF0dXJl`
+  assert.equal(unsubscribeTokenType(token("v1.2.WEEKLY_SUMMARY_EMAIL")), "WEEKLY_SUMMARY_EMAIL")
+  assert.equal(unsubscribeTokenType(token("v1.7.DEAD_LINK_EMAIL")), "DEAD_LINK_EMAIL")
+  assert.equal(unsubscribeTokenType(token("v1.42.EXPIRY_REMINDER_EMAIL")), "EXPIRY_REMINDER_EMAIL")
+  assert.equal(unsubscribeTokenType(token("v1.2.LINK_DEAD")), null)
+  assert.equal(unsubscribeTokenType(token("v2.2.WEEKLY_SUMMARY_EMAIL")), null)
+  assert.equal(unsubscribeTokenType(token("v1.x.WEEKLY_SUMMARY_EMAIL")), null)
+  assert.equal(unsubscribeTokenType(token("v1.2.CONSTRUCTOR")), null)
+  assert.equal(unsubscribeTokenType("garbage"), null)
+  assert.equal(unsubscribeTokenType("@@@.x"), null)
+  assert.equal(unsubscribeTokenType(""), null)
 })
 
 check("strings are ASCII", () => {

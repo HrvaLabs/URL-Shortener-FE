@@ -120,6 +120,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
     setSwitching((current) => ({ ...current, [channel.id]: enabled }))
     try {
       await update.mutateAsync({ id: channel.id, input: inputOf(channel, enabled) })
+      setTests((current) => withoutKey(current, channel.id))
     } catch (err) {
       toast.error(errorText(err))
     } finally {
@@ -187,6 +188,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
 
   const openDialog = (mode: DialogState["mode"], trigger: HTMLElement, channel?: NotificationChannel) => {
     dialogTrigger.current = trigger
+    if (channel) setTests((current) => withoutKey(current, channel.id))
     setDialog((current) => ({ mode, channel, key: current.key + 1 }))
     setDialogOpen(true)
   }
@@ -375,9 +377,11 @@ function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, ro
           ))}
         </ul>
       )}
-      <p role="status" className={failed ? "text-xs text-destructive [overflow-wrap:anywhere]" : "text-xs text-muted-foreground [overflow-wrap:anywhere]"}>
-        {deliveryLine(channel, now)}
-      </p>
+      {(!testOutcome || channel.autoDisabledAt != null) && (
+        <p role="status" className={failed ? "text-xs text-destructive [overflow-wrap:anywhere]" : "text-xs text-muted-foreground [overflow-wrap:anywhere]"}>
+          {deliveryLine(channel, now)}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <div className="mr-1 flex items-center gap-2">
           <Switch
@@ -389,7 +393,7 @@ function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, ro
             onCheckedChange={(checked) => { if (!switching) onToggle(checked) }}
             className="aria-disabled:opacity-60"
           />
-          <span aria-hidden="true" className="text-sm">On</span>
+          <span aria-hidden="true" className="text-sm">{enabled ? "On" : "Off"}</span>
         </div>
         <Button
           id={testButtonId(channel.id)}

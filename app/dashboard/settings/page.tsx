@@ -189,7 +189,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Your data</CardTitle>
-          <CardDescription>Download all your data (profile, URLs, API keys, passkeys, emails) as JSON</CardDescription>
+          <CardDescription>Download all your data (profile, URLs, API keys, passkeys, emails, notification settings) as JSON</CardDescription>
         </CardHeader>
         <CardContent>
           <Button type="button" variant="outline" size="sm" disabled={exportLoading} onClick={handleExport} className="gap-1.5">
@@ -202,7 +202,7 @@ export default function SettingsPage() {
       <Card className="border-destructive/30">
         <CardHeader>
           <CardTitle className="text-base text-destructive">Delete account</CardTitle>
-          <CardDescription>Permanently delete your account, links, API keys and passkeys. This cannot be undone.</CardDescription>
+          <CardDescription>Permanently delete your account, links, API keys, passkeys and notification channels. This cannot be undone.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

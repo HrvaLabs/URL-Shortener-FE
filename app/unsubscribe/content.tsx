@@ -6,12 +6,42 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ApiError, notificationApi } from "@/lib/api-client"
-import { EMAIL_NOTIFICATION_NOUNS } from "@/lib/notifications"
+import { EMAIL_NOTIFICATION_NOUNS, unsubscribeTokenType } from "@/lib/notifications"
 import type { UnsubscribeResult } from "@/lib/types"
 
 const SETTINGS_HREF = "/dashboard/settings#notifications"
 
 const INVALID_LINK = "This unsubscribe link isn't valid. You can turn emails off in Settings, under Notifications."
+
+const DONE_KEY = "hrva:unsubscribed"
+
+const sentenceCase = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+
+const rememberDone = (result: UnsubscribeResult) => {
+  try {
+    window.sessionStorage.setItem(DONE_KEY, JSON.stringify({ type: result.type, alreadyOff: result.alreadyOff }))
+  } catch {
+    return
+  }
+}
+
+const rememberedDone = (): UnsubscribeResult | null => {
+  try {
+    const stored: unknown = JSON.parse(window.sessionStorage.getItem(DONE_KEY) ?? "null")
+    if (stored === null || typeof stored !== "object") return null
+    const { type, alreadyOff } = stored as Record<string, unknown>
+    if (typeof type !== "string" || !Object.hasOwn(EMAIL_NOTIFICATION_NOUNS, type) || typeof alreadyOff !== "boolean") return null
+    return { type: type as UnsubscribeResult["type"], alreadyOff }
+  } catch {
+    return null
+  }
+}
+
+const initialState = (token: string): State => {
+  if (token) return { kind: "idle" }
+  const done = typeof window === "undefined" ? null : rememberedDone()
+  return done ? { kind: "done", result: done } : { kind: "invalid", message: INVALID_LINK }
+}
 
 type State =
   | { kind: "idle" }
@@ -21,7 +51,7 @@ type State =
 
 export function UnsubscribeContent() {
   const token = useSearchParams().get("token")?.trim() ?? ""
-  const [state, setState] = useState<State>(token ? { kind: "idle" } : { kind: "invalid", message: INVALID_LINK })
+  const [state, setState] = useState<State>(() => initialState(token))
   const [sending, setSending] = useState(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
@@ -39,7 +69,10 @@ export function UnsubscribeContent() {
       setState(next)
       setSending(false)
     })
-    if (next.kind === "done") window.history.replaceState(null, "", "/unsubscribe")
+    if (next.kind === "done") {
+      rememberDone(next.result)
+      window.history.replaceState(null, "", "/unsubscribe")
+    }
     if (next.kind === "done" || next.kind === "invalid") headingRef.current?.focus()
   }
 
@@ -57,7 +90,7 @@ export function UnsubscribeContent() {
     const noun = EMAIL_NOTIFICATION_NOUNS[state.result.type] ?? "these emails"
     return (
       <div className="space-y-3">
-        {heading(state.result.alreadyOff ? "These emails were already off." : `Done. You won't get ${noun} any more.`)}
+        {heading(state.result.alreadyOff ? `${sentenceCase(noun)} were already off.` : `Done. You won't get ${noun} any more.`)}
         <p className="text-sm text-muted-foreground">You can turn them back on any time in {settingsLink}.</p>
       </div>
     )
@@ -73,10 +106,13 @@ export function UnsubscribeContent() {
     )
   }
 
+  const tokenType = unsubscribeTokenType(token)
+  const question = tokenType ? `Stop getting ${EMAIL_NOTIFICATION_NOUNS[tokenType]} from hrva.cc?` : "Stop getting this kind of email from hrva.cc?"
+
   return (
     <div className="space-y-3">
       {heading("Unsubscribe")}
-      <p className="text-sm text-muted-foreground">Stop getting this kind of email from hrva.cc?</p>
+      <p className="text-sm text-muted-foreground">{question}</p>
       {state.kind === "failed" && <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{state.message}</p>}
       <Button
         type="button"

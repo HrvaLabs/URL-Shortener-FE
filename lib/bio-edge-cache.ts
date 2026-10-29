@@ -4,9 +4,7 @@ export const BIO_CACHE_STATUS_HEADER = "X-Bio-Cache"
 
 export const BIO_CACHE_CONTROL = `public, max-age=0, s-maxage=${BIO_EDGE_CACHE_SECONDS}`
 
-const BIO_PAGE_PATH = /^\/bio\/[a-z0-9_-]{3,30}$/
-
-const BIO_IMAGE_PATH = /^\/bio\/[a-z0-9_-]{3,30}\/opengraph-image$/
+const BIO_URL = /^https?:\/\/[^/?#]+\/bio\/[a-z0-9_-]{3,30}(\/opengraph-image)?(?=[?#]|$)/
 
 const ROUTER_HEADERS = ["rsc", "next-router-prefetch", "next-router-state-tree", "next-router-segment-prefetch", "next-action"]
 
@@ -22,14 +20,14 @@ type WaitUntil = { waitUntil: (promise: Promise<unknown>) => void }
 type VersionedEnv = { CF_VERSION_METADATA?: { id?: string } }
 
 export const bioCacheKey = (request: Request, version: string | undefined): string | null => {
-  if (request.method !== "GET") return null
+  const match = BIO_URL.exec(request.url)
+  if (!match || !version || request.method !== "GET") return null
   if (ROUTER_HEADERS.some((header) => request.headers.has(header))) return null
   const url = new URL(request.url)
   if (url.searchParams.has("_rsc")) return null
-  const page = BIO_PAGE_PATH.test(url.pathname)
-  if (!page && !BIO_IMAGE_PATH.test(url.pathname)) return null
+  const page = match[1] === undefined
   if (page && url.search) return null
-  return `${url.origin}${url.pathname}?v=${encodeURIComponent(version ?? "local")}`
+  return `${url.origin}${url.pathname}?v=${encodeURIComponent(version)}`
 }
 
 export const isStorableBioResponse = (response: Response): boolean =>

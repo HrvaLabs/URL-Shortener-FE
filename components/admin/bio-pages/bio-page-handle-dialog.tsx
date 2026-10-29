@@ -106,7 +106,7 @@ function HandleForm({ currentHandle, busy, onBusyChange, onCancel, onConfirm }: 
         </DialogTitle>
         <DialogDescription className="[overflow-wrap:anywhere]">
           {currentHandle
-            ? `${displayShareUrl(currentHandle, shortBase)} stops working right away, and @${currentHandle} is held for this page for 30 days.`
+            ? `${displayShareUrl(currentHandle, shortBase)} stops working within 5 minutes, and @${currentHandle} is held for this page for 30 days.`
             : "The page gets this address. The owner can change it later."}
         </DialogDescription>
       </DialogHeader>

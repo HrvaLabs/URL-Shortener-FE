@@ -16,6 +16,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
+import { adminBioPagePath } from "@/lib/bio"
 import { useAdminBioPages, useChangeBioPageHandle, useHideBioPage, useRevokeBioPageHandle, useUnhideBioPage, type AdminBioPageFilters } from "@/lib/hooks/useAdminBioPages"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -355,11 +356,11 @@ export function BioPagesLoading() {
 
 const buttonsText = (page: AdminBioPage) => `${page.visibleButtons.toLocaleString()} of ${page.buttons.toLocaleString()} shown`
 
-export function BioPageLink({ handle, className }: { handle: string | null; className?: string }) {
+export function BioPageLink({ handle, changedAt, className }: { handle: string | null; changedAt?: string | null; className?: string }) {
   if (!handle) return <span className={cn("block text-muted-foreground", className)}>No handle</span>
   return (
     <a
-      href={`/bio/${encodeURIComponent(handle)}`}
+      href={adminBioPagePath(handle, changedAt)}
       target="_blank"
       rel="noopener noreferrer"
       className={cn("inline-flex min-w-0 max-w-full items-baseline gap-1 font-mono text-[13px] font-medium text-brand hover:underline", className)}
@@ -374,7 +375,7 @@ export function BioPageLink({ handle, className }: { handle: string | null; clas
 function PageIdentity({ page }: { page: AdminBioPage }) {
   return (
     <div className="min-w-36 @lg:min-w-56">
-      <BioPageLink handle={page.handle} />
+      <BioPageLink handle={page.handle} changedAt={page.hiddenAt ?? page.updatedAt} />
       {page.displayName && <p dir="auto" className="mt-0.5 [overflow-wrap:anywhere]">{page.displayName}</p>}
     </div>
   )

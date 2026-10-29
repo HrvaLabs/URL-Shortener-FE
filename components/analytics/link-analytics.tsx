@@ -12,6 +12,7 @@ import { QrScansList } from "@/components/analytics/qr-scans-list"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
+import { useAuth } from "@/lib/auth-context"
 import { useUrlAnalytics } from "@/lib/hooks/useAnalytics"
 import type { AnalyticsLinkSummary, AnalyticsRange, UrlAnalytics } from "@/lib/types"
 import { cn, formatDate, formatDateTime, formatShortUrl, formatTimeAgo } from "@/lib/utils"
@@ -61,6 +62,7 @@ interface LinkAnalyticsBodyProps {
 }
 
 function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyticsBodyProps) {
+  const { isAdmin } = useAuth()
   const { link, totals, daily, breakdowns } = data
   const empty = totals.clicks + totals.botClicks === 0
   const historyStart = formatDate(analyticsDay(ANALYTICS_HISTORY_START))
@@ -78,7 +80,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
               <span className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">{link.destinationHost}</span>
             )}
           </div>
-          <DestinationHealthBadge health={link.destinationHealth} active={link.status === "ACTIVE"} emailPrompt />
+          <DestinationHealthBadge health={link.destinationHealth} active={link.status === "ACTIVE"} emailPrompt={!isAdmin} />
         </div>
         <dl className="flex flex-wrap gap-x-10 gap-y-4 text-sm">
           <div>

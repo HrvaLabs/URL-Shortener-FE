@@ -49,6 +49,7 @@ const {
   linkStateLabel,
   newBioButton,
   freshBioPagePath,
+  adminBioPagePath,
 } = await import("../lib/bio.ts")
 
 const { BIO_CACHE_CONTROL, BIO_CACHE_STATUS_HEADER, bioCacheKey, isStorableBioResponse, withBioEdgeCache } = await import("../lib/bio-edge-cache.ts")
@@ -995,10 +996,18 @@ check("freshBioPagePath adds the save time so the editor's View page skips the e
   assert.equal(freshBioPagePath("ana", undefined), "/bio/ana")
 })
 
+check("adminBioPagePath always skips the edge cache", () => {
+  assert.equal(adminBioPagePath("ana", "2026-10-29T10:15:30"), "/bio/ana?saved=2026-10-29T10%3A15%3A30")
+  assert.equal(adminBioPagePath("ana", null), "/bio/ana?admin")
+  assert.equal(adminBioPagePath("ana", undefined), "/bio/ana?admin")
+})
+
 check("bioCacheKey takes only plain GETs of a bio page or its share image", () => {
   const get = (path, headers = {}, method = "GET") => new Request(`https://app.hrva.cc${path}`, { method, headers })
   assert.equal(bioCacheKey(get("/bio/ana"), "v1"), "https://app.hrva.cc/bio/ana?v=v1")
-  assert.equal(bioCacheKey(get("/bio/ana"), undefined), "https://app.hrva.cc/bio/ana?v=local")
+  assert.equal(bioCacheKey(get("/bio/ana"), undefined), null)
+  assert.equal(bioCacheKey(get("/bio/ana"), ""), null)
+  assert.equal(bioCacheKey(new Request("https://app.hrva.cc/bio/ana?"), "v1"), "https://app.hrva.cc/bio/ana?v=v1")
   assert.equal(bioCacheKey(get("/bio/ana", { "User-Agent": "facebookexternalhit/1.1", Cookie: "a=b" }), "v1"), "https://app.hrva.cc/bio/ana?v=v1")
   assert.equal(bioCacheKey(get("/bio/ana/opengraph-image?eb30aa1b04ca6d45"), "v1"), "https://app.hrva.cc/bio/ana/opengraph-image?v=v1")
   assert.equal(bioCacheKey(get("/bio/ana?saved=2026"), "v1"), null)
@@ -1081,6 +1090,11 @@ const runEdgeCache = async () => {
   const otherVersion = await worker(new Request("https://app.hrva.cc/bio/ana"), { CF_VERSION_METADATA: { id: "v2" } }, context)
   await Promise.all(pending.splice(0))
   assert.equal(otherVersion.headers.get(BIO_CACHE_STATUS_HEADER), "MISS")
+
+  const unversioned = await worker(new Request("https://app.hrva.cc/bio/ana"), {}, context)
+  await Promise.all(pending.splice(0))
+  assert.equal(unversioned.headers.get(BIO_CACHE_STATUS_HEADER), null)
+  assert.match(unversioned.headers.get("Cache-Control"), /no-store/)
 
   delete globalThis.caches
   const withoutCache = await call("/bio/ana")

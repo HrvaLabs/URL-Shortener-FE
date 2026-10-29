@@ -54,9 +54,9 @@ export default function PrivacyPage() {
                 When you register, we process your email address, an optional display name, and your
                 password, which is stored only as a salted one-way hash. If you sign in with Google,
                 we receive your name and email address from that account instead of a password. If
-                you sign in with GitHub, we receive your username, your name and the email addresses
-                on that account instead of a password, and use only its verified primary email
-                address. Two-step verification is available whether you sign in with a password,
+                you sign in with GitHub, we receive your public profile (username and name) and the
+                email addresses on the account instead of a password; hrva.cc uses only the verified
+                primary one. Two-step verification is available whether you sign in with a password,
                 Google or GitHub. If you turn it on, we store the shared secret of your authenticator
                 app, if you use one, and one-way hashes of your recovery codes, so we can verify your
                 codes. If you add a passkey or security key, we store its public key and a few

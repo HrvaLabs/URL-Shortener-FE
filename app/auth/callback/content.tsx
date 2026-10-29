@@ -21,6 +21,7 @@ const messages: Record<string, string> = {
   github_email_unverified: "Your GitHub account has no verified email address. Verify one on GitHub, or sign in another way.",
   google_email_unverified: "Your Google account's email address isn't verified.",
   registration_disabled: "Registrations are currently disabled",
+  provider_error: "Signing in didn't work. Try again, or sign in another way.",
 }
 
 type Callback =

@@ -6,7 +6,7 @@ import { StaticPage, SummaryBox } from "@/components/static-page"
 import { AUTHOR_NAME, AUTHOR_URL, PUBLISHER_URL, absoluteUrl, pageMetadata } from "@/lib/seo"
 
 const description =
-  "About hrva.cc: a free, privacy-first, open-source URL shortener and HrvaLabs hobby project from Croatia. Who runs it and how it is paid for."
+  "About hrva.cc: a free, open-source URL shortener from HrvaLabs. Who runs it and how it's paid for."
 
 export const metadata: Metadata = pageMetadata({ title: "About hrva.cc: who runs this free URL shortener", description, path: "/about", absolute: true })
 

@@ -17,7 +17,7 @@ export const SLOGAN = "Counts clicks, not people."
 export const HOME_TITLE_TEXT = "Free URL shortener that counts clicks, not people"
 export const HOME_TITLE = `${HOME_TITLE_TEXT} ${MIDDLE_DOT} ${SITE_NAME}`
 export const HOME_DESCRIPTION =
-  "Free, ad-free URL shortener from Croatia. Visits are counted without storing IPs. Open source, with link-in-bio pages, QR codes and an MCP server for Claude and ChatGPT."
+  "Free, ad-free URL shortener from Croatia. Clicks are counted without storing IPs. Open source, with link-in-bio pages, QR codes and an MCP server for Claude and ChatGPT."
 export const ENTITY_SENTENCE =
   "hrva.cc is a free, open-source URL shortener from HrvaLabs, with link-in-bio pages and an MCP server for AI assistants."
 

@@ -20,6 +20,10 @@ Shortening works without an account. A free account adds custom aliases, visit l
 - [Frontend source code](https://github.com/HrvaLabs/URL-Shortener-FE): Next.js web app
 - [Status page](https://status.hrva.cc/status/url): uptime and incidents
 
+## Free tools
+
+- [QR code generator](https://app.hrva.cc/qr): no signup; type an address, pick colours and size, download PNG or SVG, made in the browser
+
 ## Guides
 
 - [Help index](https://app.hrva.cc/help): guides to every feature

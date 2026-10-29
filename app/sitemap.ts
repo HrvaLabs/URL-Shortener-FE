@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/about"),
     dated("/privacy-first-url-shortener"),
     dated("/developers"),
+    dated("/qr"),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

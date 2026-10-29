@@ -8,6 +8,7 @@ const columns = [
     links: [
       { href: "/#features", label: "Features" },
       { href: "/help/link-in-bio", label: "Bio pages" },
+      { href: "/qr", label: "QR code generator" },
       { href: "/validate", label: "Check a link" },
       { href: "/stats", label: "Public stats" },
       { href: "/changelog", label: "Changelog" },

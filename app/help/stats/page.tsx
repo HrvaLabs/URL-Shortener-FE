@@ -91,6 +91,10 @@ export default function StatsHelpPage() {
                 clicks. A link with a password counts every visit, scans included, as another click.
               </p>
               <p>Bots and link previews are never counted as scans or clicks.</p>
+              <p>
+                The free <Link href="/qr">QR code generator</Link> works without an account. Its codes point straight
+                at the address you type, so their scans reach hrva.cc only when that address is a hrva.cc short link.
+              </p>
 
               <h2 id="privacy">Privacy</h2>
               <p>

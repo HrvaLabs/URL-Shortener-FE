@@ -12,9 +12,10 @@ type Level = "L" | "M" | "Q" | "H"
 interface QrCustomizerProps {
   value: string
   filename?: string
+  marker?: boolean
 }
 
-export function QrCustomizer({ value, filename = "qr-code" }: QrCustomizerProps) {
+export function QrCustomizer({ value, filename = "qr-code", marker = true }: QrCustomizerProps) {
   const [fgColor, setFgColor] = useState("#0e0e11")
   const [bgColor, setBgColor] = useState("#ffffff")
   const [transparent, setTransparent] = useState(false)
@@ -26,6 +27,7 @@ export function QrCustomizer({ value, filename = "qr-code" }: QrCustomizerProps)
   const svgWrapRef = useRef<HTMLDivElement>(null)
 
   const effectiveBg = transparent ? "transparent" : bgColor
+  const encoded = marker ? withQrMarker(value) : value
 
   const downloadPng = () => {
     const canvas = canvasWrapRef.current?.querySelector("canvas")
@@ -52,15 +54,17 @@ export function QrCustomizer({ value, filename = "qr-code" }: QrCustomizerProps)
   return (
     <div className="flex flex-col items-center gap-4">
       <div ref={canvasWrapRef} className="max-w-full overflow-hidden rounded-lg border p-2" style={{ background: transparent ? "transparent" : "#ffffff" }}>
-        <QRCodeCanvas value={withQrMarker(value)} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} style={{ maxWidth: "100%", height: "auto" }} />
+        <QRCodeCanvas value={encoded} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} style={{ maxWidth: "100%", height: "auto" }} />
       </div>
       {/* hidden SVG mirror for vector export */}
       <div ref={svgWrapRef} className="hidden">
-        <QRCodeSVG value={withQrMarker(value)} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} />
+        <QRCodeSVG value={encoded} size={size} fgColor={fgColor} bgColor={effectiveBg} level={level} marginSize={2} />
       </div>
-      <p className="text-center text-sm text-muted-foreground">
-        Scans of this code show as QR scans in the link&apos;s stats.
-      </p>
+      {marker && (
+        <p className="text-center text-sm text-muted-foreground">
+          Scans of this code show as QR scans in the link&apos;s stats.
+        </p>
+      )}
 
       <div className="w-full space-y-4">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">

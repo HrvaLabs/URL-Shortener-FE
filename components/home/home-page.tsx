@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import { cn, formatShortUrl } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
-import { HOME_HEADLINE } from "@/lib/seo"
+import { HOME_HEADLINE, MIDDLE_DOT } from "@/lib/seo"
 import { SALT_GRACE_SOURCE, VISITOR_HASH_SOURCE } from "@/lib/source-links"
 
 const PASSWORD_DOTS = String.fromCodePoint(0x2022).repeat(8)
@@ -54,6 +54,17 @@ function PublicHome() {
               </Link>{" "}
               for custom aliases, visit limits, expiry dates and analytics.
             </p>
+            <nav aria-label="Free tools" className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span>Also free:</span>
+              {freeTools.map((tool, index) => (
+                <Fragment key={tool.href}>
+                  {index > 0 && <span aria-hidden="true">{MIDDLE_DOT}</span>}
+                  <Link href={tool.href} className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                    {tool.label}
+                  </Link>
+                </Fragment>
+              ))}
+            </nav>
           </div>
 
           <DashboardPreview />
@@ -68,6 +79,12 @@ function PublicHome() {
     </>
   )
 }
+
+const freeTools = [
+  { href: "/qr", label: "QR code generator" },
+  { href: "/help/link-in-bio", label: "Bio pages" },
+  { href: "/developers", label: "API" },
+]
 
 const previewRows = [
   { alias: "cv", destination: "drive.google.com/file/d/1Xa9kQ2mZpL7/view", visits: "1,284", tags: ["personal"], status: "Active" },
@@ -231,7 +248,12 @@ function FeatureGrid() {
                 Pick colours and size, then download as PNG or SVG. Link analytics count scans apart from other clicks.{" "}
                 <Link href="/help/stats#qr-scans" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about QR scans</span>
+                </Link>{" "}
+                or{" "}
+                <Link href="/qr" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  make one now, no account needed
                 </Link>
+                .
               </>
             }
           >

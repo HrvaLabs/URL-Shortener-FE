@@ -3,7 +3,7 @@ export const CONTENT_UPDATED = {
   "/help": "2026-10-29",
   "/help/utm": "2026-10-26",
   "/help/passkeys": "2026-10-26",
-  "/help/stats": "2026-10-27",
+  "/help/stats": "2026-10-29",
   "/help/link-in-bio": "2026-10-27",
   "/help/notifications": "2026-10-29",
   "/mcp": "2026-10-29",
@@ -14,6 +14,7 @@ export const CONTENT_UPDATED = {
   "/about": "2026-10-29",
   "/privacy-first-url-shortener": "2026-10-29",
   "/developers": "2026-10-29",
+  "/qr": "2026-10-29",
 } as const
 
 export type DatedPath = keyof typeof CONTENT_UPDATED

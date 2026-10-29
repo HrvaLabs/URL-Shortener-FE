@@ -83,7 +83,7 @@ function PublicHome() {
 const freeTools = [
   { href: "/qr", label: "QR code generator" },
   { href: "/utm", label: "UTM builder" },
-  { href: "/help/link-in-bio", label: "Bio pages" },
+  { href: "/link-in-bio", label: "Bio pages" },
   { href: "/developers", label: "API" },
 ]
 
@@ -458,7 +458,7 @@ function FeatureGrid() {
               <>
                 One page with all your links at hrva.cc/@yourname, for your Instagram, TikTok or any other bio. Every button
                 is one of your checked short links.{" "}
-                <Link href="/help/link-in-bio" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                <Link href="/link-in-bio" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about bio pages</span>
                 </Link>
               </>

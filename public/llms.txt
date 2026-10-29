@@ -23,6 +23,7 @@ Shortening works without an account. A free account adds custom aliases, visit l
 ## Free tools
 
 - [QR code generator](https://app.hrva.cc/qr): no signup; type an address, pick colours and size, download PNG or SVG, made in the browser
+- [Free link in bio page](https://app.hrva.cc/link-in-bio): hrva.cc/@yourname with up to 30 buttons, each a checked short link, private view counts, no ads or trackers
 - [UTM builder](https://app.hrva.cc/utm): no signup; add UTM tags to any link, copy it, optionally shorten it
 
 ## Guides

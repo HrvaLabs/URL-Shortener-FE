@@ -16,6 +16,7 @@ export const CONTENT_UPDATED = {
   "/developers": "2026-10-29",
   "/qr": "2026-10-29",
   "/utm": "2026-10-29",
+  "/link-in-bio": "2026-10-29",
 } as const
 
 export type DatedPath = keyof typeof CONTENT_UPDATED

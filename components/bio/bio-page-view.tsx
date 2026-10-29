@@ -125,7 +125,7 @@ export function BioPageView({
           </Link>
         )}
         {isPublic ? (
-          <Link href="/" className={FOOTER_LINK_CLASSES}>
+          <Link href="/link-in-bio" className={FOOTER_LINK_CLASSES}>
             Made with hrva.cc
           </Link>
         ) : (

@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/developers"),
     dated("/qr"),
     dated("/utm"),
+    dated("/link-in-bio"),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ChannelList } from "@/components/notifications/channel-list"
 import { EmailNotifications } from "@/components/notifications/email-notifications"
 import { useNotificationConsents } from "@/lib/hooks/useNotifications"
 
@@ -33,6 +34,7 @@ export function NotificationsCard() {
       </CardHeader>
       <CardContent className="space-y-6">
         <EmailNotifications titleRef={titleRef} />
+        <ChannelList titleRef={titleRef} />
       </CardContent>
     </Card>
   )

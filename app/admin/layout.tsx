@@ -15,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user) router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
+      if (!user) router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`)
       else if (!isAdmin) router.push("/dashboard")
     }
   }, [user, isLoading, isAdmin, router, pathname, logoutDestination])

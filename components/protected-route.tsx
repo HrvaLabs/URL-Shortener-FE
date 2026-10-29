@@ -11,7 +11,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
+      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`)
     }
   }, [user, isLoading, router, pathname, logoutDestination])
 

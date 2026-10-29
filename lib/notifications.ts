@@ -10,6 +10,12 @@ export const EMAIL_NOTIFICATION_LABELS: Record<EmailNotificationType, string> = 
   EXPIRY_REMINDER_EMAIL: "Expiry reminders",
 }
 
+export const EMAIL_NOTIFICATION_NOUNS: Record<EmailNotificationType, string> = {
+  DEAD_LINK_EMAIL: "dead link emails",
+  WEEKLY_SUMMARY_EMAIL: "weekly summary emails",
+  EXPIRY_REMINDER_EMAIL: "expiry reminder emails",
+}
+
 export const CHANNEL_EVENT_LABELS: Record<ChannelEvent, string> = {
   LINK_DEAD: "A link stopped working",
   LINK_BACK: "A link works again",

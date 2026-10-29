@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useRef, useState, type ClipboardEvent, type FormEvent } from "react"
+import { useId, useRef, useState, type FormEvent } from "react"
 import { flushSync } from "react-dom"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -108,11 +108,6 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
     setType(next)
     setSuggestedType(null)
     setFieldErrors({})
-  }
-
-  const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
-    const detected = detectChannelType(event.clipboardData.getData("text"))
-    setSuggestedType(detected && detected !== type ? detected : null)
   }
 
   const switchToSuggested = () => {
@@ -258,14 +253,21 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
                       type={password && !visible ? "password" : field === "target" ? "url" : "text"}
                       inputMode={field === "target" ? "url" : undefined}
                       spellCheck={false}
-                      autoComplete="off"
+                      autoComplete={password ? "new-password" : "off"}
+                      data-1p-ignore={password || undefined}
+                      data-lpignore={password ? "true" : undefined}
+                      data-bwignore={password || undefined}
+                      data-protonpass-ignore={password ? "true" : undefined}
                       value={values[field]}
                       onChange={(event) => {
                         const next = event.target.value
                         setValues((current) => ({ ...current, [field]: next }))
                         clearError(field)
+                        if (field === "target") {
+                          const detected = detectChannelType(next)
+                          setSuggestedType(detected && detected !== type ? detected : null)
+                        }
                       }}
-                      onPaste={field === "target" ? handlePaste : undefined}
                       placeholder={saved ? SAVED_PLACEHOLDER : field === "target" ? option.targetPlaceholder : FIELD_PLACEHOLDERS[field]}
                       aria-invalid={fieldErrors[field] ? true : undefined}
                       aria-describedby={describedBy(field, savedMask && hintId(`${field}-saved`))}

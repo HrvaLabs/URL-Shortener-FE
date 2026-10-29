@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search)}`)
+      router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`)
     }
   }, [user, isLoading, router, pathname, logoutDestination])
 

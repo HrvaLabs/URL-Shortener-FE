@@ -13,6 +13,7 @@ const {
   CHANNEL_TYPES,
   DESTINATION_STATUS_LABELS,
   EMAIL_NOTIFICATION_LABELS,
+  EMAIL_NOTIFICATION_NOUNS,
   MAX_CHANNELS,
   deliveryLine,
   detectChannelType,
@@ -138,6 +139,14 @@ check("email labels", () => {
     DEAD_LINK_EMAIL: "Dead links",
     WEEKLY_SUMMARY_EMAIL: "Weekly summary",
     EXPIRY_REMINDER_EMAIL: "Expiry reminders",
+  })
+})
+
+check("email nouns", () => {
+  assert.deepEqual(EMAIL_NOTIFICATION_NOUNS, {
+    DEAD_LINK_EMAIL: "dead link emails",
+    WEEKLY_SUMMARY_EMAIL: "weekly summary emails",
+    EXPIRY_REMINDER_EMAIL: "expiry reminder emails",
   })
 })
 

@@ -68,7 +68,7 @@ export const SigningSecretPanel = forwardRef<HTMLHeadingElement | null, SigningS
       <p className="rounded-md border bg-background px-3 py-2 font-mono text-sm [overflow-wrap:anywhere]">{secret}</p>
       <p className="text-sm text-muted-foreground">
         This is the only time it&apos;s shown. Use it to check the X-Hrva-Signature header.{" "}
-        <Link href="/help/notifications#webhook" className="text-brand-link">How to check signatures</Link>
+        <Link href="/help/notifications#webhook" target="_blank" rel="noopener" className="text-brand-link">How to check signatures</Link>
       </p>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={copySecret} className="gap-1.5">

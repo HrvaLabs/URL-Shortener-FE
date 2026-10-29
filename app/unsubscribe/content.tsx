@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ApiError, notificationApi } from "@/lib/api-client"
-import { EMAIL_NOTIFICATION_LABELS } from "@/lib/notifications"
+import { EMAIL_NOTIFICATION_NOUNS } from "@/lib/notifications"
 import type { UnsubscribeResult } from "@/lib/types"
 
 const SETTINGS_HREF = "/dashboard/settings#notifications"
@@ -53,10 +53,10 @@ export function UnsubscribeContent() {
   )
 
   if (state.kind === "done") {
-    const label = (EMAIL_NOTIFICATION_LABELS[state.result.type] ?? "these").toLowerCase()
+    const noun = EMAIL_NOTIFICATION_NOUNS[state.result.type] ?? "these emails"
     return (
       <div className="space-y-3">
-        {heading(state.result.alreadyOff ? "These emails were already off." : `Done. You won't get ${label} emails any more.`)}
+        {heading(state.result.alreadyOff ? "These emails were already off." : `Done. You won't get ${noun} any more.`)}
         <p className="text-sm text-muted-foreground">You can turn them back on any time in {settingsLink}.</p>
       </div>
     )

@@ -5,13 +5,13 @@ import { StackedDailyChart } from "@/components/admin/stats/stacked-daily-chart"
 import { StatGrid } from "@/components/admin/stats/stat-grid"
 import { StatsPanel } from "@/components/admin/stats/stats-panel"
 import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
-import { CHANNEL_EVENT_LABELS, CHANNEL_TYPES, EMAIL_NOTIFICATION_LABELS } from "@/lib/notifications"
+import { CHANNEL_EVENT_LABELS, CHANNEL_TYPES, EMAIL_NOTIFICATION_NOUNS } from "@/lib/notifications"
 import { useUsersStats } from "@/lib/hooks/useSiteStats"
 import type { AnalyticsRange, ChannelEvent, CountEntry, EmailNotificationType, UsersStats } from "@/lib/types"
 
 const consentTile = ({ value, count }: CountEntry) => {
-  const emailLabel = EMAIL_NOTIFICATION_LABELS[value as EmailNotificationType]
-  if (emailLabel) return { label: `${emailLabel} email`, value: count.toLocaleString(), hint: "People who turned this email on." }
+  const emailNoun = EMAIL_NOTIFICATION_NOUNS[value as EmailNotificationType]
+  if (emailNoun) return { label: `${emailNoun.charAt(0).toUpperCase()}${emailNoun.slice(1)}`, value: count.toLocaleString(), hint: "People who turned this email on." }
   return { label: CHANNEL_EVENT_LABELS[value as ChannelEvent] ?? value, value: count.toLocaleString(), hint: "Channels getting this event." }
 }
 

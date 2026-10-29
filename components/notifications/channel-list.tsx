@@ -39,6 +39,8 @@ const typeLabel = (type: ChannelType) => CHANNEL_TYPES.find((option) => option.t
 
 const errorText = (error: unknown) => (error instanceof Error && error.message ? error.message : "Something went wrong. Try again.")
 
+const SAVE_SECRET_FIRST = "Save the signing secret shown above first."
+
 const testButtonId = (channelId: number) => `notification-channel-${channelId}-test`
 
 const withoutKey = <T,>(record: Record<number, T>, key: number): Record<number, T> =>
@@ -87,6 +89,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
   const deleteTrigger = useRef<HTMLElement | null>(null)
   const rotateTrigger = useRef<HTMLElement | null>(null)
   const dialogTrigger = useRef<HTMLElement | null>(null)
+  const secretJustShown = useRef(false)
   const removal = useRowRemovalFocus(addButtonRef)
   const [switching, setSwitching] = useState<Record<number, boolean>>({})
   const [testing, setTesting] = useState<number[]>([])
@@ -100,6 +103,8 @@ export function ChannelList({ titleRef }: ChannelListProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const atLimit = (channels?.length ?? 0) >= MAX_CHANNELS
+  const addBlocked = atLimit || secret !== null
+  const addHint = secret ? SAVE_SECRET_FIRST : atLimit ? `You can have up to ${MAX_CHANNELS} channels.` : null
   const now = new Date()
 
   const toggle = async (channel: NotificationChannel, enabled: boolean) => {
@@ -163,6 +168,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
     setRotateBusy(true)
     try {
       const { signingSecret } = await rotate.mutateAsync(rotating.id)
+      secretJustShown.current = true
       setSecret({ channelId: rotating.id, channelName: rotating.name, value: signingSecret })
     } catch (err) {
       toast.error(errorText(err))
@@ -178,7 +184,8 @@ export function ChannelList({ titleRef }: ChannelListProps) {
   }
 
   const focusSecretOrReturn = (event: Event, returnTo: HTMLElement | null) => {
-    const heading = secretHeadingRef.current
+    const heading = secretJustShown.current ? secretHeadingRef.current : null
+    secretJustShown.current = false
     const next = heading?.isConnected ? heading : returnTo?.isConnected ? returnTo : addButtonRef.current
     if (!next) return
     event.preventDefault()
@@ -199,15 +206,15 @@ export function ChannelList({ titleRef }: ChannelListProps) {
         type="button"
         variant="outline"
         size="sm"
-        aria-disabled={atLimit}
-        aria-describedby={atLimit ? limitHintId : undefined}
-        onClick={(event) => { if (!atLimit) openDialog("create", event.currentTarget) }}
+        aria-disabled={addBlocked}
+        aria-describedby={addHint ? limitHintId : undefined}
+        onClick={(event) => { if (!addBlocked) openDialog("create", event.currentTarget) }}
         className="gap-1.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
       >
         <Plus className="h-4 w-4" aria-hidden="true" />
         Add channel
       </Button>
-      {atLimit && <p id={limitHintId} className="text-xs text-muted-foreground">You can have up to {MAX_CHANNELS} channels.</p>}
+      {addHint && <p id={limitHintId} className="text-xs text-muted-foreground">{addHint}</p>}
     </div>
   )
 
@@ -256,10 +263,12 @@ export function ChannelList({ titleRef }: ChannelListProps) {
                 switching={channel.id in switching}
                 testing={testing.includes(channel.id)}
                 testOutcome={tests[channel.id]}
+                rotateHintId={secret ? limitHintId : undefined}
                 onToggle={(enabled) => toggle(channel, enabled)}
                 onTest={() => sendTest(channel)}
                 onEdit={(trigger) => openDialog("edit", trigger, channel)}
                 onRotate={(trigger) => {
+                  if (secret) return
                   rotateTrigger.current = trigger
                   setRotating(channel)
                 }}
@@ -280,7 +289,9 @@ export function ChannelList({ titleRef }: ChannelListProps) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onCreated={(signingSecret, created) => {
-          if (signingSecret) setSecret({ channelId: created.id, channelName: created.name, value: signingSecret })
+          if (!signingSecret) return
+          secretJustShown.current = true
+          setSecret({ channelId: created.id, channelName: created.name, value: signingSecret })
         }}
         onCloseAutoFocus={(event) => focusSecretOrReturn(event, dialogTrigger.current)}
       />
@@ -325,6 +336,7 @@ interface ChannelRowProps {
   switching: boolean
   testing: boolean
   testOutcome: TestOutcome | undefined
+  rotateHintId: string | undefined
   onToggle: (enabled: boolean) => void
   onTest: () => void
   onEdit: (trigger: HTMLElement) => void
@@ -332,7 +344,7 @@ interface ChannelRowProps {
   onDelete: (trigger: HTMLElement) => void
 }
 
-function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, onToggle, onTest, onEdit, onRotate, onDelete }: ChannelRowProps) {
+function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, rotateHintId, onToggle, onTest, onEdit, onRotate, onDelete }: ChannelRowProps) {
   const id = useId()
   const switchId = `${id}-enabled`
   const failed = channel.autoDisabledAt !== null || channel.lastDelivery?.status === "FAILED"
@@ -400,7 +412,9 @@ function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, on
             variant="outline"
             size="sm"
             aria-label={`New signing secret for ${channel.name}`}
-            onClick={(event) => onRotate(event.currentTarget)}
+            aria-disabled={rotateHintId !== undefined}
+            aria-describedby={rotateHintId}
+            onClick={(event) => { if (!rotateHintId) onRotate(event.currentTarget) }}
             className={rowButton}
           >
             New signing secret

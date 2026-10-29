@@ -264,6 +264,7 @@ export default function DashboardPage() {
                         <Lock className="h-3 w-3 shrink-0 text-muted-foreground" aria-label="Password protected" />
                       )}
                     </div>
+                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} className="md:hidden" />
                   </TableCell>
                   <TableCell className="hidden min-w-56 md:table-cell">
                     <span className="block break-all text-sm text-muted-foreground">{url.longUrl}</span>

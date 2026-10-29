@@ -27,6 +27,7 @@ const columns = [
     title: "Help & legal",
     links: [
       { href: "/about", label: "About" },
+      { href: "/privacy-first-url-shortener", label: "How visits are counted" },
       { href: "/help", label: "Help" },
       { href: "/report", label: "Report abuse" },
       { href: "/blog", label: "Blog" },

@@ -16,6 +16,7 @@ import { useMyUrls } from "@/lib/hooks/useUrls"
 import { cn, formatShortUrl } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
 import { HOME_HEADLINE } from "@/lib/seo"
+import { SALT_GRACE_SOURCE, VISITOR_HASH_SOURCE } from "@/lib/source-links"
 
 const PASSWORD_DOTS = String.fromCodePoint(0x2022).repeat(8)
 
@@ -530,10 +531,8 @@ const privacyClaims = [
   { title: "Free, no ads", text: "A non-commercial HrvaLabs project, built and run by one person in Croatia." },
 ]
 
-const visitorHashUrl =
-  "https://github.com/HrvaLabs/url-shortener/blob/main/src/main/java/cc/hrva/urlshortener/service/analytics/UniqueVisitorCounter.java#L58-L62"
-const saltGraceUrl =
-  "https://github.com/HrvaLabs/url-shortener/blob/main/src/main/java/cc/hrva/urlshortener/service/analytics/AnalyticsDays.java#L16"
+const visitorHashUrl = VISITOR_HASH_SOURCE
+const saltGraceUrl = SALT_GRACE_SOURCE
 
 function PrivacySection() {
   return (
@@ -552,13 +551,22 @@ function PrivacySection() {
               </div>
             ))}
           </dl>
-          <Link
-            href="/privacy"
-            className="mt-6 inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
-          >
-            Read the privacy policy
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+            <Link
+              href="/privacy-first-url-shortener"
+              className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
+            >
+              How visits are counted without tracking
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+            <Link
+              href="/privacy"
+              className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline"
+            >
+              Read the privacy policy
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
 
         <figure className="min-w-0 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.4)]">

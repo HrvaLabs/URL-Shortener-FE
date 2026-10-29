@@ -50,7 +50,7 @@ export default function AboutPage() {
         <p>
           Counting visits doesn&apos;t require knowing who your visitors are, so hrva.cc doesn&apos;t keep that. Link
           statistics are daily totals, unique visitors are counted with a one-way hash under a key that changes every
-          day, and visitors&apos; IP addresses are never stored. Shortening works without an account, and a free account
+          day, and visitors&apos; IP addresses are never stored (<Link href="/privacy-first-url-shortener">how visits are counted</Link>). Shortening works without an account, and a free account
           adds custom aliases, visit limits, expiry dates, passwords, analytics, API keys, bio pages and notifications.
         </p>
 

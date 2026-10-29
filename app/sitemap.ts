@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: absoluteUrl("/changelog") },
     { url: absoluteUrl("/stats") },
     dated("/about"),
+    dated("/privacy-first-url-shortener"),
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),

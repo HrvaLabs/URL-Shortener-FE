@@ -754,6 +754,30 @@ export interface DomainRuleCreated {
   linksAffected: number
 }
 
+export interface DomainBlockPreview {
+  domain: string
+  hosts: string[]
+  selectedLinks: number
+  activeLinks: number
+  rule: DomainRuleType | null
+}
+
+export interface DomainBlocked {
+  domain: string
+  linksDeactivated: number
+}
+
+export interface DomainSkipped {
+  domain: string
+  reason: string
+}
+
+export interface DomainBulkBlockResult {
+  blocked: DomainBlocked[]
+  skipped: DomainSkipped[]
+  linksDeactivated: number
+}
+
 export interface LinksAffected {
   linksAffected: number
 }

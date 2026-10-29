@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Badge, badgeVariants } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
+import { BlockDomainsDialog } from "@/components/admin/block-domains-dialog"
 import { UtmFields } from "@/components/utm-fields"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
@@ -164,6 +165,8 @@ function AdminUrls() {
   const filtered = !!search.trim() || activeFilter !== "all" || expiredFilter || anonymousFilter || deadFilter
   const [blockTarget, setBlockTarget] = useState<UrlResponse | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
+  const [blockDomainsIds, setBlockDomainsIds] = useState<number[]>([])
+  const [blockDomainsOpen, setBlockDomainsOpen] = useState(false)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
   const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
   const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
@@ -234,6 +237,11 @@ function AdminUrls() {
   const openBlockDomain = (url: UrlResponse) => {
     setBlockTarget(url)
     setBlockOpen(true)
+  }
+
+  const openBlockDomains = () => {
+    setBlockDomainsIds([...selectedIds])
+    setBlockDomainsOpen(true)
   }
 
   const handleEditOpen = (url: UrlResponse) => {
@@ -366,6 +374,10 @@ function AdminUrls() {
           </Button>
           <Button size="sm" variant="outline" className="h-8" onClick={() => batchAction("deactivate")}>
             Deactivate
+          </Button>
+          <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openBlockDomains}>
+            <GlobeLock aria-hidden="true" className="h-3.5 w-3.5" />
+            Block domains
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -585,6 +597,17 @@ function AdminUrls() {
         open={blockOpen}
         onOpenChange={setBlockOpen}
         onBlocked={() => undefined}
+      />
+
+      <BlockDomainsDialog
+        urlIds={blockDomainsIds}
+        open={blockDomainsOpen}
+        onOpenChange={setBlockDomainsOpen}
+        onBlocked={() => {
+          removalFocus.setTarget(null)
+          setSelectedIds(new Set())
+        }}
+        onCloseAutoFocus={removalFocus.onCloseAutoFocus}
       />
 
       <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { PageMeta } from "@/components/page-meta"
 import { ExternalLink, Copy, Check, AlertCircle, ArrowLeft, Calendar, Search } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -27,7 +26,6 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
 
   useEffect(() => {
     if (!short) return
-    setLoading(true)
     urlApi.peek(short)
       .then(setData)
       .catch((err) => setError(err.message || "URL not found"))
@@ -43,8 +41,8 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
     try {
       const result = await urlApi.peek(searchInput.trim())
       setSearchResult(result)
-    } catch (err: any) {
-      setSearchError(err.message || "URL not found")
+    } catch (err: unknown) {
+      setSearchError((err instanceof Error && err.message) || "URL not found")
     } finally {
       setSearchLoading(false)
     }
@@ -59,7 +57,6 @@ export default function ValidateByShortPage({ params }: { params: Promise<{ shor
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PageMeta title={`URL /${short}`} description={`Look up where the short URL hrva.cc/${short} redirects to.`} />
       <SiteHeader />
       <main className="flex-1">
         <div className="container py-16 sm:py-24">

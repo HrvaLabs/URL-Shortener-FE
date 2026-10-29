@@ -78,7 +78,7 @@ const rows: Row[] = [
   },
   {
     feature: "API",
-    hrva: "Free, with API keys from your dashboard.",
+    hrva: "Free. Each key has its own call allowance, shown on your API keys page.",
     bitly: "1,000 API requests a month on the Free plan.",
     source: "pricing",
   },
@@ -86,7 +86,7 @@ const rows: Row[] = [
     feature: "What is stored when someone clicks",
     hrva: "Daily totals per link. No IP addresses, and nothing about a single click.",
     bitly:
-      "The IP address and the location derived from it, referring websites, the time and date of each access, device settings such as browser, operating system and language, cookies and mobile advertising identifiers.",
+      "Its privacy policy lists: the IP address and the location derived from it, referring websites, the time and date of each access, device settings such as browser, operating system and language, cookies and mobile advertising identifiers.",
     source: "privacy",
   },
   {
@@ -129,25 +129,25 @@ export default function BitlyAlternativePage() {
           Bitly&apos;s facts were checked on {checked} on its <a href={sources.pricing} className="text-brand-link">pricing page</a>{" "}
           and in its <a href={sources.privacy} className="text-brand-link">privacy policy</a>. They may have changed since.
         </p>
-        <table className="mt-5 block w-full text-sm sm:table">
-          <thead className="hidden sm:table-header-group">
-            <tr className="border-b text-left">
-              <th scope="col" className="w-40 py-2 pr-4 font-semibold">Feature</th>
-              <th scope="col" className="py-2 pr-4 font-semibold">hrva.cc</th>
-              <th scope="col" className="py-2 font-semibold">Bitly Free plan</th>
+        <table role="table" className="mt-5 block w-full text-sm sm:table">
+          <thead role="rowgroup" className="hidden sm:table-header-group">
+            <tr role="row" className="border-b text-left">
+              <th scope="col" role="columnheader" className="w-40 py-2 pr-4 font-semibold">Feature</th>
+              <th scope="col" role="columnheader" className="py-2 pr-4 font-semibold">hrva.cc</th>
+              <th scope="col" role="columnheader" className="py-2 font-semibold">Bitly Free plan</th>
             </tr>
           </thead>
-          <tbody className="block sm:table-row-group">
+          <tbody role="rowgroup" className="block sm:table-row-group">
             {rows.map((row) => (
-              <tr key={row.feature} className="block border-b py-3 sm:table-row sm:py-0">
-                <th scope="row" className="block pb-1 text-left font-semibold sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
+              <tr key={row.feature} role="row" className="block border-b py-3 sm:table-row sm:py-0">
+                <th scope="row" role="rowheader" className="block pb-1 text-left font-semibold sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
                   {row.feature}
                 </th>
-                <td className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
+                <td role="cell" className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:pr-4 sm:align-top">
                   <span className="font-medium text-muted-foreground sm:hidden">hrva.cc: </span>
                   {row.hrva}
                 </td>
-                <td className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:align-top">
+                <td role="cell" className="block py-1 leading-relaxed sm:table-cell sm:py-3 sm:align-top">
                   <span className="font-medium text-muted-foreground sm:hidden">Bitly Free plan: </span>
                   {row.bitly}{" "}
                   <a href={sources[row.source]} className="whitespace-nowrap text-xs text-brand-link">

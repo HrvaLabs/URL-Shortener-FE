@@ -95,6 +95,16 @@ export function SiteJsonLd() {
             publisher: reference(JSON_LD_IDS.organization),
           },
           {
+            "@type": "WebApplication",
+            "@id": JSON_LD_IDS.app,
+            name: SITE_NAME,
+            url: HOME_URL,
+            applicationCategory: "UtilityApplication",
+            operatingSystem: "Any",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+            publisher: reference(JSON_LD_IDS.organization),
+          },
+          {
             "@type": "Organization",
             "@id": JSON_LD_IDS.organization,
             name: PUBLISHER_NAME,

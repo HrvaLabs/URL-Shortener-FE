@@ -16,6 +16,7 @@ import { PageMeta } from "@/components/page-meta"
 import { PasskeysCard } from "@/components/passkeys-card"
 import { TwoStepCard } from "@/components/two-step-card"
 import { ConnectedAppsCard } from "@/components/connected-apps-card"
+import { NotificationsCard } from "@/components/notifications/notifications-card"
 
 export default function SettingsPage() {
   const { user, refreshUser, logout, logoutTo, isAdmin } = useAuth()
@@ -182,6 +183,8 @@ export default function SettingsPage() {
       <TwoStepCard />
 
       <ConnectedAppsCard />
+
+      <NotificationsCard />
 
       <Card>
         <CardHeader>

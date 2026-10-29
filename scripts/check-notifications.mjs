@@ -11,12 +11,14 @@ const {
   CHANNEL_EVENT_LABELS,
   CHANNEL_NAME_MAX,
   CHANNEL_TYPES,
+  DEAD_LINK_EMAIL_SETTINGS_HREF,
   DESTINATION_STATUS_LABELS,
   EMAIL_NOTIFICATION_LABELS,
   EMAIL_NOTIFICATION_NOUNS,
   MAX_CHANNELS,
   deliveryLine,
   detectChannelType,
+  isConsentedTo,
   unsubscribeTokenType,
 } = notifications
 
@@ -221,6 +223,18 @@ check("unsubscribeTokenType reads the email type from the token", () => {
   assert.equal(unsubscribeTokenType("garbage"), null)
   assert.equal(unsubscribeTokenType("@@@.x"), null)
   assert.equal(unsubscribeTokenType(""), null)
+})
+
+check("isConsentedTo reads one email type's switch", () => {
+  const consents = [
+    { type: "DEAD_LINK_EMAIL", consented: false, grantedAt: null, description: "" },
+    { type: "WEEKLY_SUMMARY_EMAIL", consented: true, grantedAt: "2026-10-20T03:00:00", description: "" },
+  ]
+  assert.equal(isConsentedTo(consents, "DEAD_LINK_EMAIL"), false)
+  assert.equal(isConsentedTo(consents, "WEEKLY_SUMMARY_EMAIL"), true)
+  assert.equal(isConsentedTo(consents, "EXPIRY_REMINDER_EMAIL"), false)
+  assert.equal(isConsentedTo(undefined, "DEAD_LINK_EMAIL"), false)
+  assert.equal(DEAD_LINK_EMAIL_SETTINGS_HREF, "/dashboard/settings#notifications")
 })
 
 check("strings are ASCII", () => {

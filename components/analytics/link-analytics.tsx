@@ -78,7 +78,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
               <span className="min-w-0 text-sm text-muted-foreground [overflow-wrap:anywhere]">{link.destinationHost}</span>
             )}
           </div>
-          <DestinationHealthBadge health={link.destinationHealth} active={link.status === "ACTIVE"} />
+          <DestinationHealthBadge health={link.destinationHealth} active={link.status === "ACTIVE"} emailPrompt />
         </div>
         <dl className="flex flex-wrap gap-x-10 gap-y-4 text-sm">
           <div>

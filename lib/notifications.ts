@@ -1,4 +1,4 @@
-import type { ChannelEvent, ChannelType, DestinationStatus, EmailNotificationType, NotificationChannel } from "./types"
+import type { ChannelEvent, ChannelType, DestinationStatus, EmailNotificationType, NotificationChannel, NotificationConsent } from "./types"
 
 export const MAX_CHANNELS = 10
 
@@ -15,6 +15,13 @@ export const EMAIL_NOTIFICATION_NOUNS: Record<EmailNotificationType, string> = {
   WEEKLY_SUMMARY_EMAIL: "weekly summary emails",
   EXPIRY_REMINDER_EMAIL: "expiry reminder emails",
 }
+
+export const DEAD_LINK_EMAIL_PROMPT = "Get an email when this happens"
+
+export const DEAD_LINK_EMAIL_SETTINGS_HREF = "/dashboard/settings#notifications"
+
+export const isConsentedTo = (consents: NotificationConsent[] | undefined, type: EmailNotificationType): boolean =>
+  consents?.some((consent) => consent.type === type && consent.consented) ?? false
 
 export const unsubscribeTokenType = (token: string): EmailNotificationType | null => {
   const payload = token.split(".")[0] ?? ""

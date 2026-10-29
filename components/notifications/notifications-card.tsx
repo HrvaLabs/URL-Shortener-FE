@@ -18,7 +18,9 @@ export function NotificationsCard() {
   useEffect(() => {
     if (scrolled.current || isPending) return
     scrolled.current = true
-    if (window.location.hash === `#${CARD_ID}`) cardRef.current?.scrollIntoView({ block: "start" })
+    if (window.location.hash !== `#${CARD_ID}`) return
+    cardRef.current?.scrollIntoView({ block: "start" })
+    if (document.activeElement === document.body || document.activeElement === null) titleRef.current?.focus({ preventScroll: true })
   }, [isPending])
 
   return (

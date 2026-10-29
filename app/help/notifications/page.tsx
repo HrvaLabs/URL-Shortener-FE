@@ -177,6 +177,8 @@ export default function NotificationsHelpPage() {
                 A dead link shows <strong>Destination looks dead</strong> on your <Link href="/dashboard">URLs
                 page</Link> and in the link&apos;s analytics, with the date and the reason, for example{" "}
                 <strong>The page wasn&apos;t found (404).</strong> The badge shows only while the link is active.
+                While dead link emails are off, it also links to Settings with{" "}
+                <strong>Get an email when this happens</strong>.
               </p>
               <p>
                 The badge goes away by itself on the first night the destination works again. If the page moved,

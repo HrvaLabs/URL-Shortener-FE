@@ -178,13 +178,13 @@ export default function SettingsPage() {
         </Card>
       )}
 
+      <NotificationsCard />
+
       <PasskeysCard />
 
       <TwoStepCard />
 
       <ConnectedAppsCard />
-
-      <NotificationsCard />
 
       <Card>
         <CardHeader>

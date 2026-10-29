@@ -264,11 +264,11 @@ export default function DashboardPage() {
                         <Lock className="h-3 w-3 shrink-0 text-muted-foreground" aria-label="Password protected" />
                       )}
                     </div>
-                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} className="md:hidden" />
+                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} emailPrompt className="md:hidden" />
                   </TableCell>
                   <TableCell className="hidden min-w-56 md:table-cell">
                     <span className="block break-all text-sm text-muted-foreground">{url.longUrl}</span>
-                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} />
+                    <DestinationHealthBadge health={url.destinationHealth} active={url.status ? url.status === "ACTIVE" : url.active} emailPrompt />
                     {url.tags && url.tags.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {url.tags.map((t) => (

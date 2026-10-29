@@ -48,7 +48,10 @@ const {
   destinationHostOf,
   linkStateLabel,
   newBioButton,
+  freshBioPagePath,
 } = await import("../lib/bio.ts")
+
+const { BIO_CACHE_CONTROL, BIO_CACHE_STATUS_HEADER, bioCacheKey, isStorableBioResponse, withBioEdgeCache } = await import("../lib/bio-edge-cache.ts")
 
 const check = (name, run) => {
   try {
@@ -985,5 +988,110 @@ check("bioSaveErrors maps unindexed texts to the button they belong to", () => {
     assert.equal(bioSaveErrors(unmapped, {}, sentButtons), null, unmapped)
   }
 })
+
+check("freshBioPagePath adds the save time so the editor's View page skips the edge cache", () => {
+  assert.equal(freshBioPagePath("ana", "2026-10-29T10:15:30.123456"), "/bio/ana?saved=2026-10-29T10%3A15%3A30.123456")
+  assert.equal(freshBioPagePath("ana", null), "/bio/ana")
+  assert.equal(freshBioPagePath("ana", undefined), "/bio/ana")
+})
+
+check("bioCacheKey takes only plain GETs of a bio page or its share image", () => {
+  const get = (path, headers = {}, method = "GET") => new Request(`https://app.hrva.cc${path}`, { method, headers })
+  assert.equal(bioCacheKey(get("/bio/ana"), "v1"), "https://app.hrva.cc/bio/ana?v=v1")
+  assert.equal(bioCacheKey(get("/bio/ana"), undefined), "https://app.hrva.cc/bio/ana?v=local")
+  assert.equal(bioCacheKey(get("/bio/ana", { "User-Agent": "facebookexternalhit/1.1", Cookie: "a=b" }), "v1"), "https://app.hrva.cc/bio/ana?v=v1")
+  assert.equal(bioCacheKey(get("/bio/ana/opengraph-image?eb30aa1b04ca6d45"), "v1"), "https://app.hrva.cc/bio/ana/opengraph-image?v=v1")
+  assert.equal(bioCacheKey(get("/bio/ana?saved=2026"), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana?_rsc=abc"), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana/opengraph-image?_rsc=abc"), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana", { RSC: "1" }), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana", { "Next-Router-Prefetch": "1" }), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana", { "Next-Router-State-Tree": "x" }), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana", {}, "HEAD"), "v1"), null)
+  assert.equal(bioCacheKey(get("/bio/ana", {}, "POST"), "v1"), null)
+  for (const path of ["/bio/Ana", "/bio/%40ana", "/bio/ab", "/bio/ana/", "/bio/ana/other", "/bio", "/dashboard", "/", "/bio/ana/opengraph-image/x"]) {
+    assert.equal(bioCacheKey(get(path), "v1"), null, path)
+  }
+})
+
+check("isStorableBioResponse keeps only cookie-free 200s", () => {
+  assert.equal(isStorableBioResponse(new Response("page", { status: 200 })), true)
+  assert.equal(isStorableBioResponse(new Response("missing", { status: 404 })), false)
+  assert.equal(isStorableBioResponse(new Response("failed", { status: 500 })), false)
+  assert.equal(isStorableBioResponse(new Response(null, { status: 308, headers: { Location: "/bio/ana" } })), false)
+  assert.equal(isStorableBioResponse(new Response("page", { status: 200, headers: { "Set-Cookie": "a=b" } })), false)
+})
+
+const fakeEdgeCache = () => {
+  const entries = new Map()
+  return {
+    entries,
+    match: async (key) => entries.get(key)?.clone(),
+    put: async (key, response) => {
+      entries.set(key, new Response(await response.arrayBuffer(), response))
+    },
+  }
+}
+
+const runEdgeCache = async () => {
+  const cache = fakeEdgeCache()
+  globalThis.caches = { default: cache }
+  let rendered = 0
+  const statusFor = { "/bio/ana": 200, "/bio/gone": 404, "/bio/broken": 500 }
+  const handler = async (request) => {
+    rendered += 1
+    const status = statusFor[new URL(request.url).pathname] ?? 200
+    return new Response(`render ${rendered}`, {
+      status,
+      headers: { "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate", Vary: "RSC, Next-Router-State-Tree" },
+    })
+  }
+  const pending = []
+  const context = { waitUntil: (promise) => pending.push(promise) }
+  const env = { CF_VERSION_METADATA: { id: "v1" } }
+  const worker = withBioEdgeCache(handler)
+  const call = async (path, init) => {
+    const response = await worker(new Request(`https://app.hrva.cc${path}`, init), env, context)
+    await Promise.all(pending.splice(0))
+    return response
+  }
+
+  const first = await call("/bio/ana")
+  assert.equal(first.headers.get(BIO_CACHE_STATUS_HEADER), "MISS")
+  assert.equal(first.headers.get("Cache-Control"), BIO_CACHE_CONTROL)
+  assert.equal(first.headers.get("Vary"), "Accept-Encoding")
+  assert.equal(await first.text(), "render 1")
+  const second = await call("/bio/ana", { headers: { Cookie: "theme=dark", Authorization: "Bearer x" } })
+  assert.equal(second.headers.get(BIO_CACHE_STATUS_HEADER), "HIT")
+  assert.equal(await second.text(), "render 1")
+  assert.equal(rendered, 1)
+
+  const router = await call("/bio/ana", { headers: { RSC: "1" } })
+  assert.equal(router.headers.get(BIO_CACHE_STATUS_HEADER), null)
+  assert.equal(await router.text(), "render 2")
+
+  for (const path of ["/bio/gone", "/bio/gone", "/bio/broken", "/bio/broken"]) {
+    const response = await call(path)
+    assert.equal(response.headers.get(BIO_CACHE_STATUS_HEADER), null, path)
+    assert.match(response.headers.get("Cache-Control"), /no-store/, path)
+  }
+  assert.equal(rendered, 6)
+  assert.deepEqual([...cache.entries.keys()], ["https://app.hrva.cc/bio/ana?v=v1"])
+
+  const otherVersion = await worker(new Request("https://app.hrva.cc/bio/ana"), { CF_VERSION_METADATA: { id: "v2" } }, context)
+  await Promise.all(pending.splice(0))
+  assert.equal(otherVersion.headers.get(BIO_CACHE_STATUS_HEADER), "MISS")
+
+  delete globalThis.caches
+  const withoutCache = await call("/bio/ana")
+  assert.equal(withoutCache.headers.get(BIO_CACHE_STATUS_HEADER), null)
+}
+
+try {
+  await runEdgeCache()
+} catch (error) {
+  console.error(`FAIL withBioEdgeCache\n  ${String(error.message).split("\n").join("\n  ")}`)
+  process.exit(1)
+}
 
 console.log("ok")

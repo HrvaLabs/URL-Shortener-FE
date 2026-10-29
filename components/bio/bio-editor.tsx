@@ -316,7 +316,7 @@ export function BioEditor({ page, headingRef }: { page: BioPage; headingRef: Ref
 
   const sections = (
     <div className="space-y-6" onFocusCapture={rememberFocus}>
-      <ShareBar handle={synced.handle} />
+      <ShareBar handle={synced.handle} savedAt={synced.updatedAt} />
 
       {synced.handle !== null && synced.displayName === "" && synced.buttons.length === 0 && (
         <p className="rounded-xl border bg-muted/40 px-4 py-3 text-sm [overflow-wrap:anywhere]">

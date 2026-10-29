@@ -107,7 +107,8 @@ export default function LinkInBioHelpPage() {
               <p>
                 Nothing changes on your page until you select <strong>Save changes</strong> in the{" "}
                 <strong>You have unsaved changes</strong> bar. <strong>Discard</strong> undoes everything
-                since the last save.
+                since the last save. Saved changes show on your public page within 5 minutes;{" "}
+                <strong>View page</strong> in the editor always shows the saved version.
               </p>
 
               <h2 id="look">Name, bio, avatar and colours</h2>
@@ -217,7 +218,7 @@ export default function LinkInBioHelpPage() {
                 </li>
               </ol>
               <p>
-                Your old link stops working right away; it says the page isn&apos;t available and
+                Your old link stops working within 5 minutes; it says the page isn&apos;t available and
                 doesn&apos;t forward to the new one. Nobody else can take the old handle for 30 days, and
                 you can take it back yourself in that time. Handles can be changed five times in 24
                 hours, and creating the page counts as one.
@@ -242,8 +243,8 @@ export default function LinkInBioHelpPage() {
                 say which button is the problem in the details. Reports go to a person; a report never hides a page by itself.
               </p>
               <p>
-                An admin may hide a page that breaks the <Link href="/terms">terms</Link>. Visitors then see
-                that the page isn&apos;t available, and its owner sees the reason in the editor and can
+                An admin may hide a page that breaks the <Link href="/terms">terms</Link>. Visitors then see,
+                within 5 minutes, that the page isn&apos;t available, and its owner sees the reason in the editor and can
                 still edit the page. If you think it&apos;s a mistake, email{" "}
                 <a href="mailto:abuse@hrva.cc">abuse@hrva.cc</a>.
               </p>
@@ -262,7 +263,8 @@ export default function LinkInBioHelpPage() {
                 </li>
                 <li>
                   <strong>Delete bio page</strong>, at the bottom of the editor, deletes the page and its
-                  view counts right away, but not while an admin has hidden it; your short links stay.
+                  view counts, but not while an admin has hidden it; your short links stay. Visitors may
+                  still see the page for up to 5 minutes.
                   The handle is kept for 30 days so nobody can pretend to be you, and that includes you:
                   you won&apos;t be able to use it again until then. Deleting your account does the same.
                 </li>

@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { bioShareUrl, displayShareUrl } from "@/lib/bio"
+import { bioShareUrl, displayShareUrl, freshBioPagePath } from "@/lib/bio"
 import { getShortBaseUrl } from "@/lib/utils"
 
 const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>
@@ -20,7 +20,7 @@ const VIEWS_LINK = (
   </Button>
 )
 
-export function ShareBar({ handle }: { handle: string | null }) {
+export function ShareBar({ handle, savedAt }: { handle: string | null; savedAt?: string | null }) {
   if (!handle) {
     return (
       <section aria-label="Share" className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)] sm:flex-row sm:items-center sm:justify-between">
@@ -47,7 +47,7 @@ export function ShareBar({ handle }: { handle: string | null }) {
   const shortBase = getShortBaseUrl()
   const shareUrl = bioShareUrl(handle, shortBase)
   const shownUrl = displayShareUrl(handle, shortBase)
-  const pagePath = `/bio/${handle}`
+  const pagePath = freshBioPagePath(handle, savedAt)
 
   const copyLink = async () => {
     try {

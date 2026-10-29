@@ -60,7 +60,7 @@ function ChangeHandleForm({
       <DialogHeader>
         <DialogTitle>Change handle</DialogTitle>
         <DialogDescription className="[overflow-wrap:anywhere]">
-          Your current link {displayShareUrl(currentHandle, getShortBaseUrl())} stops working right away. Nobody else can take @{currentHandle} for 30 days.
+          Your current link {displayShareUrl(currentHandle, getShortBaseUrl())} stops working within 5 minutes. Nobody else can take @{currentHandle} for 30 days.
         </DialogDescription>
       </DialogHeader>
       <HandleField

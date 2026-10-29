@@ -68,6 +68,9 @@ export const bioShareUrl = (handle: string, shortBase: string): string => `${sho
 
 export const BIO_PAGE_NAME_ID = "bio-page-name"
 
+export const freshBioPagePath = (handle: string, savedAt: string | null | undefined): string =>
+  savedAt ? `/bio/${handle}?saved=${encodeURIComponent(savedAt)}` : `/bio/${handle}`
+
 export const displayShareUrl = (handle: string, shortBase: string): string =>
   bioShareUrl(handle, shortBase).replace(/^[a-z][a-z0-9+.-]*:\/\//i, "")
 

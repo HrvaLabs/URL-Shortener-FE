@@ -98,7 +98,7 @@ const DETECTED_HOSTS: [ChannelType, string[]][] = [
 export const detectChannelType = (url: string): ChannelType | null => {
   let host: string
   try {
-    host = new URL(url.trim()).hostname.toLowerCase()
+    host = new URL(url.trim()).hostname.toLowerCase().replace(/\.$/, "")
   } catch {
     return null
   }
@@ -137,7 +137,7 @@ const timeAgo = (date: Date, now: Date): string => {
 const CALENDAR_DATE = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" })
 
 export const deliveryLine = (channel: NotificationChannel, now: Date): string => {
-  if (channel.autoDisabledAt) {
+  if (channel.autoDisabledAt != null) {
     return `Turned off on ${CALENDAR_DATE.format(serverDateTime(channel.autoDisabledAt))} after failing for 10 days. Fix the channel, then turn it on.`
   }
   const delivery = channel.lastDelivery

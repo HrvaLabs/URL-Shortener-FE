@@ -70,6 +70,8 @@ check("detectChannelType", () => {
   assert.equal(detectChannelType("https://api.telegram.org/bot1:x/sendMessage"), "TELEGRAM")
   assert.equal(detectChannelType("https://ntfy.sh/abc"), "NTFY")
   assert.equal(detectChannelType("https://NTFY.SH/abc"), "NTFY")
+  assert.equal(detectChannelType("https://discord.com./api/webhooks/1/x"), "DISCORD")
+  assert.equal(detectChannelType("https://Hooks.Slack.com./services/T/B/x"), "SLACK")
   assert.equal(detectChannelType("https://discord.com.evil.example/x"), null)
   assert.equal(detectChannelType("https://www.discord.com/api/webhooks/1/x"), null)
   assert.equal(detectChannelType("https://discord.com:8443/api/webhooks/1/x"), "DISCORD")

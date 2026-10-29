@@ -39,6 +39,7 @@ export function UnsubscribeContent() {
       setState(next)
       setSending(false)
     })
+    if (next.kind === "done") window.history.replaceState(null, "", "/unsubscribe")
     if (next.kind === "done" || next.kind === "invalid") headingRef.current?.focus()
   }
 

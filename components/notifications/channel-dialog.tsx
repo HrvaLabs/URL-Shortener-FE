@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 
 const EVENTS = Object.keys(CHANNEL_EVENT_LABELS) as ChannelEvent[]
 
-const FIELD_ORDER = ["type", "name", "target", "botToken", "chatId", "accessToken", "events"] as const
+const FIELD_ORDER = ["type", "name", "target", "botToken", "chatId", "accessToken"] as const
 
 type FormField = (typeof FIELD_ORDER)[number]
 
@@ -133,7 +133,7 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
 
   const showErrors = (error: unknown) => {
     const fields = error instanceof ApiError ? error.fields : {}
-    const known = Object.entries(fields).filter(([key]) => isFormField(key) && (key === "name" || key === "type" || key === "events" || option.fields.includes(key as ChannelField)))
+    const known = Object.entries(fields).filter(([key]) => isFormField(key) && (key === "name" || key === "type" || option.fields.includes(key as ChannelField)))
     if (known.length === 0) {
       flushSync(() => {
         setFieldErrors({})
@@ -165,7 +165,7 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
         const created = await create.mutateAsync(inputOf())
         onOpenChange(false)
         if (!created.signingSecret) toast.success("Channel added. Use Send test to check it.")
-        onCreated(created.signingSecret, created)
+        onCreated(created.signingSecret ?? null, created)
       }
     } catch (error) {
       showErrors(error)
@@ -309,18 +309,18 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
             </p>
           </div>
 
-          <fieldset aria-describedby={fieldErrors.events ? errorId("events") : undefined}>
+          <fieldset>
             <legend className="text-sm font-medium">Send me</legend>
             <div className="mt-2 space-y-2.5">
-              {EVENTS.map((eventType, index) => {
-                const id = index === 0 ? fieldId("events") : `${prefix}-event-${eventType}`
+              {EVENTS.map((eventType) => {
+                const id = `${prefix}-event-${eventType}`
                 return (
                   <div key={eventType} className="flex items-start gap-2.5">
                     <input
                       id={id}
                       type="checkbox"
                       checked={events.includes(eventType)}
-                      onChange={(event) => { toggleEvent(eventType, event.target.checked); clearError("events") }}
+                      onChange={(event) => toggleEvent(eventType, event.target.checked)}
                       aria-describedby={hintId(`event-${eventType}`)}
                       className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
                     />
@@ -332,7 +332,6 @@ export function ChannelDialog({ mode, channel, open, onOpenChange, onCreated, on
                 )
               })}
             </div>
-            {fieldError("events")}
           </fieldset>
 
           {formError && <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{formError}</p>}

@@ -1028,7 +1028,7 @@ export interface NotificationChannel {
   lastDelivery: ChannelLastDelivery | null
   createdAt: string
   updatedAt: string
-  signingSecret: string | null
+  signingSecret?: string | null
 }
 
 export interface NotificationChannelInput {

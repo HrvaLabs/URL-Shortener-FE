@@ -254,7 +254,8 @@ export default function NotificationsHelpPage() {
                 </li>
                 <li>
                   Select <strong>Add channel</strong>, then <strong>Send test</strong> on the new channel. It says{" "}
-                  <strong>Sent. Check Discord.</strong> (or the channel&apos;s type), or why the test failed.
+                  <strong>Sent. Check Discord.</strong> (or Slack, Telegram, ntfy or your webhook, for those types),
+                  or why the test failed.
                 </li>
               </ol>
               <p>
@@ -367,9 +368,10 @@ export default function NotificationsHelpPage() {
                 Telegram or ntfy.sh address: for those, choose that type instead, so messages arrive formatted.
               </p>
               <p>
-                After you add it, <strong>Your signing secret</strong> appears under the channel. This is the
-                only time it&apos;s shown: select <strong>Copy secret</strong>, store it where your server can
-                read it, then select <strong>I&apos;ve saved it</strong>.
+                After you add it, <strong>Your signing secret</strong> appears at the top of{" "}
+                <strong>Chat apps and webhooks</strong>. This is the only time it&apos;s shown: select{" "}
+                <strong>Copy secret</strong>, store it where your server can read it, then select{" "}
+                <strong>I&apos;ve saved it</strong>.
               </p>
               <p>Every request has these headers:</p>
               <pre className={codeBlockClass}>{exampleHeaders}</pre>
@@ -417,9 +419,13 @@ export default function NotificationsHelpPage() {
 
               <h2 id="auto-off">When a channel stops working</h2>
               <p>
-                When a delivery fails after its retries, the channel shows{" "}
-                <strong>Last delivery failed</strong> and the reason. If a channel fails on 10 different days with
-                no successful delivery in between, it turns itself off and says{" "}
+                When a delivery fails, the channel shows <strong>Last delivery failed</strong> and the reason,
+                even while hrva.cc is still trying it again. A failure that may pass (no answer, a timeout, or a
+                408, 429 or 5xx) is tried again 1, 10 and 60 minutes later, so for about an hour, and the line
+                changes to <strong>Last delivered</strong> if a try gets through. Only a delivery hrva.cc gives up
+                on counts towards the 10 days: one whose last try failed, or one that got any other answer. If
+                that happens on 10 different days with no successful delivery in between, the channel turns
+                itself off and says{" "}
                 <strong>Turned off on</strong> the date{" "}
                 <strong>after failing for 10 days. Fix the channel, then turn it on.</strong>
               </p>

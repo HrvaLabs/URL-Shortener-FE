@@ -37,6 +37,14 @@ const rowButton = "h-8 px-2.5 aria-disabled:cursor-not-allowed aria-disabled:opa
 
 const typeLabel = (type: ChannelType) => CHANNEL_TYPES.find((option) => option.type === type)?.label ?? type
 
+const TEST_DESTINATIONS: Record<ChannelType, string> = {
+  DISCORD: "Discord",
+  SLACK: "Slack",
+  TELEGRAM: "Telegram",
+  NTFY: "ntfy",
+  WEBHOOK: "your webhook",
+}
+
 const errorText = (error: unknown) => (error instanceof Error && error.message ? error.message : "Something went wrong. Try again.")
 
 const SAVE_SECRET_FIRST = "Save the signing secret shown above first."
@@ -127,7 +135,7 @@ export function ChannelList({ titleRef }: ChannelListProps) {
     try {
       const result = await test.mutateAsync(channel.id)
       outcome = result.delivered
-        ? { delivered: true, text: `Sent. Check ${typeLabel(channel.type)}.` }
+        ? { delivered: true, text: `Sent. Check ${TEST_DESTINATIONS[channel.type]}.` }
         : { delivered: false, text: result.error || "Couldn't reach the channel." }
     } catch (err) {
       outcome = { delivered: false, text: errorText(err) }
@@ -347,7 +355,7 @@ interface ChannelRowProps {
 function ChannelRow({ channel, now, enabled, switching, testing, testOutcome, rotateHintId, onToggle, onTest, onEdit, onRotate, onDelete }: ChannelRowProps) {
   const id = useId()
   const switchId = `${id}-enabled`
-  const failed = channel.autoDisabledAt !== null || channel.lastDelivery?.status === "FAILED"
+  const failed = channel.autoDisabledAt != null || channel.lastDelivery?.status === "FAILED"
   return (
     <li className="space-y-2 px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

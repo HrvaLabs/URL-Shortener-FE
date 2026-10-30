@@ -12,11 +12,11 @@ export function useClampedPage(page: number, totalPages: number | undefined, set
 
 const addressParam = (name: string) => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name))
 
-export function usePagination() {
+export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | "desc" = "desc") {
   const [page, setPageState] = useState(() => Math.max(0, parseInt(addressParam("page") ?? "0", 10) || 0))
   const [size, setSizeState] = useState(() => parseInt(addressParam("size") ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
-  const [sort, setSortState] = useState(() => addressParam("sort") ?? "createDate")
-  const [order, setOrderState] = useState(() => addressParam("order") ?? "desc")
+  const [sort, setSortState] = useState(() => addressParam("sort") ?? defaultSort)
+  const [order, setOrderState] = useState(() => addressParam("order") ?? defaultOrder)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

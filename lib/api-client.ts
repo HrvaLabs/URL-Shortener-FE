@@ -346,8 +346,15 @@ export const adminApi = {
     request<void>("DELETE", `/admin/blocklist-sources/${id}`),
   refreshBlocklistSource: (id: number) =>
     request<BlocklistSource>("POST", `/admin/blocklist-sources/${id}/refresh`),
-  getDomainRules: (type: DomainRuleType) =>
-    request<DomainRule[]>("GET", `/admin/domain-rules?type=${type}`),
+  getDomainRules: (type: DomainRuleType, page = 0, size = 20, sort = "createdAt", order = "desc", search?: string) => {
+    const params = new URLSearchParams()
+    params.set("type", type)
+    params.set("page", String(page))
+    params.set("size", String(size))
+    params.set("sort", `${sort},${order}`)
+    if (search) params.set("search", search)
+    return request<Page<DomainRule>>("GET", `/admin/domain-rules?${params}`)
+  },
   createDomainRule: (input: DomainRuleInput) =>
     request<DomainRuleCreated>("POST", "/admin/domain-rules", input),
   deleteDomainRule: (id: number) =>

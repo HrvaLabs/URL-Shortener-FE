@@ -123,7 +123,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
-              <span className="min-w-0 font-mono text-sm font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHost(result.domain, shortHostOf())}/</span>{result.shortUrl}</span>
+              <span className="min-w-0 font-mono text-sm font-medium text-brand [overflow-wrap:anywhere]"><span className="font-normal text-muted-foreground">{shortHost(result.domain, shortHostOf())}/</span>{result.shortUrl}</span>
               <Button variant="ghost" size="icon" aria-label="Copy short URL" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => {
                 navigator.clipboard.writeText(formatShortUrl(result.shortUrl, result.domain?.hostname))
                 setCopied(true)

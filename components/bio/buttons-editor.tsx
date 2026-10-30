@@ -129,7 +129,7 @@ function ButtonRow({
           </div>
 
           <p className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">
-            <span className="text-brand"><span className="text-brand/60">{shortHostOf(button.domain)}/</span>{button.shortUrl}</span>
+            <span className="text-brand"><span className="font-normal text-muted-foreground">{shortHostOf(button.domain)}/</span>{button.shortUrl}</span>
             {button.destinationHost && (
               <>
                 <span aria-hidden="true" className="text-muted-foreground"> → </span>

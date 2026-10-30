@@ -259,7 +259,7 @@ export default function DashboardPage() {
                         onClick={() => copyToClipboard(formatShortUrl(url.shortUrl, url.domain?.hostname), url.id)}
                         className="min-w-0 text-left font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
                       >
-                        <span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
+                        <span className="font-normal text-muted-foreground">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
                       </button>
                       {url.passwordProtected && (
                         <Lock className="h-3 w-3 shrink-0 text-muted-foreground" aria-label="Password protected" />
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                             <DialogHeader>
                               <DialogTitle>QR Code</DialogTitle>
                             </DialogHeader>
-                            <QrCustomizer value={formatShortUrl(url.shortUrl, url.domain?.hostname)} filename={`${url.shortUrl}-qr`} />
+                            <QrCustomizer value={formatShortUrl(url.shortUrl, url.domain?.hostname)} filename={`${url.domain ? `${url.domain.hostname}-` : ""}${url.shortUrl}-qr`} />
                           </DialogContent>
                         </Dialog>
                       </Tooltip>

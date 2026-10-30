@@ -52,3 +52,8 @@ export const TOKEN_STATUS_LABELS: Record<CloudflareTokenStatus, string> = {
 export const shortHost = (domain: DomainRef | null | undefined, primaryHost: string): string => domain?.hostname || primaryHost
 
 export const canPickDomain = (domains: CustomDomain[]): boolean => domains.some((domain) => domain.status === "ACTIVE")
+
+const HOSTNAME_SHAPE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/
+
+export const isHostnameShaped = (value: string | null | undefined): value is string =>
+  typeof value === "string" && value.length <= 253 && HOSTNAME_SHAPE.test(value.toLowerCase())

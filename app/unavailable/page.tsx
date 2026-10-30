@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { PageMeta } from "@/components/page-meta"
 import { shortHostOf } from "@/lib/utils"
+import { isHostnameShaped } from "@/lib/domains"
 
 const missingMessage = "There's no hrva.cc link with this name."
 
@@ -21,10 +22,11 @@ const reasonMessages = new Map([
 ])
 
 function UnavailableDetails({ short, domain, message }: { short: string; domain: string | null; message: string }) {
-  const shortLink = `${shortHostOf(domain)}/${short}`
+  const host = domain === null ? shortHostOf() : isHostnameShaped(domain) ? domain : null
+  const shortLink = short && host ? `${host}/${short}` : null
   return (
     <>
-      {short && (
+      {shortLink && (
         <p className="mt-4 font-mono text-[15px] font-medium text-brand [overflow-wrap:anywhere]">
           {shortLink}
         </p>
@@ -32,7 +34,7 @@ function UnavailableDetails({ short, domain, message }: { short: string; domain:
       {message && <p className="mt-3 text-muted-foreground">{message}</p>}
       <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
         <Button asChild variant="outline">
-          <Link href={short ? `/report?s=${encodeURIComponent(domain ? shortLink : short)}` : "/report"}>Report a link</Link>
+          <Link href={shortLink ? `/report?s=${encodeURIComponent(domain ? shortLink : short)}` : "/report"}>Report a link</Link>
         </Button>
         <Button asChild>
           <Link href="/">Go to hrva.cc</Link>

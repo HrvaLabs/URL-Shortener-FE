@@ -51,7 +51,7 @@ function PickerPage({ page, search, exclude, full, limitId, onAdd }: PickProps &
       return (
         <li key={url.id} className="flex items-start justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}</p>
+            <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="font-normal text-muted-foreground">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}</p>
             {host && <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">{host}</p>}
           </div>
           <Button

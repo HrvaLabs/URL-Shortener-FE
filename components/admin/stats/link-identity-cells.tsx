@@ -29,7 +29,7 @@ export function LinkIdentityCells({ link, days }: LinkIdentityCellsProps) {
           href={analyticsHref({ link: link.id, days })}
           className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
         >
-          <span className="text-brand/60">{shortHostOf(link.domain)}/</span>{link.shortUrl}
+          <span className="font-normal text-muted-foreground">{shortHostOf(link.domain)}/</span>{link.shortUrl}
         </Link>
       </TableCell>
       <TableCell className="text-muted-foreground">

@@ -862,7 +862,7 @@ function RecentLink({ shortUrl, hostname, longUrl, visits }: { shortUrl: string;
   return (
     <li className="group flex items-center gap-3 px-5 py-3">
       <div className="min-w-0 flex-1">
-        <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHostOf(hostname)}/</span>{shortUrl}</p>
+        <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="font-normal text-muted-foreground">{shortHostOf(hostname)}/</span>{shortUrl}</p>
         <p className="mt-0.5 break-all text-xs text-muted-foreground">{longUrl}</p>
       </div>
       <span className="text-xs tabular-nums text-muted-foreground">{visits.toLocaleString()}</span>

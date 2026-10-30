@@ -14,6 +14,7 @@ const {
   REASON_MAX,
   TOKEN_STATUS_LABELS,
   canPickDomain,
+  isHostnameShaped,
   shortHost,
 } = domains
 
@@ -115,6 +116,25 @@ check("shortHost", () => {
   assert.equal(shortHost(null, "hrva.cc"), "hrva.cc")
   assert.equal(shortHost(undefined, "hrva.cc"), "hrva.cc")
   assert.equal(shortHost({ id: 7, hostname: "go.example.com" }, "hrva.cc"), "go.example.com")
+})
+
+check("isHostnameShaped", () => {
+  assert.equal(isHostnameShaped("go.example.com"), true)
+  assert.equal(isHostnameShaped("www.go.example.com"), true)
+  assert.equal(isHostnameShaped("Go.Example.COM"), true)
+  assert.equal(isHostnameShaped("links.my-cafe.co.uk"), true)
+  assert.equal(isHostnameShaped(`${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(61)}`), true)
+  assert.equal(isHostnameShaped(`${"a".repeat(63)}.${"b".repeat(63)}.${"c".repeat(63)}.${"d".repeat(62)}`), false)
+  assert.equal(isHostnameShaped("localhost"), false)
+  assert.equal(isHostnameShaped("go.example.com."), false)
+  assert.equal(isHostnameShaped("go..example.com"), false)
+  assert.equal(isHostnameShaped("go.example.com/menu"), false)
+  assert.equal(isHostnameShaped("go.example.com:443"), false)
+  assert.equal(isHostnameShaped("go example.com"), false)
+  assert.equal(isHostnameShaped(`${String.fromCodePoint(0x10d)}okolada.hr`), false)
+  assert.equal(isHostnameShaped(""), false)
+  assert.equal(isHostnameShaped(null), false)
+  assert.equal(isHostnameShaped(undefined), false)
 })
 
 check("canPickDomain needs an active domain", () => {

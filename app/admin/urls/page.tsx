@@ -454,7 +454,7 @@ function AdminUrls() {
                   </TableCell>
                   <TableCell>
                     <span className="block min-w-28 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
-                      <span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
+                      <span className="font-normal text-muted-foreground">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
                     </span>
                     <div className="mt-1 min-w-40 space-y-0.5 text-xs text-muted-foreground @lg:min-w-56 @min-[78.25rem]:hidden">
                       <Destination url={url} />

@@ -391,7 +391,7 @@ function ReviewQueue() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
-                          <span className="text-brand/60">{shortHostOf(entry.domain)}/</span>{entry.shortUrl}
+                          <span className="font-normal text-muted-foreground">{shortHostOf(entry.domain)}/</span>{entry.shortUrl}
                         </span>
                         <CopyShortLinkButton shortUrl={entry.shortUrl} hostname={entry.domain} />
                       </div>

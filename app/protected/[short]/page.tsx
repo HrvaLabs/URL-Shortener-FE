@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { PageMeta } from "@/components/page-meta"
 import { Lock } from "lucide-react"
 import { shortHostOf } from "@/lib/utils"
+import { isHostnameShaped } from "@/lib/domains"
 
 const ELLIPSIS = String.fromCodePoint(0x2026)
 
@@ -32,6 +33,7 @@ function ProtectedLinkForm() {
   const params = useParams()
   const short = params.short as string
   const domain = useSearchParams().get("domain")?.trim() || null
+  const host = domain === null ? shortHostOf() : isHostnameShaped(domain) ? domain : null
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,9 +54,11 @@ function ProtectedLinkForm() {
   return (
     <>
       <ProtectedHeading>
-        <p className="mt-1.5 font-mono text-sm font-medium text-brand [overflow-wrap:anywhere]">
-          <span className="text-brand/60">{shortHostOf(domain)}/</span>{short}
-        </p>
+        {host && (
+          <p className="mt-1.5 font-mono text-sm font-medium text-brand [overflow-wrap:anywhere]">
+            <span className="font-normal text-muted-foreground">{host}/</span>{short}
+          </p>
+        )}
       </ProtectedHeading>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>

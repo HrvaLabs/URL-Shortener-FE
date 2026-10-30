@@ -120,7 +120,7 @@ function TopLinks({ links, days }: TopLinksProps) {
                 className="block space-y-2 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
               >
                 <span className="flex items-baseline justify-between gap-4">
-                  <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHost(link.domain, shortHostOf())}/</span>{link.shortUrl}</span>
+                  <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="font-normal text-muted-foreground">{shortHost(link.domain, shortHostOf())}/</span>{link.shortUrl}</span>
                   <span className="shrink-0 text-sm tabular-nums">{plural(link.clicks, "click")}</span>
                 </span>
                 <span aria-hidden="true" className="block h-1.5 overflow-hidden rounded-full bg-muted">

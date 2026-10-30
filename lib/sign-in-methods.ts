@@ -16,6 +16,10 @@ export const isSwitchable = (method: SignInMethod): method is SwitchableMethod =
 export const providerTurnedOffText = (provider: SwitchableMethod | null): string =>
   `${provider ? signInMethodLabels[provider] : "That"} sign-in is turned off for this account. Turn it back on in Settings after signing in another way.`
 
+export function providerFromParam(value: string | null): SwitchableMethod | null {
+  return value === "GOOGLE" || value === "GITHUB" ? value : null
+}
+
 export const OAUTH_PROVIDER_KEY = "oauth-provider"
 
 export function rememberOAuthProvider(provider: SwitchableMethod): void {
@@ -28,8 +32,7 @@ export function rememberOAuthProvider(provider: SwitchableMethod): void {
 
 export function readOAuthProvider(): SwitchableMethod | null {
   try {
-    const stored = sessionStorage.getItem(OAUTH_PROVIDER_KEY)
-    return stored === "GOOGLE" || stored === "GITHUB" ? stored : null
+    return providerFromParam(sessionStorage.getItem(OAUTH_PROVIDER_KEY))
   } catch {
     return null
   }

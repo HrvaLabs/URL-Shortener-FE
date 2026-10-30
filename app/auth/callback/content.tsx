@@ -11,7 +11,7 @@ import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
 import { SIGNUPS_PAUSED } from "@/lib/moderation"
-import { forgetOAuthProvider, providerTurnedOffText, readOAuthProvider } from "@/lib/sign-in-methods"
+import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider } from "@/lib/sign-in-methods"
 import { TWO_STEP_METHODS, type SignedIn, type TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
 
@@ -45,7 +45,7 @@ function readCallback(searchParams: URLSearchParams): Callback {
     const methods = (searchParams.get("methods") ?? "").split(",").filter(isTwoStepMethod)
     return { kind: "second-step", pendingToken, methods }
   }
-  if (err === "provider_turned_off") return { kind: "error", error: providerTurnedOffText(readOAuthProvider()), fromProvider: true }
+  if (err === "provider_turned_off") return { kind: "error", error: providerTurnedOffText(providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()), fromProvider: true }
   if (err) return { kind: "error", error: Object.hasOwn(messages, err) ? messages[err] : "Authentication failed.", fromProvider: true }
   return { kind: "error", error: "Invalid callback — no token received.", fromProvider: false }
 }

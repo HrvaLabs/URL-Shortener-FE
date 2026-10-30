@@ -65,7 +65,9 @@ function dialogText(change: Change): { title: string; description: string; confi
 
 export function SignInMethodsCard() {
   const { data: me, isLoading, error, refetch, isFetching } = useMe()
-  const methods = me?.signInMethods ?? []
+  const recorded = me?.signInMethods ?? []
+  const passwordWithoutRow = me?.passwordSet === true && !recorded.some((use) => use.method === "PASSWORD")
+  const methods = passwordWithoutRow ? [{ method: "PASSWORD" as const, firstUsedAt: "", lastUsedAt: "", turnedOffAt: null }, ...recorded] : recorded
   const [change, setChange] = useState<Change | null>(null)
   const [busy, setBusy] = useState(false)
   const buttons = useRef<Partial<Record<SignInMethod, HTMLButtonElement | null>>>({})
@@ -175,7 +177,9 @@ function MethodRow({
     <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <div className="min-w-0 space-y-0.5">
         <p className={cn("text-sm font-medium", wrap)}>{name}</p>
-        <p className="text-xs tabular-nums text-muted-foreground">Last used {formatDateTime(parseServerDateTime(use.lastUsedAt))}</p>
+        {use.lastUsedAt && (
+          <p className="text-xs tabular-nums text-muted-foreground">Last used {formatDateTime(parseServerDateTime(use.lastUsedAt))}</p>
+        )}
         {turnedOffAt && (
           <p className="text-xs tabular-nums text-muted-foreground">Turned off {formatDate(parseServerDateTime(turnedOffAt))}</p>
         )}

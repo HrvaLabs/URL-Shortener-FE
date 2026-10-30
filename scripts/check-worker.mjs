@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
-const { JUNK_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
+const { SCANNER_CACHE_CONTROL, STATIC_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
 
 let failures = 0
 
@@ -104,8 +104,18 @@ await check("the answer is a tiny plain 404", async () => {
   const response = junkPathResponse(new Request("https://app.hrva.cc/.env"))
   assert.equal(response?.status, 404)
   assert.equal(response?.headers.get("content-type"), "text/plain; charset=utf-8")
-  assert.equal(response?.headers.get("cache-control"), JUNK_CACHE_CONTROL)
+  assert.equal(response?.headers.get("cache-control"), "public, max-age=600")
+  assert.equal(response?.headers.get("cache-control"), SCANNER_CACHE_CONTROL)
   assert.equal(await response?.text(), "Not found\n")
+})
+
+await check("a missing /_next/static file is never cached, a scanner path is cached for 10 minutes", () => {
+  const chunk = junkPathResponse(new Request("https://app.hrva.cc/_next/static/chunks/old.js"))
+  assert.equal(chunk?.headers.get("cache-control"), "no-store")
+  assert.equal(chunk?.headers.get("cache-control"), STATIC_CACHE_CONTROL)
+  for (const path of ["/.env", "/admin.php", "/wp-login.php", "/cgi-bin/x"]) {
+    assert.equal(junkPathResponse(new Request(`https://app.hrva.cc${path}`))?.headers.get("cache-control"), "public, max-age=600", path)
+  }
 })
 
 await check("any method gets the 404, HEAD included", () => {

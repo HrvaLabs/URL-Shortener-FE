@@ -20,7 +20,7 @@ import {
 } from "@/lib/bio"
 import { useReorder } from "@/lib/hooks/useReorder"
 import type { BioIcon, BioPageButton, UrlResponse } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, shortHostOf } from "@/lib/utils"
 
 export const BUTTON_LIMIT_TEXT = "You've added 30 buttons, the most a page can have."
 
@@ -64,7 +64,7 @@ function ButtonRow({
   const label = bioButtonLabel(button)
   const titleError = error?.field === "title" ? error.text : null
   const linkError = error?.field === "link" ? error.text : null
-  const forButton = <span className="sr-only"> for /{button.shortUrl}</span>
+  const forButton = <span className="sr-only"> for {shortHostOf(button.domain)}/{button.shortUrl}</span>
 
   return (
     <li
@@ -129,7 +129,7 @@ function ButtonRow({
           </div>
 
           <p className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">
-            <span className="text-brand">/{button.shortUrl}</span>
+            <span className="text-brand"><span className="text-brand/60">{shortHostOf(button.domain)}/</span>{button.shortUrl}</span>
             {button.destinationHost && (
               <>
                 <span aria-hidden="true" className="text-muted-foreground"> → </span>
@@ -235,7 +235,7 @@ export function ButtonsEditor({
 
   const pick = (url: UrlResponse): string | null => {
     if (busy || buttons.length >= BIO_LIMITS.buttons || buttons.some((button) => button.urlId === url.id)) return null
-    const button = newBioButton(url)
+    const button = { ...newBioButton(url), domain: url.domain?.hostname ?? null }
     lastAdded.current = button.urlId
     onChange([...buttons, button])
     return bioButtonLabel(button)

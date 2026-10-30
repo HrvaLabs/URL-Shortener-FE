@@ -92,7 +92,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
     }
   }
 
-  const shortUrl = result ? formatShortUrl(result.shortUrl) : ""
+  const shortUrl = result ? formatShortUrl(result.shortUrl, result.domain?.hostname) : ""
 
   return (
     <div className={cn("w-full", className)}>
@@ -168,7 +168,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
       {result && (
         <div
-          key={result.shortUrl}
+          key={shortUrl}
           ref={resultRef}
           className="animate-result-in mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl border bg-card p-3 pr-4 text-left shadow-[0_8px_24px_-12px_rgb(0_0_0/0.15)]"
           aria-live="polite"

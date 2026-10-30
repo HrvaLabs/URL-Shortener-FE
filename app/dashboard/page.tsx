@@ -21,18 +21,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { cn, formatDateTime, formatRelativeDate, formatShortUrl, getShortBaseUrl } from "@/lib/utils"
+import { cn, formatDateTime, formatRelativeDate, formatShortUrl, shortHostOf } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
 import { PageMeta } from "@/components/page-meta"
 import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
+import { shortHost } from "@/lib/domains"
 
 const selectClass =
   "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
 const rowActionClass = "h-8 w-8 text-muted-foreground hover:text-foreground"
-const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
+const primaryHost = shortHostOf()
 
 function SortIcon({ dir }: { dir: string | null }) {
   if (dir === "asc") return <ArrowUp className="h-3 w-3 text-foreground" />
@@ -255,10 +256,10 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => copyToClipboard(formatShortUrl(url.shortUrl), url.id)}
+                        onClick={() => copyToClipboard(formatShortUrl(url.shortUrl, url.domain?.hostname), url.id)}
                         className="min-w-0 text-left font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
                       >
-                        <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
+                        <span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
                       </button>
                       {url.passwordProtected && (
                         <Lock className="h-3 w-3 shrink-0 text-muted-foreground" aria-label="Password protected" />
@@ -301,7 +302,7 @@ export default function DashboardPage() {
                             variant="ghost"
                             size="icon"
                             aria-label="Copy short URL"
-                            onClick={() => copyToClipboard(formatShortUrl(url.shortUrl), url.id)}
+                            onClick={() => copyToClipboard(formatShortUrl(url.shortUrl, url.domain?.hostname), url.id)}
                             className={cn(rowActionClass, copyPulseId === url.id && "animate-copy-pulse text-brand hover:text-brand")}
                           >
                             <Copy className="h-4 w-4" />
@@ -346,7 +347,7 @@ export default function DashboardPage() {
                             <DialogHeader>
                               <DialogTitle>QR Code</DialogTitle>
                             </DialogHeader>
-                            <QrCustomizer value={formatShortUrl(url.shortUrl)} filename={`${url.shortUrl}-qr`} />
+                            <QrCustomizer value={formatShortUrl(url.shortUrl, url.domain?.hostname)} filename={`${url.shortUrl}-qr`} />
                           </DialogContent>
                         </Dialog>
                       </Tooltip>

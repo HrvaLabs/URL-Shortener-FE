@@ -20,6 +20,7 @@ const SEND_FAILED = "Couldn't send the report. Try again, or email abuse@hrva.cc
 const SCHEME = /^https?:\/\//i
 const SHORT_HOST = getShortBaseUrl().replace(SCHEME, "").replace(/\/+$/, "").toLowerCase()
 const BIO_PATH = "bio/"
+const CUSTOM_HOST = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i
 const TARGET_INVALID = "Enter a hrva.cc short link or bio page, like hrva.cc/abc or hrva.cc/@name."
 
 const categories: { value: ReportCategory; label: string }[] = [
@@ -56,14 +57,24 @@ function targetOf(path: string, { shortCodes }: { shortCodes: boolean }): Report
   return shortCodes && SHORT_CODE.test(path) ? { kind: "link", code: path } : null
 }
 
+function customHostTarget(link: string): ReportTarget | null {
+  const slash = link.indexOf("/")
+  if (slash < 0) return null
+  const host = link.slice(0, slash)
+  if (!CUSTOM_HOST.test(host)) return null
+  const code = pathOf(link.slice(slash))
+  return SHORT_CODE.test(code) ? { kind: "link", code: `${host}/${code}` } : null
+}
+
 function toReportTarget(input: string): ReportTarget | null {
-  const link = input.trim().replace(SCHEME, "").replace(/^www\./i, "")
+  const withHost = input.trim().replace(SCHEME, "")
+  const link = withHost.replace(/^www\./i, "")
   const lower = link.toLowerCase()
   const onHost = (host: string) => host !== "" && (lower === host || lower.startsWith(`${host}/`))
   if (onHost(SHORT_HOST)) return targetOf(pathOf(link.slice(SHORT_HOST.length)), { shortCodes: true })
   const appHost = frontendHost()
   if (onHost(appHost)) return targetOf(pathOf(link.slice(appHost.length)), { shortCodes: false })
-  return targetOf(pathOf(link), { shortCodes: true })
+  return customHostTarget(withHost) ?? targetOf(pathOf(link), { shortCodes: true })
 }
 
 function refusedMessage(error: unknown) {

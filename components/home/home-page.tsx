@@ -13,7 +13,7 @@ import { ShortenForm } from "@/components/shorten-form"
 import { EasterEggKonami } from "@/components/easter-egg-konami"
 import { useAuth } from "@/lib/auth-context"
 import { useMyUrls } from "@/lib/hooks/useUrls"
-import { cn, formatShortUrl } from "@/lib/utils"
+import { cn, formatShortUrl, shortHostOf } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
 import { MIDDLE_DOT, SLOGAN } from "@/lib/seo"
 import { SALT_GRACE_SOURCE, VISITOR_HASH_SOURCE } from "@/lib/source-links"
@@ -831,7 +831,7 @@ function SignedInHome({ email }: { email: string }) {
             ) : (
               <ul className="divide-y">
                 {latestUrls.map((url) => (
-                  <RecentLink key={url.id} shortUrl={url.shortUrl} longUrl={url.longUrl} visits={url.visits} />
+                  <RecentLink key={url.id} shortUrl={url.shortUrl} hostname={url.domain?.hostname} longUrl={url.longUrl} visits={url.visits} />
                 ))}
               </ul>
             )}
@@ -845,9 +845,9 @@ function SignedInHome({ email }: { email: string }) {
   )
 }
 
-function RecentLink({ shortUrl, longUrl, visits }: { shortUrl: string; longUrl: string; visits: number }) {
+function RecentLink({ shortUrl, hostname, longUrl, visits }: { shortUrl: string; hostname?: string; longUrl: string; visits: number }) {
   const [copied, setCopied] = useState(false)
-  const full = formatShortUrl(shortUrl)
+  const full = formatShortUrl(shortUrl, hostname)
 
   const copy = async () => {
     try {
@@ -862,7 +862,7 @@ function RecentLink({ shortUrl, longUrl, visits }: { shortUrl: string; longUrl: 
   return (
     <li className="group flex items-center gap-3 px-5 py-3">
       <div className="min-w-0 flex-1">
-        <p className="break-all font-mono text-[13px] font-medium text-brand">/{shortUrl}</p>
+        <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHostOf(hostname)}/</span>{shortUrl}</p>
         <p className="mt-0.5 break-all text-xs text-muted-foreground">{longUrl}</p>
       </div>
       <span className="text-xs tabular-nums text-muted-foreground">{visits.toLocaleString()}</span>

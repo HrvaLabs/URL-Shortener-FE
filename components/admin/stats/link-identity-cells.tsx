@@ -2,9 +2,9 @@ import Link from "next/link"
 import { TableCell, TableHead } from "@/components/ui/table"
 import { analyticsHref } from "@/lib/analytics"
 import type { AnalyticsRange, NewestLink, TrafficTopLink } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, shortHostOf } from "@/lib/utils"
 
-export type LinkIdentity = Pick<TrafficTopLink | NewestLink, "id" | "shortUrl" | "destinationHost" | "ownerEmail">
+export type LinkIdentity = Pick<TrafficTopLink | NewestLink, "id" | "shortUrl" | "domain" | "destinationHost" | "ownerEmail">
 
 export function LinkIdentityHeads() {
   return (
@@ -29,7 +29,7 @@ export function LinkIdentityCells({ link, days }: LinkIdentityCellsProps) {
           href={analyticsHref({ link: link.id, days })}
           className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] hover:underline"
         >
-          /{link.shortUrl}
+          <span className="text-brand/60">{shortHostOf(link.domain)}/</span>{link.shortUrl}
         </Link>
       </TableCell>
       <TableCell className="text-muted-foreground">

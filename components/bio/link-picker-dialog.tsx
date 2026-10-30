@@ -12,8 +12,12 @@ import { BIO_LIMITS, destinationHostOf } from "@/lib/bio"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import type { UrlFilters, UrlResponse } from "@/lib/types"
+import { shortHost } from "@/lib/domains"
+import { shortHostOf } from "@/lib/utils"
 
 const PAGE_SIZE = 10
+
+const primaryHost = shortHostOf()
 
 const SEARCH_DELAY_MS = 300
 
@@ -47,7 +51,7 @@ function PickerPage({ page, search, exclude, full, limitId, onAdd }: PickProps &
       return (
         <li key={url.id} className="flex items-start justify-between gap-3 py-3">
           <div className="min-w-0">
-            <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">/{url.shortUrl}</p>
+            <p className="font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}</p>
             {host && <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">{host}</p>}
           </div>
           <Button
@@ -56,7 +60,7 @@ function PickerPage({ page, search, exclude, full, limitId, onAdd }: PickProps &
             size="sm"
             data-pick-link=""
             data-page={page}
-            aria-label={`Add /${url.shortUrl}`}
+            aria-label={`Add ${shortHost(url.domain, primaryHost)}/${url.shortUrl}`}
             aria-disabled={full || undefined}
             aria-describedby={full ? limitId : undefined}
             onClick={(event) => onAdd(url, event)}

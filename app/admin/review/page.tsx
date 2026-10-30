@@ -20,13 +20,12 @@ import { PageMeta } from "@/components/page-meta"
 import { adminSelectClass } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { parseServerDateTime } from "@/lib/analytics"
-import { cn, formatDateTime, formatShortUrl, getShortBaseUrl, plural } from "@/lib/utils"
+import { cn, formatDateTime, formatShortUrl, plural, shortHostOf } from "@/lib/utils"
 import { adminApi, ApiError } from "@/lib/api-client"
 import type { ReviewAction, ReviewBulkResolveResult, ReviewEntry, ReviewQueueFilters } from "@/lib/types"
 
 type RowAction = Exclude<ReviewAction, "BLOCK_DOMAIN">
 
-const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -385,16 +384,16 @@ function ReviewQueue() {
                         type="checkbox"
                         checked={selected}
                         onChange={() => toggleSelect(entry.urlId)}
-                        aria-label={`Select ${shortHost}/${entry.shortUrl}`}
+                        aria-label={`Select ${shortHostOf(entry.domain)}/${entry.shortUrl}`}
                         className="h-4 w-4 rounded border-input accent-brand"
                       />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <span className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
-                          <span className="text-brand/60">{shortHost}/</span>{entry.shortUrl}
+                          <span className="text-brand/60">{shortHostOf(entry.domain)}/</span>{entry.shortUrl}
                         </span>
-                        <CopyShortLinkButton shortUrl={entry.shortUrl} />
+                        <CopyShortLinkButton shortUrl={entry.shortUrl} hostname={entry.domain} />
                       </div>
                       <p className="mt-1 min-w-32 text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-56 @4xl:hidden">{entry.longUrl}</p>
                       <div className="mt-1 flex min-w-32 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[67rem]:hidden">
@@ -621,12 +620,12 @@ function ReasonList({ reasons, className }: { reasons: string[]; className?: str
   )
 }
 
-function CopyShortLinkButton({ shortUrl }: { shortUrl: string }) {
+function CopyShortLinkButton({ shortUrl, hostname }: { shortUrl: string; hostname?: string | null }) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(formatShortUrl(shortUrl))
+      await navigator.clipboard.writeText(formatShortUrl(shortUrl, hostname))
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {

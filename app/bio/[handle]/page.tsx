@@ -51,10 +51,10 @@ const toViewModel = (page: PublicBioPage): BioPageViewModel => ({
   accent: page.accent,
   theme: page.theme,
   buttons: page.buttons.map((button) => ({
-    key: button.shortUrl,
+    key: formatShortUrl(button.shortUrl, button.domain),
     title: button.title,
     icon: button.icon,
-    href: formatShortUrl(button.shortUrl),
+    href: formatShortUrl(button.shortUrl, button.domain),
   })),
 })
 

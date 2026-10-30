@@ -9,7 +9,8 @@ import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref } from "@/lib/analytics"
 import { useAnalyticsOverview } from "@/lib/hooks/useAnalytics"
 import type { AnalyticsOverview, AnalyticsRange, AnalyticsTopLink } from "@/lib/types"
-import { cn, formatDate, plural } from "@/lib/utils"
+import { cn, formatDate, plural, shortHostOf } from "@/lib/utils"
+import { shortHost } from "@/lib/domains"
 
 interface OverviewAnalyticsProps {
   days: AnalyticsRange
@@ -119,7 +120,7 @@ function TopLinks({ links, days }: TopLinksProps) {
                 className="block space-y-2 rounded-lg px-3 py-2.5 transition-colors hover:bg-accent"
               >
                 <span className="flex items-baseline justify-between gap-4">
-                  <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">/{link.shortUrl}</span>
+                  <span className="min-w-0 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]"><span className="text-brand/60">{shortHost(link.domain, shortHostOf())}/</span>{link.shortUrl}</span>
                   <span className="shrink-0 text-sm tabular-nums">{plural(link.clicks, "click")}</span>
                 </span>
                 <span aria-hidden="true" className="block h-1.5 overflow-hidden rounded-full bg-muted">

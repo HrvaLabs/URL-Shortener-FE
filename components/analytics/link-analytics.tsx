@@ -73,7 +73,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
     <>
       <div className="min-w-0 space-y-4">
         <div className="min-w-0">
-          <h1 className="font-mono text-lg font-medium text-brand [overflow-wrap:anywhere]">{formatShortUrl(link.shortUrl)}</h1>
+          <h1 className="font-mono text-lg font-medium text-brand [overflow-wrap:anywhere]">{formatShortUrl(link.shortUrl, link.domain?.hostname)}</h1>
           <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2">
             <StatusBadge status={link.status} className="shrink-0" />
             {link.destinationHost && (

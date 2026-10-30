@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
 import { toast } from "sonner"
-import { cn, destinationLengthError, formatDateTime, getShortBaseUrl, plural } from "@/lib/utils"
+import { cn, destinationLengthError, formatDateTime, plural, shortHostOf } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
@@ -31,10 +31,12 @@ import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { UrlResponse, UrlFilters } from "@/lib/types"
+import { shortHost } from "@/lib/domains"
 
-const shortHost = getShortBaseUrl().replace(/^https?:\/\//, "")
+const primaryHost = shortHostOf()
+const emDash = String.fromCodePoint(0x2014)
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(shortHost)}/`, "i")
+const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(primaryHost)}/`, "i")
 
 const searchTerm = (input: string) => input.trim().replace(shortLinkPrefix, "")
 
@@ -446,13 +448,13 @@ function AdminUrls() {
                       type="checkbox"
                       checked={selectedIds.has(url.id)}
                       onChange={() => toggleSelect(url.id)}
-                      aria-label={`Select /${url.shortUrl}`}
+                      aria-label={`Select ${shortHost(url.domain, primaryHost)}/${url.shortUrl}`}
                       className="h-4 w-4 rounded border-input accent-brand"
                     />
                   </TableCell>
                   <TableCell>
                     <span className="block min-w-28 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
-                      <span className="text-brand/60">{shortHost}/</span>{url.shortUrl}
+                      <span className="text-brand/60">{shortHost(url.domain, primaryHost)}/</span>{url.shortUrl}
                     </span>
                     <div className="mt-1 min-w-40 space-y-0.5 text-xs text-muted-foreground @lg:min-w-56 @min-[78.25rem]:hidden">
                       <Destination url={url} />
@@ -567,7 +569,7 @@ function AdminUrls() {
                         <AlertDialogContent onCloseAutoFocus={removalFocus.onCloseAutoFocus}>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete URL?</AlertDialogTitle>
-                            <AlertDialogDescription>This will permanently delete /{url.shortUrl}.</AlertDialogDescription>
+                            <AlertDialogDescription className="[overflow-wrap:anywhere]">This will permanently delete {shortHost(url.domain, primaryHost)}/{url.shortUrl}.</AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -613,7 +615,7 @@ function AdminUrls() {
       <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>
         <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit URL — /{editUrl?.shortUrl}</DialogTitle>
+            <DialogTitle className="[overflow-wrap:anywhere]">Edit URL {emDash} {shortHost(editUrl?.domain, primaryHost)}/{editUrl?.shortUrl}</DialogTitle>
           </DialogHeader>
           {editUrl && (
             <form onSubmit={handleEditSave} noValidate className="space-y-4">

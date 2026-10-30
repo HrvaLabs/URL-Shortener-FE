@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { adminApi, ApiError, campaignApi } from "@/lib/api-client"
-import { addBulkBlock, blockSummaryText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, RETRYABLE_BLOCK_STATUSES, type BulkBlockTotals } from "@/lib/moderation"
+import { addBulkBlock, blockSummaryText, blockTotalsText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, RETRYABLE_BLOCK_STATUSES, type BulkBlockTotals } from "@/lib/moderation"
 import { cn, plural } from "@/lib/utils"
 import type { DomainBlockPreview } from "@/lib/types"
 
@@ -205,8 +205,9 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
       <DialogHeader>
         <DialogTitle>Block domains</DialogTitle>
         <DialogDescription>
-          Every active link to a ticked domain is deactivated and its owner emailed, one email per owner. New links to these domains are refused.
-          {campaignId !== null && ` Domains are blocked ${BULK_BLOCK_BATCH} at a time.`}
+          {campaignId !== null
+            ? `Blocks each ticked domain for the whole site. Held links of the campaign stay off as domain blocks. Active links on these domains, anyone's, are turned off and their owners emailed. Domains are blocked ${BULK_BLOCK_BATCH} at a time.`
+            : "Every active link to a ticked domain is deactivated and its owner emailed, one email per owner. New links to these domains are refused."}
         </DialogDescription>
       </DialogHeader>
 
@@ -229,6 +230,22 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
         </p>
       ) : (
         <>
+          {campaignId !== null && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm tabular-nums text-muted-foreground">{blockTotalsText(rows)}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setUnticked(new Set())} disabled={locked}>Tick all</Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setUnticked(new Set(rows.map((row) => row.domain)))}
+                  disabled={locked}
+                >
+                  Untick all
+                </Button>
+              </div>
+            </div>
+          )}
           <fieldset className="space-y-2">
             <legend className="sr-only">Domains to block</legend>
             {rows.map((row, index) => {

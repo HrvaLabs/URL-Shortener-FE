@@ -1,5 +1,5 @@
 import { parseServerDateTime } from "./analytics"
-import type { AbuseReport, Campaign, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
+import type { AbuseNoContact, AbuseReport, Campaign, DomainBlockPreview, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
 
 export const ANONYMOUS_PAUSED = "Making links without an account is paused."
 
@@ -126,7 +126,7 @@ export function reportStatusText(status: ReportStatus | null, now: Date): string
   if (!status) return "Not reported"
   if (status.suspendedAt) {
     const suspended = parseServerDateTime(status.suspendedAt)
-    return `Suspended on ${suspended.getUTCDate()} ${MONTH_NAMES[suspended.getUTCMonth()]}`
+    return `Suspended on ${MONTH_NAMES[suspended.getUTCMonth()]} ${suspended.getUTCDate()}, ${suspended.getUTCFullYear()}`
   }
   const days = Math.max(0, utcDay(now) - utcDay(parseServerDateTime(status.reportedAt)))
   return days === 0 ? "Reported today, not suspended yet" : `Reported ${countOf(days, "day")} ago, not suspended yet`
@@ -165,10 +165,44 @@ export function blockSummaryText({ blocked, linksDeactivated, heldLinksConverted
 
 export const RETRYABLE_BLOCK_STATUSES: readonly number[] = [0, 503]
 
-export function campaignStatusLabel({ status, holding }: Pick<Campaign, "status" | "holding">): string {
-  if (status === "ALLOWED") return "Allowed"
-  if (status === "ALERT_ONLY") return "Alert only"
-  return holding ? "Holding" : "Hold ended"
+export type HoldState = "holding" | "off" | "ended"
+
+export function campaignHoldState(
+  { status, holding, holdingOff, activeUntil }: Pick<Campaign, "status" | "holding" | "holdingOff" | "activeUntil">,
+  now: Date,
+): HoldState | null {
+  if (status !== "HOLDING") return null
+  if (holdingOff === "switch") return "off"
+  if (holding) return "holding"
+  if (holdingOff === undefined && (!activeUntil || parseServerDateTime(activeUntil) > now)) return "off"
+  return "ended"
+}
+
+export function campaignStatusLabel(campaign: Pick<Campaign, "status" | "holding" | "holdingOff" | "activeUntil">, now: Date): string {
+  if (campaign.status === "ALLOWED") return "Allowed"
+  if (campaign.status === "ALERT_ONLY") return "Alert only"
+  const state = campaignHoldState(campaign, now)
+  return state === "holding" ? "Holding" : state === "off" ? "Not holding" : "Hold ended"
+}
+
+const HOLD_OFF_FALLBACK = "Same-shape alert or Hold links with a campaign URL shape is off"
+
+export function holdOffReason(settings: SettingResponse[] | undefined): string {
+  const off = (key: string) => settings?.find((setting) => setting.key === key && setting.value === false)
+  const setting = off("SAME_SHAPE_ALERT") ?? off("CAMPAIGN_HOLD")
+  return setting ? `${setting.label} is off` : HOLD_OFF_FALLBACK
+}
+
+export function campaignRuleText(settings: SettingResponse[] | undefined): string | null {
+  const number = (key: string) => {
+    const value = settings?.find((setting) => setting.key === key)?.value
+    return typeof value === "number" ? value : null
+  }
+  const links = number("CAMPAIGN_LINKS")
+  const domains = number("CAMPAIGN_DOMAINS")
+  const hours = number("CAMPAIGN_WINDOW_HOURS")
+  if (links === null || domains === null || hours === null) return null
+  return `One appears when ${countOf(links, "link")} without an account share a URL shape on ${countOf(domains, "domain")} within ${countOf(hours, "hour")}.`
 }
 
 export function campaignCountsText({ links, domains, clicks }: Pick<Campaign, "links" | "domains" | "clicks">): string {
@@ -204,3 +238,27 @@ export function markedText(count: number): string {
 }
 
 export const LOOKUP_FAILED = "Lookup failed. Try again."
+
+export type ReportCopyField = "to" | "cc" | "subject" | "body" | "all"
+
+export function copyMarksReported(field: ReportCopyField): boolean {
+  return field === "body" || field === "all"
+}
+
+export function reportAsText({ to, cc, subject, body }: Pick<AbuseReport, "to" | "cc" | "subject" | "body">): string {
+  return [`To: ${to}`, ...(cc.length > 0 ? [`Cc: ${cc.join(", ")}`] : []), `Subject: ${subject}`, "", body].join("\n")
+}
+
+export function noContactText({ domain, registrar, lookupFailed, reason }: Pick<AbuseNoContact, "domain" | "registrar" | "lookupFailed" | "reason">): string {
+  if (lookupFailed || reason === "lookupFailed") return LOOKUP_FAILED
+  if (reason === "sharedSuffix") return "Shared hosting domain: report it to the hosting provider"
+  if (reason === "notRegistered") return "The registry has no record of this domain"
+  if (reason === "noRegistry") return `No registry lookup for .${domain.slice(domain.lastIndexOf(".") + 1)}`
+  return `No abuse email in the registry record${registrar ? `. Registrar: ${registrar}` : ""}`
+}
+
+export function blockTotalsText(rows: DomainBlockPreview[]): string {
+  const held = rows.reduce((sum, row) => sum + row.heldLinks, 0)
+  const active = rows.reduce((sum, row) => sum + row.activeLinks, 0)
+  return `${countOf(rows.length, "domain")}, ${countOf(held, "held link")}, ${countOf(active, "active link")} on the site`
+}

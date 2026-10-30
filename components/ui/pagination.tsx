@@ -10,11 +10,13 @@ interface PaginationProps {
   size: number
   onPageChange: (page: number) => void
   onSizeChange: (size: number) => void
+  label?: string
 }
 
 const PAGE_SIZES = [10, 20, 50, 100]
 
-export function Pagination({ page, totalPages, totalElements, size, onPageChange, onSizeChange }: PaginationProps) {
+export function Pagination({ page, totalPages, totalElements, size, onPageChange, onSizeChange, label }: PaginationProps) {
+  const named = (text: string) => (label ? `${text} for ${label}` : text)
   const firstItem = totalElements ? page * size + 1 : 0
   const lastItem = totalElements ? Math.min((page + 1) * size, totalElements) : 0
 
@@ -28,7 +30,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
         )}
         <span className="ml-2 hidden sm:inline">Rows per page</span>
         <select
-          aria-label="Rows per page"
+          aria-label={named("Rows per page")}
           value={size}
           onChange={(e) => onSizeChange(Number(e.target.value))}
           className="h-8 rounded-lg border border-input bg-background px-2 text-xs tabular-nums text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus:border-ring focus:outline-hidden focus:ring-4 focus:ring-ring/15"
@@ -51,7 +53,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           className="h-8 w-8"
           disabled={page <= 0}
           onClick={() => onPageChange(page - 1)}
-          aria-label="Previous page"
+          aria-label={named("Previous page")}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
@@ -61,7 +63,7 @@ export function Pagination({ page, totalPages, totalElements, size, onPageChange
           className="h-8 w-8"
           disabled={page >= totalPages - 1}
           onClick={() => onPageChange(page + 1)}
-          aria-label="Next page"
+          aria-label={named("Next page")}
         >
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>

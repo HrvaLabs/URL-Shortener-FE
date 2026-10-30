@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -277,12 +277,12 @@ check("reportStatusText: reported, not suspended yet", () => {
   assert.equal(reportStatusText(report("2026-09-30T10:00:00"), now), "Reported 30 days ago, not suspended yet")
 })
 
-check("reportStatusText: suspended, in UTC d MMM", () => {
+check("reportStatusText: suspended, in UTC MMM d, yyyy", () => {
   const suspended = (suspendedAt) => ({ reportedAt: "2026-10-20T10:00:00", reportedBy: "karlo@hrva.cc", registrar: null, suspendedAt })
   const now = new Date("2026-11-20T12:00:00Z")
-  assert.equal(reportStatusText(suspended("2026-10-31T09:00:00"), now), "Suspended on 31 Oct")
-  assert.equal(reportStatusText(suspended("2026-11-01T23:30:00Z"), now), "Suspended on 1 Nov")
-  assert.equal(reportStatusText(suspended("2026-12-05T00:00:00+02:00"), now), "Suspended on 4 Dec")
+  assert.equal(reportStatusText(suspended("2026-10-31T09:00:00"), now), "Suspended on Oct 31, 2026")
+  assert.equal(reportStatusText(suspended("2026-11-01T23:30:00Z"), now), "Suspended on Nov 1, 2026")
+  assert.equal(reportStatusText(suspended("2026-12-05T00:00:00+02:00"), now), "Suspended on Dec 4, 2026")
 })
 
 check("inBatches: at most 100, in order, none for nothing", () => {
@@ -320,11 +320,45 @@ check("a failed batch can be retried only for a 503 or a lost connection", () =>
   assert.deepEqual([...RETRYABLE_BLOCK_STATUSES], [0, 503])
 })
 
-check("campaignStatusLabel: a hold that has run out reads Hold ended", () => {
-  assert.equal(campaignStatusLabel({ status: "HOLDING", holding: true }), "Holding")
-  assert.equal(campaignStatusLabel({ status: "HOLDING", holding: false }), "Hold ended")
-  assert.equal(campaignStatusLabel({ status: "ALERT_ONLY", holding: false }), "Alert only")
-  assert.equal(campaignStatusLabel({ status: "ALLOWED", holding: false }), "Allowed")
+check("campaignStatusLabel and campaignHoldState: holding, switched off, or run out", () => {
+  const now = new Date("2026-10-30T12:00:00Z")
+  const future = "2026-11-06T12:00:00"
+  const past = "2026-10-29T12:00:00"
+  const holding = (extra) => ({ status: "HOLDING", holding: false, activeUntil: future, ...extra })
+  assert.equal(campaignStatusLabel(holding({ holding: true }), now), "Holding")
+  assert.equal(campaignHoldState(holding({ holding: true }), now), "holding")
+  assert.equal(campaignStatusLabel(holding({ holdingOff: "switch" }), now), "Not holding")
+  assert.equal(campaignStatusLabel(holding({}), now), "Not holding")
+  assert.equal(campaignStatusLabel(holding({ holdingOff: null }), now), "Hold ended")
+  assert.equal(campaignStatusLabel(holding({ activeUntil: past }), now), "Hold ended")
+  assert.equal(campaignHoldState(holding({ holdingOff: "switch", activeUntil: past }), now), "off")
+  assert.equal(campaignStatusLabel({ status: "ALERT_ONLY", holding: false, activeUntil: null }, now), "Alert only")
+  assert.equal(campaignStatusLabel({ status: "ALLOWED", holding: false, activeUntil: null }, now), "Allowed")
+  assert.equal(campaignHoldState({ status: "ALLOWED", holding: false, activeUntil: null }, now), null)
+})
+
+check("holdOffReason names the switch that is off", () => {
+  const switches = (alert, hold) => [
+    setting({ key: "SAME_SHAPE_ALERT", type: "SWITCH", label: "Same-shape alert", value: alert }),
+    setting({ key: "CAMPAIGN_HOLD", type: "SWITCH", label: "Hold links with a campaign URL shape", value: hold }),
+  ]
+  assert.equal(holdOffReason(switches(true, false)), "Hold links with a campaign URL shape is off")
+  assert.equal(holdOffReason(switches(false, true)), "Same-shape alert is off")
+  assert.equal(holdOffReason(switches(false, false)), "Same-shape alert is off")
+  assert.equal(holdOffReason(undefined), "Same-shape alert or Hold links with a campaign URL shape is off")
+  assert.equal(holdOffReason(switches(true, true)), "Same-shape alert or Hold links with a campaign URL shape is off")
+})
+
+check("campaignRuleText reads the numbers from the settings", () => {
+  const numbers = (links, domains, hours) => [
+    setting({ key: "CAMPAIGN_LINKS", value: links }),
+    setting({ key: "CAMPAIGN_DOMAINS", value: domains }),
+    setting({ key: "CAMPAIGN_WINDOW_HOURS", value: hours }),
+  ]
+  assert.equal(campaignRuleText(numbers(3, 3, 24)), "One appears when 3 links without an account share a URL shape on 3 domains within 24 hours.")
+  assert.equal(campaignRuleText(numbers(5, 1, 1)), "One appears when 5 links without an account share a URL shape on 1 domain within 1 hour.")
+  assert.equal(campaignRuleText(undefined), null)
+  assert.equal(campaignRuleText(numbers(3, 3, 24).slice(0, 2)), null)
 })
 
 check("campaignCountsText and campaignReportsText", () => {
@@ -382,8 +416,42 @@ check("markedText and markedStatus", () => {
   assert.deepEqual(fresh, { reportedAt: "2026-10-30T12:00:00.000Z", reportedBy: "", registrar: "NameSilo, LLC", suspendedAt: null })
   assert.equal(reportStatusText(fresh, now), "Reported today, not suspended yet")
   const suspended = { reportedAt: "2026-10-20T10:00:00", reportedBy: "karlo@hrva.cc", registrar: null, suspendedAt: "2026-10-25T09:00:00" }
-  assert.equal(reportStatusText(markedStatus(suspended, "NameSilo, LLC", now), now), "Suspended on 25 Oct")
+  assert.equal(reportStatusText(markedStatus(suspended, "NameSilo, LLC", now), now), "Suspended on Oct 25, 2026")
   assert.equal(LOOKUP_FAILED, "Lookup failed. Try again.")
+})
+
+check("copying only To, Cc or Subject marks nothing; the body and the whole email mark", () => {
+  assert.equal(copyMarksReported("to"), false)
+  assert.equal(copyMarksReported("cc"), false)
+  assert.equal(copyMarksReported("subject"), false)
+  assert.equal(copyMarksReported("body"), true)
+  assert.equal(copyMarksReported("all"), true)
+})
+
+check("reportAsText: To, Cc when there is one, Subject, a blank line, the body", () => {
+  const report = { to: "abuse@namesilo.com", cc: ["a@example.com", "b@example.com"], subject: "Abuse report", body: "Hello\nBye" }
+  assert.equal(reportAsText(report), "To: abuse@namesilo.com\nCc: a@example.com, b@example.com\nSubject: Abuse report\n\nHello\nBye")
+  assert.equal(reportAsText({ ...report, cc: [] }), "To: abuse@namesilo.com\nSubject: Abuse report\n\nHello\nBye")
+})
+
+check("noContactText: lookup failed, no registry, or no abuse email", () => {
+  const entry = { domain: "example.hr", registrar: null }
+  assert.equal(noContactText({ ...entry, lookupFailed: true }), LOOKUP_FAILED)
+  assert.equal(noContactText({ ...entry, lookupFailed: true, reason: "noRegistry" }), LOOKUP_FAILED)
+  assert.equal(noContactText({ ...entry, reason: "noRegistry" }), "No registry lookup for .hr")
+  assert.equal(noContactText({ domain: "a.b.co.uk", registrar: null, reason: "noRegistry" }), "No registry lookup for .uk")
+  assert.equal(noContactText({ ...entry, reason: "lookupFailed" }), LOOKUP_FAILED)
+  assert.equal(noContactText({ ...entry, reason: "sharedSuffix" }), "Shared hosting domain: report it to the hosting provider")
+  assert.equal(noContactText({ ...entry, reason: "notRegistered" }), "The registry has no record of this domain")
+  assert.equal(noContactText({ ...entry, reason: "noAbuseEmail" }), "No abuse email in the registry record")
+  assert.equal(noContactText(entry), "No abuse email in the registry record")
+  assert.equal(noContactText({ ...entry, reason: null, registrar: "NameSilo, LLC" }), "No abuse email in the registry record. Registrar: NameSilo, LLC")
+})
+
+check("blockTotalsText sums the domains, held links and active links", () => {
+  const row = (heldLinks, activeLinks) => ({ domain: "x", hosts: ["x"], selectedLinks: 1, activeLinks, heldLinks, rule: null })
+  assert.equal(blockTotalsText([row(1, 0), row(1, 0)]), "2 domains, 2 held links, 0 active links on the site")
+  assert.equal(blockTotalsText([row(1, 1)]), "1 domain, 1 held link, 1 active link on the site")
 })
 
 check("strings are ASCII", () => {

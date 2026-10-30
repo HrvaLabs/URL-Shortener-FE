@@ -862,10 +862,13 @@ export interface AbuseReport {
   domains: AbuseReportDomain[]
 }
 
+export type AbuseNoContactReason = "noRegistry" | "lookupFailed" | "noAbuseEmail" | "notRegistered" | "sharedSuffix"
+
 export interface AbuseNoContact {
   domain: string
   registrar: string | null
   lookupFailed?: boolean
+  reason?: AbuseNoContactReason | null
   report: ReportStatus | null
 }
 
@@ -893,6 +896,7 @@ export interface Campaign {
   queryNames: string[]
   status: CampaignStatus
   holding: boolean
+  holdingOff?: "switch" | null
   firstSeenAt: string
   lastSeenAt: string
   activeUntil: string | null

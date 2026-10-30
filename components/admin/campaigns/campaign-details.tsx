@@ -1,6 +1,6 @@
 "use client"
 
-import type { FormEvent } from "react"
+import { useRef, useState, type FormEvent } from "react"
 import { Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,11 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SortSelect, type SortOption } from "@/components/admin/sort-controls"
 import { useCampaignDetail, useCampaignLinks } from "@/lib/hooks/useCampaigns"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useListSearch } from "@/lib/hooks/useListSearch"
 import { prefixedParam, useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { blockReasonLabels } from "@/lib/labels"
 import { reportStatusText } from "@/lib/moderation"
-import { shortHostOf } from "@/lib/utils"
+import { cn, shortHostOf } from "@/lib/utils"
 import type { Campaign, CampaignLink } from "@/lib/types"
 
 const LINKS_PREFIX = "links"
@@ -24,6 +25,10 @@ const LINKS_SEARCH_PARAM = prefixedParam(LINKS_PREFIX, "search")
 export const campaignLinkParams = ["page", "size", "sort", "order", "search"].map((name) => prefixedParam(LINKS_PREFIX, name))
 
 const DEFAULT_SORT = "createDate"
+
+const DOMAINS_SHOWN = 10
+
+const retryClass = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
 const sortFields = ["createDate", "id"]
 
@@ -39,28 +44,49 @@ const linkState = (link: CampaignLink) => {
 }
 
 export function CampaignDetails({ campaign, panelId }: { campaign: Campaign; panelId: string }) {
-  const { data, isLoading, error, refetch, isFetching, dataUpdatedAt } = useCampaignDetail(campaign.id, true)
-
   return (
     <div id={panelId} className="mt-4 space-y-6 border-t pt-4">
-      <section aria-label="Domains" className="space-y-2">
-        <h3 className="text-sm font-semibold">Domains</h3>
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : !data ? (
-          <div className="rounded-lg border px-4 py-6 text-center">
-            <p className="text-sm font-medium text-destructive">Failed to load the domains</p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
-          </div>
-        ) : data.domains.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No domains.</p>
-        ) : (
-          <div className="space-y-2">
-            {error && <RefreshFailed what="domains" onRetry={() => refetch()} disabled={isFetching} />}
+      <CampaignLinks campaign={campaign} />
+      <CampaignDomains campaign={campaign} />
+    </div>
+  )
+}
+
+function CampaignDomains({ campaign }: { campaign: Campaign }) {
+  const { data, isLoading, error, refetch, isFetching, dataUpdatedAt } = useCampaignDetail(campaign.id, true)
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const retry = useFocusAfterRetry(headingRef, !!data && !error && !isFetching)
+  const [showAll, setShowAll] = useState(false)
+  const domains = data?.domains ?? []
+  const shown = showAll ? domains : domains.slice(0, DOMAINS_SHOWN)
+
+  return (
+    <section aria-labelledby={panelHeadingId(campaign.id)} className="space-y-2">
+      <h3 id={panelHeadingId(campaign.id)} ref={headingRef} tabIndex={-1} className="rounded-sm text-sm font-semibold">Domains</h3>
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-9 w-full" />
+          ))}
+        </div>
+      ) : !data ? (
+        <div className="rounded-lg border px-4 py-6 text-center">
+          <p className="text-sm font-medium text-destructive">Failed to load the domains</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("mt-3", retryClass)}
+            onClick={() => { if (!isFetching) retry(refetch) }}
+            aria-disabled={isFetching}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : domains.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No domains.</p>
+      ) : (
+        <div className="space-y-2">
+          {error && <RefreshFailed what="domains" onRetry={() => retry(refetch)} disabled={isFetching} />}
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
@@ -71,28 +97,32 @@ export function CampaignDetails({ campaign, panelId }: { campaign: Campaign; pan
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.domains.map((entry) => (
+                {shown.map((entry) => (
                   <TableRow key={entry.domain}>
                     <TableCell>
                       <span className="block min-w-32 font-mono text-[13px] [overflow-wrap:anywhere]">{entry.domain}</span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{entry.links.toLocaleString()}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      <span className="block [overflow-wrap:anywhere]">{reportStatusText(entry.report, new Date(dataUpdatedAt))}</span>
+                      <span className="block">{reportStatusText(entry.report, new Date(dataUpdatedAt))}</span>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-          </div>
-        )}
-      </section>
-
-      <CampaignLinks campaign={campaign} />
-    </div>
+          {domains.length > DOMAINS_SHOWN && (
+            <Button variant="outline" size="sm" onClick={() => setShowAll(!showAll)} aria-expanded={showAll}>
+              {showAll ? `Show the first ${DOMAINS_SHOWN} domains` : `Show all ${domains.length.toLocaleString()} domains`}
+            </Button>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
+
+const panelHeadingId = (campaignId: number) => `campaign-${campaignId}-domains`
 
 function CampaignLinks({ campaign }: { campaign: Campaign }) {
   const { page, size, sort, order, setPage, setSize, setSortOrder } = usePagination(DEFAULT_SORT, "desc", sortFields, LINKS_PREFIX)
@@ -100,10 +130,12 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
   const { data, isLoading, error, refetch, isFetching } = useCampaignLinks(campaign.id, page, size, sort, order, search)
   useClampedPage(page, data?.totalPages, setPage)
   const links = data?.content ?? []
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const retry = useFocusAfterRetry(headingRef, !!data && !error && !isFetching)
 
   return (
     <section aria-label="Links" className="space-y-3">
-      <h3 className="text-sm font-semibold">Links</h3>
+      <h3 ref={headingRef} tabIndex={-1} className="rounded-sm text-sm font-semibold">Links</h3>
       <div className="flex flex-wrap items-center gap-3">
         <form
           role="search"
@@ -137,16 +169,24 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
       ) : error && !data ? (
         <div className="rounded-lg border px-4 py-8 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load the links</p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("mt-3", retryClass)}
+            onClick={() => { if (!isFetching) retry(refetch) }}
+            aria-disabled={isFetching}
+          >
+            Retry
+          </Button>
         </div>
       ) : links.length === 0 ? (
         <>
-          {error && <RefreshFailed what="links" onRetry={() => refetch()} disabled={isFetching} />}
+          {error && <RefreshFailed what="links" onRetry={() => retry(refetch)} disabled={isFetching} />}
           <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">{search ? "No links match." : "No links."}</p>
         </>
       ) : (
         <div className="space-y-2">
-          {error && <RefreshFailed what="links" onRetry={() => refetch()} disabled={isFetching} />}
+          {error && <RefreshFailed what="links" onRetry={() => retry(refetch)} disabled={isFetching} />}
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader>
@@ -188,10 +228,12 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
             size={size}
             onPageChange={setPage}
             onSizeChange={setSize}
+            label={`links of ${campaign.shape}`}
           />
         </div>
         </div>
       )}
+      <p className="text-xs text-muted-foreground">Links made by signed-in users, and links to domains with an Allow rule, are never counted here.</p>
     </section>
   )
 }
@@ -202,7 +244,7 @@ function RefreshFailed({ what, onRetry, disabled }: { what: string; onRetry(): v
       <p role="alert" className="min-w-0 text-sm font-medium text-destructive [overflow-wrap:anywhere]">
         {`Couldn't refresh the ${what}. The list may be out of date.`}
       </p>
-      <Button variant="outline" size="sm" onClick={onRetry} disabled={disabled}>Retry</Button>
+      <Button variant="outline" size="sm" className={retryClass} onClick={() => { if (!disabled) onRetry() }} aria-disabled={disabled}>Retry</Button>
     </div>
   )
 }

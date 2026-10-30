@@ -12,8 +12,11 @@ import { Pagination } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddressParam } from "@/lib/hooks/useAddressParam"
 import { useCampaigns } from "@/lib/hooks/useCampaigns"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useListSearch } from "@/lib/hooks/useListSearch"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { useAdminSettings } from "@/lib/hooks/useSettings"
+import { campaignRuleText, holdOffReason } from "@/lib/moderation"
 
 const DEFAULT_SORT = "lastSeenAt"
 
@@ -63,6 +66,9 @@ function Campaigns() {
   const { data, isLoading, error, refetch, isFetching } = useCampaigns(page, size, sort, order, search)
   useClampedPage(page, data?.totalPages, setPage)
   const campaigns = data?.content ?? []
+  const retry = useFocusAfterRetry(headingRef, !!data && !error && !isFetching)
+  const { data: settings } = useAdminSettings()
+  const ruleText = campaignRuleText(settings)
 
   const toggle = (id: number) => {
     clearLinkParams()
@@ -74,7 +80,9 @@ function Campaigns() {
       <PageMeta title={`Admin ${String.fromCodePoint(0x2014)} Campaigns`} description="URL shapes shared by links made without an account, with their links and domains." />
       <div>
         <h1 ref={headingRef} tabIndex={-1} className="rounded-sm font-display text-2xl">Campaigns</h1>
-        <p className="mt-1 text-sm text-muted-foreground">URL shapes that links made without an account share across several domains</p>
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          When links made without an account share one URL shape across several domains, they show up here. While a campaign is holding, new links with its shape are saved turned off. Signed-in users&apos; links are never held.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -106,12 +114,24 @@ function Campaigns() {
       ) : error && !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load the campaigns</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            onClick={() => { if (!isFetching) retry(refetch) }}
+            aria-disabled={isFetching}
+          >
+            Retry
+          </Button>
         </div>
       ) : campaigns.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <p className="font-semibold">{search ? "No campaigns match" : "No campaigns in the last 90 days."}</p>
-          {search && <p className="mt-1 text-sm text-muted-foreground">Try a different search.</p>}
+          {search ? (
+            <p className="mt-1 text-sm text-muted-foreground">Try a different search.</p>
+          ) : (
+            ruleText && <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{ruleText}</p>
+          )}
         </div>
       ) : (
         <>
@@ -120,7 +140,15 @@ function Campaigns() {
               <p role="alert" className="min-w-0 text-sm font-medium text-destructive [overflow-wrap:anywhere]">
                 {"Couldn't refresh the campaigns. The list may be out of date."}
               </p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                onClick={() => { if (!isFetching) retry(refetch) }}
+                aria-disabled={isFetching}
+              >
+                Retry
+              </Button>
             </div>
           )}
           <ul className="space-y-3">
@@ -131,6 +159,7 @@ function Campaigns() {
                 expanded={openId === String(campaign.id)}
                 onToggle={() => toggle(campaign.id)}
                 fallbackFocusRef={headingRef}
+                holdOffReason={holdOffReason(settings)}
               />
             ))}
           </ul>
@@ -142,6 +171,7 @@ function Campaigns() {
               size={size}
               onPageChange={setPage}
               onSizeChange={setSize}
+              label="campaigns"
             />
           </div>
         </>

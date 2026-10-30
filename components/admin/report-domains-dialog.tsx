@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useMemo, useRef, useState, type RefObject } from "react"
 import { Mail } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -8,11 +8,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api-client"
 import { useAbuseReports, useMarkReported } from "@/lib/hooks/useAbuseReports"
-import { LOOKUP_FAILED, mailtoHref, markedStatus, reportStatusText } from "@/lib/moderation"
+import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
+import { copyMarksReported, mailtoHref, markedStatus, noContactText, reportAsText, reportStatusText, type ReportCopyField } from "@/lib/moderation"
 import { cn, plural } from "@/lib/utils"
 import type { AbuseReport, AbuseReportSource } from "@/lib/types"
 
 const wrap = "[overflow-wrap:anywhere]"
+
+const words = "break-words"
+
+const disabledClass = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
 const COPY_REFUSED = "Couldn't copy. Select the text and copy it by hand."
 
@@ -39,13 +44,17 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
   const now = new Date(dataUpdatedAt)
   const lookupFailed = data?.noContact.some((entry) => entry.lookupFailed) ?? false
   const nothing = data && data.reports.length === 0 && data.noContact.length === 0
+  const noContactRef = useRef<HTMLHeadingElement>(null)
+  const firstCardRef = useRef<HTMLHeadingElement>(null)
+  const firstResultRef = useMemo<RefObject<HTMLElement | null>>(() => ({ get current() { return noContactRef.current ?? firstCardRef.current } }), [])
+  const retry = useFocusAfterRetry(firstResultRef, !!data && !error && !isFetching)
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>Report domains</DialogTitle>
         <DialogDescription>
-          One email per registrar. Open it in your mail app or copy it; hrva.cc sends nothing itself. The first time you open or copy an email, its domains are marked as reported.
+          One email per registrar. Open it in your mail app or copy it; hrva.cc sends nothing itself. The first time you open an email in your mail app, copy its body or copy all of it, its domains are marked as reported. Copying only the To, Cc or Subject marks nothing.
         </DialogDescription>
       </DialogHeader>
 
@@ -60,7 +69,15 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
           <p className={cn("text-destructive", wrap)}>
             {error instanceof ApiError && error.message ? error.message : "Couldn't prepare the reports."}
           </p>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn("mt-3", disabledClass)}
+            onClick={() => { if (!isFetching) retry(refetch) }}
+            aria-disabled={isFetching}
+          >
+            Retry
+          </Button>
         </div>
       ) : data ? (
         <>
@@ -69,7 +86,15 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
               <p className={cn("min-w-0 flex-1 text-destructive", wrap)}>
                 {error instanceof ApiError && error.message ? error.message : "Couldn't look up the registrars again."} The list below may be out of date.
               </p>
-              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={disabledClass}
+                onClick={() => { if (!isFetching) retry(refetch) }}
+                aria-disabled={isFetching}
+              >
+                Retry
+              </Button>
             </div>
           )}
 
@@ -77,8 +102,8 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
 
           {data.reports.length > 0 && (
             <ul className="space-y-3">
-              {data.reports.map((report) => (
-                <ReportCard key={`${report.registrar}|${report.to}`} report={report} marked={marked} mark={mark} now={now} />
+              {data.reports.map((report, index) => (
+                <ReportCard key={`${report.registrar}|${report.to}`} report={report} marked={marked} mark={mark} now={now} headingRef={index === 0 ? firstCardRef : undefined} />
               ))}
             </ul>
           )}
@@ -86,9 +111,15 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
           {data.noContact.length > 0 && (
             <section aria-labelledby="no-contact-heading" className="space-y-3 rounded-xl border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 id="no-contact-heading" className="text-sm font-medium">No abuse contact found</h3>
+                <h3 id="no-contact-heading" ref={noContactRef} tabIndex={-1} className="rounded-sm text-sm font-medium">No abuse contact found</h3>
                 {lookupFailed && (
-                  <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={disabledClass}
+                    onClick={() => { if (!isFetching) retry(refetch) }}
+                    aria-disabled={isFetching}
+                  >
                     {isFetching ? "Looking up..." : "Look up again"}
                   </Button>
                 )}
@@ -97,8 +128,8 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
                 {data.noContact.map((entry) => (
                   <li key={entry.domain} className="text-sm">
                     <p className={cn("font-mono text-[13px] font-medium", wrap)}>{entry.domain}</p>
-                    <p className={cn("text-xs text-muted-foreground", wrap)}>
-                      {entry.lookupFailed ? LOOKUP_FAILED : `No abuse email in the registry record${entry.registrar ? `. Registrar: ${entry.registrar}` : ""}`}
+                    <p className={cn("text-xs text-muted-foreground", words)}>
+                      {noContactText(entry)}
                       {" - "}
                       {reportStatusText(entry.report, now)}
                     </p>
@@ -113,23 +144,21 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
   )
 }
 
-type CopyField = "to" | "cc" | "subject" | "body"
-
 interface ReportCardProps {
   report: AbuseReport
   marked: ReadonlySet<string>
   mark(report: AbuseReport): Promise<boolean>
   now: Date
+  headingRef?: RefObject<HTMLHeadingElement | null>
 }
 
-function ReportCard({ report, marked, mark, now }: ReportCardProps) {
-  const id = useId()
+function ReportCard({ report, marked, mark, now, headingRef }: ReportCardProps) {
   const [markFailed, setMarkFailed] = useState(false)
   const href = mailtoHref(report)
 
   const markFirst = async () => setMarkFailed(!(await mark(report)))
 
-  const copy = async (label: string, text: string) => {
+  const copy = async (field: ReportCopyField, label: string, text: string) => {
     try {
       await navigator.clipboard.writeText(text)
     } catch {
@@ -137,10 +166,10 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
       return
     }
     toast.success(`${label} copied`)
-    void markFirst()
+    if (copyMarksReported(field)) void markFirst()
   }
 
-  const fields: { field: CopyField; label: string; text: string }[] = [
+  const fields: { field: Exclude<ReportCopyField, "all">; label: string; text: string }[] = [
     { field: "to", label: "To", text: report.to },
     { field: "cc", label: "Cc", text: report.cc.join(", ") },
     { field: "subject", label: "Subject", text: report.subject },
@@ -149,17 +178,17 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
 
   return (
     <li className="space-y-3 rounded-xl border bg-card p-4 @lg:p-5">
-      <h3 className={cn("text-sm font-semibold", wrap)}>{report.registrar}</h3>
+      <h3 ref={headingRef} tabIndex={-1} className={cn("rounded-sm text-sm font-semibold", words)}>{report.registrar}</h3>
 
       {fields.map(({ field, label, text }) => (
         <div key={field} className="space-y-1">
           <div className="flex items-center justify-between gap-2">
-            <p id={`${id}-${field}`} className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
             <Button
               variant="outline"
               size="sm"
               className="h-7 px-2.5"
-              onClick={() => void copy(label, text)}
+              onClick={() => void copy(field, label, text)}
               disabled={text === ""}
               aria-label={`Copy ${label} for ${report.registrar}`}
             >
@@ -170,7 +199,7 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
             <div
               tabIndex={0}
               role="region"
-              aria-labelledby={`${id}-${field}`}
+              aria-label={`${label} for ${report.registrar}`}
               className={cn("max-h-64 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/40 px-3 py-2 text-[13px]", wrap)}
             >
               {text}
@@ -190,8 +219,11 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
             </a>
           </Button>
         ) : (
-          <p className="text-sm text-muted-foreground">Too long for a mail link. Use Copy.</p>
+          <p className="text-sm text-muted-foreground">Too long for a mail link. Use Copy all.</p>
         )}
+        <Button variant="outline" size="sm" onClick={() => void copy("all", "Email", reportAsText(report))} aria-label={`Copy all for ${report.registrar}`}>
+          Copy all
+        </Button>
       </div>
 
       {markFailed && (
@@ -204,8 +236,8 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
         <p className="text-xs font-medium text-muted-foreground">{plural(report.domains.length, "domain")}</p>
         <ul className="mt-1 space-y-1">
           {report.domains.map(({ domain, report: status }) => (
-            <li key={domain} className={cn("text-sm", wrap)}>
-              <span className="font-mono text-[13px] font-medium">{domain}</span>
+            <li key={domain} className={cn("text-sm", words)}>
+              <span className={cn("font-mono text-[13px] font-medium", wrap)}>{domain}</span>
               <span className="text-xs text-muted-foreground">
                 {" - "}
                 {reportStatusText(marked.has(domain) ? markedStatus(status, report.registrar, now) : status, now)}

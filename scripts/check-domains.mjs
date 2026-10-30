@@ -13,6 +13,9 @@ const {
   LINK_MODE_LABELS,
   REASON_MAX,
   TOKEN_STATUS_LABELS,
+  TOKEN_STATUS_TONES,
+  TOKEN_NOT_CHECKED,
+  cloudflareTokenLine,
   DOMAIN_PROBLEM_FOLLOW_UPS,
   PROVISIONING_FAILED_TEXT,
   PROVISIONING_GAVE_UP_TEXT,
@@ -127,6 +130,47 @@ check("token status labels", () => {
     INVALID: "Invalid",
     NO_PERMISSION: "No permission",
     UNREACHABLE: "Unreachable",
+  })
+})
+
+check("token status tones: only an outage is a warning", () => {
+  assert.deepEqual(TOKEN_STATUS_TONES, {
+    OK: "success",
+    MISSING: "destructive",
+    INVALID: "destructive",
+    NO_PERMISSION: "destructive",
+    UNREACHABLE: "warning",
+  })
+})
+
+check("cloudflareTokenLine", () => {
+  const unreachable = "Cloudflare couldn't be reached. We'll check again."
+  const missing = "CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID isn't set."
+  assert.equal(TOKEN_NOT_CHECKED, "Not checked yet")
+  for (const status of ["OK", "INVALID", "NO_PERMISSION", "UNREACHABLE"]) {
+    assert.deepEqual(
+      cloudflareTokenLine({ status, checkedAt: null, message: status === "UNREACHABLE" ? unreachable : null }),
+      { label: "Not checked yet", tone: "muted", message: null, checkedAt: null },
+      status,
+    )
+  }
+  assert.deepEqual(cloudflareTokenLine({ status: "MISSING", checkedAt: null, message: missing }), {
+    label: "Missing",
+    tone: "destructive",
+    message: missing,
+    checkedAt: null,
+  })
+  assert.deepEqual(cloudflareTokenLine({ status: "UNREACHABLE", checkedAt: "2026-10-29T10:00:00", message: unreachable }), {
+    label: "Unreachable",
+    tone: "warning",
+    message: unreachable,
+    checkedAt: "2026-10-29T10:00:00",
+  })
+  assert.deepEqual(cloudflareTokenLine({ status: "OK", checkedAt: "2026-10-29T10:00:00", message: null }), {
+    label: "OK",
+    tone: "success",
+    message: null,
+    checkedAt: "2026-10-29T10:00:00",
   })
 })
 

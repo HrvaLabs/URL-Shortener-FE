@@ -9,20 +9,19 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseServerDateTime } from "@/lib/analytics"
-import { TOKEN_STATUS_LABELS } from "@/lib/domains"
+import { TOKEN_STATUS_LABELS, cloudflareTokenLine, type TokenTone } from "@/lib/domains"
 import { useCheckCloudflare, useDomainSummary, useReconcileDomains } from "@/lib/hooks/useDomains"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
-import type { CloudflareTokenStatus, DomainReconcile, DomainSummary } from "@/lib/types"
+import type { DomainReconcile, DomainSummary } from "@/lib/types"
 import { cn, formatTimeAgo } from "@/lib/utils"
 
 const busyButton = "h-8 px-2.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
-const TOKEN_VARIANTS: Record<CloudflareTokenStatus, "success" | "destructive" | "warning"> = {
-  OK: "success",
-  MISSING: "destructive",
-  INVALID: "destructive",
-  NO_PERMISSION: "destructive",
-  UNREACHABLE: "warning",
+const TOKEN_VARIANTS: Record<TokenTone, "success" | "destructive" | "warning" | "secondary"> = {
+  success: "success",
+  destructive: "destructive",
+  warning: "warning",
+  muted: "secondary",
 }
 
 const checkedAgo = (value: string) => `Checked ${formatTimeAgo(parseServerDateTime(value))}`
@@ -122,7 +121,7 @@ function CloudflareTile({ summary }: { summary: DomainSummary }) {
 function TokenTile({ summary }: { summary: DomainSummary }) {
   const check = useCheckCloudflare()
   const busy = check.isPending
-  const { token } = summary
+  const line = cloudflareTokenLine(summary.token)
 
   const run = async () => {
     if (busy) return
@@ -145,11 +144,11 @@ function TokenTile({ summary }: { summary: DomainSummary }) {
         </Button>
       }
     >
-      <Badge variant={TOKEN_VARIANTS[token.status]} className={TOKEN_VARIANTS[token.status] === "destructive" ? "dark:bg-destructive/5" : undefined}>
-        {TOKEN_STATUS_LABELS[token.status]}
+      <Badge variant={TOKEN_VARIANTS[line.tone]} className={line.tone === "destructive" ? "dark:bg-destructive/5" : undefined}>
+        {line.label}
       </Badge>
-      {token.message && <p className="[overflow-wrap:anywhere]">{token.message}</p>}
-      <p className="text-xs text-muted-foreground">{token.checkedAt ? checkedAgo(token.checkedAt) : "Not checked yet"}</p>
+      {line.message && <p className="[overflow-wrap:anywhere]">{line.message}</p>}
+      {line.checkedAt && <p className="text-xs text-muted-foreground">{checkedAgo(line.checkedAt)}</p>}
     </Tile>
   )
 }

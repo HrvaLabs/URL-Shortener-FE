@@ -81,6 +81,7 @@ function LinksBody({ data, days }: LinksBodyProps) {
           ]}
         />
       )}
+      {data.customDomains && <CustomDomains counts={data.customDomains} />}
       <div className="grid gap-4 @3xl:grid-cols-2">
         <RankedList
           title="Blocked links by reason"
@@ -94,6 +95,25 @@ function LinksBody({ data, days }: LinksBodyProps) {
       </div>
       <NewestLinks links={newest} days={days} />
     </>
+  )
+}
+
+function CustomDomains({ counts }: { counts: NonNullable<LinksStats["customDomains"]> }) {
+  const { active, pending, slotsInUse, maxActive, freeAllowance, cloudflareTotal } = counts
+  return (
+    <StatGrid
+      title="Custom domains"
+      items={[
+        { label: "Active", value: active.toLocaleString(), href: "/admin/domains?status=ACTIVE" },
+        { label: "Waiting for review", value: pending.toLocaleString(), href: "/admin/domains" },
+        { label: "In use of the cap", value: `${slotsInUse.toLocaleString()} of ${maxActive.toLocaleString()}`, href: "/admin/domains" },
+        {
+          label: "Cloudflare hostnames",
+          value: cloudflareTotal === null ? "Not read yet" : `${cloudflareTotal.toLocaleString()} of ${freeAllowance.toLocaleString()} free`,
+          href: "/admin/domains",
+        },
+      ]}
+    />
   )
 }
 

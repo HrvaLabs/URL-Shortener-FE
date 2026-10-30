@@ -1,4 +1,4 @@
-import type { CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainAllowance, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
+import type { CloudflareCheck, CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainAllowance, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
 
 export const HOSTNAME_PLACEHOLDER = "go.example.com"
 
@@ -171,3 +171,27 @@ export const domainLimitError = (value: string): string | null => {
   const parsed = Number(value.trim())
   return parsed < DOMAIN_LIMIT_MIN || parsed > DOMAIN_LIMIT_MAX ? DOMAIN_LIMIT_RANGE_ERROR : null
 }
+
+export type TokenTone = "success" | "destructive" | "warning" | "muted"
+
+export const TOKEN_STATUS_TONES: Record<CloudflareTokenStatus, Exclude<TokenTone, "muted">> = {
+  OK: "success",
+  MISSING: "destructive",
+  INVALID: "destructive",
+  NO_PERMISSION: "destructive",
+  UNREACHABLE: "warning",
+}
+
+export const TOKEN_NOT_CHECKED = "Not checked yet"
+
+export interface CloudflareTokenLine {
+  label: string
+  tone: TokenTone
+  message: string | null
+  checkedAt: string | null
+}
+
+export const cloudflareTokenLine = ({ status, checkedAt, message }: CloudflareCheck): CloudflareTokenLine =>
+  checkedAt === null && status !== "MISSING"
+    ? { label: TOKEN_NOT_CHECKED, tone: "muted", message: null, checkedAt: null }
+    : { label: TOKEN_STATUS_LABELS[status], tone: TOKEN_STATUS_TONES[status], message, checkedAt }

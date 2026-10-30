@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { AlertCircle } from "lucide-react"
 import { LoginRateLimits } from "@/components/admin/stats/login-rate-limits"
 import { StackedDailyChart, inFillOrder, type StackFill } from "@/components/admin/stats/stacked-daily-chart"
@@ -9,9 +10,10 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { emailStatusLabels, formatBytes, redisPrefixLabels } from "@/lib/admin-stats"
 import { parseServerDateTime } from "@/lib/analytics"
+import { cloudflareTokenLine, type TokenTone } from "@/lib/domains"
 import { useSystemStats } from "@/lib/hooks/useSiteStats"
-import type { AnalyticsRange, EmailStatus, RedirectTiming, RedisKeyCounts, SystemStats } from "@/lib/types"
-import { cn, formatDateTime } from "@/lib/utils"
+import type { AnalyticsRange, CloudflareCheck, EmailStatus, RedirectTiming, RedisKeyCounts, SystemStats } from "@/lib/types"
+import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils"
 
 const emailFills: Record<EmailStatus, StackFill> = {
   SENT: { step: 100 },
@@ -79,13 +81,16 @@ function SystemBody({ data, days }: SystemBodyProps) {
           { label: "Profiles", value: data.activeProfiles.length > 0 ? data.activeProfiles.join(", ") : "default" },
         ]}
       />
-      <StatGrid
-        title="Health"
-        items={[
-          { label: "Database", value: <HealthBadge status={health.database} /> },
-          { label: "Redis", value: <HealthBadge status={health.redis} /> },
-        ]}
-      />
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold">Health</h2>
+        <StatGrid
+          items={[
+            { label: "Database", value: <HealthBadge status={health.database} /> },
+            { label: "Redis", value: <HealthBadge status={health.redis} /> },
+          ]}
+        />
+        {data.cloudflare && <CloudflareToken check={data.cloudflare} />}
+      </section>
       <Redirects timings={data.redirects} />
       <StatGrid
         items={[
@@ -134,6 +139,29 @@ function HealthBadge({ status }: { status: string }) {
       <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", up ? "bg-success" : "bg-destructive")} />
       {status}
     </Badge>
+  )
+}
+
+const TOKEN_TONE_TEXT: Record<TokenTone, string> = {
+  success: "text-success",
+  destructive: "text-destructive",
+  warning: "text-warning",
+  muted: "text-muted-foreground",
+}
+
+function CloudflareToken({ check }: { check: CloudflareCheck }) {
+  const line = cloudflareTokenLine(check)
+  return (
+    <div className="min-w-0 space-y-1 rounded-xl border bg-card px-5 py-3.5 text-sm shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
+      <p className="[overflow-wrap:anywhere]">
+        <Link href="/admin/domains" className="font-medium text-brand-link">
+          Cloudflare API token
+        </Link>
+        : <span className={cn("font-medium", TOKEN_TONE_TEXT[line.tone])}>{line.label}</span>
+      </p>
+      {line.message && <p className="[overflow-wrap:anywhere]">{line.message}</p>}
+      {line.checkedAt && <p className="text-xs text-muted-foreground">Checked {formatTimeAgo(parseServerDateTime(line.checkedAt))}</p>}
+    </div>
   )
 }
 

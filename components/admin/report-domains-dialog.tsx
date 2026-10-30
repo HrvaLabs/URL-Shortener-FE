@@ -93,13 +93,12 @@ function ReportDomainsBody({ source }: { source: AbuseReportSource }) {
                   </Button>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">These domains have no abuse email in their registry record, so there is nothing to send.</p>
               <ul className="space-y-2">
                 {data.noContact.map((entry) => (
                   <li key={entry.domain} className="text-sm">
                     <p className={cn("font-mono text-[13px] font-medium", wrap)}>{entry.domain}</p>
                     <p className={cn("text-xs text-muted-foreground", wrap)}>
-                      {entry.lookupFailed ? LOOKUP_FAILED : entry.registrar ? `Registrar: ${entry.registrar}` : "No registrar found"}
+                      {entry.lookupFailed ? LOOKUP_FAILED : `No abuse email in the registry record${entry.registrar ? `. Registrar: ${entry.registrar}` : ""}`}
                       {" - "}
                       {reportStatusText(entry.report, now)}
                     </p>
@@ -191,7 +190,7 @@ function ReportCard({ report, marked, mark, now }: ReportCardProps) {
             </a>
           </Button>
         ) : (
-          <Button size="sm" disabled>Too long for a mail link. Use Copy.</Button>
+          <p className="text-sm text-muted-foreground">Too long for a mail link. Use Copy.</p>
         )}
       </div>
 

@@ -182,13 +182,17 @@ export function campaignReportsText({ domains, reports }: Pick<Campaign, "domain
 export const MAILTO_MAX_LENGTH = 2000
 
 export function mailtoHref({ to, cc, subject, body }: Pick<AbuseReport, "to" | "cc" | "subject" | "body">): string | null {
-  const fields = [
-    ...(cc.length > 0 ? [`cc=${cc.map(encodeURIComponent).join(",")}`] : []),
-    `subject=${encodeURIComponent(subject)}`,
-    `body=${encodeURIComponent(body)}`,
-  ]
-  const href = `mailto:${encodeURIComponent(to).replace(/%40/g, "@")}?${fields.join("&")}`
-  return href.length > MAILTO_MAX_LENGTH ? null : href
+  try {
+    const fields = [
+      ...(cc.length > 0 ? [`cc=${cc.map(encodeURIComponent).join(",")}`] : []),
+      `subject=${encodeURIComponent(subject)}`,
+      `body=${encodeURIComponent(body.replace(/\r?\n/g, "\r\n"))}`,
+    ]
+    const href = `mailto:${encodeURIComponent(to).replace(/%40/g, "@")}?${fields.join("&")}`
+    return href.length > MAILTO_MAX_LENGTH ? null : href
+  } catch {
+    return null
+  }
 }
 
 export function markedStatus(existing: ReportStatus | null, registrar: string, now: Date): ReportStatus {

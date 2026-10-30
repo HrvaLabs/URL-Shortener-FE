@@ -341,7 +341,7 @@ check("mailtoHref: to, cc, subject and body, encoded", () => {
   const report = { to: "abuse@namesilo.com", cc: ["reportphishing@apwg.org", "a+b@example.com"], subject: "Phishing: 2 domains used in links to x.sbs", body: "Hello,\n\nI run hrva.cc & more: 50% (a/b)?" }
   assert.equal(
     mailtoHref(report),
-    "mailto:abuse@namesilo.com?cc=reportphishing%40apwg.org,a%2Bb%40example.com&subject=Phishing%3A%202%20domains%20used%20in%20links%20to%20x.sbs&body=Hello%2C%0A%0AI%20run%20hrva.cc%20%26%20more%3A%2050%25%20(a%2Fb)%3F",
+    "mailto:abuse@namesilo.com?cc=reportphishing%40apwg.org,a%2Bb%40example.com&subject=Phishing%3A%202%20domains%20used%20in%20links%20to%20x.sbs&body=Hello%2C%0D%0A%0D%0AI%20run%20hrva.cc%20%26%20more%3A%2050%25%20(a%2Fb)%3F",
   )
   assert.equal(mailtoHref({ ...report, cc: [] }).includes("cc="), false)
   assert.equal(mailtoHref({ ...report, cc: [] }).startsWith("mailto:abuse@namesilo.com?subject="), true)
@@ -355,9 +355,22 @@ check("mailtoHref: null above MAILTO_MAX_LENGTH, the link itself at exactly that
   assert.equal(at(1999).length, 1999)
   assert.equal(at(2000).length, 2000)
   assert.equal(at(2001), null)
-  const lines = mailtoHref({ ...report, body: "line\n".repeat(300) })
+  const withBreaks = (length) => mailtoHref({ ...report, body: "\n" + "a".repeat(length - base - 6) })
+  assert.equal(withBreaks(2000).length, 2000)
+  assert.equal(withBreaks(2001), null)
+  const crlf = mailtoHref({ ...report, body: "a\nb\r\nc" })
+  assert.ok(crlf.endsWith("body=a%0D%0Ab%0D%0Ac"))
+  const lines = mailtoHref({ ...report, body: "line\n".repeat(200) })
   assert.equal(lines, null)
-  assert.notEqual(mailtoHref({ ...report, body: "line\n".repeat(200) }), null)
+  assert.notEqual(mailtoHref({ ...report, body: "line\n".repeat(100) }), null)
+})
+
+check("mailtoHref: a lone surrogate gives null instead of throwing", () => {
+  const report = { to: "abuse@namesilo.com", cc: [], subject: "Phishing", body: "see https://x.example/\ud800" }
+  assert.equal(mailtoHref(report), null)
+  assert.equal(mailtoHref({ ...report, body: "ok", subject: "bad\udc00" }), null)
+  assert.equal(mailtoHref({ ...report, body: "ok", cc: ["a\ud800@example.com"] }), null)
+  assert.notEqual(mailtoHref({ ...report, body: "ok" }), null)
 })
 
 check("markedText and markedStatus", () => {

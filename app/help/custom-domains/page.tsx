@@ -16,7 +16,7 @@ import {
   PROVISIONING_GAVE_UP_TEXT,
   domainLimitLine,
 } from "@/lib/domains"
-import type { DomainProblem } from "@/lib/types"
+import type { CustomDomainStatus, DomainProblem } from "@/lib/types"
 
 const description =
   "Use your own subdomain for hrva.cc short links: who can apply, the DNS record to add at common providers, what each status means, and how to remove a domain."
@@ -37,7 +37,11 @@ const PROBLEM_TEXTS: Record<Exclude<DomainProblem, "PROVISIONING_FAILED">, strin
   CERTIFICATE_TIMED_OUT: "The certificate couldn't be issued in time. Check the CNAME record; we'll try again.",
   CNAME_REMOVED: "The CNAME record for this domain is gone, so its links stopped working. Add the record again.",
   CLOUDFLARE_BLOCKED: "This domain can't be set up. We've been told and will look into it.",
-  DNS_TIMED_OUT: "We waited 14 days and never saw the CNAME record, so we stopped checking. Add the record, then remove and apply again.",
+  DNS_TIMED_OUT: "We waited 14 days and never saw the CNAME record, so we stopped checking. Add the record, then select Check now.",
+}
+
+const HELP_STATUS_HINTS: Partial<Record<CustomDomainStatus, string>> = {
+  AWAITING_DNS: "Add the CNAME record shown on the card. We check every minute and finish on our own.",
 }
 
 const DISABLED_REASONS = ["Turned off because the account was blocked.", "Turned off because the domain is on a blocklist."]
@@ -252,7 +256,7 @@ export default function CustomDomainsHelpPage() {
               <ul>
                 {DOMAIN_STATUSES.map((status) => (
                   <li key={status}>
-                    <strong>{DOMAIN_STATUS_LABELS[status]}</strong>: {DOMAIN_STATUS_HINTS[status]}
+                    <strong>{DOMAIN_STATUS_LABELS[status]}</strong>: {HELP_STATUS_HINTS[status] ?? DOMAIN_STATUS_HINTS[status]}
                   </li>
                 ))}
               </ul>
@@ -340,8 +344,8 @@ export default function CustomDomainsHelpPage() {
 
               <Problem title="hrva.cc stopped looking for the record" problem="DNS_TIMED_OUT">
                 <p>
-                  hrva.cc looked for the record for 14 days after approval. Add the record, then select{" "}
-                  <strong>Check now</strong>.
+                  hrva.cc looked for the record for 14 days after approval and never found it. Once you&apos;ve
+                  added it, <strong>Check now</strong> looks again.
                 </p>
               </Problem>
 

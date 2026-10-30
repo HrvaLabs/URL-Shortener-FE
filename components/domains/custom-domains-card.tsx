@@ -49,6 +49,8 @@ export function CustomDomainsCard() {
   const removeTrigger = useRef<HTMLElement | null>(null)
   const scrolled = useRef(false)
   const pendingFocus = useRef<number | null>(null)
+  const focusFrame = useRef<number | null>(null)
+  const focusTimer = useRef<number | null>(null)
   const { data, error, isPending, isFetching, refetch } = useMyDomains()
   const remove = useRemoveDomain()
   const retry = useFocusAfterRetry(titleRef, data !== undefined)
@@ -76,11 +78,25 @@ export function CustomDomainsCard() {
     focusNewRow(true)
   }, [data, focusNewRow])
 
+  useEffect(
+    () => () => {
+      if (focusFrame.current !== null) window.cancelAnimationFrame(focusFrame.current)
+      if (focusTimer.current !== null) window.clearTimeout(focusTimer.current)
+    },
+    [],
+  )
+
   const onApplied = (domain: CustomDomain) => {
     pendingFocus.current = domain.id
-    window.requestAnimationFrame(() => {
+    if (focusFrame.current !== null) window.cancelAnimationFrame(focusFrame.current)
+    if (focusTimer.current !== null) window.clearTimeout(focusTimer.current)
+    focusFrame.current = window.requestAnimationFrame(() => {
+      focusFrame.current = null
       focusNewRow(false)
-      window.setTimeout(() => focusNewRow(true), 1000)
+      focusTimer.current = window.setTimeout(() => {
+        focusTimer.current = null
+        focusNewRow(true)
+      }, 1000)
     })
   }
 

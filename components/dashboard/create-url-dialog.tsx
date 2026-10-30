@@ -70,7 +70,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
       setResult({ shortUrl: url.shortUrl, longUrl: url.longUrl, domain: url.domain ?? null })
       toast.success("URL shortened!")
     } catch (err) {
-      if (err instanceof ApiError && err.fields.domain) {
+      if (domain !== null && err instanceof ApiError && err.fields.domain) {
         const message = err.fields.domain
         flushSync(() => setDomainError(message))
         document.getElementById(`${id}-domain`)?.focus()

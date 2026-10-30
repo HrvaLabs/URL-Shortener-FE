@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { adminDomainApi, domainApi } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth-context"
 import type { AdminDomainFilters, CustomDomainStatus, DomainLinkMode } from "@/lib/types"
 
 const DOMAINS_KEY = ["domains"]
@@ -17,9 +18,11 @@ const POLL_INTERVAL = 10_000
 const POLLED_STATUSES: ReadonlySet<CustomDomainStatus> = new Set(["APPROVED_PROVISIONING", "AWAITING_DNS"])
 
 export function useMyDomains() {
+  const { user } = useAuth()
   return useQuery({
     queryKey: MY_DOMAINS_KEY,
     queryFn: domainApi.mine,
+    enabled: Boolean(user),
   })
 }
 

@@ -87,7 +87,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       setCopied(false)
       toast.success("Link shortened")
     } catch (err) {
-      if (showDomains && err instanceof ApiError && err.fields.domain) {
+      if (pickedDomain !== null && err instanceof ApiError && err.fields.domain) {
         const message = err.fields.domain
         flushSync(() => setDomainError(message))
         document.getElementById(domainPickerId)?.focus()

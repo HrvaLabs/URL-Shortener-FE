@@ -19,7 +19,7 @@ const messages: Record<string, string> = {
   no_email: "Could not retrieve email from provider.",
   account_inactive: "Your account is deactivated. Contact an administrator.",
   two_step_unavailable: "Two-step sign-in isn't available right now. Try again in a minute.",
-  invalid_email: "This account's email address can't be used on hrva.cc. Sign in with another account or with your email and password.",
+  invalid_email: "This account's email address can't be used on hrva.cc. Sign in with another account, or another way.",
   github_email_unverified: "Your GitHub account has no verified email address. Verify one on GitHub, or sign in another way.",
   google_email_unverified: "Your Google account's email address isn't verified.",
   registration_disabled: `${SIGNUPS_PAUSED} Sign in if you already have an account.`,

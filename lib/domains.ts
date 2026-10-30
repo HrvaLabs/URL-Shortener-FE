@@ -53,6 +53,11 @@ export const shortHost = (domain: DomainRef | null | undefined, primaryHost: str
 
 export const canPickDomain = (domains: CustomDomain[]): boolean => domains.some((domain) => domain.status === "ACTIVE")
 
+export const pickableHostnames = (domains: CustomDomain[], picked: string | null): string[] => {
+  const active = domains.filter((domain) => domain.status === "ACTIVE").map((domain) => domain.hostname)
+  return picked && !active.includes(picked) ? [...active, picked] : active
+}
+
 const HOSTNAME_SHAPE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
 export const isHostnameShaped = (value: string | null | undefined): boolean =>

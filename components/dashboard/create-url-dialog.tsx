@@ -1,15 +1,18 @@
 "use client"
 
 import { useId, useState } from "react"
+import { flushSync } from "react-dom"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { UtmFields } from "@/components/utm-fields"
+import { DomainPicker } from "@/components/domains/domain-picker"
 import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { Copy, Check } from "lucide-react"
+import { ApiError } from "@/lib/api-client"
 import { destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
 import { shortHost } from "@/lib/domains"
 import type { DomainRef } from "@/lib/types"
@@ -24,6 +27,8 @@ interface CreateUrlDialogProps {
 export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: CreateUrlDialogProps) {
   const [longUrl, setLongUrl] = useState("")
   const [customAlias, setCustomAlias] = useState("")
+  const [domain, setDomain] = useState<string | null>(null)
+  const [domainError, setDomainError] = useState<string | null>(null)
   const [visitLimit, setVisitLimit] = useState("")
   const [expirationDate, setExpirationDate] = useState("")
   const [tags, setTags] = useState("")
@@ -49,6 +54,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
       return
     }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
+    setDomainError(null)
     try {
       const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean)
       const url = await createUrl.mutateAsync({
@@ -58,11 +64,18 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
         expirationDate: expDate,
         tags: tagList.length ? tagList : undefined,
         password: password || undefined,
+        domain: domain || undefined,
       })
       if (utmOpen) rememberUtm(utm)
       setResult({ shortUrl: url.shortUrl, longUrl: url.longUrl, domain: url.domain ?? null })
       toast.success("URL shortened!")
     } catch (err) {
+      if (err instanceof ApiError && err.fields.domain) {
+        const message = err.fields.domain
+        flushSync(() => setDomainError(message))
+        document.getElementById(`${id}-domain`)?.focus()
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Failed to create URL")
     }
   }
@@ -70,6 +83,8 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
   const handleClose = () => {
     setLongUrl("")
     setCustomAlias("")
+    setDomain(null)
+    setDomainError(null)
     setVisitLimit("")
     setExpirationDate("")
     setTags("")
@@ -95,9 +110,13 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
               <Input id={`${id}-long-url`} placeholder="https://example.com/very/long/url" value={longUrl} onChange={(e) => setLongUrl(e.target.value)} required aria-invalid={!!longUrlError} aria-describedby={longUrlError ? "create-long-url-error" : undefined} className="mt-2" />
               {longUrlError && <p id="create-long-url-error" className="mt-2 text-sm text-destructive">{longUrlError}</p>}
             </div>
+            <DomainPicker id={`${id}-domain`} value={domain} onChange={(picked) => { setDomain(picked); setDomainError(null) }} error={domainError} />
             <div>
               <Label htmlFor={`${id}-alias`}>Custom alias (optional)</Label>
-              <Input id={`${id}-alias`} placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} className="mt-2" />
+              <div className="mt-2 flex min-h-10 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+                <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-3 py-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(domain)}/</span>
+                <input id={`${id}-alias`} placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-hidden placeholder:text-muted-foreground" />
+              </div>
             </div>
             <div>
               <Label htmlFor={`${id}-visit-limit`}>Visit limit (optional)</Label>

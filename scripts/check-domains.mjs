@@ -23,6 +23,7 @@ const {
   domainRemovalSummary,
   isHostnameShaped,
   isWaitingForSetup,
+  pickableHostnames,
   shortHost,
 } = domains
 
@@ -150,6 +151,20 @@ check("canPickDomain needs an active domain", () => {
   assert.equal(canPickDomain([domain({ status: "AWAITING_DNS" })]), false)
   assert.equal(canPickDomain([domain()]), true)
   assert.equal(canPickDomain([domain({ status: "DISABLED" }), domain({ id: 8, hostname: "links.example.org" })]), true)
+})
+
+check("pickableHostnames lists active domains and keeps the picked one", () => {
+  const mixed = [
+    domain({ id: 1, hostname: "a.example.com", status: "AWAITING_DNS" }),
+    domain({ id: 2, hostname: "b.example.com" }),
+    domain({ id: 3, hostname: "c.example.com", status: "DISABLED" }),
+    domain({ id: 4, hostname: "d.example.com" }),
+  ]
+  assert.deepEqual(pickableHostnames([], null), [])
+  assert.deepEqual(pickableHostnames(mixed, null), ["b.example.com", "d.example.com"])
+  assert.deepEqual(pickableHostnames(mixed, "d.example.com"), ["b.example.com", "d.example.com"])
+  assert.deepEqual(pickableHostnames(mixed, "c.example.com"), ["b.example.com", "d.example.com", "c.example.com"])
+  assert.deepEqual(pickableHostnames([], "gone.example.com"), ["gone.example.com"])
 })
 
 check("problem follow-ups say who checks again", () => {

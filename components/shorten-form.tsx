@@ -1,17 +1,20 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import { QRCodeSVG } from "qrcode.react"
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
 import { toast } from "sonner"
+import { DomainPicker } from "@/components/domains/domain-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UtmFields } from "@/components/utm-fields"
+import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import type { UrlResponse } from "@/lib/types"
-import { cn, destinationLengthError, formatShortUrl, getShortBaseUrl, withQrMarker } from "@/lib/utils"
+import { cn, destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
@@ -24,6 +27,8 @@ interface ShortenFormProps {
 export function ShortenForm({ initialUrl = "", withOptions = false, size = "default", className }: ShortenFormProps) {
   const [longUrl, setLongUrl] = useState(initialUrl)
   const [customAlias, setCustomAlias] = useState("")
+  const [domain, setDomain] = useState<string | null>(null)
+  const [domainError, setDomainError] = useState<string | null>(null)
   const [visitLimit, setVisitLimit] = useState("")
   const [expirationDate, setExpirationDate] = useState("")
   const [utm, setUtm] = useState<UtmValues>({})
@@ -36,11 +41,13 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
   const { user } = useAuth()
   const createUrl = useCreateUrl()
   const showUtm = withOptions && Boolean(user)
+  const showDomains = withOptions && Boolean(user)
+  const pickedDomain = showDomains ? domain : null
   const tagging = showUtm && utmOpen
   const isLarge = size === "lg"
-  const shortBase = getShortBaseUrl().replace(/^https?:\/\//, "")
   const longUrlError = destinationLengthError(longUrl)
   const longUrlErrorId = useId()
+  const domainPickerId = useId()
 
   useEffect(() => {
     if (!result) return
@@ -63,6 +70,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       return
     }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
+    setDomainError(null)
 
     try {
       const url = await createUrl.mutateAsync({
@@ -70,6 +78,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
         shortUrl: customAlias || undefined,
         visitLimit: visitLimit ? parseInt(visitLimit) : undefined,
         expirationDate: expDate,
+        domain: pickedDomain || undefined,
       })
       if (tagging) rememberUtm(utm)
       setUtm({})
@@ -78,6 +87,12 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       setCopied(false)
       toast.success("Link shortened")
     } catch (err) {
+      if (showDomains && err instanceof ApiError && err.fields.domain) {
+        const message = err.fields.domain
+        flushSync(() => setDomainError(message))
+        document.getElementById(domainPickerId)?.focus()
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     }
   }
@@ -133,18 +148,24 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
           {longUrlError && <p id={longUrlErrorId} className="mt-2 text-left text-sm text-destructive">{longUrlError}</p>}
         </div>
 
+        {showDomains && (
+          <div className="sm:max-w-sm">
+            <DomainPicker id={domainPickerId} value={domain} onChange={(picked) => { setDomain(picked); setDomainError(null) }} error={domainError} variant="form" />
+          </div>
+        )}
+
         {withOptions && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>
-              <div className="mt-1.5 flex h-9 items-center overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
-                <span className="select-none border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground">{shortBase}/</span>
+              <div className="mt-1.5 flex min-h-9 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+                <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(pickedDomain)}/</span>
                 <input
                   id="alias"
                   placeholder="my-link"
                   value={customAlias}
                   onChange={(e) => setCustomAlias(e.target.value)}
-                  className="h-full min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-hidden placeholder:text-muted-foreground"
+                  className="min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-hidden placeholder:text-muted-foreground"
                 />
               </div>
             </div>

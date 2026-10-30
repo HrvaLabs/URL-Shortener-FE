@@ -50,7 +50,7 @@ export function DomainPicker({ id, value, onChange, error, variant = "dialog" }:
         >
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="max-w-(--radix-select-trigger-width)" onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault() }}>
+        <SelectContent className="max-w-(--radix-select-trigger-width)">
           <SelectItem value={primaryHost} className="[overflow-wrap:anywhere]">{primaryHost}</SelectItem>
           {hostnames.map((hostname) => (
             <SelectItem key={hostname} value={hostname} className="[overflow-wrap:anywhere]">{hostname}</SelectItem>

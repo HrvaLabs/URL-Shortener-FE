@@ -32,7 +32,7 @@ SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
+>(({ className, children, position = "popper", onKeyDown, ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
@@ -42,6 +42,10 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      onKeyDown={(event) => {
+        onKeyDown?.(event)
+        if (event.key === "Enter") event.preventDefault()
+      }}
       {...props}
     >
       <SelectPrimitive.Viewport

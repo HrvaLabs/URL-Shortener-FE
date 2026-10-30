@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -87,21 +87,38 @@ check("the Turnstile script is Cloudflare's explicit-render URL and a pending ch
 })
 
 check("nextTurnstileState: a token arrives, expires or fails", () => {
-  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null })
-  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc" })
-  assert.deepEqual(ready, { token: "abc" })
-  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def" }), { token: "def" })
-  assert.deepEqual(nextTurnstileState(ready, { type: "expired" }), { token: null })
-  assert.deepEqual(nextTurnstileState(ready, { type: "error" }), { token: null })
-  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), { token: null })
+  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null, receivedAt: null })
+  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1000 })
+  assert.deepEqual(ready, { token: "abc", receivedAt: 1000 })
+  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def", at: 2000 }), { token: "def", receivedAt: 2000 })
+  assert.deepEqual(nextTurnstileState(ready, { type: "expired" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(nextTurnstileState(ready, { type: "error" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), NO_TURNSTILE_TOKEN)
 })
 
 check("turnstileResetsAfterEveryAttempt", () => {
-  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc" })
-  assert.deepEqual(nextTurnstileState(ready, { type: "submitted" }), { token: null })
-  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "submitted" }), { token: null })
-  const again = nextTurnstileState(nextTurnstileState(ready, { type: "submitted" }), { type: "token", token: "fresh" })
-  assert.deepEqual(again, { token: "fresh" })
+  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1000 })
+  assert.deepEqual(nextTurnstileState(ready, { type: "submitted" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "submitted" }), NO_TURNSTILE_TOKEN)
+  const again = nextTurnstileState(nextTurnstileState(ready, { type: "submitted" }), { type: "token", token: "fresh", at: 3000 })
+  assert.deepEqual(again, { token: "fresh", receivedAt: 3000 })
+})
+
+check("freshTurnstileToken: a token older than 290 s counts as expired", () => {
+  assert.equal(TURNSTILE_TOKEN_MAX_AGE_MS, 290_000)
+  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1_000 })
+  assert.equal(freshTurnstileToken(ready, 1_000), "abc")
+  assert.equal(freshTurnstileToken(ready, 1_000 + 289_999), "abc")
+  assert.equal(freshTurnstileToken(ready, 1_000 + 290_000), null)
+  assert.equal(freshTurnstileToken(ready, 1_000 + 600_000), null)
+  assert.equal(freshTurnstileToken(NO_TURNSTILE_TOKEN, 1_000), null)
+})
+
+check("turnstileNeedsReload: only a failed load with no widget loads the script again", () => {
+  assert.equal(turnstileNeedsReload(false, true), true)
+  assert.equal(turnstileNeedsReload(true, true), false)
+  assert.equal(turnstileNeedsReload(false, false), false)
+  assert.equal(turnstileNeedsReload(true, false), false)
 })
 
 check("noEffectText", () => {

@@ -30,16 +30,28 @@ export function humanCheckEnabled(settings: PublicSettings | undefined, signedIn
   return settings.humanCheck === true && Boolean(settings.turnstileSiteKey?.trim())
 }
 
+export const TURNSTILE_TOKEN_MAX_AGE_MS = 290_000
+
 export interface TurnstileState {
   token: string | null
+  receivedAt: number | null
 }
 
-export type TurnstileEvent = { type: "token"; token: string } | { type: "expired" } | { type: "error" } | { type: "submitted" }
+export type TurnstileEvent = { type: "token"; token: string; at: number } | { type: "expired" } | { type: "error" } | { type: "submitted" }
 
-export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null }
+export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null, receivedAt: null }
 
 export function nextTurnstileState(_state: TurnstileState, event: TurnstileEvent): TurnstileState {
-  return event.type === "token" ? { token: event.token } : NO_TURNSTILE_TOKEN
+  return event.type === "token" ? { token: event.token, receivedAt: event.at } : NO_TURNSTILE_TOKEN
+}
+
+export function freshTurnstileToken(state: TurnstileState, now: number): string | null {
+  if (state.token === null || state.receivedAt === null) return null
+  return now - state.receivedAt < TURNSTILE_TOKEN_MAX_AGE_MS ? state.token : null
+}
+
+export function turnstileNeedsReload(widgetRendered: boolean, loadFailed: boolean): boolean {
+  return loadFailed && !widgetRendered
 }
 
 export function noEffectText(parentLabel: string): string {

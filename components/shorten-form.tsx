@@ -94,6 +94,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       humanCheckToken = await humanCheck.waitForToken()
       setChecking(false)
       if (!humanCheckToken) {
+        humanCheck.reset()
         setCheckMissing(true)
         return
       }
@@ -127,7 +128,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     } finally {
-      if (humanCheckToken) humanCheck.reset()
+      humanCheck.reset()
     }
   }
 
@@ -176,8 +177,9 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
             </div>
             <Button
               type="submit"
-              disabled={createUrl.isPending || checking}
-              aria-disabled={paused || undefined}
+              disabled={createUrl.isPending}
+              aria-disabled={paused || checking || undefined}
+              aria-busy={checking || undefined}
               aria-describedby={paused ? noticeId : undefined}
               className={cn("shrink-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
             >

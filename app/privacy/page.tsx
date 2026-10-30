@@ -146,7 +146,7 @@ export default function PrivacyPage() {
               <p>
                 We keep a few small items in your browser, only so the site works the way you asked,
                 and none of them leaves your browser except the sign-in token, which is sent to
-                hrva.cc with your requests:
+                hrva.cc with your requests. The last item is Cloudflare&apos;s, not ours:
               </p>
               <ul>
                 <li>
@@ -169,6 +169,11 @@ export default function PrivacyPage() {
                 <li>
                   a copy of the offline page, in the browser&apos;s cache storage, kept by hrva.cc&apos;s
                   service worker so the site can show it when you have no connection
+                </li>
+                <li>
+                  <em>cf.turnstile.u</em>, in <em>localStorage</em>, set by Cloudflare&apos;s check frame
+                  (challenges.cloudflare.com), not by hrva.cc, only when you make a link without an account
+                  while the human check is on; Cloudflare uses it for that check, and hrva.cc never reads it
                 </li>
               </ul>
               <p>

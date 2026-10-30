@@ -60,6 +60,7 @@ export function QrGenerator() {
       humanCheckToken = await humanCheck.waitForToken()
       setChecking(false)
       if (!humanCheckToken) {
+        humanCheck.reset()
         setCheckMissing(true)
         return
       }
@@ -83,7 +84,7 @@ export function QrGenerator() {
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
     } finally {
-      if (humanCheckToken) humanCheck.reset()
+      humanCheck.reset()
     }
   }
 

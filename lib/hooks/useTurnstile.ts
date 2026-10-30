@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
-import { HUMAN_CHECK_WAIT_MS, NO_TURNSTILE_TOKEN, TURNSTILE_SCRIPT_URL, nextTurnstileState, type TurnstileEvent } from "@/lib/moderation"
+import { HUMAN_CHECK_WAIT_MS, NO_TURNSTILE_TOKEN, TURNSTILE_SCRIPT_URL, freshTurnstileToken, nextTurnstileState, turnstileNeedsReload, type TurnstileEvent } from "@/lib/moderation"
 
 interface TurnstileRenderOptions {
   sitekey: string
@@ -35,12 +35,13 @@ function loadTurnstile(): Promise<TurnstileApi> {
     const script = document.createElement("script")
     script.src = TURNSTILE_SCRIPT_URL
     script.async = true
-    script.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("Turnstile didn't load")))
-    script.onerror = () => {
+    const fail = () => {
       script.remove()
       scriptLoad = null
       reject(new Error("Turnstile didn't load"))
     }
+    script.onload = () => (window.turnstile ? resolve(window.turnstile) : fail())
+    script.onerror = fail
     document.head.appendChild(script)
   })
   return scriptLoad
@@ -56,9 +57,11 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
   const siteKey = enabled ? publicSettings?.turnstileSiteKey?.trim() || null : null
   const [container, setContainer] = useState<HTMLDivElement | null>(null)
   const [started, setStarted] = useState(startAtOnce)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [state, setState] = useState(NO_TURNSTILE_TOKEN)
   const stateRef = useRef(NO_TURNSTILE_TOKEN)
   const widgetRef = useRef<{ api: TurnstileApi; id: string } | null>(null)
+  const loadFailedRef = useRef(false)
   const waitersRef = useRef(new Set<(token: string | null) => void>())
 
   const apply = useCallback((event: TurnstileEvent) => {
@@ -79,7 +82,7 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
           appearance: "interaction-only",
           size: "flexible",
           theme: "auto",
-          callback: (token) => apply({ type: "token", token }),
+          callback: (token) => apply({ type: "token", token, at: Date.now() }),
           "expired-callback": () => apply({ type: "expired" }),
           "error-callback": () => {
             apply({ type: "error" })
@@ -88,7 +91,9 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
         })
         if (id) widgetRef.current = { api, id }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (!cancelled) loadFailedRef.current = true
+      })
     return () => {
       cancelled = true
       const widget = widgetRef.current
@@ -96,9 +101,14 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
       if (widget) widget.api.remove(widget.id)
       apply({ type: "expired" })
     }
-  }, [started, siteKey, container, apply])
+  }, [started, siteKey, container, apply, loadAttempt])
 
-  const start = useCallback(() => setStarted(true), [])
+  const start = useCallback(() => {
+    setStarted(true)
+    if (!turnstileNeedsReload(widgetRef.current !== null, loadFailedRef.current)) return
+    loadFailedRef.current = false
+    setLoadAttempt((attempt) => attempt + 1)
+  }, [])
 
   const reset = useCallback(() => {
     apply({ type: "submitted" })
@@ -107,8 +117,10 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
   }, [apply])
 
   const waitForToken = useCallback((timeoutMs = HUMAN_CHECK_WAIT_MS): Promise<string | null> => {
-    const current = stateRef.current.token
-    if (current) return Promise.resolve(current)
+    const fresh = freshTurnstileToken(stateRef.current, Date.now())
+    if (fresh) return Promise.resolve(fresh)
+    if (stateRef.current.token) reset()
+    start()
     return new Promise((resolve) => {
       const done = (token: string | null) => {
         clearTimeout(timer)
@@ -118,7 +130,7 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
       const timer = setTimeout(() => done(null), timeoutMs)
       waitersRef.current.add(done)
     })
-  }, [])
+  }, [reset, start])
 
   return { containerRef: setContainer, token: state.token, active: siteKey !== null, start, reset, waitForToken }
 }

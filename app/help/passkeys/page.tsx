@@ -216,6 +216,18 @@ export default function PasskeysHelpPage() {
                 manager, so delete it there too.
               </p>
 
+              <h2 id="sign-in-methods">Sign-in methods in Settings</h2>
+              <p>
+                The <strong>Sign-in methods</strong> card in Settings lists every way you&apos;ve signed in to
+                your account: email and password, passkey, Google or GitHub, each with when you last used it.
+                A method is added the first time a sign-in with it finishes.
+              </p>
+              <p>
+                With two-step verification on, the card shows the method you signed in with first, not your
+                second step, so a passkey you use only as your second step isn&apos;t listed. The card only
+                shows the list; you can&apos;t remove a method from it.
+              </p>
+
               <h2 id="privacy">Passkeys and your privacy</h2>
               <p>
                 hrva.cc stores the passkey&apos;s public key and a few details, such as its name, when it

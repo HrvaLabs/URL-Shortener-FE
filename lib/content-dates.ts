@@ -1,8 +1,8 @@
 export const CONTENT_UPDATED = {
-  "/": "2026-10-29",
+  "/": "2026-10-30",
   "/help": "2026-10-29",
   "/help/utm": "2026-10-29",
-  "/help/passkeys": "2026-10-26",
+  "/help/passkeys": "2026-10-30",
   "/help/stats": "2026-10-29",
   "/help/link-in-bio": "2026-10-27",
   "/help/notifications": "2026-10-29",

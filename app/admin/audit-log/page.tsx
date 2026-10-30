@@ -62,6 +62,7 @@ const actionLabels: Record<AuditAction, string> = {
   TURN_ON_SIGN_IN_METHOD: "Turned on sign-in method",
   REMOVE_PASSWORD: "Removed password",
   ALLOW_CAMPAIGN_SHAPE: "Allowed campaign shape",
+  REPORT_DOMAINS: "Reported domains",
   UNKNOWN: "Unknown action",
 }
 
@@ -107,6 +108,7 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   TURN_ON_SIGN_IN_METHOD: "success",
   REMOVE_PASSWORD: "destructive",
   ALLOW_CAMPAIGN_SHAPE: "success",
+  REPORT_DOMAINS: "secondary",
   UNKNOWN: "outline",
 }
 

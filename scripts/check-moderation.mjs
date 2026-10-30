@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED } = moderation
 
 const check = (name, run) => {
   try {
@@ -335,6 +335,42 @@ check("campaignCountsText and campaignReportsText", () => {
   assert.equal(campaignCountsText(small), "1 link (1 active, 0 held, 0 blocked), 1 domain, 1 click")
   assert.equal(campaignReportsText(small), "0 of 1 domain reported, 0 suspended")
   assert.equal(campaignCountsText({ ...campaign, links: { ...campaign.links, total: 1500 }, clicks: 12000 }), "1,500 links (0 active, 58 held, 4 blocked), 39 domains, 12,000 clicks")
+})
+
+check("mailtoHref: to, cc, subject and body, encoded", () => {
+  const report = { to: "abuse@namesilo.com", cc: ["reportphishing@apwg.org", "a+b@example.com"], subject: "Phishing: 2 domains used in links to x.sbs", body: "Hello,\n\nI run hrva.cc & more: 50% (a/b)?" }
+  assert.equal(
+    mailtoHref(report),
+    "mailto:abuse@namesilo.com?cc=reportphishing%40apwg.org,a%2Bb%40example.com&subject=Phishing%3A%202%20domains%20used%20in%20links%20to%20x.sbs&body=Hello%2C%0A%0AI%20run%20hrva.cc%20%26%20more%3A%2050%25%20(a%2Fb)%3F",
+  )
+  assert.equal(mailtoHref({ ...report, cc: [] }).includes("cc="), false)
+  assert.equal(mailtoHref({ ...report, cc: [] }).startsWith("mailto:abuse@namesilo.com?subject="), true)
+})
+
+check("mailtoHref: null above MAILTO_MAX_LENGTH, the link itself at exactly that length", () => {
+  assert.equal(MAILTO_MAX_LENGTH, 2000)
+  const report = { to: "abuse@namesilo.com", cc: ["reportphishing@apwg.org"], subject: "Phishing", body: "" }
+  const base = mailtoHref(report).length
+  const at = (length) => mailtoHref({ ...report, body: "a".repeat(length - base) })
+  assert.equal(at(1999).length, 1999)
+  assert.equal(at(2000).length, 2000)
+  assert.equal(at(2001), null)
+  const lines = mailtoHref({ ...report, body: "line\n".repeat(300) })
+  assert.equal(lines, null)
+  assert.notEqual(mailtoHref({ ...report, body: "line\n".repeat(200) }), null)
+})
+
+check("markedText and markedStatus", () => {
+  assert.equal(markedText(1), "Marked 1 domain as reported")
+  assert.equal(markedText(39), "Marked 39 domains as reported")
+  assert.equal(markedText(1200), "Marked 1,200 domains as reported")
+  const now = new Date("2026-10-30T12:00:00Z")
+  const fresh = markedStatus(null, "NameSilo, LLC", now)
+  assert.deepEqual(fresh, { reportedAt: "2026-10-30T12:00:00.000Z", reportedBy: "", registrar: "NameSilo, LLC", suspendedAt: null })
+  assert.equal(reportStatusText(fresh, now), "Reported today, not suspended yet")
+  const suspended = { reportedAt: "2026-10-20T10:00:00", reportedBy: "karlo@hrva.cc", registrar: null, suspendedAt: "2026-10-25T09:00:00" }
+  assert.equal(reportStatusText(markedStatus(suspended, "NameSilo, LLC", now), now), "Suspended on 25 Oct")
+  assert.equal(LOOKUP_FAILED, "Lookup failed. Try again.")
 })
 
 check("strings are ASCII", () => {

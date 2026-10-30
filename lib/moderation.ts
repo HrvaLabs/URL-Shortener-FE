@@ -1,5 +1,5 @@
 import { parseServerDateTime } from "./analytics"
-import type { Campaign, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
+import type { AbuseReport, Campaign, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
 
 export const ANONYMOUS_PAUSED = "Making links without an account is paused."
 
@@ -178,3 +178,25 @@ export function campaignCountsText({ links, domains, clicks }: Pick<Campaign, "l
 export function campaignReportsText({ domains, reports }: Pick<Campaign, "domains" | "reports">): string {
   return `${reports.reported.toLocaleString("en-US")} of ${countOf(domains, "domain")} reported, ${reports.suspended.toLocaleString("en-US")} suspended`
 }
+
+export const MAILTO_MAX_LENGTH = 2000
+
+export function mailtoHref({ to, cc, subject, body }: Pick<AbuseReport, "to" | "cc" | "subject" | "body">): string | null {
+  const fields = [
+    ...(cc.length > 0 ? [`cc=${cc.map(encodeURIComponent).join(",")}`] : []),
+    `subject=${encodeURIComponent(subject)}`,
+    `body=${encodeURIComponent(body)}`,
+  ]
+  const href = `mailto:${encodeURIComponent(to).replace(/%40/g, "@")}?${fields.join("&")}`
+  return href.length > MAILTO_MAX_LENGTH ? null : href
+}
+
+export function markedStatus(existing: ReportStatus | null, registrar: string, now: Date): ReportStatus {
+  return { reportedAt: now.toISOString(), reportedBy: existing?.reportedBy ?? "", registrar, suspendedAt: existing?.suspendedAt ?? null }
+}
+
+export function markedText(count: number): string {
+  return `Marked ${countOf(count, "domain")} as reported`
+}
+
+export const LOOKUP_FAILED = "Lookup failed. Try again."

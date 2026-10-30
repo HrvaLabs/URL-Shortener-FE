@@ -14,13 +14,14 @@ import { Badge, badgeVariants } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/status-badge"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { BlockDomainsDialog } from "@/components/admin/block-domains-dialog"
+import { ReportDomainsDialog } from "@/components/admin/report-domains-dialog"
 import { UtmFields } from "@/components/utm-fields"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, BarChart3 } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3 } from "lucide-react"
 import { toast } from "sonner"
 import { cn, destinationLengthError, formatDateTime, plural, shortHostOf } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
@@ -174,6 +175,9 @@ function AdminUrls() {
   const [blockOpen, setBlockOpen] = useState(false)
   const [blockDomainsIds, setBlockDomainsIds] = useState<number[]>([])
   const [blockDomainsOpen, setBlockDomainsOpen] = useState(false)
+  const [reportIds, setReportIds] = useState<number[]>([])
+  const [reportOpen, setReportOpen] = useState(false)
+  const reportButtonRef = useRef<HTMLButtonElement>(null)
   const selectionKey = `${page}-${size}-${sort}-${order}-${filterKey}`
   const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
   const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
@@ -249,6 +253,11 @@ function AdminUrls() {
   const openBlockDomains = () => {
     setBlockDomainsIds([...selectedIds])
     setBlockDomainsOpen(true)
+  }
+
+  const openReportDomains = () => {
+    setReportIds([...selectedIds])
+    setReportOpen(true)
   }
 
   const handleEditOpen = (url: UrlResponse) => {
@@ -385,6 +394,10 @@ function AdminUrls() {
           <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openBlockDomains}>
             <GlobeLock aria-hidden="true" className="h-3.5 w-3.5" />
             Block domains
+          </Button>
+          <Button ref={reportButtonRef} size="sm" variant="outline" className="h-8 gap-1.5" onClick={openReportDomains}>
+            <Flag aria-hidden="true" className="h-3.5 w-3.5" />
+            Report domains
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -615,6 +628,17 @@ function AdminUrls() {
           setSelectedIds(new Set())
         }}
         onCloseAutoFocus={removalFocus.onCloseAutoFocus}
+      />
+
+      <ReportDomainsDialog
+        source={{ urlIds: reportIds }}
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          const target = reportButtonRef.current?.isConnected ? reportButtonRef.current : searchRef.current
+          target?.focus()
+        }}
       />
 
       <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>

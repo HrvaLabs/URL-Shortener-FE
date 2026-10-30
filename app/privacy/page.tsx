@@ -360,6 +360,9 @@ export default function PrivacyPage() {
                   <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a
                   destination, or of a custom domain you apply for, as described under{" "}
                   <em>Keeping links safe</em>.
+                  When the admin reports domains used for abuse to their registrar, he sends the email from
+                  his own mail app. It contains the domains, up to 3 destination addresses and the total
+                  clicks and top countries of those links, never anything about a visitor.
                 </li>
                 <li>
                   <strong>Cloudflare</strong> — delivers the web application and short links
@@ -393,6 +396,7 @@ export default function PrivacyPage() {
                   short link, the domain it points to, the day&apos;s clicks and the country most came
                   from; when such links take most of the day&apos;s clicks, with the two totals; and when an admin
                   changes a setting, naming the setting and the admin&apos;s email address.
+                  It also gets a line when a reported domain is suspended, naming the domain.
                   Every Monday the channel also gets the weekly summary:
                   site-wide totals for the past week, such as clicks, visitors, new links and users,
                   reviews and automatic blocks, how many reviews are still open, and the top 5 links

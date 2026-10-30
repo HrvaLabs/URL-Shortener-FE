@@ -1,12 +1,13 @@
 "use client"
 
 import { useId, useRef, useState, type RefObject } from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Flag } from "lucide-react"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BlockDomainsDialog } from "@/components/admin/block-domains-dialog"
+import { ReportDomainsDialog } from "@/components/admin/report-domains-dialog"
 import { CampaignDetails } from "@/components/admin/campaigns/campaign-details"
 import { ApiError } from "@/lib/api-client"
 import { parseServerDateTime } from "@/lib/analytics"
@@ -39,9 +40,11 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
   const panelId = useId()
   const toggleRef = useRef<HTMLButtonElement>(null)
   const blockRef = useRef<HTMLButtonElement>(null)
+  const reportRef = useRef<HTMLButtonElement>(null)
   const allowRef = useRef<HTMLButtonElement>(null)
   const allowConfirmed = useRef(false)
   const [blockOpen, setBlockOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const allow = useAllowCampaign()
   const variant: BadgeVariant = campaign.status === "HOLDING" && !campaign.holding ? "outline" : statusVariants[campaign.status]
 
@@ -97,6 +100,10 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
         <Button ref={blockRef} variant="outline" size="sm" onClick={() => setBlockOpen(true)} aria-describedby={headingId}>
           Block all domains
         </Button>
+        <Button ref={reportRef} variant="outline" size="sm" className="gap-1.5" onClick={() => setReportOpen(true)} aria-describedby={headingId}>
+          <Flag aria-hidden="true" className="h-3.5 w-3.5" />
+          Report all
+        </Button>
         {campaign.status !== "ALLOWED" && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -130,6 +137,16 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
         onCloseAutoFocus={(event) => {
           event.preventDefault()
           const target = blockRef.current?.isConnected ? blockRef.current : fallbackFocusRef.current
+          target?.focus()
+        }}
+      />
+      <ReportDomainsDialog
+        source={{ campaignId: campaign.id }}
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          const target = reportRef.current?.isConnected ? reportRef.current : fallbackFocusRef.current
           target?.focus()
         }}
       />

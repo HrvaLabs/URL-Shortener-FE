@@ -685,6 +685,7 @@ export type AuditAction =
   | "TURN_ON_SIGN_IN_METHOD"
   | "REMOVE_PASSWORD"
   | "ALLOW_CAMPAIGN_SHAPE"
+  | "REPORT_DOMAINS"
   | "UNKNOWN"
 
 export interface AuditLog {
@@ -842,6 +843,35 @@ export interface ReportStatus {
   reportedBy: string
   registrar: string | null
   suspendedAt: string | null
+}
+
+export type AbuseReportSource = { urlIds: number[] } | { campaignId: number }
+
+export interface AbuseReportDomain {
+  domain: string
+  registeredOn: string | null
+  report: ReportStatus | null
+}
+
+export interface AbuseReport {
+  registrar: string
+  to: string
+  cc: string[]
+  subject: string
+  body: string
+  domains: AbuseReportDomain[]
+}
+
+export interface AbuseNoContact {
+  domain: string
+  registrar: string | null
+  lookupFailed?: boolean
+  report: ReportStatus | null
+}
+
+export interface AbuseReportResponse {
+  reports: AbuseReport[]
+  noContact: AbuseNoContact[]
 }
 
 export interface CampaignLinkCounts {

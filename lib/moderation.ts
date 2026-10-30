@@ -32,17 +32,29 @@ export function humanCheckEnabled(settings: PublicSettings | undefined, signedIn
 
 export const TURNSTILE_TOKEN_MAX_AGE_MS = 290_000
 
+export const TICK_THE_BOX = "Tick the box above to continue."
+
 export interface TurnstileState {
   token: string | null
   receivedAt: number | null
+  interactive: boolean
 }
 
-export type TurnstileEvent = { type: "token"; token: string; at: number } | { type: "expired" } | { type: "error" } | { type: "submitted" }
+export type TurnstileEvent =
+  | { type: "token"; token: string; at: number }
+  | { type: "interactive" }
+  | { type: "settled" }
+  | { type: "expired" }
+  | { type: "error" }
+  | { type: "submitted" }
 
-export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null, receivedAt: null }
+export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null, receivedAt: null, interactive: false }
 
-export function nextTurnstileState(_state: TurnstileState, event: TurnstileEvent): TurnstileState {
-  return event.type === "token" ? { token: event.token, receivedAt: event.at } : NO_TURNSTILE_TOKEN
+export function nextTurnstileState(state: TurnstileState, event: TurnstileEvent): TurnstileState {
+  if (event.type === "token") return { token: event.token, receivedAt: event.at, interactive: false }
+  if (event.type === "interactive") return { ...state, interactive: true }
+  if (event.type === "settled") return { ...state, interactive: false }
+  return NO_TURNSTILE_TOKEN
 }
 
 export function freshTurnstileToken(state: TurnstileState, now: number): string | null {

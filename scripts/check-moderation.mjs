@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -87,10 +87,10 @@ check("the Turnstile script is Cloudflare's explicit-render URL and a pending ch
 })
 
 check("nextTurnstileState: a token arrives, expires or fails", () => {
-  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null, receivedAt: null })
+  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null, receivedAt: null, interactive: false })
   const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1000 })
-  assert.deepEqual(ready, { token: "abc", receivedAt: 1000 })
-  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def", at: 2000 }), { token: "def", receivedAt: 2000 })
+  assert.deepEqual(ready, { token: "abc", receivedAt: 1000, interactive: false })
+  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def", at: 2000 }), { token: "def", receivedAt: 2000, interactive: false })
   assert.deepEqual(nextTurnstileState(ready, { type: "expired" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(ready, { type: "error" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), NO_TURNSTILE_TOKEN)
@@ -101,7 +101,17 @@ check("turnstileResetsAfterEveryAttempt", () => {
   assert.deepEqual(nextTurnstileState(ready, { type: "submitted" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "submitted" }), NO_TURNSTILE_TOKEN)
   const again = nextTurnstileState(nextTurnstileState(ready, { type: "submitted" }), { type: "token", token: "fresh", at: 3000 })
-  assert.deepEqual(again, { token: "fresh", receivedAt: 3000 })
+  assert.deepEqual(again, { token: "fresh", receivedAt: 3000, interactive: false })
+})
+
+check("nextTurnstileState: the box the visitor ticks is shown, then left", () => {
+  const shown = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "interactive" })
+  assert.deepEqual(shown, { token: null, receivedAt: null, interactive: true })
+  assert.deepEqual(nextTurnstileState(shown, { type: "settled" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(nextTurnstileState(shown, { type: "token", token: "abc", at: 5000 }), { token: "abc", receivedAt: 5000, interactive: false })
+  assert.deepEqual(nextTurnstileState(shown, { type: "error" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(nextTurnstileState(shown, { type: "submitted" }), NO_TURNSTILE_TOKEN)
+  assert.equal(TICK_THE_BOX, "Tick the box above to continue.")
 })
 
 check("freshTurnstileToken: a token older than 290 s counts as expired", () => {

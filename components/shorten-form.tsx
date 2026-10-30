@@ -187,7 +187,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
             </Button>
           </div>
           {longUrlError && <p id={longUrlErrorId} className="mt-2 text-left text-sm text-destructive">{longUrlError}</p>}
-          <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} className="mt-2" />
+          <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} ticking={checking && humanCheck.interactive} className="mt-2" />
         </div>
 
         {showDomains && (

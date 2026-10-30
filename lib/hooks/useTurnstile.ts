@@ -12,6 +12,8 @@ interface TurnstileRenderOptions {
   callback: (token: string) => void
   "expired-callback": () => void
   "error-callback": () => boolean
+  "before-interactive-callback": () => void
+  "after-interactive-callback": () => void
 }
 
 interface TurnstileApi {
@@ -88,6 +90,8 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
             apply({ type: "error" })
             return true
           },
+          "before-interactive-callback": () => apply({ type: "interactive" }),
+          "after-interactive-callback": () => apply({ type: "settled" }),
         })
         if (id) widgetRef.current = { api, id }
       })
@@ -122,15 +126,20 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
     if (stateRef.current.token) reset()
     start()
     return new Promise((resolve) => {
+      let timer: ReturnType<typeof setTimeout>
       const done = (token: string | null) => {
         clearTimeout(timer)
         waitersRef.current.delete(done)
         resolve(token)
       }
-      const timer = setTimeout(() => done(null), timeoutMs)
+      const giveUpUnlessTicking = () => {
+        if (stateRef.current.interactive) timer = setTimeout(giveUpUnlessTicking, timeoutMs)
+        else done(null)
+      }
+      timer = setTimeout(giveUpUnlessTicking, timeoutMs)
       waitersRef.current.add(done)
     })
   }, [reset, start])
 
-  return { containerRef: setContainer, token: state.token, active: siteKey !== null, start, reset, waitForToken }
+  return { containerRef: setContainer, token: state.token, interactive: state.interactive, active: siteKey !== null, start, reset, waitForToken }
 }

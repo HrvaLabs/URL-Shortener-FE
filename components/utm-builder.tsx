@@ -172,7 +172,7 @@ export function UtmBuilder() {
                     </Button>
                   )}
                 </div>
-                <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} className="mt-3" />
+                <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} ticking={checking && humanCheck.interactive} className="mt-3" />
               </>
             )}
           </div>

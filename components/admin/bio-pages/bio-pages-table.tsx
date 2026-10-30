@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { BioPageHandleDialog } from "@/components/admin/bio-pages/bio-page-handle-dialog"
 import { BioPageReasonDialog, errorText } from "@/components/admin/bio-pages/bio-page-reason-dialog"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { SortHead, SortSelect, type SortOption } from "@/components/admin/sort-controls"
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,15 @@ const HIDDEN_PARAM = "hidden"
 
 const SEARCH_DELAY_MS = 300
 
+const sortFields = ["createdAt", "handle"]
+
+const sortOptions: SortOption[] = [
+  { field: "createdAt", direction: "desc", label: "Newest first" },
+  { field: "createdAt", direction: "asc", label: "Oldest first" },
+  { field: "handle", direction: "asc", label: "Handle, A to Z" },
+  { field: "handle", direction: "desc", label: "Handle, Z to A" },
+]
+
 const focusAfter: Record<DialogKind, FocusKey> = { hide: "visibility", unhide: "visibility", handle: "handle", revoke: "handle" }
 
 const rowButton = "h-8 px-2.5"
@@ -58,12 +68,12 @@ const pageName = (page: Pick<AdminBioPage, "id" | "handle" | "displayName">) =>
 
 export function BioPagesTable({ headingRef }: { headingRef: RefObject<HTMLElement | null> }) {
   const searchParams = useSearchParams()
-  const { page, size, setPage, setSize } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createdAt", "desc", sortFields)
   const [searchInput, setSearchInput] = useState(() => searchParams.get(SEARCH_PARAM) ?? "")
   const [search, setSearch] = useState(() => (searchParams.get(SEARCH_PARAM) ?? "").trim())
   const [hiddenOnly, setHiddenOnly] = useState(() => searchParams.get(HIDDEN_PARAM) === "true")
   const filters: AdminBioPageFilters = { search: search || undefined, hiddenOnly: hiddenOnly || undefined }
-  const { data, isLoading, error, refetch, isFetching } = useAdminBioPages(filters, page, size)
+  const { data, isLoading, error, refetch, isFetching } = useAdminBioPages(filters, page, size, sort, order)
   useClampedPage(page, data?.totalPages, setPage)
   const pages = data?.content ?? []
   const filtered = !!search || hiddenOnly
@@ -199,6 +209,7 @@ export function BioPagesTable({ headingRef }: { headingRef: RefObject<HTMLElemen
           />
           Hidden only
         </label>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[67rem]:hidden" />
       </div>
 
       {isLoading ? (
@@ -225,11 +236,11 @@ export function BioPagesTable({ headingRef }: { headingRef: RefObject<HTMLElemen
           <Table data-bio-pages-table>
             <TableHeader>
               <TableRow>
-                <TableHead>Page</TableHead>
+                <SortHead field="handle" label="Page" sortDir={sortDir} toggleSort={toggleSort} />
                 <TableHead className="hidden @min-[59rem]:table-cell">Owner</TableHead>
                 <TableHead className="hidden @4xl:table-cell">Buttons</TableHead>
                 <TableHead className="hidden @2xl:table-cell">Status</TableHead>
-                <TableHead className="hidden @min-[67rem]:table-cell">Created</TableHead>
+                <SortHead field="createdAt" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[67rem]:table-cell" />
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

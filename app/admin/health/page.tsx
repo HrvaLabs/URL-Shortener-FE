@@ -39,7 +39,7 @@ export default function AdminHealthPage() {
   })
   const { data: latestEmails, isPending: emailsPending, isError: emailsFailed } = useQuery({
     queryKey: ["admin", "email-log", 0, 1],
-    queryFn: () => adminApi.getEmailLog(0, 1),
+    queryFn: () => adminApi.getEmailLog({}, 0, 1),
     refetchInterval: 30_000,
   })
   const lastEmail = latestEmails?.content?.[0]

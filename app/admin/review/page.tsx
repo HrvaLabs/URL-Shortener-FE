@@ -1,14 +1,16 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useSearchParams } from "next/navigation"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Check, ChevronDown, Copy } from "lucide-react"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Check, ChevronDown, Copy, Search } from "lucide-react"
 import { toast } from "sonner"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -17,7 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { BioPageReviewSection } from "@/components/admin/bio-page-review-section"
 import { PageMeta } from "@/components/page-meta"
-import { adminSelectClass } from "@/components/admin/sort-controls"
+import { SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { parseServerDateTime } from "@/lib/analytics"
 import { cn, formatDateTime, formatShortUrl, plural, shortHostOf } from "@/lib/utils"
@@ -129,11 +131,19 @@ function ReviewQueueLoading() {
   )
 }
 
+const queueSortFields = ["flaggedAt"]
+
+const queueSortOptions: SortOption[] = [
+  { field: "flaggedAt", direction: "desc", label: "Newest flagged first" },
+  { field: "flaggedAt", direction: "asc", label: "Oldest flagged first" },
+]
+
 function ReviewQueue() {
   const searchParams = useSearchParams()
   const entryParam = searchParams.get("entry")
   const entryId = entryParam && /^\d+$/.test(entryParam) ? Number(entryParam) : null
-  const { page, size, setPage, setSize } = usePagination()
+  const { page, size, sort, order, setPage, setSize, setSortOrder } = usePagination("flaggedAt", "desc", queueSortFields)
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
   const [reason, setReason] = useState("")
   const [olderThanDays, setOlderThanDays] = useState("")
   const filters: ReviewQueueFilters = {
@@ -141,11 +151,15 @@ function ReviewQueue() {
     size,
     reason: reason || undefined,
     olderThanDays: olderThanDays ? Number(olderThanDays) : undefined,
+    search: search || undefined,
+    sort,
+    order,
   }
   const queryClient = useQueryClient()
   const { data, isLoading, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useQuery({
     queryKey: ["admin", "review", "queue", filters],
     queryFn: () => adminApi.getReviewQueue(filters),
+    placeholderData: keepPreviousData,
   })
   useClampedPage(page, data?.totalPages, setPage)
   const resolveReview = useMutation({
@@ -159,7 +173,7 @@ function ReviewQueue() {
   const [blockTarget, setBlockTarget] = useState<ReviewEntry | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
   const entries = data?.content ?? []
-  const selectionKey = `${page}-${size}-${reason}-${olderThanDays}`
+  const selectionKey = `${page}-${size}-${reason}-${olderThanDays}-${search}-${sort}-${order}`
   const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
   const selectedIds = selection.key === selectionKey ? selection.ids : new Set<number>()
   const setSelectedIds = (update: Set<number> | ((prev: Set<number>) => Set<number>)) =>
@@ -269,7 +283,7 @@ function ReviewQueue() {
     setBlockOpen(true)
   }
 
-  const filtered = !!reason || !!olderThanDays
+  const filtered = !!reason || !!olderThanDays || !!search
 
   return (
     <div className="space-y-6">
@@ -283,6 +297,26 @@ function ReviewQueue() {
 
       <h2 className="text-sm font-semibold">Links</h2>
       <div className="flex flex-wrap items-center gap-3">
+        <form
+          role="search"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+          className="relative w-full sm:max-w-sm"
+        >
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search domain, owner or short link"
+            aria-label="Search flagged links by domain, owner email or short link"
+            spellCheck={false}
+            autoCapitalize="none"
+            className="h-9 pl-9"
+          />
+        </form>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Reason
           <select
@@ -315,6 +349,7 @@ function ReviewQueue() {
             ))}
           </select>
         </label>
+        <SortSelect options={queueSortOptions} sort={sort} order={order} onChange={setSortOrder} />
       </div>
 
       {selectedEntries.length > 0 && (
@@ -340,8 +375,8 @@ function ReviewQueue() {
         </div>
       ) : entries.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">Nothing waiting for a decision.</p>
-          {filtered && <p className="mt-1 text-sm text-muted-foreground">Try a different filter.</p>}
+          <p className="font-semibold">{search ? "No flagged links match" : "Nothing waiting for a decision."}</p>
+          {filtered && <p className="mt-1 text-sm text-muted-foreground">Try a different search or filter.</p>}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">

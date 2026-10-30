@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -35,6 +35,19 @@ async function readBody(response: Response): Promise<unknown> {
   } catch {
     return text
   }
+}
+
+type ListParam = string | number | boolean | null | undefined
+
+const listParams = (page: number, size: number, sort?: string, order?: string, extra: Record<string, ListParam> = {}) => {
+  const params = new URLSearchParams()
+  params.set("page", String(page))
+  params.set("size", String(size))
+  if (sort) params.set("sort", `${sort},${order ?? "desc"}`)
+  for (const [name, value] of Object.entries(extra)) {
+    if (value != null && value !== "") params.set(name, String(value))
+  }
+  return params
 }
 
 function errorMessage(body: unknown, status: number): string {
@@ -232,10 +245,12 @@ export const urlApi = {
 export const apiKeyApi = {
   generate: () =>
     request<ApiKeyResponse>("POST", "/api-keys"),
-  getMyKeys: () =>
-    request<ApiKeyResponse[]>("GET", "/api-keys"),
-  getAllKeys: (page = 0, size = 20) =>
-    request<Page<ApiKeyResponse>>("GET", `/api-keys/all?page=${page}&size=${size}`),
+  getMyKeys: (active?: boolean) =>
+    request<ApiKeyResponse[]>("GET", active == null ? "/api-keys" : `/api-keys?active=${active}`),
+  getMyInactiveKeys: (page = 0, size = 10) =>
+    request<Page<ApiKeyResponse>>("GET", `/api-keys/inactive?${listParams(page, size)}`),
+  getAllKeys: (filters: ApiKeyFilters = {}, page = 0, size = 20, sort = "createDate", order = "desc") =>
+    request<Page<ApiKeyResponse>>("GET", `/api-keys/all?${listParams(page, size, sort, order, { search: filters.search, active: filters.active })}`),
   update: (id: number, data: ApiKeyUpdateDto) =>
     request<ApiKeyResponse>("PUT", `/api-keys/${id}`, data),
   revoke: (id: number) =>
@@ -326,14 +341,19 @@ export const adminApi = {
     request<SafetyStats>("GET", `/admin/stats/safety?days=${days}`),
   getSystemStats: (days: AnalyticsRange) =>
     request<SystemStats>("GET", `/admin/stats/system?days=${days}`),
-  getAuditLog: (page = 0, size = 50, action?: AuditAction) =>
-    request<Page<AuditLog>>("GET", `/admin/audit-log?page=${page}&size=${size}${action ? `&action=${action}` : ""}`),
-  getEmailLog: (page = 0, size = 50, status?: EmailStatus) =>
-    request<Page<EmailLog>>("GET", `/admin/email-log?page=${page}&size=${size}${status ? `&status=${status}` : ""}`),
+  getAuditLog: (filters: AuditLogFilters = {}, page = 0, size = 50, sort = "performedAt", order = "desc") =>
+    request<Page<AuditLog>>("GET", `/admin/audit-log?${listParams(page, size, sort, order, {
+      action: filters.action,
+      search: filters.search,
+      from: filters.from,
+      to: filters.to,
+    })}`),
+  getEmailLog: (filters: EmailLogFilters = {}, page = 0, size = 50, sort = "createdAt", order = "desc") =>
+    request<Page<EmailLog>>("GET", `/admin/email-log?${listParams(page, size, sort, order, { status: filters.status, search: filters.search })}`),
   resendEmail: (id: number) =>
     request<EmailLog>("POST", `/admin/email-log/${id}/resend`),
-  getLoginAttempts: () =>
-    request<Record<string, number>>("GET", "/admin/login-attempts"),
+  getLoginAttempts: (search?: string, page = 0, size = 20, sort = "attempts", order = "desc") =>
+    request<Page<LoginAttempt>>("GET", `/admin/login-attempts?${listParams(page, size, sort, order, { search })}`),
   clearLoginAttempts: () =>
     request<void>("DELETE", "/admin/login-attempts"),
   getBlocklistSources: () =>
@@ -363,20 +383,14 @@ export const adminApi = {
     request<DomainBlockPreview[]>("POST", "/admin/domain-rules/bulk-preview", { urlIds }),
   blockDomains: (domains: string[], reason: string) =>
     request<DomainBulkBlockResult>("POST", "/admin/domain-rules/bulk", { domains, reason }),
-  getReservedAliases: () =>
-    request<ReservedAlias[]>("GET", "/admin/reserved-aliases"),
+  getReservedAliases: (search?: string, page = 0, size = 20, sort?: string, order = "asc") =>
+    request<Page<ReservedAlias>>("GET", `/admin/reserved-aliases?${listParams(page, size, sort, order, { search })}`),
   reserveAlias: (input: ReservedAliasInput) =>
     request<ReservedAlias>("POST", "/admin/reserved-aliases", input),
   unreserveAlias: (id: number) =>
     request<void>("DELETE", `/admin/reserved-aliases/${id}`),
-  getReviewQueue: ({ page = 0, size = 20, reason, olderThanDays }: ReviewQueueFilters = {}) => {
-    const params = new URLSearchParams()
-    params.set("page", String(page))
-    params.set("size", String(size))
-    if (reason) params.set("reason", reason)
-    if (olderThanDays != null) params.set("olderThanDays", String(olderThanDays))
-    return request<Page<ReviewEntry>>("GET", `/admin/review-queue?${params}`)
-  },
+  getReviewQueue: ({ page = 0, size = 20, reason, olderThanDays, search, sort, order = "desc" }: ReviewQueueFilters = {}) =>
+    request<Page<ReviewEntry>>("GET", `/admin/review-queue?${listParams(page, size, sort, order, { reason, olderThanDays, search })}`),
   resolveReview: (urlId: number, action: ReviewAction, domain?: string) =>
     request<void>("POST", `/admin/review-queue/${urlId}/resolve`, domain ? { action, domain } : { action }),
   resolveReviews: (urlIds: number[], action: ReviewAction) =>
@@ -436,14 +450,8 @@ export const bioApi = {
 }
 
 export const adminBioApi = {
-  list: ({ search, hiddenOnly }: { search?: string; hiddenOnly?: boolean } = {}, page = 0, size = 20) => {
-    const params = new URLSearchParams()
-    params.set("page", String(page))
-    params.set("size", String(size))
-    if (search) params.set("search", search)
-    if (hiddenOnly) params.set("hidden", "true")
-    return request<Page<AdminBioPage>>("GET", `/admin/bio-pages?${params}`)
-  },
+  list: ({ search, hiddenOnly }: { search?: string; hiddenOnly?: boolean } = {}, page = 0, size = 20, sort = "createdAt", order = "desc") =>
+    request<Page<AdminBioPage>>("GET", `/admin/bio-pages?${listParams(page, size, sort, order, { search, hidden: hiddenOnly || undefined })}`),
   hide: (id: number, reason: string) =>
     request<AdminBioPage>("POST", `/admin/bio-pages/${id}/hide`, { reason }),
   unhide: (id: number) =>
@@ -452,8 +460,8 @@ export const adminBioApi = {
     request<AdminBioPage>("PUT", `/admin/bio-pages/${id}/handle`, { handle }),
   revokeHandle: (id: number, reason: string, expectedHandle?: string | null) =>
     request<AdminBioPage>("POST", `/admin/bio-pages/${id}/revoke-handle`, { reason, expectedHandle: expectedHandle ?? undefined }),
-  reviews: (page = 0, size = 20) =>
-    request<Page<BioPageReviewEntry>>("GET", `/admin/bio-page-reviews?page=${page}&size=${size}`),
+  reviews: (search?: string, page = 0, size = 20, sort = "flaggedAt", order = "desc") =>
+    request<Page<BioPageReviewEntry>>("GET", `/admin/bio-page-reviews?${listParams(page, size, sort, order, { search })}`),
   resolveReview: (pageId: number, action: BioPageReviewAction, reason?: string) =>
     request<void>("POST", `/admin/bio-page-reviews/${pageId}/resolve`, reason ? { action, reason } : { action }),
 }

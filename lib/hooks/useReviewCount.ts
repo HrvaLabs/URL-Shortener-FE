@@ -11,7 +11,7 @@ export function useReviewCount() {
     queryFn: async () => {
       const results = await Promise.allSettled([
         adminApi.getReviewQueue({ size: 1 }),
-        adminBioApi.reviews(0, 1),
+        adminBioApi.reviews(undefined, 0, 1),
         adminDomainApi.list({ status: "PENDING_REVIEW", page: 0, size: 1 }),
       ])
       if (results.every((result) => result.status === "rejected")) throw (results[0] as PromiseRejectedResult).reason

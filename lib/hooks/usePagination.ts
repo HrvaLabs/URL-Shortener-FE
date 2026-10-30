@@ -12,11 +12,20 @@ export function useClampedPage(page: number, totalPages: number | undefined, set
 
 const addressParam = (name: string) => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name))
 
-export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | "desc" = "desc") {
+const knownSort = (sort: string | null, sortFields: readonly string[] | undefined) => sort != null && (sortFields == null || sortFields.includes(sort))
+
+export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | "desc" = "desc", sortFields?: readonly string[]) {
   const [page, setPageState] = useState(() => Math.max(0, parseInt(addressParam("page") ?? "0", 10) || 0))
   const [size, setSizeState] = useState(() => parseInt(addressParam("size") ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
-  const [sort, setSortState] = useState(() => addressParam("sort") ?? defaultSort)
-  const [order, setOrderState] = useState(() => addressParam("order") ?? defaultOrder)
+  const [sort, setSortState] = useState(() => {
+    const addressSort = addressParam("sort")
+    return knownSort(addressSort, sortFields) ? (addressSort as string) : defaultSort
+  })
+  const [order, setOrderState] = useState<"asc" | "desc">(() => {
+    const addressOrder = addressParam("order")
+    if (!knownSort(addressParam("sort"), sortFields)) return defaultOrder
+    return addressOrder === "asc" || addressOrder === "desc" ? addressOrder : defaultOrder
+  })
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

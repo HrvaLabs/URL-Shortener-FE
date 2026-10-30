@@ -1,16 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from "react"
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type RefObject } from "react"
 import { useSearchParams } from "next/navigation"
+import { Search } from "lucide-react"
 import { toast } from "sonner"
 import { BioPageReasonDialog, errorText } from "@/components/admin/bio-pages/bio-page-reason-dialog"
 import { BioPageLink } from "@/components/admin/bio-pages/bio-pages-table"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { SortHead, SortSelect, type SortOption } from "@/components/admin/sort-controls"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Pagination } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { useBioPageReviews, useResolveBioPageReview } from "@/lib/hooks/useAdminBioPages"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useClampedPage } from "@/lib/hooks/usePagination"
@@ -25,6 +29,13 @@ const DEFAULT_SIZE = 20
 const NOT_IN_QUEUE = "This bio page is no longer in the review queue."
 
 const NOTHING_WAITING = "No bio pages are waiting."
+
+const SEARCH_PARAM = "bioSearch"
+
+const sortOptions: SortOption[] = [
+  { field: "flaggedAt", direction: "desc", label: "Newest flagged first" },
+  { field: "flaggedAt", direction: "asc", label: "Oldest flagged first" },
+]
 
 const rowButton = "h-8 px-2.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
@@ -45,7 +56,9 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const bioId = bioParam && /^\d+$/.test(bioParam) ? Number(bioParam) : null
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(DEFAULT_SIZE)
-  const { data, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useBioPageReviews(page, size)
+  const [order, setOrder] = useState<"asc" | "desc">("desc")
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0), SEARCH_PARAM)
+  const { data, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useBioPageReviews(search, page, size, order)
   useClampedPage(page, data?.totalPages, setPage)
   const entries = data?.content ?? []
   const resolve = useResolveBioPageReview()
@@ -72,7 +85,12 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
     [fallbackFocusRef],
   )
   const retry = useFocusAfterRetry(retryFocusTarget, !!data && !loadFailed)
-  const showTable = entries.length > 0 || loadFailed
+  const showTable = entries.length > 0 || loadFailed || !!search
+  const sortDir = (field: string) => (field === "flaggedAt" ? order : null)
+  const changeOrder = (next: "asc" | "desc") => {
+    setOrder(next)
+    setPage(0)
+  }
   const [resolvedIds, setResolvedIds] = useState<ReadonlySet<number>>(() => new Set())
   const deepLinked = bioId != null && !resolvedIds.has(bioId)
   const notInQueue = deepLinked && !!data && !error && !entryShown
@@ -172,6 +190,29 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
           >
             Bio pages
           </h2>
+          <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3">
+            <form
+              role="search"
+              onSubmit={(event: FormEvent<HTMLFormElement>) => {
+                event.preventDefault()
+                applySearch(searchInput)
+              }}
+              className="relative w-full sm:max-w-sm"
+            >
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="Search handle, name or owner"
+                aria-label="Search flagged bio pages by handle, name or owner email"
+                spellCheck={false}
+                autoCapitalize="none"
+                className="h-9 pl-9"
+              />
+            </form>
+            <SortSelect options={sortOptions} sort="flaggedAt" order={order} onChange={(_, direction) => changeOrder(direction)} className="@min-[57rem]:hidden" />
+          </div>
           {loadFailed ? (
             <div className="px-6 py-10 text-center">
               <p role="alert" className="text-sm font-medium text-destructive">Failed to load the bio page reviews</p>
@@ -185,6 +226,11 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
                 Retry
               </Button>
             </div>
+          ) : entries.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="font-semibold">No bio pages match</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try a different search.</p>
+            </div>
           ) : (
             <>
               <Table data-bio-review-table>
@@ -193,7 +239,7 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
                     <TableHead>Page</TableHead>
                     <TableHead className="hidden @min-[57rem]:table-cell">Owner</TableHead>
                     <TableHead className="hidden @2xl:table-cell">Reasons</TableHead>
-                    <TableHead className="hidden @min-[57rem]:table-cell">Flagged</TableHead>
+                    <SortHead field="flaggedAt" label="Flagged" sortDir={sortDir} toggleSort={() => changeOrder(order === "asc" ? "desc" : "asc")} className="hidden @min-[57rem]:table-cell" />
                     <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>

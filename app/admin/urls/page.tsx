@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { SEARCH_DELAY_MS } from "@/lib/hooks/useListSearch"
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
 import { Pagination } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -129,7 +131,8 @@ export default function AdminUrlsPage() {
 
 function AdminUrls() {
   const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
-  const [search, setSearch] = useAddressSearch()
+  const [searchInput, setSearch] = useAddressSearch()
+  const search = useDebouncedValue(searchInput, SEARCH_DELAY_MS)
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)
   const [anonymousFilter, setAnonymousFilter] = useState(false)
@@ -323,7 +326,7 @@ function AdminUrls() {
             ref={searchRef}
             placeholder="Search link, destination or owner..."
             aria-label="Search by short link, destination or owner email"
-            value={search}
+            value={searchInput}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 pl-9"
           />

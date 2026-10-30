@@ -1,10 +1,12 @@
 "use client"
 
 import { useId, useRef, useState } from "react"
-import { useMyApiKeys, useGenerateApiKey, useRevokeApiKey, useUpdateApiKey, useDeleteApiKey, useDeleteInactiveApiKeys } from "@/lib/hooks/useApiKeys"
+import { useMyApiKeys, useMyInactiveApiKeys, useGenerateApiKey, useRevokeApiKey, useUpdateApiKey, useDeleteApiKey, useDeleteInactiveApiKeys } from "@/lib/hooks/useApiKeys"
+import { useClampedPage } from "@/lib/hooks/usePagination"
 import { ApiError } from "@/lib/api-client"
 import type { ApiKeyResponse } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { Pagination } from "@/components/ui/pagination"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,11 +25,20 @@ const keysLabel = (count: number) => (count === 1 ? "1 key" : `${count} keys`)
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback)
 
+const INACTIVE_PAGE_SIZE = 10
+
 const DELETE_BUTTON_CLASSES = "h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
 
 export default function ApiKeysPage() {
   const { isAdmin } = useAuth()
-  const { data: apiKeys, isLoading, error, refetch } = useMyApiKeys()
+  const activeQuery = useMyApiKeys(true)
+  const [inactivePage, setInactivePage] = useState(0)
+  const [inactiveSize, setInactiveSize] = useState(INACTIVE_PAGE_SIZE)
+  const inactiveQuery = useMyInactiveApiKeys(inactivePage, inactiveSize)
+  useClampedPage(inactivePage, inactiveQuery.data?.totalPages, setInactivePage)
+  const isLoading = activeQuery.isLoading || inactiveQuery.isLoading
+  const error = activeQuery.error ?? inactiveQuery.error
+  const refetch = () => Promise.all([activeQuery.refetch(), inactiveQuery.refetch()])
   const generateKey = useGenerateApiKey()
   const revokeKey = useRevokeApiKey()
   const updateKey = useUpdateApiKey()
@@ -92,8 +103,9 @@ export default function ApiKeysPage() {
     }
   }
 
-  const activeKeys = apiKeys?.filter((key) => key.active) ?? []
-  const inactiveKeys = apiKeys?.filter((key) => !key.active) ?? []
+  const activeKeys = activeQuery.data ?? []
+  const inactiveKeys = inactiveQuery.data?.content ?? []
+  const inactiveCount = inactiveQuery.data?.totalElements ?? 0
 
   const fallbackFocus = () => (disclosureRef.current?.isConnected ? disclosureRef.current : generateRef.current)
 
@@ -165,7 +177,7 @@ export default function ApiKeysPage() {
   const openBulkDelete = () => {
     deleted.current = false
     setBulkError(null)
-    setBulkCount(inactiveKeys.length)
+    setBulkCount(inactiveCount)
     setBulkOpen(true)
   }
 
@@ -506,7 +518,7 @@ export default function ApiKeysPage() {
           <p className="text-sm text-destructive">Failed to load API keys</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-4">Retry</Button>
         </div>
-      ) : !apiKeys || apiKeys.length === 0 ? (
+      ) : activeKeys.length === 0 && inactiveCount === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <h2 className="font-semibold">No API keys</h2>
           <p className="mt-1 text-sm text-muted-foreground">Generate an API key to use the URL shortener programmatically.</p>
@@ -517,7 +529,7 @@ export default function ApiKeysPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {inactiveKeys.length > 0 && (
+          {inactiveCount > 0 && (
             <div className="flex justify-end">
               <Button
                 ref={bulkRef}
@@ -527,7 +539,7 @@ export default function ApiKeysPage() {
                 className="h-auto min-h-8 gap-1.5 whitespace-normal border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <Trash2 className="h-4 w-4 shrink-0" />
-                Delete {inactiveKeys.length} inactive {inactiveKeys.length === 1 ? "key" : "keys"}
+                Delete {inactiveCount} inactive {inactiveCount === 1 ? "key" : "keys"}
               </Button>
             </div>
           )}
@@ -546,7 +558,7 @@ export default function ApiKeysPage() {
               <TableBody>
                 {activeKeys.map(renderRow)}
               </TableBody>
-              {inactiveKeys.length > 0 && (
+              {inactiveCount > 0 && (
                 <>
                   <TableBody>
                     <TableRow className="hover:bg-transparent">
@@ -561,7 +573,7 @@ export default function ApiKeysPage() {
                           className="h-auto min-h-8 gap-1.5 whitespace-normal text-left text-muted-foreground hover:text-foreground"
                         >
                           <ChevronRight aria-hidden="true" className={cn("h-4 w-4 shrink-0 transition-transform", showInactive && "rotate-90")} />
-                          Show {inactiveKeys.length} expired or revoked {inactiveKeys.length === 1 ? "key" : "keys"}
+                          Show {inactiveCount} expired or revoked {inactiveCount === 1 ? "key" : "keys"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -572,6 +584,19 @@ export default function ApiKeysPage() {
                 </>
               )}
             </Table>
+            {showInactive && (inactiveQuery.data?.totalPages ?? 0) > 1 && (
+              <Pagination
+                page={inactivePage}
+                totalPages={inactiveQuery.data?.totalPages ?? 0}
+                totalElements={inactiveCount}
+                size={inactiveSize}
+                onPageChange={setInactivePage}
+                onSizeChange={(next) => {
+                  setInactiveSize(next)
+                  setInactivePage(0)
+                }}
+              />
+            )}
           </div>
         </div>
       )}

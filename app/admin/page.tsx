@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { Pagination } from "@/components/ui/pagination"
 import type { User, UserFilters } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -43,7 +44,7 @@ const lastLoginText = (lastLogin: string | null | undefined) => (lastLogin ? for
 
 export default function AdminUsersPage() {
   const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
-  const [search, setSearch] = useState("")
+  const { search, searchInput, setSearchInput } = useListSearch()
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [scammersOnly, setScammersOnly] = useState(false)
   useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly, setPage])
@@ -196,8 +197,8 @@ export default function AdminUsersPage() {
             ref={searchRef}
             placeholder="Search users..."
             aria-label="Search users by email"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="h-9 pl-9"
           />
         </div>

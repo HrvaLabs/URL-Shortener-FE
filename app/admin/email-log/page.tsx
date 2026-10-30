@@ -1,21 +1,26 @@
 "use client"
 
-import { Fragment, Suspense, useEffect, useRef } from "react"
+import { Fragment, Suspense, useEffect, useRef, type FormEvent } from "react"
 import { useSearchParams } from "next/navigation"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { RotateCw } from "lucide-react"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { RotateCw, Search } from "lucide-react"
 import { toast } from "sonner"
 import { usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
+import { SortHead } from "@/components/admin/sort-controls"
 import { adminApi } from "@/lib/api-client"
-import type { EmailLog, EmailStatus, Page } from "@/lib/types"
+import type { EmailLog, EmailLogFilters, EmailStatus, Page } from "@/lib/types"
+
+const sortFields = ["createdAt"]
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "success" | "outline"> = {
   SENT: "success",
@@ -90,13 +95,16 @@ export default function AdminEmailLogPage() {
 }
 
 function EmailLog() {
-  const { page, size, setPage, setSize } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination("createdAt", "desc", sortFields)
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
   const [failedOnly, setFailedOnly] = useFailedOnly()
   const status = failedOnly ? FAILED : undefined
+  const filters: EmailLogFilters = { status, search: search || undefined }
   const queryClient = useQueryClient()
   const { data, isLoading, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useQuery<Page<EmailLog>>({
-    queryKey: ["admin", "email-log", page, size, status ?? "all"],
-    queryFn: () => adminApi.getEmailLog(page, size, status),
+    queryKey: ["admin", "email-log", filters, page, size, sort, order],
+    queryFn: () => adminApi.getEmailLog(filters, page, size, sort, order),
+    placeholderData: keepPreviousData,
   })
   const failedOnlyRef = useRef<HTMLInputElement>(null)
   const removalFocus = useRowRemovalFocus(failedOnlyRef)
@@ -128,19 +136,41 @@ function EmailLog() {
         <p className="mt-1 text-sm text-muted-foreground">View email delivery status</p>
       </div>
 
-      <label className="flex w-fit cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
-        <input
-          ref={failedOnlyRef}
-          type="checkbox"
-          checked={failedOnly}
-          onChange={(event) => {
-            setFailedOnly(event.target.checked)
-            setPage(0)
+      <div className="flex flex-wrap items-center gap-3">
+        <form
+          role="search"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            applySearch(searchInput)
           }}
-          className="h-4 w-4 rounded border-input accent-brand"
-        />
-        Failed only
-      </label>
+          className="relative w-full sm:max-w-sm"
+        >
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search recipient or subject"
+            aria-label="Search the email log by recipient or subject"
+            spellCheck={false}
+            autoCapitalize="none"
+            className="h-9 pl-9"
+          />
+        </form>
+        <label className="flex w-fit cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
+          <input
+            ref={failedOnlyRef}
+            type="checkbox"
+            checked={failedOnly}
+            onChange={(event) => {
+              setFailedOnly(event.target.checked)
+              setPage(0)
+            }}
+            className="h-4 w-4 rounded border-input accent-brand"
+          />
+          Failed only
+        </label>
+      </div>
 
       {isLoading ? (
         <EmailLogLoading />
@@ -151,7 +181,12 @@ function EmailLog() {
         </div>
       ) : !data || data.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          {failedOnly ? (
+          {search ? (
+            <>
+              <p className="font-semibold">No emails match</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try a different search.</p>
+            </>
+          ) : failedOnly ? (
             <p className="font-semibold">No failed emails.</p>
           ) : (
             <>
@@ -165,7 +200,7 @@ function EmailLog() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
+                <SortHead field="createdAt" label="Time" sortDir={sortDir} toggleSort={toggleSort} />
                 <TableHead>Recipient</TableHead>
                 <TableHead className="hidden @min-[59rem]:table-cell">Subject</TableHead>
                 <TableHead className="hidden @min-[59rem]:table-cell">Status</TableHead>

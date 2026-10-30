@@ -1,20 +1,30 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiKeyApi } from "@/lib/api-client"
-import type { ApiKeyUpdateDto } from "@/lib/types"
+import type { ApiKeyFilters, ApiKeyUpdateDto } from "@/lib/types"
 
-export function useMyApiKeys() {
+export function useMyApiKeys(active?: boolean) {
   return useQuery({
-    queryKey: ["apiKeys", "my"],
-    queryFn: apiKeyApi.getMyKeys,
+    queryKey: ["apiKeys", "my", active ?? "all"],
+    queryFn: () => apiKeyApi.getMyKeys(active),
   })
 }
 
-export function useAllApiKeys(page = 0, size = 20) {
+export function useMyInactiveApiKeys(page = 0, size = 10, enabled = true) {
   return useQuery({
-    queryKey: ["apiKeys", "all", page, size],
-    queryFn: () => apiKeyApi.getAllKeys(page, size),
+    queryKey: ["apiKeys", "my", "inactive", page, size],
+    queryFn: () => apiKeyApi.getMyInactiveKeys(page, size),
+    placeholderData: keepPreviousData,
+    enabled,
+  })
+}
+
+export function useAllApiKeys(filters: ApiKeyFilters = {}, page = 0, size = 20, sort = "createDate", order = "desc") {
+  return useQuery({
+    queryKey: ["apiKeys", "all", filters, page, size, sort, order],
+    queryFn: () => apiKeyApi.getAllKeys(filters, page, size, sort, order),
+    placeholderData: keepPreviousData,
   })
 }
 

@@ -598,6 +598,28 @@ export interface UrlFilters {
   tag?: string
 }
 
+export interface ApiKeyFilters {
+  search?: string
+  active?: boolean
+}
+
+export interface AuditLogFilters {
+  action?: AuditAction
+  search?: string
+  from?: string
+  to?: string
+}
+
+export interface EmailLogFilters {
+  status?: EmailStatus
+  search?: string
+}
+
+export interface LoginAttempt {
+  key: string
+  attempts: number
+}
+
 export interface UserFilters {
   search?: string
   active?: boolean
@@ -811,6 +833,9 @@ export interface ReviewQueueFilters {
   size?: number
   reason?: string
   olderThanDays?: number
+  search?: string
+  sort?: string
+  order?: "asc" | "desc"
 }
 
 export type ReviewAction = "OK" | "TRUST_DOMAIN" | "BLOCK_LINK" | "BLOCK_DOMAIN" | "BLOCK_USER"

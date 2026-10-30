@@ -10,18 +10,18 @@ export interface AdminBioPageFilters {
   hiddenOnly?: boolean
 }
 
-export function useAdminBioPages(filters: AdminBioPageFilters, page: number, size: number) {
+export function useAdminBioPages(filters: AdminBioPageFilters, page: number, size: number, sort = "createdAt", order = "desc") {
   return useQuery({
-    queryKey: ["admin", "bio-pages", filters, page, size],
-    queryFn: () => adminBioApi.list(filters, page, size),
+    queryKey: ["admin", "bio-pages", filters, page, size, sort, order],
+    queryFn: () => adminBioApi.list(filters, page, size, sort, order),
     placeholderData: keepPreviousData,
   })
 }
 
-export function useBioPageReviews(page: number, size: number) {
+export function useBioPageReviews(search: string, page: number, size: number, order: "asc" | "desc" = "desc") {
   return useQuery({
-    queryKey: ["admin", "review", "bio", page, size],
-    queryFn: () => adminBioApi.reviews(page, size),
+    queryKey: ["admin", "review", "bio", search, page, size, order],
+    queryFn: () => adminBioApi.reviews(search || undefined, page, size, "flaggedAt", order),
     placeholderData: keepPreviousData,
   })
 }

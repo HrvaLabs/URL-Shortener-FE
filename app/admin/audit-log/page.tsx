@@ -1,18 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, type FormEvent } from "react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { Search } from "lucide-react"
 import { usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
-import { adminSelectClass } from "@/components/admin/sort-controls"
+import { SortHead, adminSelectClass } from "@/components/admin/sort-controls"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { adminApi } from "@/lib/api-client"
-import type { AuditAction, AuditLog, Page } from "@/lib/types"
+import type { AuditAction, AuditLog, AuditLogFilters, Page } from "@/lib/types"
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "outline"
 
@@ -121,15 +124,25 @@ const actionLabel = ({ action, failed }: AuditLog): string => {
   return failed ? `${label} (failed)` : label
 }
 
+const sortFields = ["performedAt"]
+
+const dateInputClass = `${adminSelectClass} tabular-nums`
+
 const detailsText = ({ action, details }: AuditLog): string | null =>
   action === "REVOKE_BIO_HANDLE" && details ? details.replace(/(^|, )expectedHandle: /, "$1Handle: ") : details
 
 export default function AdminAuditLogPage() {
-  const { page, size, setPage, setSize } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination("performedAt", "desc", sortFields)
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
   const [action, setAction] = useState<AuditAction | "">("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const filters: AuditLogFilters = { action: action || undefined, search: search || undefined, from: from || undefined, to: to || undefined }
+  const filtered = !!action || !!search || !!from || !!to
   const { data, isLoading, error, refetch, isFetching } = useQuery<Page<AuditLog>>({
-    queryKey: ["admin", "audit-log", page, size, action],
-    queryFn: () => adminApi.getAuditLog(page, size, action || undefined),
+    queryKey: ["admin", "audit-log", filters, page, size, sort, order],
+    queryFn: () => adminApi.getAuditLog(filters, page, size, sort, order),
+    placeholderData: keepPreviousData,
   })
 
   return (
@@ -141,6 +154,26 @@ export default function AdminAuditLogPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <form
+          role="search"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+          className="relative w-full sm:max-w-sm"
+        >
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search admin, target or details"
+            aria-label="Search the audit log by admin, target or details"
+            spellCheck={false}
+            autoCapitalize="none"
+            className="h-9 pl-9"
+          />
+        </form>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Action
           <select
@@ -157,6 +190,32 @@ export default function AdminAuditLogPage() {
             ))}
           </select>
         </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          From
+          <input
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(event) => {
+              setFrom(event.target.value)
+              setPage(0)
+            }}
+            className={dateInputClass}
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          To
+          <input
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(event) => {
+              setTo(event.target.value)
+              setPage(0)
+            }}
+            className={dateInputClass}
+          />
+        </label>
       </div>
 
       {isLoading ? (
@@ -172,9 +231,9 @@ export default function AdminAuditLogPage() {
         </div>
       ) : !data || data.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">No audit log entries</p>
+          <p className="font-semibold">{filtered ? "No entries match" : "No audit log entries"}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {action ? "Nothing recorded for this action yet. Try a different one." : "Actions taken by admins will be recorded here."}
+            {filtered ? "Try a different search, action or date range." : "Actions taken by admins will be recorded here."}
           </p>
         </div>
       ) : (
@@ -182,7 +241,7 @@ export default function AdminAuditLogPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
+                <SortHead field="performedAt" label="Time" sortDir={sortDir} toggleSort={toggleSort} />
                 <TableHead className="hidden @2xl:table-cell">Admin</TableHead>
                 <TableHead>Action</TableHead>
                 <TableHead className="hidden @4xl:table-cell">Target type</TableHead>

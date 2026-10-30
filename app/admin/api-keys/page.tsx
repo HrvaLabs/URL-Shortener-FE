@@ -2,9 +2,11 @@
 
 import { useAllApiKeys, useRevokeApiKey, useActivateApiKey, useUpdateApiKey, useDeleteApiKey } from "@/lib/hooks/useApiKeys"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import { ApiError } from "@/lib/api-client"
 import { Pagination } from "@/components/ui/pagination"
-import type { ApiKeyResponse } from "@/lib/types"
+import type { ApiKeyFilters, ApiKeyResponse } from "@/lib/types"
+import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
@@ -14,22 +16,39 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ToggleRight, ToggleLeft, Edit, Trash2 } from "lucide-react"
+import { ToggleRight, ToggleLeft, Edit, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
-import { useRef, useState } from "react"
+import { useRef, useState, type FormEvent } from "react"
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback)
+
+const sortFields = ["createDate", "apiCallsUsed", "expirationDate"]
+
+const sortOptions: SortOption[] = [
+  { field: "createDate", direction: "desc", label: "Newest first" },
+  { field: "createDate", direction: "asc", label: "Oldest first" },
+  { field: "apiCallsUsed", direction: "desc", label: "Most calls used" },
+  { field: "apiCallsUsed", direction: "asc", label: "Fewest calls used" },
+  { field: "expirationDate", direction: "asc", label: "Expires soonest" },
+  { field: "expirationDate", direction: "desc", label: "Expires last" },
+]
+
+const statusFilters: Record<string, boolean | undefined> = { all: undefined, active: true, inactive: false }
 
 const rowAction = (row: Element | null | undefined) =>
   row?.querySelector<HTMLElement>("[data-remove-row]") ?? row?.querySelector<HTMLElement>("button") ?? null
 
 export default function AdminApiKeysPage() {
-  const { page, size, setPage, setSize } = usePagination()
-  const { data: apiKeys, isLoading, error, refetch } = useAllApiKeys(page, size)
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createDate", "desc", sortFields)
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
+  const [statusFilter, setStatusFilter] = useState("all")
+  const filters: ApiKeyFilters = { search: search || undefined, active: statusFilters[statusFilter] }
+  const filtered = !!search || statusFilter !== "all"
+  const { data: apiKeys, isLoading, error, refetch } = useAllApiKeys(filters, page, size, sort, order)
   useClampedPage(page, apiKeys?.totalPages, setPage)
   const revokeKey = useRevokeApiKey()
   const activateKey = useActivateApiKey()
@@ -188,6 +207,43 @@ export default function AdminApiKeysPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <div className="flex flex-wrap items-center gap-3">
+        <form
+          role="search"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+          className="relative w-full sm:max-w-sm"
+        >
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Search by owner or key start"
+            aria-label="Search API keys by owner email or the start of the key"
+            spellCheck={false}
+            autoCapitalize="none"
+            className="h-9 pl-9"
+          />
+        </form>
+        <select
+          value={statusFilter}
+          onChange={(event) => {
+            setStatusFilter(event.target.value)
+            setPage(0)
+          }}
+          aria-label="Filter by status"
+          className={adminSelectClass}
+        >
+          <option value="all">All status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} />
+      </div>
+
       {isLoading ? (
         <div className="space-y-3 rounded-xl border bg-card p-5">
           {[...Array(3)].map((_, i) => (
@@ -201,8 +257,17 @@ export default function AdminApiKeysPage() {
         </div>
       ) : !apiKeys || !apiKeys.content || apiKeys.content.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">No API keys</p>
-          <p className="mt-1 text-sm text-muted-foreground">Keys created by users will be listed here.</p>
+          {filtered ? (
+            <>
+              <p className="font-semibold">No keys match</p>
+              <p className="mt-1 text-sm text-muted-foreground">Try a different search or filter.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold">No API keys</p>
+              <p className="mt-1 text-sm text-muted-foreground">Keys created by users will be listed here.</p>
+            </>
+          )}
         </div>
       ) : (
         <div data-admin-api-keys className="overflow-hidden rounded-xl border bg-card">
@@ -211,8 +276,8 @@ export default function AdminApiKeysPage() {
               <TableRow>
                 <TableHead>Key</TableHead>
                 <TableHead className="hidden @min-[46rem]:table-cell">Owner</TableHead>
-                <TableHead className="hidden @min-[46rem]:table-cell">Created</TableHead>
-                <TableHead className="hidden @md:table-cell">Usage</TableHead>
+                <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[46rem]:table-cell" />
+                <SortHead field="apiCallsUsed" label="Usage" sortDir={sortDir} toggleSort={toggleSort} className="hidden @md:table-cell" />
                 <TableHead className="hidden @md:table-cell">Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>

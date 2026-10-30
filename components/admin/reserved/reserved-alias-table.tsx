@@ -1,23 +1,35 @@
 "use client"
 
-import { useRef, useState, type RefObject } from "react"
+import { useRef, type FormEvent, type RefObject } from "react"
 import Link from "next/link"
 import { Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { SortHead, SortSelect, type SortOption } from "@/components/admin/sort-controls"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { ApiError } from "@/lib/api-client"
+import { useListSearch } from "@/lib/hooks/useListSearch"
+import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useReservedAliases, useUnreserveAlias } from "@/lib/hooks/useReservedAliases"
 import type { ReservedAlias, ReservedAliasLink } from "@/lib/types"
 import { cn, focusTargetAfterRemoving, formatDateTime } from "@/lib/utils"
 
-const matches = (entry: ReservedAlias, query: string) =>
-  [entry.alias, entry.reason, entry.createdBy ?? ""].some((value) => value.toLowerCase().includes(query))
+const sortFields = ["", "alias", "createdAt"]
+
+const sortOptions: SortOption[] = [
+  { field: "", direction: "asc", label: "Custom first" },
+  { field: "alias", direction: "asc", label: "Alias, A to Z" },
+  { field: "alias", direction: "desc", label: "Alias, Z to A" },
+  { field: "createdAt", direction: "desc", label: "Newest first" },
+  { field: "createdAt", direction: "asc", label: "Oldest first" },
+]
 
 const shortLinks = (links: ReservedAliasLink[]) => {
   const names = links.map((link) => `/${link.shortUrl}`)
@@ -25,29 +37,38 @@ const shortLinks = (links: ReservedAliasLink[]) => {
 }
 
 export function ReservedAliasTable() {
-  const { data: aliases, isLoading, error, refetch, isRefetching } = useReservedAliases()
-  const [search, setSearch] = useState("")
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("", "asc", sortFields)
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
+  const { data, isLoading, error, refetch, isRefetching } = useReservedAliases(search, page, size, sort, order)
+  useClampedPage(page, data?.totalPages, setPage)
   const searchRef = useRef<HTMLInputElement>(null)
-  const query = search.trim().toLowerCase()
-  const custom = (aliases ?? []).filter((entry) => !entry.builtIn && matches(entry, query))
-  const builtIn = (aliases ?? []).filter((entry) => entry.builtIn)
-  const builtInShown = builtIn.filter((entry) => matches(entry, query))
+  const aliases = data?.content ?? []
 
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-      <div className="border-b p-4">
-        <div className="relative max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="flex flex-wrap items-center gap-3 border-b p-4">
+        <form
+          role="search"
+          onSubmit={(event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+          className="relative w-full sm:max-w-xs"
+        >
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             ref={searchRef}
             type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search alias, reason or added by..."
             aria-label="Search reserved aliases by alias, reason or who added them"
+            spellCheck={false}
+            autoCapitalize="none"
             className="h-9 pl-9"
           />
-        </div>
+        </form>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} />
       </div>
 
       {isLoading ? (
@@ -63,54 +84,41 @@ export function ReservedAliasTable() {
             Retry
           </Button>
         </div>
+      ) : aliases.length === 0 ? (
+        <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+          {search ? "No reservations match." : "No reservations yet."}
+        </p>
       ) : (
         <>
-          {custom.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted-foreground">
-              {query ? "No custom reservations match." : "No custom reservations yet."}
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Alias</TableHead>
-                  <TableHead className="hidden @min-[29rem]:table-cell">Reason</TableHead>
-                  <TableHead className="hidden @min-[55rem]:table-cell">Added</TableHead>
-                  <TableHead className="hidden @min-[55rem]:table-cell">In use by</TableHead>
-                  <TableHead className="text-right">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {custom.map((entry) => (
-                  <ReservedAliasRow key={entry.alias} entry={entry} fallbackFocusRef={searchRef} />
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {builtInShown.length > 0 && <BuiltInAliases entries={builtInShown} total={builtIn.length} filtered={!!query} />}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortHead field="alias" label="Alias" sortDir={sortDir} toggleSort={toggleSort} />
+                <TableHead className="hidden @min-[29rem]:table-cell">Reason</TableHead>
+                <SortHead field="createdAt" label="Added" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[55rem]:table-cell" />
+                <TableHead className="hidden @min-[55rem]:table-cell">In use by</TableHead>
+                <TableHead className="text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {aliases.map((entry) => (
+                <ReservedAliasRow key={entry.alias} entry={entry} fallbackFocusRef={searchRef} />
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination
+            page={page}
+            totalPages={data?.totalPages ?? 0}
+            totalElements={data?.totalElements}
+            size={size}
+            onPageChange={setPage}
+            onSizeChange={setSize}
+          />
         </>
       )}
     </section>
-  )
-}
-
-function BuiltInAliases({ entries, total, filtered }: { entries: ReservedAlias[]; total: number; filtered: boolean }) {
-  const count = filtered ? `${entries.length} of ${total}` : String(total)
-  return (
-    <div className="border-t bg-muted/30 px-5 py-3.5 text-sm">
-      <p className="text-muted-foreground">
-        Built in ({count}), used by hrva.cc itself and never removable:{" "}
-        {entries.map((entry, index) => (
-          <span key={entry.alias}>
-            {index > 0 && ", "}
-            <span className="font-mono text-[13px] text-foreground">{entry.alias}</span>
-            {entry.inUse.length > 0 && <span> (in use by {shortLinks(entry.inUse)})</span>}
-          </span>
-        ))}
-      </p>
-    </div>
   )
 }
 
@@ -144,7 +152,10 @@ function ReservedAliasRow({ entry, fallbackFocusRef }: { entry: ReservedAlias; f
   return (
     <TableRow>
       <TableCell>
-        <span className="block min-w-28 font-mono text-[13px] font-medium [overflow-wrap:anywhere]">{entry.alias}</span>
+        <span className="flex min-w-28 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">{entry.alias}</span>
+          {entry.builtIn && <Badge variant="outline">Built in</Badge>}
+        </span>
         <div className="min-w-40 @min-[29rem]:hidden">
           <p className="mt-1 [overflow-wrap:anywhere]">{entry.reason}</p>
           {details}

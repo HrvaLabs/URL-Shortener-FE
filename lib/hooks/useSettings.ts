@@ -9,6 +9,8 @@ const ADMIN_SETTINGS_KEY = ["admin", "settings"]
 
 const PUBLIC_SETTINGS_KEY = ["public", "settings"]
 
+const AUDIT_LOG_KEY = ["admin", "audit-log"]
+
 export function useAdminSettings() {
   return useQuery({
     queryKey: ADMIN_SETTINGS_KEY,
@@ -18,7 +20,7 @@ export function useAdminSettings() {
 
 function useRefreshSettings() {
   const queryClient = useQueryClient()
-  return () => Promise.all([ADMIN_SETTINGS_KEY, PUBLIC_SETTINGS_KEY].map((queryKey) => queryClient.invalidateQueries({ queryKey })))
+  return () => Promise.all([ADMIN_SETTINGS_KEY, PUBLIC_SETTINGS_KEY, AUDIT_LOG_KEY].map((queryKey) => queryClient.invalidateQueries({ queryKey })))
 }
 
 export function useChangeSetting() {

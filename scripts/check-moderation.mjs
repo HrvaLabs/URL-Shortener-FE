@@ -83,6 +83,26 @@ check("safetyOffLines: several, in the order given", () => {
   assert.deepEqual(safetyOffLines(settings), ["Nightly destination check is off.", "Nightly Safe Browsing recheck is off."])
 })
 
+check("safetyOffLines: a child switch is not listed while its parent is off", () => {
+  const parent = safetySwitch("Google Safe Browsing check on new links", false, { key: "SAFE_BROWSING_CHECK" })
+  const child = safetySwitch("Refuse links when Google Safe Browsing is down", false, { key: "SAFE_BROWSING_FAIL_CLOSED", parent: "SAFE_BROWSING_CHECK" })
+  assert.deepEqual(safetyOffLines([parent, child]), ["Google Safe Browsing check on new links is off."])
+  assert.deepEqual(safetyOffLines([child, parent]), ["Google Safe Browsing check on new links is off."])
+})
+
+check("safetyOffLines: a child switch is listed while its parent is on", () => {
+  const parent = safetySwitch("Google Safe Browsing check on new links", true, { key: "SAFE_BROWSING_CHECK" })
+  const child = safetySwitch("Refuse links when Google Safe Browsing is down", false, { key: "SAFE_BROWSING_FAIL_CLOSED", parent: "SAFE_BROWSING_CHECK" })
+  assert.deepEqual(safetyOffLines([parent, child]), ["Refuse links when Google Safe Browsing is down is off."])
+})
+
+check("safetyOffLines: a grandchild follows the same rule", () => {
+  const top = safetySwitch("Top", false, { key: "SAFE_BROWSING_CHECK" })
+  const middle = setting({ key: "SAFE_BROWSING_FAIL_CLOSED", type: "NUMBER", parent: "SAFE_BROWSING_CHECK", value: 1 })
+  const bottom = safetySwitch("Bottom", false, { key: "BLOCKLIST_CHECK", parent: "SAFE_BROWSING_FAIL_CLOSED" })
+  assert.deepEqual(safetyOffLines([top, middle, bottom]), ["Top is off."])
+})
+
 check("settingValueText: switches", () => {
   const sw = setting({ type: "SWITCH", unit: null })
   assert.equal(settingValueText(sw, true), "On")

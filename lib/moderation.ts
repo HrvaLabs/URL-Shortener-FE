@@ -16,8 +16,22 @@ export const SETTING_GROUP_LABELS: Record<SettingGroup, string> = {
 
 const NONE = "None"
 
+function parentIsOff(setting: SettingResponse, byKey: Map<string, SettingResponse>): boolean {
+  const seen = new Set<string>()
+  let parent = setting.parent ? byKey.get(setting.parent) : undefined
+  while (parent && !seen.has(parent.key)) {
+    if (parent.type === "SWITCH" && parent.value === false) return true
+    seen.add(parent.key)
+    parent = parent.parent ? byKey.get(parent.parent) : undefined
+  }
+  return false
+}
+
 export function safetyOffLines(settings: SettingResponse[]): string[] {
-  return settings.filter((setting) => setting.safety && setting.type === "SWITCH" && setting.value === false).map((setting) => `${setting.label} is off.`)
+  const byKey = new Map(settings.map((setting) => [setting.key, setting]))
+  return settings
+    .filter((setting) => setting.safety && setting.type === "SWITCH" && setting.value === false && !parentIsOff(setting, byKey))
+    .map((setting) => `${setting.label} is off.`)
 }
 
 function numberText(setting: SettingResponse, value: number): string {

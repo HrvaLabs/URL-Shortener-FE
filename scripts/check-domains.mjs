@@ -275,8 +275,8 @@ check("domainApplyState", () => {
 })
 
 check("domainLimitLine", () => {
-  assert.equal(domainLimitLine(1), "You can have 1 custom domain. Remove one to apply for another.")
-  assert.equal(domainLimitLine(3), "You can have 3 custom domains. Remove one to apply for another.")
+  assert.equal(domainLimitLine(1), "You can have 1 custom domain. Remove or withdraw one to apply for another.")
+  assert.equal(domainLimitLine(3), "You can have 3 custom domains. Remove or withdraw one to apply for another.")
 })
 
 check("domainRemovalSummary", () => {

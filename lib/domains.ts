@@ -102,7 +102,7 @@ export const domainApplyState = ({ canApply, used, limit }: MyDomains): DomainAp
 const countOf = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`
 
 export const domainLimitLine = (limit: number): string =>
-  `You can have ${countOf(limit, "custom domain")}. Remove one to apply for another.`
+  `You can have ${countOf(limit, "custom domain")}. Remove or withdraw one to apply for another.`
 
 export const domainRemovalSummary = ({ moved, renamed, deactivated }: DomainRemoval): string | null => {
   if (moved > 0) return `${countOf(moved, "link")} moved, ${renamed.length} with a new alias.`

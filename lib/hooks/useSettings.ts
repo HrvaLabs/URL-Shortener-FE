@@ -2,7 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { publicApi, settingsApi } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth-context"
 import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
+import { anonymousLinksPaused } from "@/lib/moderation"
 import type { SettingKey, SettingValue } from "@/lib/types"
 
 const ADMIN_SETTINGS_KEY = ["admin", "settings"]
@@ -46,4 +48,10 @@ export function usePublicSettings() {
     staleTime: 60_000,
     retry: retryUnlessRefused,
   })
+}
+
+export function useAnonymousLinksPaused(): boolean {
+  const { user, isLoading } = useAuth()
+  const { data } = usePublicSettings()
+  return anonymousLinksPaused(data, Boolean(user), isLoading)
 }

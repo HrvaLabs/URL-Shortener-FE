@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { ShortenForm } from "@/components/shorten-form"
 import { EasterEggKonami } from "@/components/easter-egg-konami"
 import { useAuth } from "@/lib/auth-context"
+import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import { cn, formatShortUrl, shortHostOf } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
@@ -34,6 +35,8 @@ export function HomePage() {
 }
 
 function PublicHome() {
+  const paused = useAnonymousLinksPaused()
+
   return (
     <>
       <section className="overflow-hidden border-b">
@@ -47,13 +50,15 @@ function PublicHome() {
 
           <div id="shorten" className="mx-auto mt-10 max-w-2xl scroll-mt-24">
             <ShortenForm size="lg" />
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              No account needed.{" "}
-              <Link href="/register" className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
-                Sign up free
-              </Link>{" "}
-              for custom aliases, visit limits, expiry dates and analytics.
-            </p>
+            {!paused && (
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                No account needed.{" "}
+                <Link href="/register" className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Sign up free
+                </Link>{" "}
+                for custom aliases, visit limits, expiry dates and analytics.
+              </p>
+            )}
             <nav aria-label="Free tools" className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
               <span>Also free:</span>
               {freeTools.map((tool, index) => (

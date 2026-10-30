@@ -35,6 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/help/notifications"),
     dated("/help/install-app"),
     dated("/help/custom-domains"),
+    dated("/help/links-without-an-account"),
     dated("/report"),
     dated("/privacy"),
     dated("/terms"),

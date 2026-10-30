@@ -2,7 +2,9 @@
 
 import { useId, useState } from "react"
 import { flushSync } from "react-dom"
+import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
+import { aliasFieldShown } from "@/lib/moderation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,6 +40,8 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
   const [result, setResult] = useState<{ shortUrl: string; longUrl: string; domain: DomainRef | null } | null>(null)
   const [copied, setCopied] = useState(false)
   const createUrl = useCreateUrl()
+  const { data: publicSettings } = usePublicSettings()
+  const showAlias = aliasFieldShown(publicSettings, domain)
   const longUrlError = destinationLengthError(longUrl)
   const id = useId()
 
@@ -59,7 +63,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
       const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean)
       const url = await createUrl.mutateAsync({
         longUrl: destination,
-        shortUrl: customAlias || undefined,
+        shortUrl: showAlias ? customAlias || undefined : undefined,
         visitLimit: visitLimit ? parseInt(visitLimit) : undefined,
         expirationDate: expDate,
         tags: tagList.length ? tagList : undefined,
@@ -111,13 +115,15 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
               {longUrlError && <p id="create-long-url-error" className="mt-2 text-sm text-destructive">{longUrlError}</p>}
             </div>
             <DomainPicker id={`${id}-domain`} value={domain} onChange={(picked) => { setDomain(picked); setDomainError(null) }} error={domainError} />
-            <div>
-              <Label htmlFor={`${id}-alias`}>Custom alias (optional)</Label>
-              <div className="mt-2 flex min-h-10 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
-                <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-3 py-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(domain)}/</span>
-                <input id={`${id}-alias`} placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-hidden placeholder:text-muted-foreground" />
+            {showAlias && (
+              <div>
+                <Label htmlFor={`${id}-alias`}>Custom alias (optional)</Label>
+                <div className="mt-2 flex min-h-10 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+                  <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-3 py-2 text-sm text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(domain)}/</span>
+                  <input id={`${id}-alias`} placeholder="my-link" value={customAlias} onChange={(e) => setCustomAlias(e.target.value)} className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-hidden placeholder:text-muted-foreground" />
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <Label htmlFor={`${id}-visit-limit`}>Visit limit (optional)</Label>
               <Input id={`${id}-visit-limit`} type="number" placeholder="e.g. 100" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-2" />

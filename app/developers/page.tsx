@@ -83,6 +83,7 @@ const fields = [
 
 const errors = [
   { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; or the API key is expired, revoked or out of calls, or belongs to an inactive account. The body is {\"error\": \"...\"}, or one message per field." },
+  { status: "400", text: "Custom aliases are turned off right now." },
   { status: "404", text: "The API key doesn't exist." },
   { status: "409", text: "The custom alias is already taken." },
   { status: "429", text: "Too many links in a short time. The body says: You've created a lot of links in a short time. Try again in an hour." },
@@ -143,7 +144,7 @@ export default function DevelopersPage() {
         <h2 id="errors">Errors</h2>
         <ul>
           {errors.map((error) => (
-            <li key={error.status}>
+            <li key={error.text}>
               <strong>{error.status}</strong>: {error.text}
             </li>
           ))}

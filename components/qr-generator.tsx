@@ -5,12 +5,14 @@ import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy, QrCode } from "lucide-react"
 import { toast } from "sonner"
+import { AnonymousNotice } from "@/components/anonymous-notice"
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
+import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
 import { withScheme } from "@/lib/utm"
@@ -27,6 +29,7 @@ export function QrGenerator() {
   const id = useId()
   const { user } = useAuth()
   const createUrl = useCreateUrl()
+  const paused = useAnonymousLinksPaused()
   const [typed, setTyped] = useState("")
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -120,7 +123,9 @@ export function QrGenerator() {
               <p className="text-muted-foreground">
                 A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
               </p>
-              {refusal ? (
+              {paused ? (
+                <AnonymousNotice className="sm:max-w-sm" />
+              ) : refusal ? (
                 <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
               ) : (
                 <Button

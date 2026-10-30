@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown } = moderation
 
 const check = (name, run) => {
   try {
@@ -193,6 +193,36 @@ check("settingValueText: addresses are joined with a comma and a space", () => {
   assert.equal(settingValueText(addresses, ["abuse@hrva.cc"]), "abuse@hrva.cc")
   assert.equal(settingValueText(addresses, ["abuse@hrva.cc", "reportphishing@apwg.org"]), "abuse@hrva.cc, reportphishing@apwg.org")
   assert.equal(settingValueText(addresses, []), "None")
+})
+
+check("anonymousLinksPaused: only for a signed-out visitor once the settings say so", () => {
+  const off = { anonymousLinks: false, newSignups: true, customAliases: true }
+  const on = { ...off, anonymousLinks: true }
+  assert.equal(anonymousLinksPaused(off, false, false), true)
+  assert.equal(anonymousLinksPaused(on, false, false), false)
+  assert.equal(anonymousLinksPaused(off, true, false), false)
+})
+
+check("anonymousLinksPaused: loading or failed settings and a loading sign-in leave the form alone", () => {
+  const off = { anonymousLinks: false, newSignups: true, customAliases: true }
+  assert.equal(anonymousLinksPaused(undefined, false, false), false)
+  assert.equal(anonymousLinksPaused(off, false, true), false)
+})
+
+check("signupsPaused: only when the settings say so", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true }
+  assert.equal(signupsPaused({ ...base, newSignups: false }), true)
+  assert.equal(signupsPaused(base), false)
+  assert.equal(signupsPaused(undefined), false)
+})
+
+check("aliasFieldShown: hidden only on hrva.cc links while aliases are off", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true }
+  const off = { ...base, customAliases: false }
+  assert.equal(aliasFieldShown(off, null), false)
+  assert.equal(aliasFieldShown(off, "go.example.com"), true)
+  assert.equal(aliasFieldShown(base, null), true)
+  assert.equal(aliasFieldShown(undefined, null), true)
 })
 
 check("strings are ASCII", () => {

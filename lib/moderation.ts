@@ -1,8 +1,20 @@
-import type { SettingGroup, SettingResponse } from "./types"
+import type { PublicSettings, SettingGroup, SettingResponse } from "./types"
 
 export const ANONYMOUS_PAUSED = "Making links without an account is paused."
 
 export const SIGNUPS_PAUSED = "Creating new accounts is paused."
+
+export function anonymousLinksPaused(settings: PublicSettings | undefined, signedIn: boolean, authLoading: boolean): boolean {
+  return !authLoading && !signedIn && settings?.anonymousLinks === false
+}
+
+export function signupsPaused(settings: PublicSettings | undefined): boolean {
+  return settings?.newSignups === false
+}
+
+export function aliasFieldShown(settings: PublicSettings | undefined, domain: string | null): boolean {
+  return settings?.customAliases !== false || domain !== null
+}
 
 export const SETTING_GROUP_LABELS: Record<SettingGroup, string> = {
   ACCESS: "Access",

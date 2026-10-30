@@ -27,6 +27,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "su
   FAILED: "destructive",
   SENDING: "secondary",
   RESENT: "outline",
+  SKIPPED: "outline",
 }
 
 const statusLabels: Record<string, string> = {
@@ -34,6 +35,7 @@ const statusLabels: Record<string, string> = {
   FAILED: "Failed",
   SENDING: "Sending",
   RESENT: "Resent",
+  SKIPPED: "Not sent",
 }
 
 const recipientList = (recipient: string) => recipient.replace(/^\[(.*)\]$/, "$1")

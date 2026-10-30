@@ -5,12 +5,14 @@ import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
+import { AnonymousNotice } from "@/components/anonymous-notice"
 import { UtmFields } from "@/components/utm-fields"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
+import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
 import { destinationToSend, hasUtmValues, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
@@ -44,6 +46,7 @@ export function UtmBuilder() {
   const id = useId()
   const { user } = useAuth()
   const createUrl = useCreateUrl()
+  const paused = useAnonymousLinksPaused()
   const [typed, setTyped] = useState("")
   const [utm, setUtm] = useState<UtmValues>({})
   const [open, setOpen] = useState(true)
@@ -117,7 +120,9 @@ export function UtmBuilder() {
             ) : (
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
-                {refusal ? (
+                {paused ? (
+                  <AnonymousNotice className="sm:max-w-sm" />
+                ) : refusal ? (
                   <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
                 ) : (
                   <Button

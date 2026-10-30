@@ -6,13 +6,16 @@ import { QRCodeSVG } from "qrcode.react"
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
 import { toast } from "sonner"
 import { DomainPicker } from "@/components/domains/domain-picker"
+import { AnonymousNotice } from "@/components/anonymous-notice"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UtmFields } from "@/components/utm-fields"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
+import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
+import { aliasFieldShown } from "@/lib/moderation"
 import type { UrlResponse } from "@/lib/types"
 import { cn, destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
@@ -40,14 +43,19 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
   const { user } = useAuth()
   const createUrl = useCreateUrl()
+  const paused = useAnonymousLinksPaused()
+  const { data: publicSettings } = usePublicSettings()
   const showUtm = withOptions && Boolean(user)
   const showDomains = withOptions && Boolean(user)
   const pickedDomain = showDomains ? domain : null
+  const showAlias = aliasFieldShown(publicSettings, pickedDomain)
   const tagging = showUtm && utmOpen
   const isLarge = size === "lg"
   const longUrlError = destinationLengthError(longUrl)
   const longUrlErrorId = useId()
   const domainPickerId = useId()
+  const noticeId = useId()
+  const longUrlDescription = [paused ? noticeId : null, longUrlError ? longUrlErrorId : null].filter(Boolean).join(" ") || undefined
 
   useEffect(() => {
     if (!result) return
@@ -58,7 +66,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!longUrl || longUrlError) return
+    if (paused || !longUrl || longUrlError) return
 
     const destination = destinationToSend(longUrl, tagging, utm)
     if (destination === null) {
@@ -75,7 +83,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
     try {
       const url = await createUrl.mutateAsync({
         longUrl: destination,
-        shortUrl: customAlias || undefined,
+        shortUrl: showAlias ? customAlias || undefined : undefined,
         visitLimit: visitLimit ? parseInt(visitLimit) : undefined,
         expirationDate: expDate,
         domain: pickedDomain || undefined,
@@ -111,6 +119,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
   return (
     <div className={cn("w-full", className)}>
+      {paused && <AnonymousNotice id={noticeId} className="mb-4" />}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -132,15 +141,19 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
                 value={longUrl}
                 onChange={(e) => setLongUrl(e.target.value)}
                 aria-invalid={!!longUrlError}
-                aria-describedby={longUrlError ? longUrlErrorId : undefined}
-                className={cn(isLarge ? "h-14 rounded-xl pl-12 text-base" : "h-11 pl-9")}
-                required
+                aria-describedby={longUrlDescription}
+                aria-disabled={paused || undefined}
+                readOnly={paused}
+                className={cn(isLarge ? "h-14 rounded-xl pl-12 text-base" : "h-11 pl-9", paused && "cursor-not-allowed opacity-60")}
+                required={!paused}
               />
             </div>
             <Button
               type="submit"
               disabled={createUrl.isPending}
-              className={cn("shrink-0", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
+              aria-disabled={paused || undefined}
+              aria-describedby={paused ? noticeId : undefined}
+              className={cn("shrink-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
             >
               {createUrl.isPending ? "Shortening…" : "Shorten"}
             </Button>
@@ -155,20 +168,22 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
         )}
 
         {withOptions && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>
-              <div className="mt-1.5 flex min-h-9 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
-                <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(pickedDomain)}/</span>
-                <input
-                  id="alias"
-                  placeholder="my-link"
-                  value={customAlias}
-                  onChange={(e) => setCustomAlias(e.target.value)}
-                  className="min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-hidden placeholder:text-muted-foreground"
-                />
+          <div className={cn("grid grid-cols-1 gap-3", showAlias ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+            {showAlias && (
+              <div>
+                <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>
+                <div className="mt-1.5 flex min-h-9 overflow-hidden rounded-lg border border-input bg-background shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-within:border-ring focus-within:ring-4 focus-within:ring-ring/15">
+                  <span className="flex min-w-0 max-w-[60%] select-none items-center border-r bg-muted/60 px-2.5 py-2 text-xs text-muted-foreground [overflow-wrap:anywhere]">{shortHostOf(pickedDomain)}/</span>
+                  <input
+                    id="alias"
+                    placeholder="my-link"
+                    value={customAlias}
+                    onChange={(e) => setCustomAlias(e.target.value)}
+                    className="min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-hidden placeholder:text-muted-foreground"
+                  />
+                </div>
               </div>
-            </div>
+            )}
             <div>
               <Label htmlFor="visit-limit" className="text-xs text-muted-foreground">Visit limit</Label>
               <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-1.5 h-9" />

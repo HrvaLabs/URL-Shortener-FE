@@ -391,7 +391,8 @@ export default function PrivacyPage() {
                   the path and the names of its query parameters, how many links and domains share
                   it and up to 3 short links; when one such link gets many clicks in a day, with the
                   short link, the domain it points to, the day&apos;s clicks and the country most came
-                  from; and when such links take most of the day&apos;s clicks, with the two totals.
+                  from; when such links take most of the day&apos;s clicks, with the two totals; and when an admin
+                  changes a setting, naming the setting and the admin&apos;s email address.
                   Every Monday the channel also gets the weekly summary:
                   site-wide totals for the past week, such as clicks, visitors, new links and users,
                   reviews and automatic blocks, how many reviews are still open, and the top 5 links

@@ -7,7 +7,7 @@ import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
 const description =
-  "Guides to hrva.cc: bio pages, campaign tracking (UTM), passkeys and two-step sign-in, notifications and webhooks, custom domains, installing it as an app, and what the public numbers mean."
+  "Guides to hrva.cc: bio pages, campaign tracking (UTM), passkeys and two-step sign-in, notifications and webhooks, custom domains, links made without an account, installing it as an app, and what the public numbers mean."
 
 export const metadata: Metadata = pageMetadata({ title: "Help", description, path: "/help" })
 
@@ -46,6 +46,11 @@ const guides = [
     href: "/help/custom-domains",
     title: "Custom domains",
     description: "Use your own subdomain, like go.example.com, for your short links, with the exact DNS record for common providers.",
+  },
+  {
+    href: "/help/links-without-an-account",
+    title: "Links without an account",
+    description: "What happens when you make a link without signing in.",
   },
   {
     href: "/help/install-app",

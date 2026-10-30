@@ -149,7 +149,7 @@ function AdminUrls() {
     anonymous: anonymousFilter || undefined,
     deadDestination: deadFilter || undefined,
   }
-  const { data: urls, isLoading, error, refetch } = useAllUrls(filters, page, size, sort, order)
+  const { data: urls, isLoading, isFetching, error, refetch } = useAllUrls(filters, page, size, sort, order)
   const { data: deadCount } = useAllUrls({ deadDestination: true }, 0, 1)
   useClampedPage(page, urls?.totalPages, setPage)
   const deactivateUrl = useDeactivateUrl()
@@ -430,8 +430,8 @@ function AdminUrls() {
 
       {error && urls && (
         <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm text-destructive">
-          <span>Couldn&apos;t refresh the list. It may be out of date.</span>
-          <Button size="sm" variant="outline" className="h-8" onClick={() => refetch()}>Retry</Button>
+          <span className="[overflow-wrap:anywhere]">Couldn&apos;t refresh the list. It may be out of date.</span>
+          <Button size="sm" variant="outline" className="h-8" disabled={isFetching} onClick={() => refetch()}>Retry</Button>
         </div>
       )}
 

@@ -44,7 +44,7 @@ export function useResetSetting() {
 export function refreshPublicSettingsAfterRefusal(queryClient: QueryClient, error: unknown) {
   if (!(error instanceof ApiError) || refusedSwitch(error.message) === null) return
   void queryClient
-    .fetchQuery({ queryKey: PUBLIC_SETTINGS_KEY, queryFn: () => publicApi.getSettings("no-store"), staleTime: 0 })
+    .fetchQuery({ queryKey: PUBLIC_SETTINGS_KEY, queryFn: () => publicApi.getSettings("reload"), staleTime: 0 })
     .catch(() => {})
 }
 

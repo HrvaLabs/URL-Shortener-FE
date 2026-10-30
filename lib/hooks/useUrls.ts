@@ -1,9 +1,9 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { urlApi } from "@/lib/api-client"
+import { adminApi, urlApi } from "@/lib/api-client"
 import { refreshPublicSettingsAfterRefusal } from "@/lib/hooks/useSettings"
-import type { CreateUrlDto, UrlUpdateDto, UrlResponse, Page, UrlFilters } from "@/lib/types"
+import type { CreateUrlDto, UrlUpdateDto, UrlFilters } from "@/lib/types"
 
 export function useMyUrls(filters: UrlFilters = {}, page = 0, size = 20, sort = "createDate", order = "desc") {
   return useQuery({
@@ -66,6 +66,17 @@ export function useActivateUrl() {
     mutationFn: (id: number) => urlApi.activate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["urls"] })
+    },
+  })
+}
+
+export function useClearWarningPage() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => adminApi.clearWarningPage(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["urls"] })
+      queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] })
     },
   })
 }

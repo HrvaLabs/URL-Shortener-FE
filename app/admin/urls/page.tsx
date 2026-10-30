@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useAllUrls, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
+import { useAllUrls, useClearWarningPage, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { SEARCH_DELAY_MS } from "@/lib/hooks/useListSearch"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
@@ -21,7 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3 } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
 import { cn, destinationLengthError, formatDateTime, plural, shortHostOf } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
@@ -149,11 +149,12 @@ function AdminUrls() {
     anonymous: anonymousFilter || undefined,
     deadDestination: deadFilter || undefined,
   }
-  const { data: urls, isLoading, error } = useAllUrls(filters, page, size, sort, order)
+  const { data: urls, isLoading, error, refetch } = useAllUrls(filters, page, size, sort, order)
   const { data: deadCount } = useAllUrls({ deadDestination: true }, 0, 1)
   useClampedPage(page, urls?.totalPages, setPage)
   const deactivateUrl = useDeactivateUrl()
   const activateUrl = useActivateUrl()
+  const clearWarningPage = useClearWarningPage()
   const deleteUrl = useDeleteUrl()
   const updateUrl = useUpdateUrl()
   const [editUrl, setEditUrl] = useState<UrlResponse | null>(null)
@@ -233,6 +234,16 @@ function AdminUrls() {
       toast.success("URL activated")
     } catch (err) {
       toast.error(err instanceof Error && err.message ? err.message : "Failed to activate")
+    }
+  }
+
+  const handleClearWarningPage = async (id: number) => {
+    try {
+      await clearWarningPage.mutateAsync(id)
+      toast.success("Warning page cleared")
+      document.getElementById(`edit-url-${id}`)?.focus()
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to clear the warning page")
     }
   }
 
@@ -417,9 +428,16 @@ function AdminUrls() {
         </div>
       )}
 
+      {error && urls && (
+        <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2.5 text-sm text-destructive">
+          <span>Couldn&apos;t refresh the list. It may be out of date.</span>
+          <Button size="sm" variant="outline" className="h-8" onClick={() => refetch()}>Retry</Button>
+        </div>
+      )}
+
       {isLoading ? (
         <AdminUrlsLoading />
-      ) : error ? (
+      ) : error && !urls ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load URLs</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
@@ -547,6 +565,7 @@ function AdminUrls() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
+                            id={`edit-url-${url.id}`}
                             onClick={() => handleEditOpen(url)}
                             aria-label="Edit URL"
                             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -556,6 +575,21 @@ function AdminUrls() {
                         </TooltipTrigger>
                         <TooltipContent side="top">Edit URL</TooltipContent>
                       </Tooltip>
+                      {url.warningPage && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => handleClearWarningPage(url.id)}
+                              disabled={clearWarningPage.isPending}
+                              aria-label="Clear warning page"
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            >
+                              <ShieldOff className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Clear warning page</TooltipContent>
+                        </Tooltip>
+                      )}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <button
@@ -755,6 +789,7 @@ function UrlStatus({ url }: { url: UrlResponse }) {
             In review
           </Link>
         )}
+        {url.warningPage && <Badge variant="warning" className="whitespace-nowrap">Warning page</Badge>}
       </div>
       {url.status === "BLOCKED" && url.blockReason && (
         <p className="mt-1 min-w-24 text-xs text-muted-foreground">{blockReasonLabels[url.blockReason] ?? url.blockReason}</p>

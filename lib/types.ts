@@ -83,6 +83,7 @@ export interface UrlResponse {
   reviewOpen?: boolean
   ownerPossibleScammer?: boolean
   finalUrl?: string | null
+  warningPage?: boolean
 }
 
 export interface ApiKey {
@@ -645,6 +646,7 @@ export interface UserFilters {
 
 export type AuditAction =
   | "CLEAR_LOGIN_ATTEMPTS"
+  | "CLEAR_WARNING_PAGE"
   | "RESEND_EMAIL"
   | "UPDATE_USER"
   | "DELETE_USER"

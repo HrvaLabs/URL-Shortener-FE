@@ -545,7 +545,7 @@ function FeatureGrid() {
         </div>
 
         <p className="mt-8 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Also included: custom aliases, two-factor sign-in, Google Safe Browsing checks on every destination,{" "}
+          Also included: custom aliases, two-factor sign-in, Google Safe Browsing checks on every destination, a warning page before risky links made without an account,{" "}
           <Link href="/help/install-app" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             an app you can install
           </Link>{" "}

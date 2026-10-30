@@ -429,6 +429,8 @@ export const adminApi = {
     request<void>("POST", `/admin/review-queue/${urlId}/resolve`, domain ? { action, domain } : { action }),
   resolveReviews: (urlIds: number[], action: ReviewAction) =>
     request<ReviewBulkResolveResult>("POST", "/admin/review-queue/resolve", { urlIds, action }),
+  clearWarningPage: (id: number) =>
+    request<UrlResponse>("DELETE", `/admin/urls/${id}/warning-page`),
   blockUser: (id: number) =>
     request<LinksAffected>("POST", `/admin/users/${id}/block`),
   unblockUser: (id: number) =>

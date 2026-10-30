@@ -62,6 +62,15 @@ export default function LinksWithoutAnAccountHelpPage() {
                 <Link href="/privacy">Privacy Policy</Link> describes what hrva.cc keeps about them.
               </p>
 
+              <h2 id="warning-page">Warning page</h2>
+              <p>
+                Some links made without an account open an hrva.cc page first instead of going straight to the
+                destination. It shows the full address the link goes to, a Continue button and a{" "}
+                <Link href="/report">Report this link</Link> link. It appears when the destination&apos;s domain
+                was registered recently or looks machine-made. The page has no scripts and sets no cookies, and
+                showing it counts as the click.
+              </p>
+
               <h2 id="paused">When it&apos;s paused</h2>
               <p>
                 Making links without an account is sometimes paused, for example during a spam wave. The

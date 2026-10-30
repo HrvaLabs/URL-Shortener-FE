@@ -130,12 +130,13 @@ export const canTurnOff = (status: CustomDomainStatus): boolean => TURNS_OFF.has
 
 export const canRemoveDomain = (status: CustomDomainStatus): boolean => REMOVABLE.has(status)
 
-export const canAdminRetry = ({ status }: Pick<CustomDomain, "status">): boolean => status === "ERROR" || status === "AWAITING_DNS"
+export const canAdminRetry = ({ status, problem }: Pick<CustomDomain, "status" | "problem">): boolean =>
+  status === "ERROR" || status === "AWAITING_DNS" || (status === "APPROVED_PROVISIONING" && problem === "PROVISIONING_FAILED")
 
 export const ADMIN_RECHECK_HINTS = {
   rechecked: "Checked again every hour on its own.",
   stopped: "No longer checked on its own. Use Retry.",
-  retrying: "Retried on its own for 24 hours, then waits for Retry.",
+  retrying: "Retried on its own for 24 hours. Retry now to try again right away.",
 } as const
 
 export const adminRecheckHint = ({ status, problem }: Pick<CustomDomain, "status" | "problem">): string | null => {

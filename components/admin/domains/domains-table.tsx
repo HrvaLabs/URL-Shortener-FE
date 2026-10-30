@@ -305,9 +305,9 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
                     ref={highlighted ? highlightedRef : undefined}
                     data-domain-row={domain.id}
                     aria-current={highlighted ? "true" : undefined}
-                    className={cn("group", highlighted && "bg-brand-soft hover:bg-brand-soft")}
+                    className="group"
                   >
-                    <TableCell className="align-top">
+                    <TableCell className={cn("align-top", highlighted && "shadow-[inset_3px_0_0_hsl(var(--brand))]")}>
                       <div className="min-w-40 space-y-1.5 @lg:min-w-56">
                         <p className="font-mono text-[13px] font-medium [overflow-wrap:anywhere]">{domain.hostname}</p>
                         <DomainStatusBadge status={domain.status} />
@@ -340,7 +340,7 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
                     <TableCell
                       className={cn(
                         "sticky right-0 bg-card text-right align-top transition-colors",
-                        highlighted ? "bg-brand-soft" : "group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))]",
+                        "group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))]",
                       )}
                     >
                       <RowActions

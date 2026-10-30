@@ -133,7 +133,7 @@ export function ApplicationsSection({ highlightId, fallbackFocusRef }: Applicati
                       id={`domain-application-${entry.id}`}
                       data-domain-row={entry.id}
                       aria-current={highlighted ? "true" : undefined}
-                      className={cn("scroll-mt-24 px-5 py-4", highlighted && "bg-brand-soft")}
+                      className={cn("scroll-mt-24 px-5 py-4", highlighted && "shadow-[inset_3px_0_0_hsl(var(--brand))]")}
                     >
                       <ApplicationRow entry={entry} onReview={openReview} />
                     </li>

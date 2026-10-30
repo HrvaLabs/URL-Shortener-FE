@@ -249,7 +249,7 @@ check("admin actions by status", () => {
   assert.deepEqual(DOMAIN_STATUSES.filter(canRemoveDomain), ["APPROVED_PROVISIONING", "AWAITING_DNS", "ACTIVE", "DISABLED", "ERROR"])
   assert.equal(canAdminRetry({ status: "ERROR", problem: "CAA_BLOCKED" }), true)
   assert.equal(canAdminRetry({ status: "AWAITING_DNS", problem: null }), true)
-  assert.equal(canAdminRetry({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), false)
+  assert.equal(canAdminRetry({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), true)
   assert.equal(canAdminRetry({ status: "APPROVED_PROVISIONING", problem: null }), false)
   assert.equal(canAdminRetry({ status: "ACTIVE", problem: null }), false)
   assert.equal(canAdminRetry({ status: "DISABLED", problem: null }), false)
@@ -262,7 +262,7 @@ check("admin recheck hints", () => {
   for (const problem of ["DNS_TIMED_OUT", "PROVISIONING_FAILED"]) {
     assert.equal(adminRecheckHint({ status: "ERROR", problem }), "No longer checked on its own. Use Retry.")
   }
-  assert.equal(adminRecheckHint({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), "Retried on its own for 24 hours, then waits for Retry.")
+  assert.equal(adminRecheckHint({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), "Retried on its own for 24 hours. Retry now to try again right away.")
   assert.equal(adminRecheckHint({ status: "AWAITING_DNS", problem: "DNS_NOT_FOUND" }), null)
   assert.equal(adminRecheckHint({ status: "ERROR", problem: null }), null)
 })

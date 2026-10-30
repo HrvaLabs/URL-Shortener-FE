@@ -72,6 +72,7 @@ export function SiteFooter() {
                     ) : (
                       <NavLink
                         href={link.href}
+                        prefetch={false}
                         className="text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:font-medium aria-[current=page]:text-foreground"
                       >
                         {link.label}

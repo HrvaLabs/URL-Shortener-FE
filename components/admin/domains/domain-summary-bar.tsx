@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseServerDateTime } from "@/lib/analytics"
-import { TOKEN_STATUS_LABELS, cloudflareTokenLine, type TokenTone } from "@/lib/domains"
+import { TOKEN_STATUS_LABELS, TOKEN_STATUS_TONES, cloudflareTokenLine, type TokenTone } from "@/lib/domains"
 import { useCheckCloudflare, useDomainSummary, useReconcileDomains } from "@/lib/hooks/useDomains"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import type { DomainReconcile, DomainSummary } from "@/lib/types"
@@ -128,8 +128,11 @@ function TokenTile({ summary }: { summary: DomainSummary }) {
     try {
       const result = await check.mutateAsync()
       const label = `Token: ${TOKEN_STATUS_LABELS[result.status]}`
-      if (result.status === "OK") toast.success(label)
-      else toast.error(label, result.message ? { description: result.message } : undefined)
+      const description = result.message ? { description: result.message } : undefined
+      const tone = TOKEN_STATUS_TONES[result.status]
+      if (tone === "success") toast.success(label, description)
+      else if (tone === "warning") toast.warning(label, description)
+      else toast.error(label, description)
     } catch (checkError) {
       toast.error(errorText(checkError))
     }

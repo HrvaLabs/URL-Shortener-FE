@@ -109,7 +109,7 @@ function CustomDomains({ counts }: { counts: NonNullable<LinksStats["customDomai
         { label: "In use of the cap", value: `${slotsInUse.toLocaleString()} of ${maxActive.toLocaleString()}`, href: "/admin/domains" },
         {
           label: "Cloudflare hostnames",
-          value: cloudflareTotal === null ? "Not read yet" : `${cloudflareTotal.toLocaleString()} of ${freeAllowance.toLocaleString()} free`,
+          value: cloudflareTotal == null ? "Not read yet" : `${cloudflareTotal.toLocaleString()} of ${freeAllowance.toLocaleString()} free`,
           href: "/admin/domains",
         },
       ]}

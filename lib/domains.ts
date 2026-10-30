@@ -192,6 +192,6 @@ export interface CloudflareTokenLine {
 }
 
 export const cloudflareTokenLine = ({ status, checkedAt, message }: CloudflareCheck): CloudflareTokenLine =>
-  checkedAt === null && status !== "MISSING"
+  checkedAt == null && status !== "MISSING"
     ? { label: TOKEN_NOT_CHECKED, tone: "muted", message: null, checkedAt: null }
     : { label: TOKEN_STATUS_LABELS[status], tone: TOKEN_STATUS_TONES[status], message, checkedAt }

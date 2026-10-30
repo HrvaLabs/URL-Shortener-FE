@@ -61,7 +61,9 @@ export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCl
             {withdraw ? `Withdraw your application for ${hostname}?` : `Remove ${hostname}?`}
           </AlertDialogTitle>
           <AlertDialogDescription className="[overflow-wrap:anywhere]">
-            {withdraw ? "You can apply again later." : `Its links stop working on ${hostname} at once. This can't be undone.`}
+            {withdraw
+              ? "You can apply again later."
+              : `${withLinks ? `Its links stop working on ${hostname} at once. ` : ""}This can't be undone.`}
             {!withdraw && note ? ` ${note}` : null}
           </AlertDialogDescription>
         </AlertDialogHeader>

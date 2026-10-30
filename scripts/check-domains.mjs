@@ -154,6 +154,12 @@ check("cloudflareTokenLine", () => {
       status,
     )
   }
+  assert.deepEqual(cloudflareTokenLine({ status: "OK", message: null }), {
+    label: "Not checked yet",
+    tone: "muted",
+    message: null,
+    checkedAt: null,
+  })
   assert.deepEqual(cloudflareTokenLine({ status: "MISSING", checkedAt: null, message: missing }), {
     label: "Missing",
     tone: "destructive",

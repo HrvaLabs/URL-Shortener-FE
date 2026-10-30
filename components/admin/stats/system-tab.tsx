@@ -31,12 +31,16 @@ const UP = "UP"
 
 const UNKNOWN_VERSION = "unknown"
 
+const NO_VALUE = String.fromCodePoint(0x2014)
+
+const AT_LEAST = `${String.fromCodePoint(0x2265)} `
+
 function formatMs(ms: number | null): string {
-  return ms == null ? "—" : `${ms.toFixed(1)} ms`
+  return ms == null ? NO_VALUE : `${ms.toFixed(1)} ms`
 }
 
 function formatSlowest({ maxMs }: RedirectTiming): string {
-  return maxMs === 0 ? "—" : formatMs(maxMs)
+  return maxMs === 0 ? NO_VALUE : formatMs(maxMs)
 }
 
 interface SystemTabProps {
@@ -197,7 +201,7 @@ function Redirects({ timings }: { timings: RedirectTiming[] }) {
 }
 
 function RedisKeys({ keys }: { keys: RedisKeyCounts | null }) {
-  const count = (value: number) => `${keys?.capped ? "≥ " : ""}${value.toLocaleString()}`
+  const count = (value: number) => `${keys?.capped ? AT_LEAST : ""}${value.toLocaleString()}`
   const rows = keys
     ? [
         ...Object.entries(keys.counts).map(([prefix, value]) => ({ label: redisPrefixLabels[prefix] ?? prefix, value })),

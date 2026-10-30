@@ -35,7 +35,7 @@ export function useTurnOffSignInMethod() {
 export function useTurnOnSignInMethod() {
   const store = useStoreMethods()
   return useMutation({
-    mutationFn: (method: SignInMethod) => signInMethodApi.turnOn(method),
+    mutationFn: ({ method, password }: { method: SignInMethod; password?: string }) => signInMethodApi.turnOn(method, password),
     onSuccess: store,
   })
 }

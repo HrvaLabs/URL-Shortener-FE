@@ -161,8 +161,8 @@ export const passkeyApi = {
 export const signInMethodApi = {
   turnOff: (method: SignInMethod) =>
     request<SignInMethodsResponse>("POST", `/users/me/sign-in-methods/${method}/turn-off`),
-  turnOn: (method: SignInMethod) =>
-    request<SignInMethodsResponse>("POST", `/users/me/sign-in-methods/${method}/turn-on`),
+  turnOn: (method: SignInMethod, password?: string) =>
+    request<SignInMethodsResponse>("POST", `/users/me/sign-in-methods/${method}/turn-on`, password ? { password } : undefined),
   removePassword: (currentPassword: string) =>
     request<SignInMethodsResponse>("POST", "/users/me/password/remove", { currentPassword }),
 }

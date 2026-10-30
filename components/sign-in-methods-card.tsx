@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { parseServerDateTime } from "@/lib/analytics"
 import { ApiError, REQUEST_FAILED } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth-context"
 import { useRemovePassword, useTurnOffSignInMethod, useTurnOnSignInMethod } from "@/lib/hooks/useSignInMethods"
 import { useMe } from "@/lib/hooks/useUsers"
 import { isSwitchable, signInMethodLabels } from "@/lib/sign-in-methods"
@@ -34,7 +35,7 @@ interface Change {
 
 const wrap = "[overflow-wrap:anywhere]"
 
-function dialogText(change: Change): { title: string; description: string; confirm: string; busy: string; success: string } {
+function dialogText(change: Change, askPassword: boolean): { title: string; description: string; confirm: string; busy: string; success: string } {
   const name = signInMethodLabels[change.method]
   if (change.kind === "turn-off") {
     return {
@@ -48,7 +49,7 @@ function dialogText(change: Change): { title: string; description: string; confi
   if (change.kind === "turn-on") {
     return {
       title: `Turn ${name} sign-in back on?`,
-      description: `Signing in with ${name} will work again. You can turn it off again here. We'll email you about the change.`,
+      description: `Signing in with ${name} will work again. You can turn it off again here. ${askPassword ? "Enter your current password to confirm. " : ""}We'll email you about the change.`,
       confirm: "Turn back on",
       busy: "Turning on...",
       success: `${name} sign-in turned back on`,
@@ -145,6 +146,7 @@ export function SignInMethodsCard() {
             <ChangeForm
               key={`${change.kind}-${change.method}`}
               change={change}
+              passwordSet={me?.passwordSet}
               busy={busy}
               onBusyChange={setBusy}
               passwordRef={passwordRef}
@@ -222,14 +224,22 @@ function errorText(error: unknown): string {
   return error instanceof Error && error.message ? error.message : REQUEST_FAILED
 }
 
+function fieldErrorFor(change: Change, needsPassword: boolean, err: unknown): string | undefined {
+  if (!needsPassword || !(err instanceof ApiError)) return undefined
+  if (change.kind === "remove-password") return err.fields.currentPassword
+  return err.status === 400 || err.status === 403 ? err.message : undefined
+}
+
 function ChangeForm({
   change,
+  passwordSet,
   busy,
   onBusyChange,
   passwordRef,
   onDone,
 }: {
   change: Change
+  passwordSet: boolean | undefined
   busy: boolean
   onBusyChange: (busy: boolean) => void
   passwordRef: React.RefObject<HTMLInputElement | null>
@@ -242,8 +252,10 @@ function ChangeForm({
   const turnOff = useTurnOffSignInMethod()
   const turnOn = useTurnOnSignInMethod()
   const removePassword = useRemovePassword()
-  const text = dialogText(change)
-  const needsPassword = change.kind === "remove-password"
+  const { logout } = useAuth()
+  const [signInAgain, setSignInAgain] = useState(false)
+  const needsPassword = change.kind === "remove-password" || (change.kind === "turn-on" && passwordSet === true)
+  const text = dialogText(change, needsPassword)
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -256,21 +268,23 @@ function ChangeForm({
     submitting.current = true
     setError(null)
     setFieldError(null)
+    setSignInAgain(false)
     onBusyChange(true)
     try {
       if (change.kind === "turn-off") await turnOff.mutateAsync(change.method)
-      else if (change.kind === "turn-on") await turnOn.mutateAsync(change.method)
+      else if (change.kind === "turn-on") await turnOn.mutateAsync({ method: change.method, password: needsPassword ? password : undefined })
       else await removePassword.mutateAsync(password)
     } catch (err) {
       submitting.current = false
       onBusyChange(false)
-      const field = err instanceof ApiError ? err.fields.currentPassword : undefined
+      const field = fieldErrorFor(change, needsPassword, err)
       if (needsPassword && field) {
         setFieldError(field)
         passwordRef.current?.focus()
         passwordRef.current?.select()
       } else {
         setError(errorText(err))
+        setSignInAgain(change.kind === "turn-on" && !needsPassword && err instanceof ApiError && err.status === 401)
       }
       return
     }
@@ -286,28 +300,35 @@ function ChangeForm({
       </AlertDialogHeader>
       {needsPassword && (
         <div>
-          <Label htmlFor="removePasswordCurrent">Current password</Label>
+          <Label htmlFor="changeCurrentPassword">Current password</Label>
           <Input
             ref={passwordRef}
-            id="removePasswordCurrent"
+            id="changeCurrentPassword"
             type="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); setFieldError(null) }}
             readOnly={busy}
             aria-invalid={fieldError ? true : undefined}
-            aria-describedby={fieldError ? "removePasswordCurrentError" : undefined}
+            aria-describedby={fieldError ? "changeCurrentPasswordError" : undefined}
             className="mt-1.5 h-10"
           />
           {fieldError && (
-            <p id="removePasswordCurrentError" role="alert" className={cn("mt-1.5 text-sm text-destructive", wrap)}>
+            <p id="changeCurrentPasswordError" role="alert" className={cn("mt-1.5 text-sm text-destructive", wrap)}>
               {fieldError}
             </p>
           )}
         </div>
       )}
       {error && (
-        <p role="alert" className={cn("text-sm text-destructive", wrap)}>{error}</p>
+        <div role="alert" className="grid gap-2">
+          <p className={cn("text-sm text-destructive", wrap)}>{error}</p>
+          {signInAgain && (
+            <Button type="button" variant="outline" size="sm" className="justify-self-start" onClick={() => logout()}>
+              Sign in again
+            </Button>
+          )}
+        </div>
       )}
       <AlertDialogFooter className="gap-2 sm:gap-0">
         <AlertDialogCancel type="button" disabled={busy}>Cancel</AlertDialogCancel>

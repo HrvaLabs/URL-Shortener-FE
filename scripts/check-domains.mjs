@@ -13,8 +13,15 @@ const {
   LINK_MODE_LABELS,
   REASON_MAX,
   TOKEN_STATUS_LABELS,
+  DOMAIN_PROBLEM_FOLLOW_UPS,
+  PROVISIONING_FAILED_TEXT,
   canPickDomain,
+  domainApplyState,
+  domainLimitLine,
+  domainProblemLines,
+  domainRemovalSummary,
   isHostnameShaped,
+  isWaitingForSetup,
   shortHost,
 } = domains
 
@@ -142,6 +149,61 @@ check("canPickDomain needs an active domain", () => {
   assert.equal(canPickDomain([domain({ status: "AWAITING_DNS" })]), false)
   assert.equal(canPickDomain([domain()]), true)
   assert.equal(canPickDomain([domain({ status: "DISABLED" }), domain({ id: 8, hostname: "links.example.org" })]), true)
+})
+
+check("problem follow-ups say who checks again", () => {
+  assert.deepEqual(DOMAIN_PROBLEM_FOLLOW_UPS, {
+    DNS_NOT_FOUND: "We keep checking on our own, or use Check now.",
+    CAA_BLOCKED: "We check again on our own, or use Check now once it's fixed.",
+    CERTIFICATE_TIMED_OUT: "We check again on our own, or use Check now once it's fixed.",
+    CNAME_REMOVED: "We check again on our own, or use Check now once it's fixed.",
+    CLOUDFLARE_BLOCKED: "We check again on our own. You don't need to do anything.",
+    DNS_TIMED_OUT: "We don't check on our own any more. Use Check now to look again.",
+  })
+  assert.equal(PROVISIONING_FAILED_TEXT, "Setting up your domain hit a problem. We'll keep trying, or try again now.")
+})
+
+check("domainProblemLines", () => {
+  assert.equal(domainProblemLines(domain()), null)
+  assert.deepEqual(
+    domainProblemLines(domain({ status: "ERROR", problem: "CAA_BLOCKED", problemText: "CAA text" })),
+    { text: "CAA text", followUp: DOMAIN_PROBLEM_FOLLOW_UPS.CAA_BLOCKED, retry: false },
+  )
+  assert.deepEqual(
+    domainProblemLines(domain({ status: "ERROR", problem: "DNS_TIMED_OUT", problemText: "Timed out text" })),
+    { text: "Timed out text", followUp: DOMAIN_PROBLEM_FOLLOW_UPS.DNS_TIMED_OUT, retry: false },
+  )
+  assert.deepEqual(
+    domainProblemLines(domain({ status: "AWAITING_DNS", problem: "DNS_NOT_FOUND", problemText: null })),
+    { text: null, followUp: DOMAIN_PROBLEM_FOLLOW_UPS.DNS_NOT_FOUND, retry: false },
+  )
+  const failed = { text: PROVISIONING_FAILED_TEXT, followUp: null, retry: true }
+  assert.deepEqual(domainProblemLines(domain({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED", problemText: "Backend text" })), failed)
+  assert.deepEqual(domainProblemLines(domain({ status: "ERROR", problem: "PROVISIONING_FAILED", problemText: "Backend text" })), failed)
+})
+
+check("isWaitingForSetup", () => {
+  assert.deepEqual(STATUSES.filter(isWaitingForSetup), ["APPROVED_PROVISIONING", "AWAITING_DNS", "ERROR"])
+})
+
+check("domainApplyState", () => {
+  assert.equal(domainApplyState({ domains: [], limit: 1, used: 0, canApply: true }), "form")
+  assert.equal(domainApplyState({ domains: [domain()], limit: 1, used: 1, canApply: false }), "limit")
+  assert.equal(domainApplyState({ domains: [domain()], limit: 3, used: 4, canApply: false }), "limit")
+  assert.equal(domainApplyState({ domains: [], limit: 1, used: 0, canApply: false }), "off")
+})
+
+check("domainLimitLine", () => {
+  assert.equal(domainLimitLine(1), "You can have 1 custom domain. Remove one to apply for another.")
+  assert.equal(domainLimitLine(3), "You can have 3 custom domains. Remove one to apply for another.")
+})
+
+check("domainRemovalSummary", () => {
+  assert.equal(domainRemovalSummary({ moved: 0, renamed: [], deactivated: 0 }), null)
+  assert.equal(domainRemovalSummary({ moved: 3, renamed: [{ from: "menu", to: "k3J9x" }], deactivated: 0 }), "3 links moved, 1 with a new alias.")
+  assert.equal(domainRemovalSummary({ moved: 1, renamed: [], deactivated: 0 }), "1 link moved, 0 with a new alias.")
+  assert.equal(domainRemovalSummary({ moved: 0, renamed: [], deactivated: 2 }), "2 links turned off.")
+  assert.equal(domainRemovalSummary({ moved: 0, renamed: [], deactivated: 1 }), "1 link turned off.")
 })
 
 check("strings are ASCII", () => {

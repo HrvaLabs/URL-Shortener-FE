@@ -1,4 +1,4 @@
-import type { CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainLinkMode, DomainRef, DomainSteps } from "./types"
+import type { CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
 
 export const HOSTNAME_PLACEHOLDER = "go.example.com"
 
@@ -55,5 +55,48 @@ export const canPickDomain = (domains: CustomDomain[]): boolean => domains.some(
 
 const HOSTNAME_SHAPE = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/
 
-export const isHostnameShaped = (value: string | null | undefined): value is string =>
+export const isHostnameShaped = (value: string | null | undefined): boolean =>
   typeof value === "string" && value.length <= 253 && HOSTNAME_SHAPE.test(value.toLowerCase())
+
+export const PROVISIONING_FAILED_TEXT = "Setting up your domain hit a problem. We'll keep trying, or try again now."
+
+export const DOMAIN_PROBLEM_FOLLOW_UPS: Record<Exclude<DomainProblem, "PROVISIONING_FAILED">, string> = {
+  DNS_NOT_FOUND: "We keep checking on our own, or use Check now.",
+  CAA_BLOCKED: "We check again on our own, or use Check now once it's fixed.",
+  CERTIFICATE_TIMED_OUT: "We check again on our own, or use Check now once it's fixed.",
+  CNAME_REMOVED: "We check again on our own, or use Check now once it's fixed.",
+  CLOUDFLARE_BLOCKED: "We check again on our own. You don't need to do anything.",
+  DNS_TIMED_OUT: "We don't check on our own any more. Use Check now to look again.",
+}
+
+export interface DomainProblemLines {
+  text: string | null
+  followUp: string | null
+  retry: boolean
+}
+
+export const domainProblemLines = (domain: CustomDomain): DomainProblemLines | null => {
+  if (!domain.problem) return null
+  if (domain.problem === "PROVISIONING_FAILED") return { text: PROVISIONING_FAILED_TEXT, followUp: null, retry: true }
+  return { text: domain.problemText, followUp: DOMAIN_PROBLEM_FOLLOW_UPS[domain.problem], retry: false }
+}
+
+const WAITING_FOR_SETUP: ReadonlySet<CustomDomainStatus> = new Set(["APPROVED_PROVISIONING", "AWAITING_DNS", "ERROR"])
+
+export const isWaitingForSetup = (status: CustomDomainStatus): boolean => WAITING_FOR_SETUP.has(status)
+
+export type DomainApplyState = "form" | "limit" | "off"
+
+export const domainApplyState = ({ canApply, used, limit }: MyDomains): DomainApplyState =>
+  canApply ? "form" : used >= limit ? "limit" : "off"
+
+const countOf = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`
+
+export const domainLimitLine = (limit: number): string =>
+  `You can have ${countOf(limit, "custom domain")}. Remove one to apply for another.`
+
+export const domainRemovalSummary = ({ moved, renamed, deactivated }: DomainRemoval): string | null => {
+  if (moved > 0) return `${countOf(moved, "link")} moved, ${renamed.length} with a new alias.`
+  if (deactivated > 0) return `${countOf(deactivated, "link")} turned off.`
+  return null
+}

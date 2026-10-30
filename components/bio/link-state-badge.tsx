@@ -10,6 +10,7 @@ const LINK_STATE_VARIANTS: Record<Exclude<BioLinkState, "LIVE">, BadgeProps["var
   EXPIRED: "secondary",
   LIMIT_REACHED: "warning",
   BLOCKED: "destructive",
+  DOMAIN_OFF: "secondary",
 }
 
 export function LinkStateBadge({ state }: { state: BioLinkState }) {

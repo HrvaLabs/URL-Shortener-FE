@@ -401,6 +401,7 @@ check("link state labels", () => {
     EXPIRED: { badge: "Link expired", hint: "Give {alias} a later expiry date on the URLs page to show it again." },
     LIMIT_REACHED: { badge: "Visit limit reached", hint: "Raise the visit limit of {alias} on the URLs page to show it again." },
     BLOCKED: { badge: "Link blocked", hint: "Blocked links can't be shown. Remove this button." },
+    DOMAIN_OFF: { badge: "Domain turned off", hint: "Not shown on your page while its custom domain isn't active. Check it under Custom domains in Settings." },
   })
 })
 
@@ -921,6 +922,7 @@ check("linkStateLabel guards states the FE doesn't know", () => {
   assert.equal(linkStateLabel("LIVE"), null)
   assert.deepEqual(linkStateLabel("DEACTIVATED"), LINK_STATE_LABELS.DEACTIVATED)
   assert.deepEqual(linkStateLabel("BLOCKED"), LINK_STATE_LABELS.BLOCKED)
+  assert.deepEqual(linkStateLabel("DOMAIN_OFF"), LINK_STATE_LABELS.DOMAIN_OFF)
   for (const unknown of ["PAUSED", "toString", "constructor", "__proto__", "", null, undefined]) {
     assert.equal(linkStateLabel(unknown), null, String(unknown))
   }

@@ -239,6 +239,7 @@ export const LINK_STATE_LABELS: Record<Exclude<BioLinkState, "LIVE">, { badge: s
   EXPIRED: { badge: "Link expired", hint: `Give ${ALIAS} a later expiry date on the ${URLS_PAGE} to show it again.` },
   LIMIT_REACHED: { badge: "Visit limit reached", hint: `Raise the visit limit of ${ALIAS} on the ${URLS_PAGE} to show it again.` },
   BLOCKED: { badge: "Link blocked", hint: "Blocked links can't be shown. Remove this button." },
+  DOMAIN_OFF: { badge: "Domain turned off", hint: "Not shown on your page while its custom domain isn't active. Check it under Custom domains in Settings." },
 }
 
 export const AVATAR_EMOJI_REQUIRED = "Pick one emoji for the avatar."

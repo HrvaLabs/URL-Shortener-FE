@@ -877,7 +877,7 @@ export type BioIcon =
   | "WHATSAPP"
   | "TELEGRAM"
 
-export type BioLinkState = "LIVE" | "IN_REVIEW" | "DEACTIVATED" | "EXPIRED" | "LIMIT_REACHED" | "BLOCKED"
+export type BioLinkState = "LIVE" | "IN_REVIEW" | "DEACTIVATED" | "EXPIRED" | "LIMIT_REACHED" | "BLOCKED" | "DOMAIN_OFF"
 
 export type BioPageReviewAction = "OK" | "HIDE"
 

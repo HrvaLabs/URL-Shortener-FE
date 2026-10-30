@@ -13,6 +13,8 @@ import { isHostnameShaped } from "@/lib/domains"
 
 const missingMessage = "There's no hrva.cc link with this name."
 
+const missingOnHost = (host: string) => `There's no ${host} link with this name.`
+
 const reasonMessages = new Map([
   ["blocked", "hrva.cc disabled this link because it led to a site reported for phishing, malware or scams."],
   ["expired", "This link has expired."],
@@ -49,7 +51,8 @@ function UnavailableContent() {
   const searchParams = useSearchParams()
   const short = searchParams.get("s")?.trim() ?? ""
   const domain = searchParams.get("d")?.trim() || null
-  const message = reasonMessages.get(searchParams.get("reason") ?? "") ?? missingMessage
+  const reason = reasonMessages.get(searchParams.get("reason") ?? "") ?? missingMessage
+  const message = reason === missingMessage && domain && isHostnameShaped(domain) ? missingOnHost(domain) : reason
   return <UnavailableDetails short={short} domain={domain} message={message} />
 }
 

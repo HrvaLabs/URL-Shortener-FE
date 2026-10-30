@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState, type RefObject } from "react"
+import { useEffect, useId, useMemo, useRef, useState, type RefObject } from "react"
 import { toast } from "sonner"
 import { ReviewDomainDialog, type ReviewMode } from "@/components/admin/domains/review-domain-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -19,8 +19,6 @@ const PAGE_SIZE = 20
 export const applicationFilters = (page: number, size: number = PAGE_SIZE): AdminDomainFilters => ({ status: "PENDING_REVIEW", page, size })
 
 const rowButton = "h-8 px-2.5 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-
-export const domainRowSelector = (domainId: number) => `[data-domain-row="${domainId}"]`
 
 interface ReviewTarget {
   mode: ReviewMode
@@ -50,7 +48,11 @@ export function ApplicationsSection({ highlightId, fallbackFocusRef }: Applicati
   const scrolledTo = useRef<number | null>(null)
   const highlightedRef = useRef<HTMLLIElement>(null)
   const highlightShown = highlightId !== null && entries.some((entry) => entry.id === highlightId)
-  const retry = useFocusAfterRetry(headingRef, !!data && !error)
+  const retryFocusTarget = useMemo<RefObject<HTMLElement | null>>(
+    () => ({ get current() { return headingRef.current ?? fallbackFocusRef.current } }),
+    [fallbackFocusRef],
+  )
+  const retry = useFocusAfterRetry(retryFocusTarget, !!data && !error)
 
   useEffect(() => {
     if (!highlightShown || scrolledTo.current === highlightId) return

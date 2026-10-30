@@ -40,7 +40,7 @@ const STATUS_PARAM = "status"
 
 const SEARCH_DELAY_MS = 300
 
-const NOT_IN_LIST = "This domain isn't in the list."
+const NOT_ON_PAGE = "This domain isn't on this page. Search for its name to find it."
 
 const DASH = String.fromCodePoint(0x2014)
 
@@ -85,6 +85,8 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
     const value = searchParams.get(STATUS_PARAM)
     return isDomainStatus(value) ? value : ""
   })
+  const [linkedWithSearch] = useState(() => (searchParams.has(SEARCH_PARAM) ? highlightId : null))
+  const [lookedUpId, setLookedUpId] = useState<number | null>(null)
   const filters: AdminDomainFilters = { status: status || undefined, search: search || undefined, page, size }
   const { data, isLoading, error, refetch, isFetching } = useAdminDomains(filters)
   const applications = useAdminDomains(applicationFilters(0))
@@ -107,7 +109,22 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const retryLoad = useFocusAfterRetry(headingRef, !!data && !error)
   const inTable = highlightId !== null && domains.some((domain) => domain.id === highlightId)
   const inApplications = highlightId !== null && (applications.data?.content ?? []).some((domain) => domain.id === highlightId)
-  const notInList = highlightId !== null && !!data && !error && !!applications.data && !inTable && !inApplications
+  const lookupReady = highlightId !== null && !!data && !error && !isFetching && !applications.isPending
+  if (lookupReady && lookedUpId !== highlightId) {
+    setLookedUpId(highlightId)
+    if (!inTable && !inApplications && filtered && linkedWithSearch !== highlightId) {
+      setStatus("")
+      setSearch("")
+      setSearchInput("")
+      setPage(0)
+    }
+  }
+  const notOnPage = lookupReady && lookedUpId === highlightId && !inTable && !inApplications
+
+  useEffect(() => {
+    writeParam(STATUS_PARAM, status || null)
+    writeParam(SEARCH_PARAM, search || null)
+  }, [status, search])
 
   useEffect(() => {
     const next = searchInput.trim()
@@ -115,30 +132,27 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
     const timer = window.setTimeout(() => {
       setSearch(next)
       setPage(0)
-      writeParam(SEARCH_PARAM, next || null)
     }, SEARCH_DELAY_MS)
     return () => window.clearTimeout(timer)
   }, [searchInput, search, setPage])
 
   useEffect(() => {
-    if (!inTable || inApplications || !applications.data || scrolledTo.current === highlightId) return
+    if (!inTable || inApplications || applications.isPending || scrolledTo.current === highlightId) return
     scrolledTo.current = highlightId
     highlightedRef.current?.scrollIntoView({ block: "center" })
-  }, [inTable, inApplications, applications.data, highlightId])
+  }, [inTable, inApplications, applications.isPending, highlightId])
 
   const applySearch = (value: string) => {
     const next = value.trim()
     if (next === search) return
     setSearch(next)
     setPage(0)
-    writeParam(SEARCH_PARAM, next || null)
   }
 
   const changeStatus = (value: string) => {
     const next = isDomainStatus(value) ? value : ""
     setStatus(next)
     setPage(0)
-    writeParam(STATUS_PARAM, next || null)
   }
 
   const rowOf = (domainId: number) => tableRef.current?.querySelector<HTMLElement>(`[data-domain-row="${domainId}"]`) ?? null
@@ -254,9 +268,9 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
         </select>
       </div>
 
-      {notInList && (
+      {notOnPage && (
         <p role="status" className="text-sm text-muted-foreground">
-          {NOT_IN_LIST}
+          {NOT_ON_PAGE}
         </p>
       )}
 
@@ -410,10 +424,11 @@ function DomainNotes({ domain }: { domain: AdminDomain }) {
   const problemText = domain.problem ? domain.problemText : null
   const recheck = adminRecheckHint(domain)
   const disabledNote = domain.status === "DISABLED" ? domain.disabledNote : null
+  const notePrefix = domain.disabledReason === "ADMIN" ? "Turned off: " : ""
   if (!problemText && !domain.lastError && !recheck && !disabledNote) return null
   return (
     <div className="max-w-md space-y-0.5 text-xs">
-      {disabledNote && <p className="[overflow-wrap:anywhere]">Turned off: {disabledNote}</p>}
+      {disabledNote && <p className="[overflow-wrap:anywhere]">{notePrefix}{disabledNote}</p>}
       {problemText && <p className="text-destructive [overflow-wrap:anywhere]">{problemText}</p>}
       {domain.lastError && <p className="text-muted-foreground [overflow-wrap:anywhere]">Cloudflare said: {domain.lastError}</p>}
       {recheck && <p className="text-muted-foreground">{recheck}</p>}
@@ -483,7 +498,6 @@ function RowActions({ domain, busy, onDisable, onEnable, onRetry, onRemove }: Ro
           type="button"
           size="sm"
           variant="outline"
-          data-remove-row
           data-row-action="remove"
           aria-disabled={busy}
           onClick={(event) => { if (!busy) onRemove(event.currentTarget) }}

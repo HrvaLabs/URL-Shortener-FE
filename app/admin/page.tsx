@@ -61,6 +61,7 @@ export default function AdminUsersPage() {
   const deleteUser = useDeleteUser()
   const [editUser, setEditUser] = useState<User | null>(null)
   const [domainLimitUser, setDomainLimitUser] = useState<User | null>(null)
+  const domainLimitTrigger = useRef<HTMLElement | null>(null)
   const [editEmail, setEditEmail] = useState("")
   const [editSlots, setEditSlots] = useState("")
   const editId = useId()
@@ -186,7 +187,7 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      <DomainLimitDialog user={domainLimitUser} onOpenChange={(open) => { if (!open) setDomainLimitUser(null) }} />
+      <DomainLimitDialog user={domainLimitUser} returnFocusRef={domainLimitTrigger} onOpenChange={(open) => { if (!open) setDomainLimitUser(null) }} />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-xs flex-1">
@@ -290,7 +291,10 @@ export default function AdminUsersPage() {
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(user)} aria-label="Edit user" title="Edit user">
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDomainLimitUser(user)} aria-label="Domain limit" title="Domain limit">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(event) => {
+                          domainLimitTrigger.current = event.currentTarget
+                          setDomainLimitUser(user)
+                        }} aria-label="Domain limit" title="Domain limit">
                         <Globe className="h-4 w-4" />
                       </Button>
                       <Button

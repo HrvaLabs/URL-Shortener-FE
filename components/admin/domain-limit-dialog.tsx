@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from "react"
+import { useEffect, useId, useRef, useState, type FormEvent, type RefObject } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -9,11 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { parseServerDateTime } from "@/lib/analytics"
-import { ApiError, REQUEST_FAILED } from "@/lib/api-client"
+import { errorText } from "@/components/admin/domains/review-domain-dialog"
+import { ApiError } from "@/lib/api-client"
 import { DOMAIN_LIMIT_MAX, DOMAIN_LIMIT_MIN, REASON_MAX, REASON_REQUIRED, domainLimitError, domainLimitText } from "@/lib/domains"
 import { useDomainAllowance, useRemoveDomainAllowance, useSetDomainAllowance } from "@/lib/hooks/useDomains"
 import type { DomainAllowance } from "@/lib/types"
-import { cn, formatDate } from "@/lib/utils"
+import { cn, formatDate, plural } from "@/lib/utils"
 
 interface LimitUser {
   id: number
@@ -22,33 +23,24 @@ interface LimitUser {
 
 interface DomainLimitDialogProps {
   user: LimitUser | null
+  returnFocusRef: RefObject<HTMLElement | null>
   onOpenChange(open: boolean): void
 }
 
-const errorText = (error: unknown) => (error instanceof Error && error.message ? error.message : REQUEST_FAILED)
-
 const serverDate = (value: string) => formatDate(parseServerDateTime(value))
 
-export function DomainLimitDialog({ user, onOpenChange }: DomainLimitDialogProps) {
+export function DomainLimitDialog({ user, returnFocusRef, onOpenChange }: DomainLimitDialogProps) {
   const [shown, setShown] = useState<LimitUser | null>(user)
   const [busy, setBusy] = useState(false)
-  const returnTo = useRef<HTMLElement | null>(null)
   const open = user !== null
 
   if (user !== null && user.id !== shown?.id) setShown(user)
-
-  useLayoutEffect(() => {
-    if (!open) return
-    const active = document.activeElement
-    returnTo.current = active instanceof HTMLElement && active !== document.body ? active : null
-  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (next || !busy) onOpenChange(next) }}>
       <DialogContent
         onCloseAutoFocus={(event) => {
-          const target = returnTo.current
-          returnTo.current = null
+          const target = returnFocusRef.current
           if (!target?.isConnected) return
           event.preventDefault()
           target.focus()
@@ -172,7 +164,7 @@ function LimitForm({ user, allowance, busy, onBusyChange, onDone }: LimitFormPro
     void run("save", async () => {
       try {
         await setAllowance.mutateAsync({ userId: user.id, maxDomains: value, reason: reason.trim() })
-        toast.success(`${user.email} can now have ${value} custom domain${value === 1 ? "" : "s"}`)
+        toast.success(`${user.email} can now have ${plural(value, "custom domain")}`)
       } catch (saveError) {
         showError(saveError)
         throw saveError

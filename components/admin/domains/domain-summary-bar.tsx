@@ -2,6 +2,7 @@
 
 import type { ReactNode, RefObject } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { errorText } from "@/components/admin/domains/review-domain-dialog"
 import { Badge } from "@/components/ui/badge"
@@ -153,7 +154,14 @@ function TokenTile({ summary }: { summary: DomainSummary }) {
   )
 }
 
+const withDomainId = (domainId: number) => {
+  const params = new URLSearchParams(window.location.search)
+  params.set("id", String(domainId))
+  return `${window.location.pathname}?${params.toString()}`
+}
+
 function ReconcileTile({ reconcile }: { reconcile: DomainReconcile | null }) {
+  const router = useRouter()
   const run = useReconcileDomains()
   const busy = run.isPending
 
@@ -192,7 +200,15 @@ function ReconcileTile({ reconcile }: { reconcile: DomainReconcile | null }) {
             items={reconcile.missing.map((missing) => ({
               key: String(missing.id),
               content: (
-                <Link href={`/admin/domains?id=${missing.id}`} className="text-brand-link">
+                <Link
+                  href={`/admin/domains?id=${missing.id}`}
+                  onClick={(event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+                    event.preventDefault()
+                    router.push(withDomainId(missing.id), { scroll: false })
+                  }}
+                  className="text-brand-link"
+                >
                   {missing.hostname}
                 </Link>
               ),

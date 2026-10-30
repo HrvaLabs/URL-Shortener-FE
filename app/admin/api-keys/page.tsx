@@ -3,6 +3,7 @@
 import { useAllApiKeys, useRevokeApiKey, useActivateApiKey, useUpdateApiKey, useDeleteApiKey } from "@/lib/hooks/useApiKeys"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useListSearch } from "@/lib/hooks/useListSearch"
+import { useAddressParam } from "@/lib/hooks/useAddressParam"
 import { ApiError } from "@/lib/api-client"
 import { Pagination } from "@/components/ui/pagination"
 import type { ApiKeyFilters, ApiKeyResponse } from "@/lib/types"
@@ -22,7 +23,7 @@ import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
-import { useRef, useState, type FormEvent } from "react"
+import { Suspense, useRef, useState, type FormEvent } from "react"
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback)
 
@@ -39,13 +40,23 @@ const sortOptions: SortOption[] = [
 
 const statusFilters: Record<string, boolean | undefined> = { all: undefined, active: true, inactive: false }
 
+const addressStatus = (value: string | null) => (value === "active" || value === "inactive" ? value : "all")
+
 const rowAction = (row: Element | null | undefined) =>
   row?.querySelector<HTMLElement>("[data-remove-row]") ?? row?.querySelector<HTMLElement>("button") ?? null
 
 export default function AdminApiKeysPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminApiKeys />
+    </Suspense>
+  )
+}
+
+function AdminApiKeys() {
   const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createDate", "desc", sortFields)
   const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useAddressParam<string>("status", addressStatus)
   const filters: ApiKeyFilters = { search: search || undefined, active: statusFilters[statusFilter] }
   const filtered = !!search || statusFilter !== "all"
   const { data: apiKeys, isLoading, error, refetch } = useAllApiKeys(filters, page, size, sort, order)

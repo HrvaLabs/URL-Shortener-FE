@@ -1282,6 +1282,8 @@ export interface AdminDomainFilters {
   search?: string
   page: number
   size: number
+  sort?: string
+  order?: "asc" | "desc"
 }
 
 export interface Url {

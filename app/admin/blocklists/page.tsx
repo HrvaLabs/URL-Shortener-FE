@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { PageMeta } from "@/components/page-meta"
 import { DomainRulesSection } from "@/components/admin/blocklists/domain-rules-section"
 import { SourcesSection } from "@/components/admin/blocklists/sources-section"
@@ -14,7 +15,9 @@ export default function AdminBlocklistsPage() {
         <p className="mt-1 text-sm text-muted-foreground">The lists and domain rules every link is checked against</p>
       </div>
       <SourcesSection />
-      <DomainRulesSection />
+      <Suspense fallback={null}>
+        <DomainRulesSection />
+      </Suspense>
       <UrlTester />
     </div>
   )

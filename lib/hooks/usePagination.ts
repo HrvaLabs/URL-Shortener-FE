@@ -31,8 +31,13 @@ export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | 
     const params = new URLSearchParams(window.location.search)
     params.set("page", String(page))
     params.set("size", String(size))
-    params.set("sort", sort)
-    params.set("order", order)
+    if (sort) {
+      params.set("sort", sort)
+      params.set("order", order)
+    } else {
+      params.delete("sort")
+      params.delete("order")
+    }
     window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}${window.location.hash}`)
   }, [page, size, sort, order])
 

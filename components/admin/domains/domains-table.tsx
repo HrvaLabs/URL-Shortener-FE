@@ -9,7 +9,7 @@ import { DisableDomainDialog } from "@/components/admin/domains/disable-domain-d
 import { AdminRemoveDomainDialog } from "@/components/admin/domains/remove-domain-dialog"
 import { errorText } from "@/components/admin/domains/review-domain-dialog"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
-import { adminSelectClass } from "@/components/admin/sort-controls"
+import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { DomainStatusBadge } from "@/components/domains/domain-status"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,6 +39,16 @@ const SEARCH_PARAM = "search"
 const STATUS_PARAM = "status"
 
 const SEARCH_DELAY_MS = 300
+
+const sortFields = ["createdAt", "hostname", "status"]
+
+const sortOptions: SortOption[] = [
+  { field: "createdAt", direction: "desc", label: "Newest first" },
+  { field: "createdAt", direction: "asc", label: "Oldest first" },
+  { field: "hostname", direction: "asc", label: "Domain, A to Z" },
+  { field: "hostname", direction: "desc", label: "Domain, Z to A" },
+  { field: "status", direction: "asc", label: "Grouped by status" },
+]
 
 const NOT_ON_PAGE = "This domain isn't on this page. Search for its name to find it."
 
@@ -78,7 +88,7 @@ interface DomainsTableProps {
 
 export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const searchParams = useSearchParams()
-  const { page, size, setPage, setSize } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createdAt", "desc", sortFields)
   const [searchInput, setSearchInput] = useState(() => searchParams.get(SEARCH_PARAM) ?? "")
   const [search, setSearch] = useState(() => (searchParams.get(SEARCH_PARAM) ?? "").trim())
   const [status, setStatus] = useState<CustomDomainStatus | "">(() => {
@@ -87,7 +97,7 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   })
   const [linkedWithSearch] = useState(() => (searchParams.has(SEARCH_PARAM) ? highlightId : null))
   const [lookedUpId, setLookedUpId] = useState<number | null>(null)
-  const filters: AdminDomainFilters = { status: status || undefined, search: search || undefined, page, size }
+  const filters: AdminDomainFilters = { status: status || undefined, search: search || undefined, page, size, sort, order }
   const { data, isLoading, error, refetch, isFetching, isPlaceholderData } = useAdminDomains(filters)
   const applications = useAdminDomains(applicationFilters(0))
   useClampedPage(page, data?.totalPages, setPage)
@@ -269,6 +279,7 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
             </option>
           ))}
         </select>
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} />
       </div>
 
       {notOnPage && (
@@ -302,9 +313,9 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
           <Table ref={tableRef}>
             <TableHeader>
               <TableRow>
-                <TableHead>Domain</TableHead>
+                <SortHead field="hostname" label="Domain" sortDir={sortDir} toggleSort={toggleSort} />
                 <TableHead className="hidden @min-[50rem]:table-cell">Owner</TableHead>
-                <TableHead className="hidden @min-[60rem]:table-cell">Created</TableHead>
+                <SortHead field="createdAt" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[60rem]:table-cell" />
                 <TableHead className="hidden @min-[60rem]:table-cell">Approved</TableHead>
                 <TableHead className="hidden text-right @min-[40rem]:table-cell">Links</TableHead>
                 <TableHead className="hidden text-right @min-[40rem]:table-cell">Clicks</TableHead>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { Suspense, useEffect, useId, useRef, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -27,6 +27,8 @@ import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { DomainLimitDialog } from "@/components/admin/domain-limit-dialog"
 
+const sortFields = ["createDate", "email", "lastLogin", "active"]
+
 const sortOptions: SortOption[] = [
   { field: "createDate", direction: "desc", label: "Newest first" },
   { field: "createDate", direction: "asc", label: "Oldest first" },
@@ -43,7 +45,15 @@ const providerLabel = (provider: string | undefined) => providerLabels[(provider
 const lastLoginText = (lastLogin: string | null | undefined) => (lastLogin ? formatDateTime(parseServerDateTime(lastLogin)) : "Never")
 
 export default function AdminUsersPage() {
-  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
+  return (
+    <Suspense fallback={null}>
+      <AdminUsers />
+    </Suspense>
+  )
+}
+
+function AdminUsers() {
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createDate", "desc", sortFields)
   const { search, searchInput, setSearchInput } = useListSearch()
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [scammersOnly, setScammersOnly] = useState(false)

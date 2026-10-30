@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { Suspense, useState, type FormEvent } from "react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { Search } from "lucide-react"
 import { usePagination } from "@/lib/hooks/usePagination"
 import { useListSearch } from "@/lib/hooks/useListSearch"
+import { useAddressParam } from "@/lib/hooks/useAddressParam"
 import { Pagination } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -126,17 +127,27 @@ const actionLabel = ({ action, failed }: AuditLog): string => {
 
 const sortFields = ["performedAt"]
 
+const addressDate = (value: string | null) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? value : "")
+
 const dateInputClass = `${adminSelectClass} tabular-nums`
 
 const detailsText = ({ action, details }: AuditLog): string | null =>
   action === "REVOKE_BIO_HANDLE" && details ? details.replace(/(^|, )expectedHandle: /, "$1Handle: ") : details
 
 export default function AdminAuditLogPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminAuditLog />
+    </Suspense>
+  )
+}
+
+function AdminAuditLog() {
   const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination("performedAt", "desc", sortFields)
   const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
   const [action, setAction] = useState<AuditAction | "">("")
-  const [from, setFrom] = useState("")
-  const [to, setTo] = useState("")
+  const [from, setFrom] = useAddressParam("from", addressDate)
+  const [to, setTo] = useAddressParam("to", addressDate)
   const filters: AuditLogFilters = { action: action || undefined, search: search || undefined, from: from || undefined, to: to || undefined }
   const filtered = !!action || !!search || !!from || !!to
   const { data, isLoading, error, refetch, isFetching } = useQuery<Page<AuditLog>>({

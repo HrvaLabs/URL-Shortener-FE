@@ -42,6 +42,8 @@ const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(primary
 
 const searchTerm = (input: string) => input.trim().replace(shortLinkPrefix, "")
 
+const sortFields = ["createDate", "visits", "owner.email"]
+
 const sortOptions: SortOption[] = [
   { field: "createDate", direction: "desc", label: "Newest first" },
   { field: "createDate", direction: "asc", label: "Oldest first" },
@@ -130,7 +132,7 @@ export default function AdminUrlsPage() {
 }
 
 function AdminUrls() {
-  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination()
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createDate", "desc", sortFields)
   const [searchInput, setSearch] = useAddressSearch()
   const search = useDebouncedValue(searchInput, SEARCH_DELAY_MS)
   const [activeFilter, setActiveFilter] = useState<string>("all")

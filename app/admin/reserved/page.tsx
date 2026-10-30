@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { PageMeta } from "@/components/page-meta"
 import { ReservedAliasForm } from "@/components/admin/reserved/reserved-alias-form"
 import { ReservedAliasTable } from "@/components/admin/reserved/reserved-alias-table"
@@ -15,7 +16,9 @@ export default function AdminReservedAliasesPage() {
         <p className="mt-1 text-sm text-muted-foreground">{subline}</p>
       </div>
       <ReservedAliasForm />
-      <ReservedAliasTable />
+      <Suspense fallback={null}>
+        <ReservedAliasTable />
+      </Suspense>
     </div>
   )
 }

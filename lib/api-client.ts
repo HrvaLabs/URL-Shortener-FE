@@ -512,14 +512,8 @@ export const domainApi = {
 }
 
 export const adminDomainApi = {
-  list: ({ status, search, page, size }: AdminDomainFilters) => {
-    const params = new URLSearchParams()
-    params.set("page", String(page))
-    params.set("size", String(size))
-    if (status) params.set("status", status)
-    if (search) params.set("search", search)
-    return request<Page<AdminDomain>>("GET", `/admin/domains?${params}`)
-  },
+  list: ({ status, search, page, size, sort, order }: AdminDomainFilters) =>
+    request<Page<AdminDomain>>("GET", `/admin/domains?${listParams(page, size, sort, order, { status, search })}`),
   summary: () =>
     request<DomainSummary>("GET", "/admin/domains/summary"),
   approve: (id: number, note?: string | null) =>

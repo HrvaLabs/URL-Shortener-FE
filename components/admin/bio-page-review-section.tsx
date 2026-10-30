@@ -15,6 +15,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
 import { useListSearch } from "@/lib/hooks/useListSearch"
+import { useAddressParam } from "@/lib/hooks/useAddressParam"
 import { useBioPageReviews, useResolveBioPageReview } from "@/lib/hooks/useAdminBioPages"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useClampedPage } from "@/lib/hooks/usePagination"
@@ -31,6 +32,10 @@ const NOT_IN_QUEUE = "This bio page is no longer in the review queue."
 const NOTHING_WAITING = "No bio pages are waiting."
 
 const SEARCH_PARAM = "bioSearch"
+
+const ORDER_PARAM = "bioOrder"
+
+const addressOrder = (value: string | null): "asc" | "desc" => (value === "asc" ? "asc" : "desc")
 
 const sortOptions: SortOption[] = [
   { field: "flaggedAt", direction: "desc", label: "Newest flagged first" },
@@ -56,7 +61,7 @@ export function BioPageReviewSection({ fallbackFocusRef }: { fallbackFocusRef: R
   const bioId = bioParam && /^\d+$/.test(bioParam) ? Number(bioParam) : null
   const [page, setPage] = useState(0)
   const [size, setSize] = useState(DEFAULT_SIZE)
-  const [order, setOrder] = useState<"asc" | "desc">("desc")
+  const [order, setOrder] = useAddressParam(ORDER_PARAM, addressOrder)
   const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0), SEARCH_PARAM)
   const { data, error, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useBioPageReviews(search, page, size, order)
   useClampedPage(page, data?.totalPages, setPage)

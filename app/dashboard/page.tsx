@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { Suspense, useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { useMyUrls, useActivateUrl, useDeactivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
@@ -36,6 +36,8 @@ const selectClass =
 const rowActionClass = "h-8 w-8 text-muted-foreground hover:text-foreground"
 const primaryHost = shortHostOf()
 
+const sortFields = ["createDate", "visits", "expirationDate"]
+
 function SortIcon({ dir }: { dir: string | null }) {
   if (dir === "asc") return <ArrowUp className="h-3 w-3 text-foreground" />
   if (dir === "desc") return <ArrowDown className="h-3 w-3 text-foreground" />
@@ -43,7 +45,15 @@ function SortIcon({ dir }: { dir: string | null }) {
 }
 
 export default function DashboardPage() {
-  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination()
+  return (
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  )
+}
+
+function Dashboard() {
+  const { page, size, sort, order, setPage, setSize, toggleSort, sortDir } = usePagination("createDate", "desc", sortFields)
   const { search, searchInput, setSearchInput } = useListSearch()
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [expiredFilter, setExpiredFilter] = useState(false)

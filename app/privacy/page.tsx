@@ -173,7 +173,7 @@ export default function PrivacyPage() {
                 <li>
                   <em>cf.turnstile.u</em>, in <em>localStorage</em>, set by Cloudflare&apos;s check frame
                   (challenges.cloudflare.com), not by hrva.cc, when you start making a link without an account
-                  while the human check is on; Cloudflare uses it for that check, and hrva.cc never reads it
+                  while the human check is on; see Cloudflare&apos;s <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">Turnstile Privacy Addendum</a>. hrva.cc never reads it
                 </li>
               </ul>
               <p>
@@ -210,7 +210,8 @@ export default function PrivacyPage() {
                 with the channel&apos;s type and name, also after you delete the channel. We send it only
                 what you picked: counts of clicks, your short links, their destination hosts and dates. We
                 never send visitors&apos; IP addresses, browsers or referrers, or your email address. Each
-                channel&apos;s provider receives what we send under its own privacy terms; you choose them,
+                channel&apos;s provider receives what we send; its privacy policy is linked under{" "}
+                <em>Who else receives data</em>. You choose them,
                 and you can delete a channel at any time. We keep a record of each delivery for 30 days to
                 retry failures and show you the last result.
               </p>
@@ -228,7 +229,7 @@ export default function PrivacyPage() {
                 applied, and when it was reviewed, became active, was turned off or was removed. When you apply,
                 and every night while it&apos;s active, the domain goes through the same checks as a link&apos;s
                 destination, as described under <em>Keeping links safe</em>. Once it&apos;s approved, we send the
-                domain&apos;s name to Cloudflare, which issues and renews its certificate. Certificates are
+                domain&apos;s name to Cloudflare, to get its certificate issued and renewed. Certificates are
                 published in public Certificate Transparency logs, so the name of your domain becomes public once
                 it&apos;s set up. We keep this while the domain exists. When you remove it, or it isn&apos;t approved,
                 its record stays, marked removed or not approved, until you delete your account. Visitors who open links
@@ -347,24 +348,25 @@ export default function PrivacyPage() {
               <h2>Who else receives data</h2>
               <ul>
                 <li>
-                  <strong>Google Sign-In</strong> — only if you choose to log in with Google; Google
-                  acts as your identity provider under its own privacy policy.
+                  <strong>Google Sign-In</strong> — only if you choose to log in with Google. See
+                  Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
                 <li>
-                  <strong>GitHub</strong> — only if you choose to log in with GitHub; GitHub acts as
-                  your identity provider under its own privacy policy.
+                  <strong>GitHub</strong> — only if you choose to log in with GitHub. See
+                  GitHub&apos;s <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener noreferrer">General Privacy Statement</a>.
                 </li>
                 <li>
                   <strong>Google Safe Browsing</strong> — destination URLs you shorten, and the
                   addresses they redirect to, are checked against Google&apos;s threat database to
                   protect visitors from malicious sites, and so is the address of a custom domain you apply
                   for. Only the URL is sent, never information
-                  about you or your visitors.
+                  about you or your visitors. See Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
                 <li>
                   <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a
                   destination, or of a custom domain you apply for, as described under{" "}
-                  <em>Keeping links safe</em>.
+                  <em>Keeping links safe</em>. For
+                  Spamhaus, see its <a href="https://www.spamhaus.org/privacy-notice/" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
                   When the admin reports domains used for abuse to their registrar, he sends the email from
                   his own mail app. It contains the domains, up to 3 destination addresses and the total
                   clicks and top countries of those links, never anything about a visitor.
@@ -374,7 +376,8 @@ export default function PrivacyPage() {
                   (hosting/CDN). Your IP address reaches Cloudflare as part of normal traffic
                   delivery, and Cloudflare tells us which country it belongs to, which we keep only
                   as a daily count. Cloudflare also receives the names of custom domains, to issue their
-                  certificates. Making a link without an account runs a Cloudflare Turnstile check; how
+                  certificates. For hosting and certificates, see Cloudflare&apos;s <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                  Making a link without an account runs a Cloudflare Turnstile check; how
                   Cloudflare handles that data is in its <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">Turnstile Privacy Addendum</a>. hrva.cc stores nothing from it.
                 </li>
                 <li>
@@ -412,26 +415,25 @@ export default function PrivacyPage() {
                   left out (&ldquo;and N more&rdquo;). When someone applies for a custom domain, the alert names
                   the domain, the account number and what the automatic checks found; when a custom domain is
                   turned off, needs the admin&apos;s attention or is missing from Cloudflare, it names the domain
-                  and the reason. Discord Inc., based in the United States,
-                  processes these messages under its own terms, and they stay in the channel until
-                  the admin deletes them.
+                  and the reason. Discord Inc. is based in the United States; see its <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+                  The messages stay in the channel until the admin deletes them.
                 </li>
                 <li>
                   <strong>The notification channels you add</strong> &mdash; only if you add one: Discord,
                   Slack, Telegram, ntfy, or the address of your own webhook. hrva.cc sends each one the
                   notifications you picked for it: counts of clicks, your short links, their destination
-                  hosts and dates. You choose these recipients; they aren&apos;t our processors and handle what
-                  they receive under their own terms. You can delete a channel at any time.
+                  hosts and dates. You choose these recipients; they aren&apos;t our processors. See the privacy policies of{" "}
+                  <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">Discord</a>, <a href="https://slack.com/trust/privacy/privacy-policy" target="_blank" rel="noopener noreferrer">Slack</a>,
+                  <a href="https://telegram.org/privacy" target="_blank" rel="noopener noreferrer">Telegram</a> and <a href="https://docs.ntfy.sh/privacy/" target="_blank" rel="noopener noreferrer">ntfy</a>. You can delete a channel at any time.
                 </li>
                 <li>
                   <strong>SendPulse</strong> — the email delivery service we use to send
                   transactional emails (verification, password reset, notifications and security
-                  notices). It receives your email address and the content of those emails, and
-                  handles them under its data processing terms.
+                  notices). It receives your email address and the content of those emails; see its <a href="https://sendpulse.com/legal/pp" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
                 <li>
                   <strong>Oracle Cloud Infrastructure</strong> — hosts the API, its database and its
-                  cache in Frankfurt, Germany (EU). Traffic to them goes through Cloudflare.
+                  cache in Frankfurt, Germany (EU). Traffic to them goes through Cloudflare. See Oracle&apos;s <a href="https://www.oracle.com/legal/privacy/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
               </ul>
               <p>

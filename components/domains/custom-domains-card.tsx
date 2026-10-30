@@ -80,7 +80,7 @@ export function CustomDomainsCard() {
     pendingFocus.current = domain.id
     window.requestAnimationFrame(() => {
       focusNewRow(false)
-      window.requestAnimationFrame(() => focusNewRow(true))
+      window.setTimeout(() => focusNewRow(true), 1000)
     })
   }
 
@@ -200,24 +200,36 @@ function DomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowProps)
   const detail = useDomain(listed.id, { poll: true, enabled: live })
   const retry = useRetryMyDomain()
   const [manualCheck, setManualCheck] = useState(false)
+  const userChecked = useRef(false)
   const liveStatus = live ? detail.data?.status : undefined
 
   useEffect(() => {
     if (liveStatus && liveStatus !== listed.status) onStatusChange()
   }, [liveStatus, listed.status, onStatusChange])
 
+  const takeUserCheck = useCallback(() => {
+    const checked = userChecked.current
+    userChecked.current = false
+    return checked
+  }, [])
+
   const check = () => {
+    userChecked.current = true
     setManualCheck(true)
     detail
       .refetch()
-      .then((result) => { if (result.isError) toast.error(errorText(result.error)) })
+      .then((result) => {
+        if (result.isError || !result.data || isWaitingForSetup(result.data.status)) userChecked.current = false
+        if (result.isError) toast.error(errorText(result.error))
+      })
       .finally(() => setManualCheck(false))
   }
 
   return (
     <DomainRowBody
-      domain={live && detail.data ? detail.data : listed}
+      domain={live && detail.data && !detail.isError ? detail.data : listed}
       checking={manualCheck}
+      takeUserCheck={takeUserCheck}
       retrying={retry.isPending}
       onCheck={check}
       onRetry={() => retry.mutate(listed.id, { onError: (err) => { toast.error(errorText(err)) } })}
@@ -229,13 +241,14 @@ function DomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowProps)
 interface DomainRowBodyProps {
   domain: CustomDomain
   checking: boolean
+  takeUserCheck: () => boolean
   retrying: boolean
   onCheck: () => void
   onRetry: () => void
   onRemove: (trigger: HTMLElement) => void
 }
 
-function DomainRowBody({ domain, checking, retrying, onCheck, onRetry, onRemove }: DomainRowBodyProps) {
+function DomainRowBody({ domain, checking, takeUserCheck, retrying, onCheck, onRetry, onRemove }: DomainRowBodyProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const waiting = isWaitingForSetup(domain.status)
   const wasWaiting = useRef(waiting)
@@ -246,8 +259,9 @@ function DomainRowBody({ domain, checking, retrying, onCheck, onRetry, onRemove 
   useLayoutEffect(() => {
     const was = wasWaiting.current
     wasWaiting.current = waiting
-    if (!waiting && was && focusIsLost()) headingRef.current?.focus({ preventScroll: true })
-  }, [waiting])
+    if (waiting || !was) return
+    if (takeUserCheck() && focusIsLost()) headingRef.current?.focus({ preventScroll: true })
+  }, [waiting, takeUserCheck])
 
   return (
     <li className="space-y-3 px-4 py-4">

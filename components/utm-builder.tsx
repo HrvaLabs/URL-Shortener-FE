@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
+import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
+import { signupsPaused } from "@/lib/moderation"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
 import { destinationToSend, hasUtmValues, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
@@ -47,6 +48,8 @@ export function UtmBuilder() {
   const { user } = useAuth()
   const createUrl = useCreateUrl()
   const paused = useAnonymousLinksPaused()
+  const { data: publicSettings } = usePublicSettings()
+  const signupsClosed = signupsPaused(publicSettings)
   const [typed, setTyped] = useState("")
   const [utm, setUtm] = useState<UtmValues>({})
   const [open, setOpen] = useState(true)
@@ -113,15 +116,15 @@ export function UtmBuilder() {
                   {user ? (
                     <>It&apos;s in your <Link href="/dashboard" className="text-brand-link">dashboard</Link>, with the tags shown on its analytics page.</>
                   ) : (
-                    <>Links made without an account have no stats page. <Link href="/register" className="text-brand-link">Sign up free</Link> to see clicks, referrers and the campaign tags.</>
+                    <>Links made without an account have no stats page.{!signupsClosed && <> <Link href="/register" className="text-brand-link">Sign up free</Link> to see clicks, referrers and the campaign tags.</>}</>
                   )}
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
+                {!paused && <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>}
                 {paused ? (
-                  <AnonymousNotice className="sm:max-w-sm" />
+                  <AnonymousNotice className="w-full" />
                 ) : refusal ? (
                   <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
                 ) : (

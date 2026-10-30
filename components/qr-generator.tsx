@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
+import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
+import { signupsPaused } from "@/lib/moderation"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
 import { withScheme } from "@/lib/utm"
@@ -30,6 +31,8 @@ export function QrGenerator() {
   const { user } = useAuth()
   const createUrl = useCreateUrl()
   const paused = useAnonymousLinksPaused()
+  const { data: publicSettings } = usePublicSettings()
+  const signupsClosed = signupsPaused(publicSettings)
   const [typed, setTyped] = useState("")
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -114,17 +117,19 @@ export function QrGenerator() {
                 {user ? (
                   <>Its scans show as QR scans in the link&apos;s stats on your <Link href="/dashboard" className="text-brand-link">dashboard</Link>.</>
                 ) : (
-                  <>Links made without an account have no stats page. <Link href="/register" className="text-brand-link">Sign up free</Link> first to see scans counted.</>
+                  <>Links made without an account have no stats page.{!signupsClosed && <> <Link href="/register" className="text-brand-link">Sign up free</Link> first to see scans counted.</>}</>
                 )}
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-muted-foreground">
-                A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
-              </p>
+              {!paused && (
+                <p className="text-muted-foreground">
+                  A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
+                </p>
+              )}
               {paused ? (
-                <AnonymousNotice className="sm:max-w-sm" />
+                <AnonymousNotice className="w-full" />
               ) : refusal ? (
                 <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
               ) : (

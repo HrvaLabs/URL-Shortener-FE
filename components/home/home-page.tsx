@@ -12,7 +12,8 @@ import { SiteFooter } from "@/components/site-footer"
 import { ShortenForm } from "@/components/shorten-form"
 import { EasterEggKonami } from "@/components/easter-egg-konami"
 import { useAuth } from "@/lib/auth-context"
-import { useAnonymousLinksPaused } from "@/lib/hooks/useSettings"
+import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
+import { signupsPaused } from "@/lib/moderation"
 import { useMyUrls } from "@/lib/hooks/useUrls"
 import { cn, formatShortUrl, shortHostOf } from "@/lib/utils"
 import { HOME_FAQS } from "@/lib/home-faq"
@@ -36,6 +37,7 @@ export function HomePage() {
 
 function PublicHome() {
   const paused = useAnonymousLinksPaused()
+  const { data: publicSettings } = usePublicSettings()
 
   return (
     <>
@@ -50,7 +52,7 @@ function PublicHome() {
 
           <div id="shorten" className="mx-auto mt-10 max-w-2xl scroll-mt-24">
             <ShortenForm size="lg" />
-            {!paused && (
+            {!paused && !signupsPaused(publicSettings) && (
               <p className="mt-4 text-center text-sm text-muted-foreground">
                 No account needed.{" "}
                 <Link href="/register" className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">

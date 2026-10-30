@@ -11,11 +11,11 @@ const linkClass = "font-medium text-foreground underline decoration-border under
 
 export function AnonymousNotice({ id, className }: AnonymousNoticeProps) {
   return (
-    <div id={id} className={cn("rounded-xl border bg-muted/40 p-4 text-left text-sm leading-relaxed [overflow-wrap:anywhere]", className)}>
+    <div id={id} role="status" className={cn("rounded-xl border bg-muted/40 p-4 text-left text-sm leading-relaxed [overflow-wrap:anywhere]", className)}>
       <p className="font-medium text-foreground">{ANONYMOUS_PAUSED}</p>
       <p className="mt-1 text-muted-foreground">
         <Link href="/login" className={linkClass}>Sign in</Link> to make a link.{" "}
-        <Link href="/help/links-without-an-account" className={linkClass}>About links without an account</Link>.
+        <Link href="/help/links-without-an-account#paused" className={linkClass}>About links without an account</Link>.
       </p>
     </div>
   )

@@ -369,7 +369,8 @@ export default function PrivacyPage() {
                   (hosting/CDN). Your IP address reaches Cloudflare as part of normal traffic
                   delivery, and Cloudflare tells us which country it belongs to, which we keep only
                   as a daily count. Cloudflare also receives the names of custom domains, to issue their
-                  certificates.
+                  certificates. Making a link without an account runs a Cloudflare Turnstile check, which
+                  processes browser and network signals for that purpose only. hrva.cc stores nothing from it.
                 </li>
                 <li>
                   <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc

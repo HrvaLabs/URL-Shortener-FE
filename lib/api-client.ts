@@ -182,9 +182,12 @@ export const twoStepApi = {
 
 // URL
 export const urlApi = {
-  create: (data: CreateUrlDto, apiKey?: string) => {
-    const headers = apiKey ? { "X-Api-Key": apiKey } : undefined
-    return request<UrlResponse>("POST", "/urls", data, headers)
+  create: (data: CreateUrlDto, apiKey?: string, humanCheckToken?: string) => {
+    const headers = {
+      ...(apiKey ? { "X-Api-Key": apiKey } : {}),
+      ...(humanCheckToken ? { "X-Turnstile-Token": humanCheckToken } : {}),
+    }
+    return request<UrlResponse>("POST", "/urls", data, Object.keys(headers).length > 0 ? headers : undefined)
   },
   bulkCreate: (data: CreateUrlDto[]) =>
     request<UrlResponse[]>("POST", "/urls/bulk", data),

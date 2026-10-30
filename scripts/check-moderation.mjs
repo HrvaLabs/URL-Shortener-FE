@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -60,9 +60,48 @@ check("refusal texts and the switch each one points at", () => {
   assert.equal(ANONYMOUS_REFUSED, "Sign in to create short URLs")
   assert.equal(refusedSwitch("Sign in to create short URLs"), "anonymousLinks")
   assert.equal(refusedSwitch("Custom aliases are turned off right now."), "customAliases")
+  assert.equal(HUMAN_CHECK_REQUIRED, "Complete the check and try again.")
+  assert.equal(refusedSwitch("Complete the check and try again."), "humanCheck")
+  assert.equal(refusedSwitch("We couldn't run the check. Try again in a minute."), null)
   assert.equal(refusedSwitch("Sign in to create short URLs."), null)
   assert.equal(refusedSwitch("Could not shorten that URL."), null)
   assert.equal(refusedSwitch(undefined), null)
+})
+
+check("humanCheckEnabled: signed-out visitors, links on, check on with a site key", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true, humanCheck: true, turnstileSiteKey: "1x00000000000000000000AA" }
+  assert.equal(humanCheckEnabled(base, false, false), true)
+  assert.equal(humanCheckEnabled(base, true, false), false)
+  assert.equal(humanCheckEnabled(base, false, true), false)
+  assert.equal(humanCheckEnabled(undefined, false, false), false)
+  assert.equal(humanCheckEnabled({ ...base, anonymousLinks: false }, false, false), false)
+  assert.equal(humanCheckEnabled({ ...base, humanCheck: false }, false, false), false)
+  assert.equal(humanCheckEnabled({ ...base, turnstileSiteKey: null }, false, false), false)
+  assert.equal(humanCheckEnabled({ ...base, turnstileSiteKey: "  " }, false, false), false)
+  assert.equal(humanCheckEnabled({ anonymousLinks: true, newSignups: true, customAliases: true }, false, false), false)
+})
+
+check("the Turnstile script is Cloudflare's explicit-render URL and a pending check waits 5 s", () => {
+  assert.equal(TURNSTILE_SCRIPT_URL, "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit")
+  assert.equal(HUMAN_CHECK_WAIT_MS, 5000)
+})
+
+check("nextTurnstileState: a token arrives, expires or fails", () => {
+  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null })
+  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc" })
+  assert.deepEqual(ready, { token: "abc" })
+  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def" }), { token: "def" })
+  assert.deepEqual(nextTurnstileState(ready, { type: "expired" }), { token: null })
+  assert.deepEqual(nextTurnstileState(ready, { type: "error" }), { token: null })
+  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), { token: null })
+})
+
+check("turnstileResetsAfterEveryAttempt", () => {
+  const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc" })
+  assert.deepEqual(nextTurnstileState(ready, { type: "submitted" }), { token: null })
+  assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "submitted" }), { token: null })
+  const again = nextTurnstileState(nextTurnstileState(ready, { type: "submitted" }), { type: "token", token: "fresh" })
+  assert.deepEqual(again, { token: "fresh" })
 })
 
 check("noEffectText", () => {

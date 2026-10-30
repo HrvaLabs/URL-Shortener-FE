@@ -19,10 +19,12 @@ export function useAllUrls(filters: UrlFilters = {}, page = 0, size = 20, sort =
   })
 }
 
+export type CreateUrlVariables = CreateUrlDto & { humanCheckToken?: string | null }
+
 export function useCreateUrl(apiKey?: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateUrlDto) => urlApi.create(data, apiKey),
+    mutationFn: ({ humanCheckToken, ...data }: CreateUrlVariables) => urlApi.create(data, apiKey, humanCheckToken ?? undefined),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["urls"] })
     },

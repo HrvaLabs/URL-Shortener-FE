@@ -56,6 +56,14 @@ export default function LinksWithoutAnAccountHelpPage() {
                 change these in the forms. With an account you choose your own.
               </p>
 
+              <h2 id="human-check">The human check</h2>
+              <p>
+                Before a link is made without an account, a Cloudflare Turnstile check makes sure a person is using the
+                page. Usually you see nothing; sometimes you&apos;re asked to tick a box. It processes browser and network
+                signals for this check only, and hrva.cc stores nothing from it. Signed-in users, API keys and the MCP
+                connector are never checked.
+              </p>
+
               <h2 id="checks">Safety checks</h2>
               <p>
                 Links made without an account are checked too, and only the admin sees the result. The{" "}

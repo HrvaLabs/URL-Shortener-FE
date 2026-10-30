@@ -7,6 +7,7 @@ import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
+import { CHECKING_LABEL, TurnstileCheck } from "@/components/turnstile-check"
 import { UtmFields } from "@/components/utm-fields"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,7 +15,8 @@ import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
-import { signupsPaused } from "@/lib/moderation"
+import { HUMAN_CHECK_REQUIRED, humanCheckEnabled, signupsPaused } from "@/lib/moderation"
+import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
 import { destinationToSend, hasUtmValues, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
@@ -46,16 +48,19 @@ function CopyLine({ text, label }: { text: string; label: string }) {
 
 export function UtmBuilder() {
   const id = useId()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const createUrl = useCreateUrl()
   const paused = useAnonymousLinksPaused()
   const { data: publicSettings } = usePublicSettings()
+  const humanCheck = useTurnstile({ enabled: humanCheckEnabled(publicSettings, Boolean(user), authLoading) })
   const signupsClosed = signupsPaused(publicSettings)
   const [typed, setTyped] = useState("")
   const [utm, setUtm] = useState<UtmValues>({})
   const [open, setOpen] = useState(true)
   const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [checkMissing, setCheckMissing] = useState(false)
   const resultRef = useRef<HTMLParagraphElement>(null)
   const refusalRef = useRef<HTMLParagraphElement>(null)
   const lengthError = destinationLengthError(typed)
@@ -66,9 +71,21 @@ export function UtmBuilder() {
   const shortFor = ready && shortLink?.destination === tagged ? shortLink.url : null
 
   const shorten = async () => {
-    if (!ready || !tagged || createUrl.isPending || refusal) return
+    humanCheck.start()
+    if (!ready || !tagged || createUrl.isPending || checking || refusal) return
+    setCheckMissing(false)
+    let humanCheckToken: string | null = null
+    if (humanCheck.active) {
+      setChecking(true)
+      humanCheckToken = await humanCheck.waitForToken()
+      setChecking(false)
+      if (!humanCheckToken) {
+        setCheckMissing(true)
+        return
+      }
+    }
     try {
-      const created = await createUrl.mutateAsync({ longUrl: tagged })
+      const created = await createUrl.mutateAsync({ longUrl: tagged, humanCheckToken })
       flushSync(() => setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl) }))
       resultRef.current?.focus()
     } catch (err) {
@@ -77,7 +94,13 @@ export function UtmBuilder() {
         refusalRef.current?.focus()
         return
       }
+      if (err instanceof ApiError && err.message === HUMAN_CHECK_REQUIRED) {
+        setCheckMissing(true)
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
+    } finally {
+      if (humanCheckToken) humanCheck.reset()
     }
   }
 
@@ -122,30 +145,34 @@ export function UtmBuilder() {
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                {!paused && (
-                  <div className="space-y-1.5">
-                    <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
-                    <AnonymousLimitLine />
-                  </div>
-                )}
-                {paused ? (
-                  <AnonymousNotice className="w-full" />
-                ) : refusal ? (
-                  <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={shorten}
-                    aria-disabled={createUrl.isPending}
-                    aria-busy={createUrl.isPending}
-                    className="shrink-0"
-                  >
-                    {createUrl.isPending ? "Shortening..." : "Shorten it"}
-                  </Button>
-                )}
-              </div>
+              <>
+                <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  {!paused && (
+                    <div className="space-y-1.5">
+                      <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
+                      <AnonymousLimitLine />
+                    </div>
+                  )}
+                  {paused ? (
+                    <AnonymousNotice className="w-full" />
+                  ) : refusal ? (
+                    <p ref={refusalRef} tabIndex={-1} role="alert" className="text-foreground outline-hidden">{refusal}</p>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={shorten}
+                      onFocus={humanCheck.start}
+                      aria-disabled={createUrl.isPending || checking}
+                      aria-busy={createUrl.isPending || checking}
+                      className="shrink-0"
+                    >
+                      {checking ? CHECKING_LABEL : createUrl.isPending ? "Shortening..." : "Shorten it"}
+                    </Button>
+                  )}
+                </div>
+                <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} className="mt-3" />
+              </>
             )}
           </div>
         ) : (

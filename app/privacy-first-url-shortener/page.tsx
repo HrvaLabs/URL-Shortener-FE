@@ -102,6 +102,10 @@ export default function PrivacyFirstPage() {
           <li>Full browser identifiers and full addresses of referring pages</li>
           <li>Anything about an individual click</li>
           <li>Cookies: short links set none</li>
+          <li>
+            Making a link without an account runs a Cloudflare Turnstile check, which processes browser and network
+            signals for that purpose only. hrva.cc stores nothing from it.
+          </li>
         </ul>
         <p>
           Because the key changes every day and the link is part of the hash, the same visitor can&apos;t be followed from

@@ -10,12 +10,36 @@ export const ALIASES_PAUSED = "Custom aliases are turned off right now."
 
 export const ANONYMOUS_REFUSED = "Sign in to create short URLs"
 
-export type PublicSwitch = "anonymousLinks" | "customAliases"
+export const HUMAN_CHECK_REQUIRED = "Complete the check and try again."
+
+export type PublicSwitch = "anonymousLinks" | "customAliases" | "humanCheck"
 
 export function refusedSwitch(message: string | undefined): PublicSwitch | null {
   if (message === ANONYMOUS_REFUSED) return "anonymousLinks"
   if (message === ALIASES_PAUSED) return "customAliases"
+  if (message === HUMAN_CHECK_REQUIRED) return "humanCheck"
   return null
+}
+
+export const TURNSTILE_SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+
+export const HUMAN_CHECK_WAIT_MS = 5000
+
+export function humanCheckEnabled(settings: PublicSettings | undefined, signedIn: boolean, authLoading: boolean): boolean {
+  if (authLoading || signedIn || settings === undefined || settings.anonymousLinks === false) return false
+  return settings.humanCheck === true && Boolean(settings.turnstileSiteKey?.trim())
+}
+
+export interface TurnstileState {
+  token: string | null
+}
+
+export type TurnstileEvent = { type: "token"; token: string } | { type: "expired" } | { type: "error" } | { type: "submitted" }
+
+export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null }
+
+export function nextTurnstileState(_state: TurnstileState, event: TurnstileEvent): TurnstileState {
+  return event.type === "token" ? { token: event.token } : NO_TURNSTILE_TOKEN
 }
 
 export function noEffectText(parentLabel: string): string {

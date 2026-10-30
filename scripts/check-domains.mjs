@@ -327,7 +327,7 @@ check("accountAgeLine", () => {
 
 check("domainLimitText", () => {
   const date = (value) => `on-${value}`
-  assert.equal(domainLimitText({ userId: 5, maxDomains: 1, reason: null, grantedBy: null, grantedAt: null }, date), "Default: 1")
+  assert.equal(domainLimitText({ userId: 5, maxDomains: 1, reason: null, grantedBy: null, grantedAt: null }, date), "1 (the default)")
   assert.equal(
     domainLimitText({ userId: 5, maxDomains: 3, reason: "Agency with three brands", grantedBy: "admin@localhost", grantedAt: "2026-10-29T10:00:00" }, (value) => value.slice(0, 10)),
     "3, set by admin@localhost on 2026-10-29: Agency with three brands",

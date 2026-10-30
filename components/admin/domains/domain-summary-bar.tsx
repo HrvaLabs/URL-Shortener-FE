@@ -98,10 +98,10 @@ function CloudflareTile({ summary }: { summary: DomainSummary }) {
   return (
     <Tile title="Cloudflare">
       {total === null ? (
-        <p className="font-medium">Cloudflare total not read yet</p>
+        <p className="font-medium">Total not read yet</p>
       ) : (
         <p className={cn("font-medium tabular-nums", atAllowance && "text-warning")}>
-          Cloudflare: {total.toLocaleString()} of {summary.freeAllowance.toLocaleString()} free hostnames
+          {total.toLocaleString()} of {summary.freeAllowance.toLocaleString()} free hostnames used
         </p>
       )}
       {summary.cloudflareQuota && (

@@ -154,7 +154,7 @@ export const accountAgeLine = (createdAt: Date, now: Date): string => {
 }
 
 export const domainLimitText = ({ maxDomains, grantedBy, grantedAt, reason }: DomainAllowance, formatDate: (value: string) => string): string =>
-  grantedBy ? `${maxDomains}, set by ${grantedBy}${grantedAt ? ` on ${formatDate(grantedAt)}` : ""}${reason ? `: ${reason}` : ""}` : `Default: ${maxDomains}`
+  grantedBy ? `${maxDomains}, set by ${grantedBy}${grantedAt ? ` on ${formatDate(grantedAt)}` : ""}${reason ? `: ${reason}` : ""}` : `${maxDomains} (the default)`
 
 export const DOMAIN_LIMIT_MIN = 1
 

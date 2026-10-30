@@ -136,10 +136,11 @@ export function useRetryDomain() {
 }
 
 export function useAdminRemoveDomain() {
+  const queryClient = useQueryClient()
   const refresh = useRefreshAdminDomains()
   return useMutation({
     mutationFn: ({ id, links }: { id: number; links: DomainLinkMode }) => adminDomainApi.remove(id, links),
-    onSettled: refresh,
+    onSettled: () => Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: ["urls"] })]),
   })
 }
 

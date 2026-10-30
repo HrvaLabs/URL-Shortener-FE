@@ -29,9 +29,11 @@ interface RemoveDomainDialogProps {
   onOpenChange: (open: boolean) => void
   onConfirm: (links: DomainLinkMode) => void
   onCloseAutoFocus: (event: Event) => void
+  hints?: Record<DomainLinkMode, string>
+  note?: string
 }
 
-export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCloseAutoFocus }: RemoveDomainDialogProps) {
+export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCloseAutoFocus, hints = LINK_MODE_HINTS, note }: RemoveDomainDialogProps) {
   const prefix = useId()
   const [shown, setShown] = useState<RemovableDomain | null>(domain)
   const [mode, setMode] = useState<DomainLinkMode>("DEACTIVATE")
@@ -60,6 +62,7 @@ export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCl
           </AlertDialogTitle>
           <AlertDialogDescription className="[overflow-wrap:anywhere]">
             {withdraw ? "You can apply again later." : `Its links stop working on ${hostname} at once. This can't be undone.`}
+            {!withdraw && note ? ` ${note}` : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {withLinks && (
@@ -81,7 +84,7 @@ export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCl
                   />
                   <div className="min-w-0">
                     <label htmlFor={id} className="text-sm leading-none">{LINK_MODE_LABELS[option]}</label>
-                    <p id={`${id}-hint`} className="text-xs text-muted-foreground">{LINK_MODE_HINTS[option]}</p>
+                    <p id={`${id}-hint`} className="text-xs text-muted-foreground">{hints[option]}</p>
                   </div>
                 </div>
               )

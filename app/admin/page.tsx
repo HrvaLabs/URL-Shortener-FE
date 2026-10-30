@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Trash2, ToggleLeft, ToggleRight, Search, UserX, UserCheck } from "lucide-react"
+import { Edit, Trash2, ToggleLeft, ToggleRight, Search, UserX, UserCheck, Globe } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime, plural } from "@/lib/utils"
@@ -24,6 +24,7 @@ import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
+import { DomainLimitDialog } from "@/components/admin/domain-limit-dialog"
 
 const sortOptions: SortOption[] = [
   { field: "createDate", direction: "desc", label: "Newest first" },
@@ -45,7 +46,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [scammersOnly, setScammersOnly] = useState(false)
-  useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly])
+  useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly, setPage])
   const filterKey = `${search}-${activeFilter}-${scammersOnly}`
   const filters: UserFilters = {
     search: search || undefined,
@@ -59,6 +60,7 @@ export default function AdminUsersPage() {
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const [editUser, setEditUser] = useState<User | null>(null)
+  const [domainLimitUser, setDomainLimitUser] = useState<User | null>(null)
   const [editEmail, setEditEmail] = useState("")
   const [editSlots, setEditSlots] = useState("")
   const editId = useId()
@@ -184,6 +186,8 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
+      <DomainLimitDialog user={domainLimitUser} onOpenChange={(open) => { if (!open) setDomainLimitUser(null) }} />
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -285,6 +289,9 @@ export default function AdminUsersPage() {
                     <div className="flex items-center justify-end gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(user)} aria-label="Edit user" title="Edit user">
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDomainLimitUser(user)} aria-label="Domain limit" title="Domain limit">
+                        <Globe className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

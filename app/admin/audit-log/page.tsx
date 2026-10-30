@@ -44,6 +44,14 @@ const actionLabels: Record<AuditAction, string> = {
   RENAME_BIO_HANDLE: "Changed bio handle",
   REVOKE_BIO_HANDLE: "Revoked bio handle",
   RESOLVE_BIO_REVIEW: "Resolved bio page review",
+  APPROVE_DOMAIN: "Approved domain",
+  REJECT_DOMAIN: "Rejected domain",
+  DISABLE_DOMAIN: "Turned domain off",
+  ENABLE_DOMAIN: "Turned domain on",
+  RETRY_DOMAIN: "Retried domain",
+  DELETE_DOMAIN: "Removed domain",
+  SET_DOMAIN_ALLOWANCE: "Set domain limit",
+  REMOVE_DOMAIN_ALLOWANCE: "Removed domain limit",
   UNKNOWN: "Unknown action",
 }
 
@@ -75,6 +83,14 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   RENAME_BIO_HANDLE: "secondary",
   REVOKE_BIO_HANDLE: "destructive",
   RESOLVE_BIO_REVIEW: "secondary",
+  APPROVE_DOMAIN: "success",
+  REJECT_DOMAIN: "destructive",
+  DISABLE_DOMAIN: "destructive",
+  ENABLE_DOMAIN: "success",
+  RETRY_DOMAIN: "secondary",
+  DELETE_DOMAIN: "destructive",
+  SET_DOMAIN_ALLOWANCE: "secondary",
+  REMOVE_DOMAIN_ALLOWANCE: "secondary",
   UNKNOWN: "outline",
 }
 

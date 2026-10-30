@@ -25,6 +25,15 @@ const {
   isWaitingForSetup,
   pickableHostnames,
   shortHost,
+  DOMAIN_STATUSES,
+  isDomainStatus,
+  canTurnOff,
+  canRemoveDomain,
+  canAdminRetry,
+  adminRecheckHint,
+  accountAgeLine,
+  domainLimitText,
+  domainLimitError,
 } = domains
 
 const check = (name, run) => {
@@ -226,6 +235,58 @@ check("domainRemovalSummary", () => {
   assert.equal(domainRemovalSummary({ moved: 1, renamed: [], deactivated: 0 }), "1 link moved, 0 with a new alias.")
   assert.equal(domainRemovalSummary({ moved: 0, renamed: [], deactivated: 2 }), "2 links turned off.")
   assert.equal(domainRemovalSummary({ moved: 0, renamed: [], deactivated: 1 }), "1 link turned off.")
+})
+
+check("admin status filter", () => {
+  assert.deepEqual(DOMAIN_STATUSES, Object.keys(DOMAIN_STATUS_LABELS))
+  assert.equal(isDomainStatus("ACTIVE"), true)
+  assert.equal(isDomainStatus("active"), false)
+  assert.equal(isDomainStatus(null), false)
+})
+
+check("admin actions by status", () => {
+  assert.deepEqual(DOMAIN_STATUSES.filter(canTurnOff), ["APPROVED_PROVISIONING", "AWAITING_DNS", "ACTIVE", "ERROR"])
+  assert.deepEqual(DOMAIN_STATUSES.filter(canRemoveDomain), ["APPROVED_PROVISIONING", "AWAITING_DNS", "ACTIVE", "DISABLED", "ERROR"])
+  assert.equal(canAdminRetry({ status: "ERROR", problem: "CAA_BLOCKED" }), true)
+  assert.equal(canAdminRetry({ status: "AWAITING_DNS", problem: null }), true)
+  assert.equal(canAdminRetry({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), false)
+  assert.equal(canAdminRetry({ status: "APPROVED_PROVISIONING", problem: null }), false)
+  assert.equal(canAdminRetry({ status: "ACTIVE", problem: null }), false)
+  assert.equal(canAdminRetry({ status: "DISABLED", problem: null }), false)
+})
+
+check("admin recheck hints", () => {
+  for (const problem of ["CERTIFICATE_TIMED_OUT", "CNAME_REMOVED", "CAA_BLOCKED", "CLOUDFLARE_BLOCKED"]) {
+    assert.equal(adminRecheckHint({ status: "ERROR", problem }), "Checked again every hour on its own.")
+  }
+  for (const problem of ["DNS_TIMED_OUT", "PROVISIONING_FAILED"]) {
+    assert.equal(adminRecheckHint({ status: "ERROR", problem }), "No longer checked on its own. Use Retry.")
+  }
+  assert.equal(adminRecheckHint({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED" }), "Retried on its own for 24 hours, then waits for Retry.")
+  assert.equal(adminRecheckHint({ status: "AWAITING_DNS", problem: "DNS_NOT_FOUND" }), null)
+  assert.equal(adminRecheckHint({ status: "ERROR", problem: null }), null)
+})
+
+check("accountAgeLine", () => {
+  const now = new Date("2026-10-29T12:00:00Z")
+  assert.equal(accountAgeLine(new Date("2026-10-29T08:00:00Z"), now), "Account 0 days old")
+  assert.equal(accountAgeLine(new Date("2026-10-28T08:00:00Z"), now), "Account 1 day old")
+  assert.equal(accountAgeLine(new Date("2026-10-26T12:00:00Z"), now), "Account 3 days old")
+  assert.equal(accountAgeLine(new Date("2026-10-30T12:00:00Z"), now), "Account 0 days old")
+})
+
+check("domainLimitText", () => {
+  const date = (value) => `on-${value}`
+  assert.equal(domainLimitText({ userId: 5, maxDomains: 1, reason: null, grantedBy: null, grantedAt: null }, date), "Default: 1")
+  assert.equal(
+    domainLimitText({ userId: 5, maxDomains: 3, reason: "Agency with three brands", grantedBy: "admin@localhost", grantedAt: "2026-10-29T10:00:00" }, (value) => value.slice(0, 10)),
+    "3, set by admin@localhost on 2026-10-29: Agency with three brands",
+  )
+})
+
+check("domainLimitError", () => {
+  for (const bad of ["0", "21", "", " ", "1.5", "-1", "abc"]) assert.equal(domainLimitError(bad), "Choose 1 to 20", bad)
+  for (const good of ["1", "20", " 3 "]) assert.equal(domainLimitError(good), null, good)
 })
 
 check("strings are ASCII", () => {

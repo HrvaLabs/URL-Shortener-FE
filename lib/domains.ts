@@ -1,4 +1,4 @@
-import type { CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
+import type { CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainAllowance, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
 
 export const HOSTNAME_PLACEHOLDER = "go.example.com"
 
@@ -108,4 +108,65 @@ export const domainRemovalSummary = ({ moved, renamed, deactivated }: DomainRemo
   if (moved > 0) return `${countOf(moved, "link")} moved, ${renamed.length} with a new alias.`
   if (deactivated > 0) return `${countOf(deactivated, "link")} turned off.`
   return null
+}
+
+export const DOMAIN_STATUSES = Object.keys(DOMAIN_STATUS_LABELS) as CustomDomainStatus[]
+
+export const isDomainStatus = (value: string | null | undefined): value is CustomDomainStatus =>
+  typeof value === "string" && (DOMAIN_STATUSES as string[]).includes(value)
+
+export const ADMIN_LINK_MODE_HINTS: Record<DomainLinkMode, string> = {
+  MOVE: "Links keep their alias when it's free on hrva.cc and get a new one otherwise.",
+  DEACTIVATE: "Links stay in the owner's list, turned off.",
+}
+
+export const RECHECKED_PROBLEMS: ReadonlySet<DomainProblem> = new Set(["CERTIFICATE_TIMED_OUT", "CNAME_REMOVED", "CAA_BLOCKED", "CLOUDFLARE_BLOCKED"])
+
+const TURNS_OFF: ReadonlySet<CustomDomainStatus> = new Set(["APPROVED_PROVISIONING", "AWAITING_DNS", "ACTIVE", "ERROR"])
+
+const REMOVABLE: ReadonlySet<CustomDomainStatus> = new Set(["APPROVED_PROVISIONING", "AWAITING_DNS", "ACTIVE", "DISABLED", "ERROR"])
+
+export const canTurnOff = (status: CustomDomainStatus): boolean => TURNS_OFF.has(status)
+
+export const canRemoveDomain = (status: CustomDomainStatus): boolean => REMOVABLE.has(status)
+
+export const canAdminRetry = ({ status }: Pick<CustomDomain, "status">): boolean => status === "ERROR" || status === "AWAITING_DNS"
+
+export const ADMIN_RECHECK_HINTS = {
+  rechecked: "Checked again every hour on its own.",
+  stopped: "No longer checked on its own. Use Retry.",
+  retrying: "Retried on its own for 24 hours, then waits for Retry.",
+} as const
+
+export const adminRecheckHint = ({ status, problem }: Pick<CustomDomain, "status" | "problem">): string | null => {
+  if (!problem) return null
+  if (status === "APPROVED_PROVISIONING" && problem === "PROVISIONING_FAILED") return ADMIN_RECHECK_HINTS.retrying
+  if (status !== "ERROR") return null
+  return RECHECKED_PROBLEMS.has(problem) ? ADMIN_RECHECK_HINTS.rechecked : ADMIN_RECHECK_HINTS.stopped
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export const accountAgeLine = (createdAt: Date, now: Date): string => {
+  const days = Math.max(0, Math.floor((now.getTime() - createdAt.getTime()) / DAY_MS))
+  return `Account ${countOf(days, "day")} old`
+}
+
+export const domainLimitText = ({ maxDomains, grantedBy, grantedAt, reason }: DomainAllowance, formatDate: (value: string) => string): string =>
+  grantedBy ? `${maxDomains}, set by ${grantedBy}${grantedAt ? ` on ${formatDate(grantedAt)}` : ""}${reason ? `: ${reason}` : ""}` : `Default: ${maxDomains}`
+
+export const DOMAIN_LIMIT_MIN = 1
+
+export const DOMAIN_LIMIT_MAX = 20
+
+export const DOMAIN_LIMIT_RANGE_ERROR = "Choose 1 to 20"
+
+export const REASON_REQUIRED = "Reason is required"
+
+export const NOTE_MAX = 500
+
+export const domainLimitError = (value: string): string | null => {
+  if (!/^\d+$/.test(value.trim())) return DOMAIN_LIMIT_RANGE_ERROR
+  const parsed = Number(value.trim())
+  return parsed < DOMAIN_LIMIT_MIN || parsed > DOMAIN_LIMIT_MAX ? DOMAIN_LIMIT_RANGE_ERROR : null
 }

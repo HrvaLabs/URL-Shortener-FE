@@ -16,6 +16,39 @@ export const SETTING_GROUP_LABELS: Record<SettingGroup, string> = {
 
 const NONE = "None"
 
+export interface SettingRowView {
+  setting: SettingResponse
+  indented: boolean
+}
+
+export interface SettingGroupView {
+  group: SettingGroup
+  rows: SettingRowView[]
+}
+
+function matchesSearch(setting: SettingResponse, words: string[]): boolean {
+  const text = `${setting.label} ${setting.description}`.toLowerCase()
+  return words.every((word) => text.includes(word))
+}
+
+export function groupSettings(settings: SettingResponse[], search: string): SettingGroupView[] {
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean)
+  const shown = settings.filter((setting) => matchesSearch(setting, words))
+  return (Object.keys(SETTING_GROUP_LABELS) as SettingGroup[])
+    .map((group) => {
+      const inGroup = shown.filter((setting) => setting.group === group)
+      const keys = new Set(inGroup.map((setting) => setting.key))
+      const rows: SettingRowView[] = []
+      const add = (setting: SettingResponse, indented: boolean) => {
+        rows.push({ setting, indented })
+        for (const child of inGroup.filter((entry) => entry.parent === setting.key)) add(child, true)
+      }
+      for (const setting of inGroup.filter((entry) => !entry.parent || !keys.has(entry.parent))) add(setting, false)
+      return { group, rows }
+    })
+    .filter((entry) => entry.rows.length > 0)
+}
+
 function parentIsOff(setting: SettingResponse, byKey: Map<string, SettingResponse>): boolean {
   const seen = new Set<string>()
   let parent = setting.parent ? byKey.get(setting.parent) : undefined

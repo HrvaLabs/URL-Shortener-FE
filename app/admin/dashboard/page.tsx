@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { PageMeta } from "@/components/page-meta"
 import { AnalyticsSkeleton } from "@/components/analytics/analytics-states"
 import { RangePicker } from "@/components/analytics/range-picker"
+import { SafetySwitchesOff } from "@/components/admin/settings/safety-switches-off"
 import { LinksTab } from "@/components/admin/stats/links-tab"
 import { SafetyTab } from "@/components/admin/stats/safety-tab"
 import { SystemTab } from "@/components/admin/stats/system-tab"
@@ -64,6 +65,7 @@ function Stats() {
     <div className="space-y-6">
       <PageMeta title="Admin — Stats" description="Site-wide totals for hrva.cc. Nothing here identifies a visitor." />
       <PageTitle />
+      <SafetySwitchesOff showLink />
 
       <Tabs value={tab} onValueChange={(next) => show({ tab: parseStatsTab(next), days })}>
         <div className="flex flex-wrap items-center justify-between gap-3">

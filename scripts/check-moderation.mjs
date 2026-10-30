@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, SETTING_GROUP_LABELS, safetyOffLines, settingValueText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings } = moderation
 
 const check = (name, run) => {
   try {
@@ -101,6 +101,49 @@ check("safetyOffLines: a grandchild follows the same rule", () => {
   const middle = setting({ key: "SAFE_BROWSING_FAIL_CLOSED", type: "NUMBER", parent: "SAFE_BROWSING_CHECK", value: 1 })
   const bottom = safetySwitch("Bottom", false, { key: "BLOCKLIST_CHECK", parent: "SAFE_BROWSING_FAIL_CLOSED" })
   assert.deepEqual(safetyOffLines([top, middle, bottom]), ["Top is off."])
+})
+
+const catalogue = () => [
+  setting({ key: "ANONYMOUS_LINKS", group: "ACCESS", type: "SWITCH", label: "Links without an account", description: "Visitors can make short links without signing in.", parent: null, value: true, defaultValue: true }),
+  setting({ key: "NEW_SIGNUPS", group: "ACCESS", type: "SWITCH", label: "New sign-ups", description: "New accounts can be created, with email or a sign-in provider.", parent: null, value: true, defaultValue: true }),
+  setting({ key: "ANONYMOUS_LINKS_PER_HOUR", group: "ACCESS", label: "Links without an account per network per hour", description: "Counted over a fixed hour.", parent: "ANONYMOUS_LINKS", unit: "links" }),
+  setting({ key: "CUSTOM_ALIASES", group: "LINKS", type: "SWITCH", label: "Custom aliases", description: "Signed-in users choose their own short link.", parent: null }),
+  setting({ key: "SAME_SHAPE_ALERT", group: "ALERTS", type: "SWITCH", label: "Same-shape alert", description: "A Discord alert.", parent: null }),
+  setting({ key: "CAMPAIGN_LINKS", group: "ALERTS", label: "Same-shape alert: links", description: "Links without an account that share one URL shape.", parent: "SAME_SHAPE_ALERT" }),
+  setting({ key: "WEEKLY_DIGEST", group: "DIGEST", type: "SWITCH", label: "Weekly digest", description: "Monday's summary in Discord.", parent: null }),
+  setting({ key: "CAMPAIGN_HOLD", group: "SAFETY", type: "SWITCH", label: "Hold links", description: "Holds the links of a same-shape alert.", parent: null }),
+]
+
+const layout = (groups) => groups.map((entry) => ({ group: entry.group, rows: entry.rows.map((row) => `${row.indented ? "  " : ""}${row.setting.key}`) }))
+
+check("groupSettings: groups in the catalogue's order, children under their parent", () => {
+  assert.deepEqual(layout(groupSettings(catalogue(), "")), [
+    { group: "ACCESS", rows: ["ANONYMOUS_LINKS", "  ANONYMOUS_LINKS_PER_HOUR", "NEW_SIGNUPS"] },
+    { group: "LINKS", rows: ["CUSTOM_ALIASES"] },
+    { group: "SAFETY", rows: ["CAMPAIGN_HOLD"] },
+    { group: "ALERTS", rows: ["SAME_SHAPE_ALERT", "  CAMPAIGN_LINKS"] },
+    { group: "DIGEST", rows: ["WEEKLY_DIGEST"] },
+  ])
+})
+
+check("groupSettings: a filter matches the label and the description, ignoring case", () => {
+  assert.deepEqual(layout(groupSettings(catalogue(), "DISCORD ALERT")), [{ group: "ALERTS", rows: ["SAME_SHAPE_ALERT"] }])
+  assert.deepEqual(layout(groupSettings(catalogue(), "custom ALIASES")), [{ group: "LINKS", rows: ["CUSTOM_ALIASES"] }])
+  assert.deepEqual(layout(groupSettings(catalogue(), "  monday ")), [{ group: "DIGEST", rows: ["WEEKLY_DIGEST"] }])
+})
+
+check("groupSettings: every word has to match", () => {
+  assert.deepEqual(layout(groupSettings(catalogue(), "shape account")), [{ group: "ALERTS", rows: ["CAMPAIGN_LINKS"] }])
+  assert.deepEqual(layout(groupSettings(catalogue(), "shape nonsense")), [])
+})
+
+check("groupSettings: a child that matches without its parent is not indented", () => {
+  assert.deepEqual(layout(groupSettings(catalogue(), "fixed hour")), [{ group: "ACCESS", rows: ["ANONYMOUS_LINKS_PER_HOUR"] }])
+})
+
+check("groupSettings: a parent that matches without its children shows alone, and empty groups are left out", () => {
+  assert.deepEqual(layout(groupSettings(catalogue(), "discord alert")), [{ group: "ALERTS", rows: ["SAME_SHAPE_ALERT"] }])
+  assert.deepEqual(layout(groupSettings([], "")), [])
 })
 
 check("settingValueText: switches", () => {

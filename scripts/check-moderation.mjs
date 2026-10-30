@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_UNCONFIRMED, humanCheckRefusal, NOT_AVAILABLE, switchUnavailable, switchChecked, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, linkEndsText, WARNING_PAGE_NOTE, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerDisabledHeading, FORGOT_PASSWORD_LABEL, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -87,10 +87,10 @@ check("the Turnstile script is Cloudflare's explicit-render URL and a pending ch
 })
 
 check("nextTurnstileState: a token arrives, expires or fails", () => {
-  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null, receivedAt: null, interactive: false })
+  assert.deepEqual(NO_TURNSTILE_TOKEN, { token: null, receivedAt: null, interactive: false, boxShown: false })
   const ready = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1000 })
-  assert.deepEqual(ready, { token: "abc", receivedAt: 1000, interactive: false })
-  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def", at: 2000 }), { token: "def", receivedAt: 2000, interactive: false })
+  assert.deepEqual(ready, { token: "abc", receivedAt: 1000, interactive: false, boxShown: false })
+  assert.deepEqual(nextTurnstileState(ready, { type: "token", token: "def", at: 2000 }), { token: "def", receivedAt: 2000, interactive: false, boxShown: false })
   assert.deepEqual(nextTurnstileState(ready, { type: "expired" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(ready, { type: "error" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), NO_TURNSTILE_TOKEN)
@@ -101,17 +101,44 @@ check("turnstileResetsAfterEveryAttempt", () => {
   assert.deepEqual(nextTurnstileState(ready, { type: "submitted" }), NO_TURNSTILE_TOKEN)
   assert.deepEqual(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "submitted" }), NO_TURNSTILE_TOKEN)
   const again = nextTurnstileState(nextTurnstileState(ready, { type: "submitted" }), { type: "token", token: "fresh", at: 3000 })
-  assert.deepEqual(again, { token: "fresh", receivedAt: 3000, interactive: false })
+  assert.deepEqual(again, { token: "fresh", receivedAt: 3000, interactive: false, boxShown: false })
 })
 
 check("nextTurnstileState: the box the visitor ticks is shown, then left", () => {
   const shown = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "interactive" })
-  assert.deepEqual(shown, { token: null, receivedAt: null, interactive: true })
-  assert.deepEqual(nextTurnstileState(shown, { type: "settled" }), NO_TURNSTILE_TOKEN)
-  assert.deepEqual(nextTurnstileState(shown, { type: "token", token: "abc", at: 5000 }), { token: "abc", receivedAt: 5000, interactive: false })
-  assert.deepEqual(nextTurnstileState(shown, { type: "error" }), NO_TURNSTILE_TOKEN)
+  assert.deepEqual(shown, { token: null, receivedAt: null, interactive: true, boxShown: true })
+  const left = nextTurnstileState(shown, { type: "settled" })
+  assert.deepEqual(left, { token: null, receivedAt: null, interactive: false, boxShown: true })
+  assert.deepEqual(nextTurnstileState(shown, { type: "token", token: "abc", at: 5000 }), { token: "abc", receivedAt: 5000, interactive: false, boxShown: true })
+  assert.deepEqual(nextTurnstileState(shown, { type: "error" }), { token: null, receivedAt: null, interactive: false, boxShown: true })
+  assert.deepEqual(nextTurnstileState(shown, { type: "expired" }), { token: null, receivedAt: null, interactive: false, boxShown: true })
   assert.deepEqual(nextTurnstileState(shown, { type: "submitted" }), NO_TURNSTILE_TOKEN)
   assert.equal(TICK_THE_BOX, "Tick the box above to continue.")
+})
+
+check("humanCheckRefusal: an invisible check that fails says it couldn't confirm you; a shown box or no check says to complete it", () => {
+  assert.equal(HUMAN_CHECK_UNCONFIRMED, "The check couldn't confirm you're a person. Try again, or sign in.")
+  assert.equal(humanCheckRefusal(NO_TURNSTILE_TOKEN, true), "unconfirmed")
+  assert.equal(humanCheckRefusal(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "error" }), true), "unconfirmed")
+  assert.equal(humanCheckRefusal(nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "token", token: "abc", at: 1 }), true), "unconfirmed")
+  assert.equal(humanCheckRefusal(NO_TURNSTILE_TOKEN, false), "complete")
+  const shown = nextTurnstileState(NO_TURNSTILE_TOKEN, { type: "interactive" })
+  assert.equal(humanCheckRefusal(shown, true), "complete")
+  assert.equal(humanCheckRefusal(nextTurnstileState(shown, { type: "error" }), true), "complete")
+  assert.equal(humanCheckRefusal(nextTurnstileState(shown, { type: "settled" }), true), "complete")
+  assert.equal(humanCheckRefusal(nextTurnstileState(shown, { type: "submitted" }), true), "unconfirmed")
+})
+
+check("an unavailable switch is never shown as on", () => {
+  assert.equal(NOT_AVAILABLE, "Not available")
+  const base = { key: "HUMAN_CHECK", type: "SWITCH", value: true, available: true, unavailableReason: null }
+  assert.equal(switchUnavailable(base), false)
+  assert.equal(switchChecked(base), true)
+  assert.equal(switchChecked({ ...base, value: false }), false)
+  const blocked = { ...base, available: false, unavailableReason: "Turnstile keys aren't set, so no check runs." }
+  assert.equal(switchUnavailable(blocked), true)
+  assert.equal(switchChecked(blocked), false)
+  assert.equal(switchUnavailable({ ...blocked, type: "NUMBER", value: 3 }), false)
 })
 
 check("freshTurnstileToken: a token older than 290 s counts as expired", () => {
@@ -383,10 +410,23 @@ check("provider texts never send a provider-only account to its email and passwo
   assert.equal(providerDisabledText("GITHUB").startsWith("GitHub sign-in is turned off on hrva.cc right now."), true)
   assert.equal(providerDisabledText(null).startsWith("That sign-in is turned off on hrva.cc right now."), true)
   assert.ok(!providerDisabledText("GOOGLE").includes("email and password"))
+  assert.equal(providerDisabledHeading("GOOGLE"), "Google sign-in is off")
+  assert.equal(providerDisabledHeading("GITHUB"), "GitHub sign-in is off")
+  assert.equal(providerDisabledHeading(null), "That sign-in is off")
+  assert.equal(providerDisabledText("GOOGLE").split(FORGOT_PASSWORD_LABEL).length, 2)
   assert.equal(providersOffText([]), null)
   assert.equal(providersOffText(["GOOGLE"]), "Sign in with Google is turned off right now.")
   assert.equal(providersOffText(["GITHUB"]), "Sign in with GitHub is turned off right now.")
   assert.equal(providersOffText(["GOOGLE", "GITHUB"]), "Signing in with Google and GitHub is turned off right now.")
+})
+
+check("linkEndsText: only the parts that are set", () => {
+  assert.equal(linkEndsText("2026-11-29T10:00:00", 500), "This link stops working on Nov 29, 2026 or after 500 visits, whichever comes first.")
+  assert.equal(linkEndsText("2026-11-29T10:00:00", 0), "This link stops working on Nov 29, 2026.")
+  assert.equal(linkEndsText(undefined, 1), "This link stops working after 1 visit.")
+  assert.equal(linkEndsText(undefined, 1000), "This link stops working after 1,000 visits.")
+  assert.equal(linkEndsText(undefined, 0), null)
+  assert.equal(WARNING_PAGE_NOTE, "People who open this link see its address first, because the site is new or its name looks machine-made.")
 })
 
 check("providerOffSiteWide: only a provider whose public field is false", () => {

@@ -789,7 +789,7 @@ function UrlStatus({ url }: { url: UrlResponse }) {
             In review
           </Link>
         )}
-        {url.warningPage && <Badge variant="warning" className="whitespace-nowrap">Warning page</Badge>}
+        {url.warningPage && <Badge variant="warning" title="Visitors see the destination first" className="whitespace-nowrap">Warning page</Badge>}
       </div>
       {url.status === "BLOCKED" && url.blockReason && (
         <p className="mt-1 min-w-24 text-xs text-muted-foreground">{blockReasonLabels[url.blockReason] ?? url.blockReason}</p>

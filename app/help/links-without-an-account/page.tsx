@@ -60,13 +60,15 @@ export default function LinksWithoutAnAccountHelpPage() {
               <p>
                 Before a link is made without an account, a Cloudflare Turnstile check makes sure a person is using the
                 page. Usually you see nothing; sometimes you&apos;re asked to tick a box. It processes browser and network
-                signals for this check only, and hrva.cc stores nothing from it. Signed-in users, API keys and the MCP
-                connector are never checked.
+                signals for this check only, and hrva.cc stores nothing from it. Cloudflare keeps one item in its own
+                frame&apos;s storage; see the <Link href="/privacy">Privacy Policy</Link>. Signed-in users, API keys and
+                the MCP connector are never checked.
               </p>
 
               <h2 id="checks">Safety checks</h2>
               <p>
-                Links made without an account are checked too, and only the admin sees the result. The{" "}
+                Links made without an account are checked too, and only the admin sees the result, except the{" "}
+                <a href="#warning-page">warning page</a> below. The{" "}
                 <Link href="/privacy">Privacy Policy</Link> describes what hrva.cc keeps about them.
               </p>
 

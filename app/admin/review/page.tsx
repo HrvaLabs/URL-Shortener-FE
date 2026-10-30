@@ -39,6 +39,7 @@ const reasonOptions = [
   { value: "redirects to", label: "Redirects elsewhere" },
   { value: "reported by a visitor", label: "Reported by a visitor" },
   { value: "Spamhaus", label: "Spamhaus" },
+  { value: "Random-looking", label: "Random-looking domain" },
 ]
 
 const ageOptions = [

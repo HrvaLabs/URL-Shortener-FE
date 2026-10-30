@@ -7,6 +7,7 @@ import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
 import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
+import { LinkResultNotes } from "@/components/link-result-notes"
 import { CHECKING_LABEL, TurnstileCheck } from "@/components/turnstile-check"
 import { UtmFields } from "@/components/utm-fields"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,8 @@ import { Label } from "@/components/ui/label"
 import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
-import { HUMAN_CHECK_REQUIRED, humanCheckEnabled, signupsPaused } from "@/lib/moderation"
+import { HUMAN_CHECK_REQUIRED, humanCheckEnabled, signupsPaused, type HumanCheckRefusal } from "@/lib/moderation"
+import type { UrlResponse } from "@/lib/types"
 import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { destinationLengthError, formatShortUrl } from "@/lib/utils"
@@ -57,10 +59,10 @@ export function UtmBuilder() {
   const [typed, setTyped] = useState("")
   const [utm, setUtm] = useState<UtmValues>({})
   const [open, setOpen] = useState(true)
-  const [shortLink, setShortLink] = useState<{ destination: string; url: string } | null>(null)
+  const [shortLink, setShortLink] = useState<{ destination: string; url: string; created: UrlResponse } | null>(null)
   const [refusal, setRefusal] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
-  const [checkMissing, setCheckMissing] = useState(false)
+  const [checkRefusal, setCheckRefusal] = useState<HumanCheckRefusal | null>(null)
   const resultRef = useRef<HTMLParagraphElement>(null)
   const refusalRef = useRef<HTMLParagraphElement>(null)
   const lengthError = destinationLengthError(typed)
@@ -73,21 +75,21 @@ export function UtmBuilder() {
   const shorten = async () => {
     humanCheck.start()
     if (!ready || !tagged || createUrl.isPending || checking || refusal) return
-    setCheckMissing(false)
+    setCheckRefusal(null)
     let humanCheckToken: string | null = null
     if (humanCheck.active) {
       setChecking(true)
       humanCheckToken = await humanCheck.waitForToken()
       setChecking(false)
       if (!humanCheckToken) {
+        setCheckRefusal(humanCheck.refusal(true))
         humanCheck.reset()
-        setCheckMissing(true)
         return
       }
     }
     try {
       const created = await createUrl.mutateAsync({ longUrl: tagged, humanCheckToken })
-      flushSync(() => setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl) }))
+      flushSync(() => setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl), created }))
       resultRef.current?.focus()
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -96,7 +98,7 @@ export function UtmBuilder() {
         return
       }
       if (err instanceof ApiError && err.message === HUMAN_CHECK_REQUIRED) {
-        setCheckMissing(true)
+        setCheckRefusal(humanCheck.refusal(humanCheckToken !== null))
         return
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
@@ -144,6 +146,7 @@ export function UtmBuilder() {
                     <>Links made without an account have no stats page.{!signupsClosed && <> <Link href="/register" className="text-brand-link">Sign up free</Link> to see clicks, referrers and the campaign tags.</>}</>
                   )}
                 </p>
+                {shortLink && <LinkResultNotes link={shortLink.created} signedIn={Boolean(user)} />}
               </div>
             ) : (
               <>
@@ -172,7 +175,7 @@ export function UtmBuilder() {
                     </Button>
                   )}
                 </div>
-                <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} ticking={checking && humanCheck.interactive} className="mt-3" />
+                <TurnstileCheck containerRef={humanCheck.containerRef} refusal={checkRefusal} ticking={checking && humanCheck.interactive} className="mt-3" />
               </>
             )}
           </div>

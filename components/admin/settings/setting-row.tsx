@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { parseServerDateTime } from "@/lib/analytics"
 import { ApiError } from "@/lib/api-client"
 import { useChangeSetting, useResetSetting } from "@/lib/hooks/useSettings"
-import { noEffectText, settingValueText } from "@/lib/moderation"
+import { NOT_AVAILABLE, noEffectText, settingValueText, switchChecked, switchUnavailable } from "@/lib/moderation"
 import type { SettingResponse, SettingValue } from "@/lib/types"
 import { cn, formatDateTime } from "@/lib/utils"
 
@@ -25,6 +25,7 @@ interface RowIds {
   description: string
   input: string
   error: string
+  reason: string
 }
 
 interface EditorProps {
@@ -183,17 +184,23 @@ function NumberEditor({ setting, ids, busy, error, version, onEdit, onSave, onIn
 }
 
 function SwitchEditor({ setting, ids, busy, onToggle, controlRef }: { setting: SettingResponse; ids: RowIds; busy: boolean; onToggle: (on: boolean) => void; controlRef: (node: HTMLElement | null) => void }) {
+  const unavailable = switchUnavailable(setting)
+  const stateId = `${ids.reason}-state`
+  const describedBy = unavailable ? `${ids.description} ${stateId}${setting.unavailableReason ? ` ${ids.reason}` : ""}` : ids.description
   return (
-    <Switch
-      ref={controlRef}
-      checked={setting.value === true}
-      onCheckedChange={(on) => { if (!busy) onToggle(on) }}
-      aria-label={setting.label}
-      aria-describedby={ids.description}
-      aria-disabled={busy}
-      aria-busy={busy}
-      className={cn("mt-0.5", busyClassName)}
-    />
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <Switch
+        ref={controlRef}
+        checked={switchChecked(setting)}
+        onCheckedChange={(on) => { if (!busy && !unavailable) onToggle(on) }}
+        aria-label={setting.label}
+        aria-describedby={describedBy}
+        aria-disabled={busy || unavailable}
+        aria-busy={busy}
+        className={cn("mt-0.5", busyClassName)}
+      />
+      {unavailable && <span id={stateId} className="text-xs font-medium text-muted-foreground">{NOT_AVAILABLE}</span>}
+    </div>
   )
 }
 
@@ -205,7 +212,7 @@ function ChangedLine({ setting }: { setting: SettingResponse }) {
 
 export function SettingRow({ setting, indented, offParent }: { setting: SettingResponse; indented: boolean; offParent: string | null }) {
   const id = useId()
-  const ids: RowIds = { label: `${id}-label`, description: `${id}-description`, input: `${id}-input`, error: `${id}-error` }
+  const ids: RowIds = { label: `${id}-label`, description: `${id}-description`, input: `${id}-input`, error: `${id}-error`, reason: `${id}-reason` }
   const change = useChangeSetting()
   const reset = useResetSetting()
   const busy = change.isPending || reset.isPending
@@ -284,7 +291,7 @@ export function SettingRow({ setting, indented, offParent }: { setting: SettingR
               {offParent && <p>{noEffectText(offParent)}</p>}
             </div>
             {!setting.available && setting.unavailableReason && (
-              <p className={cn("mt-1 text-sm text-muted-foreground", wrap)}>{setting.unavailableReason}</p>
+              <p id={ids.reason} className={cn("mt-1 text-sm text-muted-foreground", wrap)}>{setting.unavailableReason}</p>
             )}
           </div>
           {isSwitch && <SwitchEditor setting={setting} ids={ids} busy={busy} onToggle={toggle} controlRef={controlRef} />}

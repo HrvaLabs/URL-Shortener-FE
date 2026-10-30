@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
-import { HUMAN_CHECK_WAIT_MS, NO_TURNSTILE_TOKEN, TURNSTILE_SCRIPT_URL, freshTurnstileToken, nextTurnstileState, turnstileNeedsReload, type TurnstileEvent } from "@/lib/moderation"
+import { HUMAN_CHECK_WAIT_MS, NO_TURNSTILE_TOKEN, TURNSTILE_SCRIPT_URL, freshTurnstileToken, humanCheckRefusal, nextTurnstileState, turnstileNeedsReload, type TurnstileEvent } from "@/lib/moderation"
 
 interface TurnstileRenderOptions {
   sitekey: string
@@ -51,14 +51,13 @@ function loadTurnstile(): Promise<TurnstileApi> {
 
 interface UseTurnstileOptions {
   enabled: boolean
-  startAtOnce?: boolean
 }
 
-export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptions) {
+export function useTurnstile({ enabled }: UseTurnstileOptions) {
   const { data: publicSettings } = usePublicSettings()
   const siteKey = enabled ? publicSettings?.turnstileSiteKey?.trim() || null : null
   const [container, setContainer] = useState<HTMLDivElement | null>(null)
-  const [started, setStarted] = useState(startAtOnce)
+  const [started, setStarted] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [state, setState] = useState(NO_TURNSTILE_TOKEN)
   const stateRef = useRef(NO_TURNSTILE_TOKEN)
@@ -120,6 +119,8 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
     if (widget) widget.api.reset(widget.id)
   }, [apply])
 
+  const refusal = useCallback((checkRan: boolean) => humanCheckRefusal(stateRef.current, checkRan), [])
+
   const waitForToken = useCallback((timeoutMs = HUMAN_CHECK_WAIT_MS): Promise<string | null> => {
     const fresh = freshTurnstileToken(stateRef.current, Date.now())
     if (fresh) return Promise.resolve(fresh)
@@ -141,5 +142,5 @@ export function useTurnstile({ enabled, startAtOnce = false }: UseTurnstileOptio
     })
   }, [reset, start])
 
-  return { containerRef: setContainer, token: state.token, interactive: state.interactive, active: siteKey !== null, start, reset, waitForToken }
+  return { containerRef: setContainer, token: state.token, interactive: state.interactive, active: siteKey !== null, start, reset, waitForToken, refusal }
 }

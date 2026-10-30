@@ -12,6 +12,10 @@ export const ANONYMOUS_REFUSED = "Sign in to create short URLs"
 
 export const HUMAN_CHECK_REQUIRED = "Complete the check and try again."
 
+export const HUMAN_CHECK_UNCONFIRMED = "The check couldn't confirm you're a person. Try again, or sign in."
+
+export const NOT_AVAILABLE = "Not available"
+
 export type PublicSwitch = "anonymousLinks" | "customAliases" | "humanCheck"
 
 export function refusedSwitch(message: string | undefined): PublicSwitch | null {
@@ -38,6 +42,7 @@ export interface TurnstileState {
   token: string | null
   receivedAt: number | null
   interactive: boolean
+  boxShown: boolean
 }
 
 export type TurnstileEvent =
@@ -48,13 +53,20 @@ export type TurnstileEvent =
   | { type: "error" }
   | { type: "submitted" }
 
-export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null, receivedAt: null, interactive: false }
+export const NO_TURNSTILE_TOKEN: TurnstileState = { token: null, receivedAt: null, interactive: false, boxShown: false }
 
 export function nextTurnstileState(state: TurnstileState, event: TurnstileEvent): TurnstileState {
-  if (event.type === "token") return { token: event.token, receivedAt: event.at, interactive: false }
-  if (event.type === "interactive") return { ...state, interactive: true }
+  if (event.type === "token") return { token: event.token, receivedAt: event.at, interactive: false, boxShown: state.boxShown }
+  if (event.type === "interactive") return { ...state, interactive: true, boxShown: true }
   if (event.type === "settled") return { ...state, interactive: false }
-  return NO_TURNSTILE_TOKEN
+  if (event.type === "submitted") return NO_TURNSTILE_TOKEN
+  return { ...NO_TURNSTILE_TOKEN, boxShown: state.boxShown }
+}
+
+export type HumanCheckRefusal = "complete" | "unconfirmed"
+
+export function humanCheckRefusal(state: TurnstileState, checkRan: boolean): HumanCheckRefusal {
+  return checkRan && !state.boxShown ? "unconfirmed" : "complete"
 }
 
 export function freshTurnstileToken(state: TurnstileState, now: number): string | null {
@@ -89,6 +101,19 @@ export function anonymousLimitLine(expiryDays: number | null, visitLimit: number
   if (limits.length === 0) return null
   return `Links made without an account stop working after ${limits.join(" or ")}${limits.length === 2 ? ", whichever comes first" : ""}.`
 }
+
+export function linkEndsText(expirationDate: string | undefined, visitLimit: number): string | null {
+  const ends: string[] = []
+  if (expirationDate) {
+    const date = parseServerDateTime(expirationDate)
+    ends.push(`on ${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCDate()}, ${date.getUTCFullYear()}`)
+  }
+  if (visitLimit > 0) ends.push(`after ${countOf(visitLimit, "visit")}`)
+  if (ends.length === 0) return null
+  return `This link stops working ${ends.join(" or ")}${ends.length === 2 ? ", whichever comes first" : ""}.`
+}
+
+export const WARNING_PAGE_NOTE = "People who open this link see its address first, because the site is new or its name looks machine-made."
 
 export function anonymousLimitLineShown(settings: PublicSettings | undefined, signedIn: boolean, authLoading: boolean): string | null {
   if (authLoading || signedIn || settings === undefined || settings.anonymousLinks === false) return null
@@ -125,6 +150,12 @@ export const FORGOT_PASSWORD_HINT = "No password yet? Use Forgot password to set
 
 export function providerDisabledText(provider: SwitchableMethod | null): string {
   return `${provider ? PROVIDER_NAMES[provider] : "That"} sign-in is turned off on hrva.cc right now. Sign in with your password or a passkey. ${FORGOT_PASSWORD_HINT}`
+}
+
+export const FORGOT_PASSWORD_LABEL = "Forgot password"
+
+export function providerDisabledHeading(provider: SwitchableMethod | null): string {
+  return `${provider ? PROVIDER_NAMES[provider] : "That"} sign-in is off`
 }
 
 export const SITE_OFF_TEXT = "Turned off on hrva.cc right now."
@@ -189,6 +220,14 @@ export function groupSettings(settings: SettingResponse[], search: string): Sett
       return { group, rows }
     })
     .filter((entry) => entry.rows.length > 0)
+}
+
+export function switchUnavailable(setting: SettingResponse): boolean {
+  return setting.type === "SWITCH" && !setting.available
+}
+
+export function switchChecked(setting: SettingResponse): boolean {
+  return setting.value === true && !switchUnavailable(setting)
 }
 
 export function safetyOffLines(settings: SettingResponse[]): string[] {

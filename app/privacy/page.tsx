@@ -172,7 +172,7 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <em>cf.turnstile.u</em>, in <em>localStorage</em>, set by Cloudflare&apos;s check frame
-                  (challenges.cloudflare.com), not by hrva.cc, only when you make a link without an account
+                  (challenges.cloudflare.com), not by hrva.cc, when you start making a link without an account
                   while the human check is on; Cloudflare uses it for that check, and hrva.cc never reads it
                 </li>
               </ul>

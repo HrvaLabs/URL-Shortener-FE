@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { DomainPicker } from "@/components/domains/domain-picker"
 import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
+import { LinkResultNotes } from "@/components/link-result-notes"
 import { CHECKING_LABEL, TurnstileCheck } from "@/components/turnstile-check"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +19,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
 import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
-import { ALIASES_PAUSED, HUMAN_CHECK_REQUIRED, aliasFieldShown, humanCheckEnabled } from "@/lib/moderation"
+import { ALIASES_PAUSED, HUMAN_CHECK_REQUIRED, aliasFieldShown, humanCheckEnabled, type HumanCheckRefusal } from "@/lib/moderation"
 import type { UrlResponse } from "@/lib/types"
 import { cn, destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
@@ -42,7 +43,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
   const [result, setResult] = useState<UrlResponse | null>(null)
   const [copied, setCopied] = useState(false)
   const [checking, setChecking] = useState(false)
-  const [checkMissing, setCheckMissing] = useState(false)
+  const [checkRefusal, setCheckRefusal] = useState<HumanCheckRefusal | null>(null)
   const resultRef = useRef<HTMLDivElement>(null)
   const copyRef = useRef<HTMLButtonElement>(null)
 
@@ -50,7 +51,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
   const createUrl = useCreateUrl()
   const paused = useAnonymousLinksPaused()
   const { data: publicSettings } = usePublicSettings()
-  const humanCheck = useTurnstile({ enabled: humanCheckEnabled(publicSettings, Boolean(user), authLoading), startAtOnce: Boolean(initialUrl) })
+  const humanCheck = useTurnstile({ enabled: humanCheckEnabled(publicSettings, Boolean(user), authLoading) })
   const showUtm = withOptions && Boolean(user)
   const showDomains = withOptions && Boolean(user)
   const pickedDomain = showDomains ? domain : null
@@ -72,7 +73,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (paused || checking || !longUrl || longUrlError) return
+    if (paused || checking || createUrl.isPending || !longUrl || longUrlError) return
 
     const destination = destinationToSend(longUrl, tagging, utm)
     if (destination === null) {
@@ -85,7 +86,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
     }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
     setDomainError(null)
-    setCheckMissing(false)
+    setCheckRefusal(null)
 
     humanCheck.start()
     let humanCheckToken: string | null = null
@@ -94,8 +95,8 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
       humanCheckToken = await humanCheck.waitForToken()
       setChecking(false)
       if (!humanCheckToken) {
+        setCheckRefusal(humanCheck.refusal(true))
         humanCheck.reset()
-        setCheckMissing(true)
         return
       }
     }
@@ -123,7 +124,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
         return
       }
       if (err instanceof ApiError && err.message === HUMAN_CHECK_REQUIRED) {
-        setCheckMissing(true)
+        setCheckRefusal(humanCheck.refusal(humanCheckToken !== null))
         return
       }
       toast.error(err instanceof Error && err.message ? err.message : "Could not shorten that URL. Check it and try again.")
@@ -177,9 +178,8 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
             </div>
             <Button
               type="submit"
-              disabled={createUrl.isPending}
-              aria-disabled={paused || checking || undefined}
-              aria-busy={checking || undefined}
+              aria-disabled={paused || checking || createUrl.isPending || undefined}
+              aria-busy={checking || createUrl.isPending || undefined}
               aria-describedby={paused ? noticeId : undefined}
               className={cn("shrink-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50", isLarge ? "h-14 rounded-xl px-7 text-base" : "h-11 px-5")}
             >
@@ -187,7 +187,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
             </Button>
           </div>
           {longUrlError && <p id={longUrlErrorId} className="mt-2 text-left text-sm text-destructive">{longUrlError}</p>}
-          <TurnstileCheck containerRef={humanCheck.containerRef} missing={checkMissing} ticking={checking && humanCheck.interactive} className="mt-2" />
+          <TurnstileCheck containerRef={humanCheck.containerRef} refusal={checkRefusal} ticking={checking && humanCheck.interactive} className="mt-2" />
         </div>
 
         {showDomains && (
@@ -272,6 +272,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
               </a>
             </Button>
           </div>
+          <LinkResultNotes link={result} signedIn={Boolean(user)} className="basis-full" />
         </div>
       )}
     </div>

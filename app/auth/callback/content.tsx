@@ -10,8 +10,8 @@ import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/lib/auth-context"
-import { SIGNUPS_PAUSED, providerDisabledText } from "@/lib/moderation"
-import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider } from "@/lib/sign-in-methods"
+import { FORGOT_PASSWORD_LABEL, SIGNUPS_PAUSED, providerDisabledHeading, providerDisabledText } from "@/lib/moderation"
+import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider, type SwitchableMethod } from "@/lib/sign-in-methods"
 import { TWO_STEP_METHODS, type SignedIn, type TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
 
@@ -29,7 +29,7 @@ const messages: Record<string, string> = {
 type Callback =
   | { kind: "token"; token: string }
   | { kind: "second-step"; pendingToken: string; methods: TwoStepMethod[] }
-  | { kind: "error"; error: string; fromProvider: boolean }
+  | { kind: "error"; error: string; fromProvider: boolean; switchedOff?: { provider: SwitchableMethod | null } }
 
 function isTwoStepMethod(value: string): value is TwoStepMethod {
   return (TWO_STEP_METHODS as readonly string[]).includes(value)
@@ -46,9 +46,24 @@ function readCallback(searchParams: URLSearchParams): Callback {
     return { kind: "second-step", pendingToken, methods }
   }
   if (err === "provider_turned_off") return { kind: "error", error: providerTurnedOffText(providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()), fromProvider: true }
-  if (err === "provider_disabled") return { kind: "error", error: providerDisabledText(providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()), fromProvider: true }
+  if (err === "provider_disabled") {
+    const provider = providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()
+    return { kind: "error", error: providerDisabledText(provider), fromProvider: true, switchedOff: { provider } }
+  }
   if (err) return { kind: "error", error: Object.hasOwn(messages, err) ? messages[err] : "Authentication failed.", fromProvider: true }
   return { kind: "error", error: "Invalid callback — no token received.", fromProvider: false }
+}
+
+function withForgotPasswordLink(text: string) {
+  const [before, after] = text.split(FORGOT_PASSWORD_LABEL)
+  if (after === undefined) return text
+  return (
+    <>
+      {before}
+      <Link href="/reset-password" className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">{FORGOT_PASSWORD_LABEL}</Link>
+      {after}
+    </>
+  )
 }
 
 function AuthCallbackShell({ children }: { children: React.ReactNode }) {
@@ -84,6 +99,7 @@ export function AuthCallbackContent() {
     if (callback.kind === "second-step" && callback.methods.length === 0) return SIGN_IN_EXPIRED
     return null
   })
+  const switchedOff = callback.kind === "error" && error === callback.error ? callback.switchedOff : undefined
   const errorHeadingRef = useRef<HTMLHeadingElement>(null)
 
   useLayoutEffect(() => {
@@ -132,11 +148,11 @@ export function AuthCallbackContent() {
             tabIndex={-1}
             className="mt-4 font-display text-2xl focus-visible:ring-0 focus-visible:ring-offset-0"
           >
-            Authentication failed
+            {switchedOff ? providerDisabledHeading(switchedOff.provider) : "Authentication failed"}
           </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">{error}</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">{switchedOff ? withForgotPasswordLink(error) : error}</p>
           <Button asChild className="mt-8 w-full">
-            <Link href="/login">Try again</Link>
+            <Link href="/login">{switchedOff ? "Back to sign in" : "Try again"}</Link>
           </Button>
         </Card>
       </AuthCallbackShell>

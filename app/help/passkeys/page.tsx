@@ -224,8 +224,22 @@ export default function PasskeysHelpPage() {
               </p>
               <p>
                 With two-step verification on, the card shows the method you signed in with first, not your
-                second step, so a passkey you use only as your second step isn&apos;t listed. The card only
-                shows the list; you can&apos;t remove a method from it.
+                second step, so a passkey you use only as your second step isn&apos;t listed.
+              </p>
+              <p>
+                You can change some of them from the card. <strong>Turn off</strong> next to Google or
+                GitHub makes hrva.cc refuse a sign-in with it, and the row then reads &quot;Turned off&quot;
+                with the date. <strong>Turn back on</strong> lets it sign you in again. Email and
+                password has <strong>Remove password</strong>, which asks for your current password and
+                removes it, so you can&apos;t sign in with your email and password anymore. To get a
+                password again, use Forgot password on the sign-in page: finishing the reset sets a new one.
+                Passkeys stay in their own card, where you can remove them. Each change sends you an email.
+              </p>
+              <p>
+                The last way you sign in can&apos;t be turned off or removed. You&apos;ll see &quot;Keep at
+                least one way to sign in. Add a passkey or another method first.&quot; The same goes for
+                removing your last passkey. With two-step verification on, you also have to keep a
+                password, Google or GitHub as your first step.
               </p>
 
               <h2 id="privacy">Passkeys and your privacy</h2>

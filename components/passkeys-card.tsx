@@ -26,10 +26,11 @@ import { parseServerDateTime } from "@/lib/analytics"
 import { useAuth } from "@/lib/auth-context"
 import { usePasskeys, useRemovePasskey, useRenamePasskey } from "@/lib/hooks/usePasskeys"
 import { useReauthToast } from "@/lib/hooks/useReauthToast"
+import { useNeedsPassword } from "@/lib/hooks/useSignInMethods"
 import { useRefreshTwoStep, useTwoStepStatus } from "@/lib/hooks/useTwoStep"
 import { useWebAuthnSupported } from "@/lib/hooks/useWebAuthnSupported"
 import type { Passkey, PasskeyKind } from "@/lib/types"
-import { formatDate, formatTimeAgo, isLocalAccount } from "@/lib/utils"
+import { formatDate, formatTimeAgo } from "@/lib/utils"
 import { abortPasskeyRequest, createPasskey, isWebAuthnSupported, passkeyErrorMessage } from "@/lib/webauthn"
 
 const KIND_BADGES: Record<PasskeyKind, { label: string; hint: string; variant: BadgeProps["variant"] }> = {
@@ -77,7 +78,7 @@ export function PasskeysCard() {
   const focusAfterRemove = useRef(false)
   const openTurnOffAfterClose = useRef(false)
 
-  const isLocal = isLocalAccount(user)
+  const needsPassword = useNeedsPassword()
   const onlyTwoStepMethod = !!twoStep?.enabled && !twoStep.totp && twoStep.passkeys <= 1
 
   const openFrom = (event: React.MouseEvent<HTMLElement>, open: () => void) => {
@@ -182,7 +183,7 @@ export function PasskeysCard() {
 
       <Dialog open={adding} onOpenChange={(open) => { if (!open && !addBusy) closeAdd() }}>
         <DialogContent onCloseAutoFocus={restoreFocus}>
-          <AddPasskeyForm email={user?.email ?? ""} isLocal={isLocal} busy={addBusy} onBusyChange={setAddBusy} onDone={closeAdd} />
+          <AddPasskeyForm email={user?.email ?? ""} needsPassword={needsPassword} busy={addBusy} onBusyChange={setAddBusy} onDone={closeAdd} />
         </DialogContent>
       </Dialog>
 
@@ -205,7 +206,7 @@ export function PasskeysCard() {
           {removing && (
             <RemovePasskeyForm
               passkey={removing}
-              isLocal={isLocal}
+              needsPassword={needsPassword}
               onlyTwoStepMethod={onlyTwoStepMethod}
               passwordRef={removePasswordRef}
               busy={removeBusy}
@@ -268,13 +269,13 @@ function PasskeyRow({
 
 function AddPasskeyForm({
   email,
-  isLocal,
+  needsPassword,
   busy,
   onBusyChange,
   onDone,
 }: {
   email: string
-  isLocal: boolean
+  needsPassword: boolean
   busy: boolean
   onBusyChange: (busy: boolean) => void
   onDone: () => void
@@ -309,7 +310,7 @@ function AddPasskeyForm({
     changeStage("waiting")
     let ceremony
     try {
-      ceremony = await passkeyApi.registrationOptions(isLocal ? password : undefined)
+      ceremony = await passkeyApi.registrationOptions(needsPassword ? password : undefined)
     } catch (error) {
       if (!mounted.current) return
       if (showError(error, errorText(error))) {
@@ -370,7 +371,7 @@ function AddPasskeyForm({
           className="mt-1.5 h-10"
         />
       </div>
-      {isLocal && (
+      {needsPassword && (
         <div>
           <Label htmlFor="passkeyPassword">Current password</Label>
           <Input
@@ -458,7 +459,7 @@ function RenamePasskeyForm({ passkey, onDone }: { passkey: Passkey; onDone: () =
 
 function RemovePasskeyForm({
   passkey,
-  isLocal,
+  needsPassword,
   onlyTwoStepMethod,
   passwordRef,
   busy,
@@ -468,7 +469,7 @@ function RemovePasskeyForm({
   onDone,
 }: {
   passkey: Passkey
-  isLocal: boolean
+  needsPassword: boolean
   onlyTwoStepMethod: boolean
   passwordRef: React.RefObject<HTMLInputElement | null>
   busy: boolean
@@ -503,7 +504,7 @@ function RemovePasskeyForm({
     submitting.current = true
     onBusyChange(true)
     try {
-      await removePasskey.mutateAsync({ id: passkey.id, password: isLocal ? password : undefined })
+      await removePasskey.mutateAsync({ id: passkey.id, password: needsPassword ? password : undefined })
     } catch (error) {
       if (showError(error, errorText(error))) {
         onDone()
@@ -547,7 +548,7 @@ function RemovePasskeyForm({
           You won&apos;t be able to sign in with it anymore. Also delete it from your password manager or device.
         </AlertDialogDescription>
       </AlertDialogHeader>
-      {isLocal && (
+      {needsPassword && (
         <div>
           <Label htmlFor="removePassword">Current password</Label>
           <Input

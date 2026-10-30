@@ -25,6 +25,11 @@ export interface SignInMethodUse {
   method: SignInMethod
   firstUsedAt: string
   lastUsedAt: string
+  turnedOffAt: string | null
+}
+
+export interface SignInMethodsResponse {
+  signInMethods: SignInMethodUse[]
 }
 
 export interface UserDto {
@@ -38,6 +43,7 @@ export interface UserDto {
   authProvider?: string
   twoFactorEnabled?: boolean
   twoStepEnabled?: boolean
+  passwordSet?: boolean
   signInMethods?: SignInMethodUse[]
 }
 

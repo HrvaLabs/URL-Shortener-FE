@@ -197,6 +197,9 @@ function AdminUsers() {
                       <li key={use.method} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                         <Badge variant={use.method === "PASSWORD" ? "outline" : "secondary"} className="whitespace-nowrap">{signInMethodLabels[use.method] ?? use.method}</Badge>
                         <span className="tabular-nums text-muted-foreground">Last used {formatDateTime(parseServerDateTime(use.lastUsedAt))}</span>
+                        {use.turnedOffAt && (
+                          <span className="tabular-nums text-muted-foreground">Turned off {formatDateTime(parseServerDateTime(use.turnedOffAt))}</span>
+                        )}
                       </li>
                     ))}
                   </ul>

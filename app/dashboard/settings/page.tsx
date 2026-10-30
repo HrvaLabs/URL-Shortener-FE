@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { userApi } from "@/lib/api-client"
 import { useReauthToast } from "@/lib/hooks/useReauthToast"
+import { useNeedsPassword } from "@/lib/hooks/useSignInMethods"
 import { isLocalAccount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,6 +36,7 @@ export default function SettingsPage() {
   const deleteButtonRef = useRef<HTMLButtonElement>(null)
   const focusAfterRefusedDeletion = useRef(false)
   const showError = useReauthToast()
+  const needsPassword = useNeedsPassword()
 
   useEffect(() => {
     if (deleteLoading || !focusAfterRefusedDeletion.current) return
@@ -69,7 +71,7 @@ export default function SettingsPage() {
     }
     setDeleteLoading(true)
     try {
-      await userApi.deleteMe(isLocal ? { password: deletePassword } : undefined)
+      await userApi.deleteMe(needsPassword ? { password: deletePassword } : undefined)
       toast.success("Your account has been deleted.")
       logoutTo("/login")
     } catch (err) {
@@ -151,7 +153,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {isLocal && (
+      {needsPassword && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Change Password</CardTitle>
@@ -212,7 +214,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {isLocal && (
+            {needsPassword && (
               <div>
                 <Label htmlFor="deletePassword">Confirm with your password</Label>
                 <Input ref={deletePasswordRef} id="deletePassword" type="password" autoComplete="current-password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="mt-1.5 h-10 max-w-sm" />
@@ -223,7 +225,7 @@ export default function SettingsPage() {
               type="button"
               variant="destructive"
               size="sm"
-              disabled={deleteLoading || (isLocal && !deletePassword)}
+              disabled={deleteLoading || (needsPassword && !deletePassword)}
               onClick={handleDeleteAccount}
             >
               {deleteLoading ? "Deleting…" : "Delete my account"}

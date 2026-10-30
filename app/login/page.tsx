@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
 import { PageMeta } from "@/components/page-meta"
 import { getBackendOrigin, safeNext } from "@/lib/utils"
+import { rememberOAuthProvider } from "@/lib/sign-in-methods"
 import { ArrowLeft } from "lucide-react"
 import { PasskeySignInButton } from "@/components/auth/passkey-sign-in-button"
 import { SecondStep } from "@/components/auth/second-step"
@@ -197,6 +198,7 @@ function LoginForm({ next }: { next: string | null }) {
                     <a
                       href={`${getBackendOrigin()}/oauth2/authorization/google`}
                       onClick={() => {
+                        rememberOAuthProvider("GOOGLE")
                         if (next) sessionStorage.setItem("post-login-next", next)
                         else sessionStorage.removeItem("post-login-next")
                       }}
@@ -214,6 +216,7 @@ function LoginForm({ next }: { next: string | null }) {
                     <a
                       href={`${getBackendOrigin()}/oauth2/authorization/github`}
                       onClick={() => {
+                        rememberOAuthProvider("GITHUB")
                         if (next) sessionStorage.setItem("post-login-next", next)
                         else sessionStorage.removeItem("post-login-next")
                       }}

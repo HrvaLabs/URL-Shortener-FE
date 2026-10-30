@@ -98,8 +98,10 @@ export default function CustomDomainsHelpPage() {
               <ul>
                 <li>Anyone with a hrva.cc account, once signed in. Custom domains are free.</li>
                 <li>
-                  One custom domain per account. An admin can allow more for an account, after looking at what
-                  it&apos;s for. At the limit, the card says <Quote>{domainLimitLine(1)}</Quote>
+                  One custom domain per account. At the limit, the card says{" "}
+                  <Quote>{domainLimitLine(1)}</Quote> To ask for more, email{" "}
+                  <a href="mailto:support@hrva.cc">support@hrva.cc</a> and say what they&apos;re for; an admin can
+                  allow more for your account.
                 </li>
                 <li>
                   A person reviews each application before anything is set up.

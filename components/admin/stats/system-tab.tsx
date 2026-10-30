@@ -20,6 +20,7 @@ const emailFills: Record<EmailStatus, StackFill> = {
   FAILED: { tone: "destructive" },
   RESENT: { step: 55 },
   SENDING: { step: 25 },
+  SKIPPED: { step: 40 },
 }
 
 const redirectSourceLabels: Record<RedirectTiming["source"], string> = {

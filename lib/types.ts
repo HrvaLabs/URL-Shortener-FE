@@ -333,7 +333,7 @@ export interface RedisKeyCounts {
   capped: boolean
 }
 
-export type EmailStatus = "SENT" | "FAILED" | "SENDING" | "RESENT"
+export type EmailStatus = "SENT" | "FAILED" | "SENDING" | "RESENT" | "SKIPPED"
 
 export interface SystemStats {
   days: AnalyticsRange
@@ -673,6 +673,8 @@ export type AuditAction =
   | "DELETE_DOMAIN"
   | "SET_DOMAIN_ALLOWANCE"
   | "REMOVE_DOMAIN_ALLOWANCE"
+  | "CHANGE_SETTING"
+  | "RESET_SETTING"
   | "UNKNOWN"
 
 export interface AuditLog {
@@ -892,6 +894,78 @@ export interface PublicStatsResponse {
   averageReviewMinutes: number | null
   blocklists: { name: string; action: "BLOCK" | "FLAG"; entries: number }[]
   updatedAt: string
+}
+
+export type SettingKey =
+  | "ANONYMOUS_LINKS"
+  | "NEW_SIGNUPS"
+  | "ANONYMOUS_LINKS_PER_HOUR"
+  | "CUSTOM_ALIASES"
+  | "SAFE_BROWSING_CHECK"
+  | "SAFE_BROWSING_FAIL_CLOSED"
+  | "BLOCKLIST_CHECK"
+  | "SUSPICIOUS_LINK_CHECK"
+  | "NIGHTLY_SAFE_BROWSING"
+  | "NIGHTLY_DESTINATION_CHECK"
+  | "SAME_SHAPE_ALERT"
+  | "CAMPAIGN_LINKS"
+  | "CAMPAIGN_DOMAINS"
+  | "CAMPAIGN_WINDOW_HOURS"
+  | "TRAFFIC_ALERTS"
+  | "TRAFFIC_LINK_CLICKS"
+  | "TRAFFIC_SHARE_PERCENT"
+  | "TRAFFIC_MIN_ANONYMOUS_CLICKS"
+  | "BURST_LINKS"
+  | "WEEKLY_DIGEST"
+  | "WEEKLY_DIGEST_EMAIL"
+  | "SEND_EMAILS"
+  | "EMAIL_LINK_BLOCKED"
+  | "EMAIL_MALWARE_FOUND"
+  | "EMAIL_DEAD_LINKS"
+  | "EMAIL_LINK_EXPIRING"
+  | "EMAIL_WEEKLY_SUMMARY"
+  | "EMAIL_ADMIN_DAILY"
+  | "EMAIL_NEW_USER_NOTICE"
+  | "EMAIL_CUSTOM_DOMAIN"
+
+export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
+
+export type SettingType = "SWITCH" | "NUMBER" | "TEXT" | "ADDRESSES"
+
+export type SettingValue = boolean | number | string | string[] | null
+
+export interface SettingResponse {
+  key: SettingKey
+  group: SettingGroup
+  type: SettingType
+  label: string
+  description: string
+  parent: SettingKey | null
+  safety: boolean
+  value: SettingValue
+  defaultValue: SettingValue
+  changed: boolean
+  changedBy: string | null
+  changedAt: string | null
+  min: number | null
+  max: number | null
+  nullable: boolean
+  noneLabel: string | null
+  unit: string | null
+  available: boolean
+  unavailableReason: string | null
+}
+
+export interface PublicSettings {
+  anonymousLinks: boolean
+  newSignups: boolean
+  customAliases: boolean
+  humanCheck?: boolean
+  turnstileSiteKey?: string | null
+  anonymousExpiryDays?: number | null
+  anonymousVisitLimit?: number | null
+  googleSignIn?: boolean
+  githubSignIn?: boolean
 }
 
 export type BioAccent = "BLUE" | "VIOLET" | "PINK" | "RED" | "ORANGE" | "GREEN" | "TEAL" | "SLATE"

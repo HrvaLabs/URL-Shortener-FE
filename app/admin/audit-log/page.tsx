@@ -56,6 +56,8 @@ const actionLabels: Record<AuditAction, string> = {
   DELETE_DOMAIN: "Removed domain",
   SET_DOMAIN_ALLOWANCE: "Set domain limit",
   REMOVE_DOMAIN_ALLOWANCE: "Removed domain limit",
+  CHANGE_SETTING: "Changed setting",
+  RESET_SETTING: "Reset setting",
   UNKNOWN: "Unknown action",
 }
 
@@ -95,6 +97,8 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   DELETE_DOMAIN: "destructive",
   SET_DOMAIN_ALLOWANCE: "secondary",
   REMOVE_DOMAIN_ALLOWANCE: "secondary",
+  CHANGE_SETTING: "secondary",
+  RESET_SETTING: "secondary",
   UNKNOWN: "outline",
 }
 

@@ -52,6 +52,7 @@ export const emailStatusLabels: Record<EmailStatus, string> = {
   FAILED: "Failed",
   SENDING: "Sending",
   RESENT: "Resent",
+  SKIPPED: "Not sent",
 }
 
 export const redisPrefixLabels: Record<string, string> = {

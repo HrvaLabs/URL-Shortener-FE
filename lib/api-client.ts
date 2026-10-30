@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, EmailStatus, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, AuditAction, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -193,16 +193,16 @@ export const urlApi = {
     if (filters.deadDestination) params.set("deadDestination", "true")
     return request<Page<UrlResponse>>("GET", `/urls/all?${params}`)
   },
-  getByShort: (short: string) =>
-    request<UrlResponse>("GET", `/urls/${short}`),
-  unlock: (short: string, password: string) =>
-    request<{ longUrl: string }>("POST", `/urls/${short}/unlock`, { password }),
-  peek: (short: string) =>
-    request<PeekUrl>("GET", `/urls/${short}/peek`),
-  preview: (short: string) =>
-    request<LinkPreviewResponse>("GET", `/urls/${short}/preview`),
-  getQrCodeUrl: (short: string, size = 300) =>
-    `${getApiBaseUrl()}/urls/${short}/qr?size=${size}`,
+  getByShort: (short: string, domain?: string | null) =>
+    request<UrlResponse>("GET", `/urls/${short}${domainQuery(domain, "?")}`),
+  unlock: (short: string, password: string, domain?: string | null) =>
+    request<{ longUrl: string }>("POST", `/urls/${short}/unlock${domainQuery(domain, "?")}`, { password }),
+  peek: (short: string, domain?: string | null) =>
+    request<PeekUrl>("GET", `/urls/${short}/peek${domainQuery(domain, "?")}`),
+  preview: (short: string, domain?: string | null) =>
+    request<LinkPreviewResponse>("GET", `/urls/${short}/preview${domainQuery(domain, "?")}`),
+  getQrCodeUrl: (short: string, size = 300, domain?: string | null) =>
+    `${getApiBaseUrl()}/urls/${short}/qr?size=${size}${domainQuery(domain, "&")}`,
   update: (id: number, data: UrlUpdateDto) =>
     request<UrlResponse>("PUT", `/urls/${id}`, data),
   deactivate: (id: number) =>
@@ -477,4 +477,54 @@ export const notificationApi = {
     request<{ signingSecret: string }>("POST", `/users/me/notification-channels/${id}/signing-secret`),
   unsubscribe: (token: string) =>
     request<UnsubscribeResult>("POST", `/notifications/unsubscribe?token=${encodeURIComponent(token)}`),
+}
+
+function domainQuery(domain: string | null | undefined, separator: "?" | "&"): string {
+  return domain ? `${separator}domain=${encodeURIComponent(domain)}` : ""
+}
+
+export const domainApi = {
+  mine: () =>
+    request<MyDomains>("GET", "/users/me/domains"),
+  apply: (hostname: string, reason: string) =>
+    request<CustomDomain>("POST", "/users/me/domains", { hostname, reason }),
+  get: (id: number) =>
+    request<CustomDomain>("GET", `/users/me/domains/${id}`),
+  remove: (id: number, links: DomainLinkMode) =>
+    request<DomainRemoval>("DELETE", `/users/me/domains/${id}?links=${links}`),
+}
+
+export const adminDomainApi = {
+  list: ({ status, search, page, size }: AdminDomainFilters) => {
+    const params = new URLSearchParams()
+    params.set("page", String(page))
+    params.set("size", String(size))
+    if (status) params.set("status", status)
+    if (search) params.set("search", search)
+    return request<Page<AdminDomain>>("GET", `/admin/domains?${params}`)
+  },
+  summary: () =>
+    request<DomainSummary>("GET", "/admin/domains/summary"),
+  approve: (id: number, note?: string | null) =>
+    request<AdminDomain>("POST", `/admin/domains/${id}/approve`, { note: note || null }),
+  reject: (id: number, note?: string | null) =>
+    request<AdminDomain>("POST", `/admin/domains/${id}/reject`, { note: note || null }),
+  disable: (id: number, note: string) =>
+    request<AdminDomain>("POST", `/admin/domains/${id}/disable`, { note }),
+  enable: (id: number) =>
+    request<AdminDomain>("POST", `/admin/domains/${id}/enable`),
+  retry: (id: number) =>
+    request<AdminDomain>("POST", `/admin/domains/${id}/retry`),
+  remove: (id: number, links: DomainLinkMode) =>
+    request<DomainRemoval>("DELETE", `/admin/domains/${id}?links=${links}`),
+  checkCloudflare: () =>
+    request<CloudflareCheck>("POST", "/admin/domains/cloudflare-check"),
+  reconcile: () =>
+    request<DomainReconcile>("POST", "/admin/domains/reconcile"),
+  allowance: (userId: number) =>
+    request<DomainAllowance>("GET", `/admin/domains/allowances/${userId}`),
+  setAllowance: (userId: number, maxDomains: number, reason: string) =>
+    request<DomainAllowance>("PUT", `/admin/domains/allowances/${userId}`, { maxDomains, reason }),
+  removeAllowance: (userId: number) =>
+    request<void>("DELETE", `/admin/domains/allowances/${userId}`),
 }

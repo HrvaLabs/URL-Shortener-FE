@@ -110,8 +110,12 @@ export function getShortBaseUrl(): string {
   return process.env.DEV_API_ORIGIN || "http://localhost:8080"
 }
 
-export function formatShortUrl(short: string): string {
-  return `${getShortBaseUrl()}/${short}`
+export function formatShortUrl(short: string, hostname?: string | null): string {
+  return hostname ? `https://${hostname}/${short}` : `${getShortBaseUrl()}/${short}`
+}
+
+export function shortHostOf(hostname?: string | null): string {
+  return hostname || getShortBaseUrl().replace(/^https?:\/\//, "")
 }
 
 export function withQrMarker(shortLink: string): string {

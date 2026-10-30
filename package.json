@@ -16,6 +16,7 @@
     "check:bio": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-bio.mjs",
     "check:notifications": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-notifications.mjs",
     "check:share": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-share.mjs",
+    "check:domains": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-domains.mjs",
     "build:cf": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

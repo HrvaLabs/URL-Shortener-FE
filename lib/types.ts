@@ -1105,3 +1105,206 @@ export interface UsersStats {
 export interface UrlFilters {
   deadDestination?: boolean
 }
+
+export type CustomDomainStatus =
+  | "PENDING_REVIEW"
+  | "APPROVED_PROVISIONING"
+  | "AWAITING_DNS"
+  | "ACTIVE"
+  | "REJECTED"
+  | "DISABLED"
+  | "ERROR"
+  | "DELETED"
+
+export type DomainProblem =
+  | "DNS_NOT_FOUND"
+  | "CAA_BLOCKED"
+  | "CERTIFICATE_TIMED_OUT"
+  | "CNAME_REMOVED"
+  | "CLOUDFLARE_BLOCKED"
+  | "PROVISIONING_FAILED"
+  | "DNS_TIMED_OUT"
+
+export type DomainLinkMode = "MOVE" | "DEACTIVATE"
+
+export type CloudflareTokenStatus = "OK" | "MISSING" | "INVALID" | "NO_PERMISSION" | "UNREACHABLE"
+
+export type DomainDisableReason = "ADMIN" | "USER_BLOCKED" | "DOMAIN_RULE" | "BLOCKLIST"
+
+export interface DomainRef {
+  id: number
+  hostname: string
+}
+
+export interface DomainDnsRecord {
+  type: "CNAME"
+  name: string
+  target: string
+}
+
+export interface DomainSteps {
+  dnsFound: boolean
+  certificateIssued: boolean
+}
+
+export interface CustomDomain {
+  id: number
+  hostname: string
+  status: CustomDomainStatus
+  reason: string
+  reviewNote: string | null
+  createdAt: string
+  reviewedAt: string | null
+  activatedAt: string | null
+  lastCheckedAt: string | null
+  dnsRecord: DomainDnsRecord | null
+  steps: DomainSteps | null
+  problem: DomainProblem | null
+  problemText: string | null
+  disabledNote: string | null
+  links: number
+}
+
+export interface MyDomains {
+  domains: CustomDomain[]
+  limit: number
+  used: number
+  canApply: boolean
+}
+
+export interface DomainRename {
+  from: string
+  to: string
+}
+
+export interface DomainRemoval {
+  moved: number
+  renamed: DomainRename[]
+  deactivated: number
+}
+
+export interface DomainOwnerSummary {
+  id: number
+  email: string
+  active: boolean
+  createdAt: string
+  links: number
+  blockedLinks: number
+  openReviews: number
+  possibleScammer: boolean
+}
+
+export interface AdminDomain extends CustomDomain {
+  owner: DomainOwnerSummary | null
+  applyFlags: string[]
+  cloudflareId: string | null
+  cloudflareStatus: string | null
+  sslStatus: string | null
+  lastError: string | null
+  disabledReason: DomainDisableReason | null
+  disabledAt: string | null
+  deletedAt: string | null
+  clicks: number
+}
+
+export interface CloudflareCheck {
+  status: CloudflareTokenStatus
+  checkedAt: string | null
+  message: string | null
+}
+
+export interface DomainReconcile {
+  ranAt: string
+  cloudflareTotal: number | null
+  oursInCloudflare: number | null
+  unknownHostnames: string[]
+  missing: DomainRef[]
+  ignored: string[]
+  error: string | null
+}
+
+export interface DomainSummary {
+  slotsInUse: number
+  maxActive: number
+  freeAllowance: number
+  cloudflareTotal: number | null
+  cloudflareQuota: { used: number; allocated: number } | null
+  pending: number
+  active: number
+  token: CloudflareCheck
+  reconcile: DomainReconcile | null
+}
+
+export interface DomainAllowance {
+  userId: number
+  maxDomains: number
+  reason: string | null
+  grantedBy: string | null
+  grantedAt: string | null
+}
+
+export interface AdminDomainFilters {
+  status?: CustomDomainStatus
+  search?: string
+  page: number
+  size: number
+}
+
+export interface Url {
+  domain?: DomainRef | null
+}
+
+export interface UrlResponse {
+  domain?: DomainRef | null
+}
+
+export interface AnalyticsLinkSummary {
+  domain?: DomainRef | null
+}
+
+export interface AnalyticsTopLink {
+  domain?: DomainRef | null
+}
+
+export interface ReviewEntry {
+  domain?: string | null
+}
+
+export interface NewestLink {
+  domain?: string | null
+}
+
+export interface TrafficTopLink {
+  domain?: string | null
+}
+
+export interface BioPageButton {
+  domain?: string | null
+}
+
+export interface PublicBioPageButton {
+  domain?: string | null
+}
+
+export interface CreateUrlDto {
+  domain?: string | null
+}
+
+export interface LinksStats {
+  customDomains?: {
+    active: number
+    pending: number
+    slotsInUse: number
+    maxActive: number
+    freeAllowance: number
+    cloudflareTotal: number | null
+  }
+}
+
+export interface SystemStats {
+  cloudflare?: CloudflareCheck
+}
+
+export interface DomainRuleCreated {
+  domainsDisabled?: number
+}

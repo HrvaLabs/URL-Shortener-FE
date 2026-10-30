@@ -103,8 +103,8 @@ export default function PrivacyFirstPage() {
           <li>Anything about an individual click</li>
           <li>Cookies: short links set none</li>
           <li>
-            Making a link without an account runs a Cloudflare Turnstile check, which processes browser and network
-            signals for that purpose only. hrva.cc stores nothing from it.
+            Making a link without an account runs a Cloudflare Turnstile check; how Cloudflare handles that data is in
+            its <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">Turnstile Privacy Addendum</a>. hrva.cc stores nothing from it.
           </li>
         </ul>
         <p>

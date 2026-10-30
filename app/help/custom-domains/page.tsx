@@ -41,7 +41,7 @@ const PROBLEM_TEXTS: Record<Exclude<DomainProblem, "PROVISIONING_FAILED">, strin
 }
 
 const HELP_STATUS_HINTS: Partial<Record<CustomDomainStatus, string>> = {
-  AWAITING_DNS: "Add the CNAME record shown on the card. We check every minute and finish on our own.",
+  AWAITING_DNS: "Add the CNAME record shown on the card. We check every minute at first, then less often, and finish on our own.",
 }
 
 const DISABLED_REASONS = ["Turned off because the account was blocked.", "Turned off because the domain is on a blocklist."]

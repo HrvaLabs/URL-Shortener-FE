@@ -18,7 +18,7 @@ export const DOMAIN_STATUS_LABELS: Record<CustomDomainStatus, string> = {
 export const DOMAIN_STATUS_HINTS: Record<CustomDomainStatus, string> = {
   PENDING_REVIEW: "We'll email you when it's reviewed, usually within a day or two.",
   APPROVED_PROVISIONING: "Approved. We're getting your domain ready; this takes a minute.",
-  AWAITING_DNS: "Add the CNAME record below. We check every minute and finish on our own.",
+  AWAITING_DNS: "Add the CNAME record below. We check every minute at first, then less often, and finish on our own.",
   ACTIVE: "Ready. Pick this domain when you shorten a link.",
   REJECTED: "This application wasn't approved.",
   DISABLED: "This domain is turned off. Its links don't open.",

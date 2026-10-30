@@ -492,6 +492,8 @@ export const domainApi = {
     request<CustomDomain>("GET", `/users/me/domains/${id}`),
   remove: (id: number, links: DomainLinkMode) =>
     request<DomainRemoval>("DELETE", `/users/me/domains/${id}?links=${links}`),
+  retry: (id: number) =>
+    request<CustomDomain>("POST", `/users/me/domains/${id}/retry`),
 }
 
 export const adminDomainApi = {

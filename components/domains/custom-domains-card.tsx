@@ -20,7 +20,7 @@ import {
   domainRemovalSummary,
   isWaitingForSetup,
 } from "@/lib/domains"
-import { useDomain, useMyDomains, useRemoveDomain } from "@/lib/hooks/useDomains"
+import { useDomain, useMyDomains, useRemoveDomain, useRetryMyDomain } from "@/lib/hooks/useDomains"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { CustomDomain, DomainLinkMode } from "@/lib/types"
@@ -196,12 +196,15 @@ interface DomainRowProps {
 }
 
 function DomainRow({ domain, onStatusChange, onRemove }: DomainRowProps) {
-  if (SETTLED.has(domain.status)) return <DomainRowBody domain={domain} checking={false} onCheck={() => {}} onRemove={onRemove} />
+  if (SETTLED.has(domain.status)) {
+    return <DomainRowBody domain={domain} checking={false} retrying={false} onCheck={() => {}} onRetry={() => {}} onRemove={onRemove} />
+  }
   return <LiveDomainRow domain={domain} onStatusChange={onStatusChange} onRemove={onRemove} />
 }
 
 function LiveDomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowProps) {
   const detail = useDomain(listed.id, { poll: true })
+  const retry = useRetryMyDomain()
   const liveStatus = detail.data?.status
 
   useEffect(() => {
@@ -212,7 +215,9 @@ function LiveDomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowPr
     <DomainRowBody
       domain={detail.data ?? listed}
       checking={detail.isFetching}
+      retrying={retry.isPending}
       onCheck={() => void detail.refetch()}
+      onRetry={() => retry.mutate(listed.id, { onError: (err) => { toast.error(errorText(err)) } })}
       onRemove={onRemove}
     />
   )
@@ -221,16 +226,19 @@ function LiveDomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowPr
 interface DomainRowBodyProps {
   domain: CustomDomain
   checking: boolean
+  retrying: boolean
   onCheck: () => void
+  onRetry: () => void
   onRemove: (trigger: HTMLElement) => void
 }
 
-function DomainRowBody({ domain, checking, onCheck, onRemove }: DomainRowBodyProps) {
+function DomainRowBody({ domain, checking, retrying, onCheck, onRetry, onRemove }: DomainRowBodyProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const checkFocused = useRef(false)
   const waiting = isWaitingForSetup(domain.status)
   const problem = domainProblemLines(domain)
   const withdraw = domain.status === "PENDING_REVIEW"
+  const busy = problem?.retry ? retrying : checking
 
   useLayoutEffect(() => {
     if (waiting || !checkFocused.current) return
@@ -285,14 +293,18 @@ function DomainRowBody({ domain, checking, onCheck, onRemove }: DomainRowBodyPro
               type="button"
               variant="outline"
               size="sm"
-              aria-disabled={checking}
-              aria-busy={checking}
+              aria-disabled={busy}
+              aria-busy={busy}
               onFocus={() => { checkFocused.current = true }}
               onBlur={() => { checkFocused.current = false }}
-              onClick={() => { if (!checking) onCheck() }}
+              onClick={() => {
+                if (busy) return
+                if (problem?.retry) onRetry()
+                else onCheck()
+              }}
               className={rowButton}
             >
-              {problem?.retry ? (checking ? "Retrying..." : "Retry") : checking ? "Checking..." : "Check now"}
+              {problem?.retry ? (retrying ? "Retrying..." : "Retry") : checking ? "Checking..." : "Check now"}
             </Button>
           )}
           <Button

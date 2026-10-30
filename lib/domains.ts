@@ -60,6 +60,8 @@ export const isHostnameShaped = (value: string | null | undefined): boolean =>
 
 export const PROVISIONING_FAILED_TEXT = "Setting up your domain hit a problem. We'll keep trying, or try again now."
 
+export const PROVISIONING_GAVE_UP_TEXT = "Setting up your domain failed. Try again now, or remove it."
+
 export const DOMAIN_PROBLEM_FOLLOW_UPS: Record<Exclude<DomainProblem, "PROVISIONING_FAILED">, string> = {
   DNS_NOT_FOUND: "We keep checking on our own, or use Check now.",
   CAA_BLOCKED: "We check again on our own, or use Check now once it's fixed.",
@@ -77,7 +79,9 @@ export interface DomainProblemLines {
 
 export const domainProblemLines = (domain: CustomDomain): DomainProblemLines | null => {
   if (!domain.problem) return null
-  if (domain.problem === "PROVISIONING_FAILED") return { text: PROVISIONING_FAILED_TEXT, followUp: null, retry: true }
+  if (domain.problem === "PROVISIONING_FAILED") {
+    return { text: domain.status === "ERROR" ? PROVISIONING_GAVE_UP_TEXT : PROVISIONING_FAILED_TEXT, followUp: null, retry: true }
+  }
   return { text: domain.problemText, followUp: DOMAIN_PROBLEM_FOLLOW_UPS[domain.problem], retry: false }
 }
 

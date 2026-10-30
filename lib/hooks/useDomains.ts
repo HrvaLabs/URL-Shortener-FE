@@ -55,6 +55,14 @@ export function useRemoveDomain() {
   })
 }
 
+export function useRetryMyDomain() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => domainApi.retry(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: DOMAINS_KEY }),
+  })
+}
+
 export function useAdminDomains(filters: AdminDomainFilters) {
   return useQuery({
     queryKey: [...ADMIN_DOMAINS_KEY, filters],

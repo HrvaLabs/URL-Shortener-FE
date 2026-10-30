@@ -15,6 +15,7 @@ const {
   TOKEN_STATUS_LABELS,
   DOMAIN_PROBLEM_FOLLOW_UPS,
   PROVISIONING_FAILED_TEXT,
+  PROVISIONING_GAVE_UP_TEXT,
   canPickDomain,
   domainApplyState,
   domainLimitLine,
@@ -161,6 +162,7 @@ check("problem follow-ups say who checks again", () => {
     DNS_TIMED_OUT: "We don't check on our own any more. Use Check now to look again.",
   })
   assert.equal(PROVISIONING_FAILED_TEXT, "Setting up your domain hit a problem. We'll keep trying, or try again now.")
+  assert.equal(PROVISIONING_GAVE_UP_TEXT, "Setting up your domain failed. Try again now, or remove it.")
 })
 
 check("domainProblemLines", () => {
@@ -177,9 +179,14 @@ check("domainProblemLines", () => {
     domainProblemLines(domain({ status: "AWAITING_DNS", problem: "DNS_NOT_FOUND", problemText: null })),
     { text: null, followUp: DOMAIN_PROBLEM_FOLLOW_UPS.DNS_NOT_FOUND, retry: false },
   )
-  const failed = { text: PROVISIONING_FAILED_TEXT, followUp: null, retry: true }
-  assert.deepEqual(domainProblemLines(domain({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED", problemText: "Backend text" })), failed)
-  assert.deepEqual(domainProblemLines(domain({ status: "ERROR", problem: "PROVISIONING_FAILED", problemText: "Backend text" })), failed)
+  assert.deepEqual(
+    domainProblemLines(domain({ status: "APPROVED_PROVISIONING", problem: "PROVISIONING_FAILED", problemText: "Backend text" })),
+    { text: PROVISIONING_FAILED_TEXT, followUp: null, retry: true },
+  )
+  assert.deepEqual(
+    domainProblemLines(domain({ status: "ERROR", problem: "PROVISIONING_FAILED", problemText: "Backend text" })),
+    { text: PROVISIONING_GAVE_UP_TEXT, followUp: null, retry: true },
+  )
 })
 
 check("isWaitingForSetup", () => {

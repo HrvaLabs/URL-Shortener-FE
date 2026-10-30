@@ -185,6 +185,12 @@ export function campaignStatusLabel(campaign: Pick<Campaign, "status" | "holding
   return state === "holding" ? "Holding" : state === "off" ? "Not holding" : "Hold ended"
 }
 
+export const HELD_LINKS_STAY_OFF = "Held links stay off until you allow the shape."
+
+export function heldLinksStayOffText(state: HoldState | null, heldLinks: number): string | null {
+  return (state === "off" || state === "ended") && heldLinks > 0 ? HELD_LINKS_STAY_OFF : null
+}
+
 const HOLD_OFF_FALLBACK = "Same-shape alert or Hold links with a campaign URL shape is off"
 
 export function holdOffReason(settings: SettingResponse[] | undefined): string {

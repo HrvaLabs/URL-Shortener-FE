@@ -296,7 +296,7 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
                         </span>
                       )}
                       {!allowed && row.heldLinks > 0 && (
-                        <span className="block tabular-nums">Keeps {plural(row.heldLinks, "held link")} off as a domain rule</span>
+                        <span className="block tabular-nums">Keeps {plural(row.heldLinks, "held link")} on the site off as a domain rule</span>
                       )}
                     </span>
                   </span>

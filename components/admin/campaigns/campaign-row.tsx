@@ -13,7 +13,7 @@ import { CampaignDetails } from "@/components/admin/campaigns/campaign-details"
 import { ApiError } from "@/lib/api-client"
 import { parseServerDateTime } from "@/lib/analytics"
 import { useAllowCampaign } from "@/lib/hooks/useCampaigns"
-import { campaignCountsText, campaignHoldState, campaignReportsText, campaignStatusLabel } from "@/lib/moderation"
+import { campaignCountsText, campaignHoldState, campaignReportsText, campaignStatusLabel, heldLinksStayOffText } from "@/lib/moderation"
 import { cn, formatDateTime, plural } from "@/lib/utils"
 import type { Campaign, CampaignStatus } from "@/lib/types"
 
@@ -51,6 +51,7 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef, ho
   const allow = useAllowCampaign()
   const now = new Date()
   const holdState = campaignHoldState(campaign, now)
+  const heldLinksStayOff = heldLinksStayOffText(holdState, campaign.links.held)
   const alertOnly = campaign.status === "ALERT_ONLY"
   const variant: BadgeVariant = holdState === "off" || holdState === "ended" ? "outline" : statusVariants[campaign.status]
 
@@ -93,6 +94,7 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef, ho
             Not holding: {holdOffReason}. <Link href="/admin/settings?search=shape" className="underline underline-offset-2 hover:text-foreground">Site settings</Link>
           </p>
         )}
+        {heldLinksStayOff && <p>{heldLinksStayOff}</p>}
         {campaign.status === "ALLOWED" && campaign.allowedBy && (
           <p>Allowed by <span className={wrap}>{campaign.allowedBy}</span>{campaign.allowedAt && ` on ${dateOf(campaign.allowedAt)}`}</p>
         )}

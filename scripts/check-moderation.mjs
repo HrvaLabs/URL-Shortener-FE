@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -335,6 +335,15 @@ check("campaignStatusLabel and campaignHoldState: holding, switched off, or run 
   assert.equal(campaignStatusLabel({ status: "ALERT_ONLY", holding: false, activeUntil: null }, now), "Alert only")
   assert.equal(campaignStatusLabel({ status: "ALLOWED", holding: false, activeUntil: null }, now), "Allowed")
   assert.equal(campaignHoldState({ status: "ALLOWED", holding: false, activeUntil: null }, now), null)
+})
+
+check("heldLinksStayOffText says held links stay off while a campaign isn't holding", () => {
+  assert.equal(HELD_LINKS_STAY_OFF, "Held links stay off until you allow the shape.")
+  assert.equal(heldLinksStayOffText("off", 3), HELD_LINKS_STAY_OFF)
+  assert.equal(heldLinksStayOffText("ended", 1), HELD_LINKS_STAY_OFF)
+  assert.equal(heldLinksStayOffText("ended", 0), null)
+  assert.equal(heldLinksStayOffText("holding", 3), null)
+  assert.equal(heldLinksStayOffText(null, 3), null)
 })
 
 check("holdOffReason names the switch that is off", () => {

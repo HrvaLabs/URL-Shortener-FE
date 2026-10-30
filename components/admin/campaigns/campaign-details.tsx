@@ -51,7 +51,7 @@ export function CampaignDetails({ campaign, panelId }: { campaign: Campaign; pan
               <Skeleton key={i} className="h-9 w-full" />
             ))}
           </div>
-        ) : error || !data ? (
+        ) : !data ? (
           <div className="rounded-lg border px-4 py-6 text-center">
             <p className="text-sm font-medium text-destructive">Failed to load the domains</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
@@ -59,6 +59,8 @@ export function CampaignDetails({ campaign, panelId }: { campaign: Campaign; pan
         ) : data.domains.length === 0 ? (
           <p className="text-sm text-muted-foreground">No domains.</p>
         ) : (
+          <div className="space-y-2">
+            {error && <RefreshFailed what="domains" onRetry={() => refetch()} disabled={isFetching} />}
           <div className="overflow-hidden rounded-lg border">
             <Table>
               <TableHeader>
@@ -76,12 +78,13 @@ export function CampaignDetails({ campaign, panelId }: { campaign: Campaign; pan
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{entry.links.toLocaleString()}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      <span className="block min-w-32 [overflow-wrap:anywhere]">{reportStatusText(entry.report, new Date(dataUpdatedAt))}</span>
+                      <span className="block [overflow-wrap:anywhere]">{reportStatusText(entry.report, new Date(dataUpdatedAt))}</span>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
+          </div>
           </div>
         )}
       </section>
@@ -131,21 +134,26 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
-      ) : error ? (
+      ) : error && !data ? (
         <div className="rounded-lg border px-4 py-8 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load the links</p>
           <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
         </div>
       ) : links.length === 0 ? (
-        <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">{search ? "No links match." : "No links."}</p>
+        <>
+          {error && <RefreshFailed what="links" onRetry={() => refetch()} disabled={isFetching} />}
+          <p className="rounded-lg border px-4 py-8 text-center text-sm text-muted-foreground">{search ? "No links match." : "No links."}</p>
+        </>
       ) : (
+        <div className="space-y-2">
+          {error && <RefreshFailed what="links" onRetry={() => refetch()} disabled={isFetching} />}
         <div className="overflow-hidden rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Short link</TableHead>
                 <TableHead className="hidden @2xl:table-cell">Destination</TableHead>
-                <TableHead>State</TableHead>
+                <TableHead className="hidden @2xl:table-cell">State</TableHead>
                 <TableHead className="text-right">Clicks</TableHead>
               </TableRow>
             </TableHeader>
@@ -159,11 +167,12 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
                         <span className="font-normal text-muted-foreground">{shortHostOf(null)}/</span>{link.shortUrl}
                       </span>
                       <span className="mt-1 block min-w-32 text-xs text-muted-foreground [overflow-wrap:anywhere] @2xl:hidden">{link.longUrl}</span>
+                      <Badge variant={state.variant} className="mt-1.5 @2xl:hidden">{state.label}</Badge>
                     </TableCell>
                     <TableCell className="hidden @2xl:table-cell">
                       <span className="block min-w-48 text-muted-foreground [overflow-wrap:anywhere]">{link.longUrl}</span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden @2xl:table-cell">
                       <Badge variant={state.variant}>{state.label}</Badge>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{link.clicks.toLocaleString()}</TableCell>
@@ -181,7 +190,19 @@ function CampaignLinks({ campaign }: { campaign: Campaign }) {
             onSizeChange={setSize}
           />
         </div>
+        </div>
       )}
     </section>
+  )
+}
+
+function RefreshFailed({ what, onRetry, disabled }: { what: string; onRetry(): void; disabled: boolean }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+      <p role="alert" className="min-w-0 text-sm font-medium text-destructive [overflow-wrap:anywhere]">
+        {`Couldn't refresh the ${what}. The list may be out of date.`}
+      </p>
+      <Button variant="outline" size="sm" onClick={onRetry} disabled={disabled}>Retry</Button>
+    </div>
   )
 }

@@ -71,7 +71,7 @@ function Campaigns() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin - Campaigns" description="URL shapes shared by links made without an account, with their links and domains." />
+      <PageMeta title={`Admin ${String.fromCodePoint(0x2014)} Campaigns`} description="URL shapes shared by links made without an account, with their links and domains." />
       <div>
         <h1 ref={headingRef} tabIndex={-1} className="rounded-sm font-display text-2xl">Campaigns</h1>
         <p className="mt-1 text-sm text-muted-foreground">URL shapes that links made without an account share across several domains</p>
@@ -103,7 +103,7 @@ function Campaigns() {
 
       {isLoading ? (
         <CampaignsLoading />
-      ) : error ? (
+      ) : error && !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p className="text-sm font-medium text-destructive">Failed to load the campaigns</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
@@ -115,6 +115,14 @@ function Campaigns() {
         </div>
       ) : (
         <>
+          {error && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <p role="alert" className="min-w-0 text-sm font-medium text-destructive [overflow-wrap:anywhere]">
+                {"Couldn't refresh the campaigns. The list may be out of date."}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>Retry</Button>
+            </div>
+          )}
           <ul className="space-y-3">
             {campaigns.map((campaign) => (
               <CampaignRow

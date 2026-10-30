@@ -39,6 +39,7 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
   const panelId = useId()
   const toggleRef = useRef<HTMLButtonElement>(null)
   const blockRef = useRef<HTMLButtonElement>(null)
+  const allowRef = useRef<HTMLButtonElement>(null)
   const allowConfirmed = useRef(false)
   const [blockOpen, setBlockOpen] = useState(false)
   const allow = useAllowCampaign()
@@ -56,7 +57,10 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
     allowConfirmed.current = true
     allow.mutate(campaign.id, {
       onSuccess: ({ linksAffected }) => toast.success(`${plural(linksAffected, "link")} restored`),
-      onError: (err) => toast.error(err instanceof ApiError && err.message ? err.message : "Failed to allow the shape"),
+      onError: (err) => {
+        toast.error(err instanceof ApiError && err.message ? err.message : "Failed to allow the shape")
+        allowRef.current?.focus()
+      },
     })
   }
 
@@ -96,7 +100,7 @@ export function CampaignRow({ campaign, expanded, onToggle, fallbackFocusRef }: 
         {campaign.status !== "ALLOWED" && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={allow.isPending} aria-describedby={headingId}>
+              <Button ref={allowRef} variant="outline" size="sm" disabled={allow.isPending} aria-describedby={headingId}>
                 Allow this shape
               </Button>
             </AlertDialogTrigger>

@@ -66,7 +66,7 @@ export function formatTimeAgo(date: string | Date | null): string {
 }
 
 export function plural(count: number, word: string): string {
-  return `${count.toLocaleString()} ${word}${count === 1 ? "" : "s"}`
+  return `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`
 }
 
 export function maskApiKey(key: string): string {

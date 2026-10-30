@@ -38,6 +38,7 @@ export function useAllowCampaign() {
         queryClient.invalidateQueries({ queryKey: campaignsKey }),
         queryClient.invalidateQueries({ queryKey: ["urls"] }),
         queryClient.invalidateQueries({ queryKey: ["admin", "review"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "domain-block-preview"] }),
       ]),
   })
 }

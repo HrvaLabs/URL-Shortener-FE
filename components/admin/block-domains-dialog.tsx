@@ -84,6 +84,8 @@ interface StalledBlock {
 
 const isAllowed = (row: DomainBlockPreview) => row.rule === "ALLOW"
 
+const isBlockable = (row: DomainBlockPreview, campaignMode: boolean) => !isAllowed(row) && !(campaignMode && row.rule === "BLOCK")
+
 const showsHosts = (row: DomainBlockPreview) => row.hosts.length > 1 || row.hosts[0] !== row.domain
 
 interface BlockDomainsFormProps {
@@ -110,7 +112,7 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number } | null>(null)
   const unreported = useRef<BulkBlockTotals | null>(null)
   const trimmedReason = reason.trim()
-  const ticked = (rows ?? []).filter((row) => !isAllowed(row) && !unticked.has(row.domain))
+  const ticked = (rows ?? []).filter((row) => isBlockable(row, campaignId !== null) && !unticked.has(row.domain))
   const leftOut = rows && campaignId === null ? urlIds.length - rows.reduce((sum, row) => sum + row.selectedLinks, 0) : 0
   const linkWord = campaignId !== null ? "campaign link" : "ticked link"
   const locked = blocking || stalled !== null
@@ -231,7 +233,8 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
             <legend className="sr-only">Domains to block</legend>
             {rows.map((row, index) => {
               const allowed = isAllowed(row)
-              const checked = !allowed && !unticked.has(row.domain)
+              const blockable = isBlockable(row, campaignId !== null)
+              const checked = blockable && !unticked.has(row.domain)
               const moreThanTicked = row.activeLinks > row.selectedLinks
               const domainId = `${id}-${index}-domain`
               const ruleId = `${id}-${index}-rule`
@@ -241,7 +244,7 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
                   key={row.domain}
                   className={cn(
                     "flex items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
-                    allowed ? "cursor-not-allowed bg-muted/40" : "cursor-pointer hover:bg-muted/40",
+                    !blockable ? "cursor-not-allowed bg-muted/40" : "cursor-pointer hover:bg-muted/40",
                     checked && "border-brand bg-brand-soft hover:bg-brand-soft",
                   )}
                 >
@@ -249,7 +252,7 @@ function BlockDomainsForm({ source, blocking, setBlocking, onCancel, onBlocked }
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggle(row.domain)}
-                    disabled={allowed || locked}
+                    disabled={!blockable || locked}
                     aria-labelledby={domainId}
                     aria-describedby={row.rule ? `${ruleId} ${detailsId}` : detailsId}
                     className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-brand"

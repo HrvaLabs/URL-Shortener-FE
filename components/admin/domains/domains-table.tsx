@@ -88,7 +88,7 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const [linkedWithSearch] = useState(() => (searchParams.has(SEARCH_PARAM) ? highlightId : null))
   const [lookedUpId, setLookedUpId] = useState<number | null>(null)
   const filters: AdminDomainFilters = { status: status || undefined, search: search || undefined, page, size }
-  const { data, isLoading, error, refetch, isFetching } = useAdminDomains(filters)
+  const { data, isLoading, error, refetch, isFetching, isPlaceholderData } = useAdminDomains(filters)
   const applications = useAdminDomains(applicationFilters(0))
   useClampedPage(page, data?.totalPages, setPage)
   const domains = data?.content ?? []
@@ -109,17 +109,20 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const retryLoad = useFocusAfterRetry(headingRef, !!data && !error)
   const inTable = highlightId !== null && domains.some((domain) => domain.id === highlightId)
   const inApplications = highlightId !== null && (applications.data?.content ?? []).some((domain) => domain.id === highlightId)
-  const lookupReady = highlightId !== null && !!data && !error && !isFetching && !applications.isPending
-  if (lookupReady && lookedUpId !== highlightId) {
+  const loaded = highlightId !== null && !!data && !error && !applications.isPending
+  if (loaded && !isFetching && lookedUpId !== highlightId) {
     setLookedUpId(highlightId)
-    if (!inTable && !inApplications && filtered && linkedWithSearch !== highlightId) {
+    const keepSearch = linkedWithSearch === highlightId
+    if (!inTable && !inApplications && (!!status || (!!search && !keepSearch))) {
       setStatus("")
-      setSearch("")
-      setSearchInput("")
+      if (!keepSearch) {
+        setSearch("")
+        setSearchInput("")
+      }
       setPage(0)
     }
   }
-  const notOnPage = lookupReady && lookedUpId === highlightId && !inTable && !inApplications
+  const notOnPage = loaded && !isPlaceholderData && lookedUpId === highlightId && !inTable && !inApplications
 
   useEffect(() => {
     writeParam(STATUS_PARAM, status || null)

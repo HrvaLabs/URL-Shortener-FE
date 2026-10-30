@@ -205,7 +205,7 @@ function ReconcileTile({ reconcile }: { reconcile: DomainReconcile | null }) {
                   onClick={(event) => {
                     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
                     event.preventDefault()
-                    router.push(withDomainId(missing.id), { scroll: false })
+                    router.replace(withDomainId(missing.id), { scroll: false })
                   }}
                   className="text-brand-link"
                 >

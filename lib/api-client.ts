@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./utils"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -337,6 +337,20 @@ export const analyticsApi = {
     request<AnalyticsOverview>("GET", `/analytics/overview?days=${days}`),
   getUrlAnalytics: (id: number, days: AnalyticsRange) =>
     request<UrlAnalytics>("GET", `/analytics/urls/${id}?days=${days}`),
+}
+
+// Admin campaigns
+export const campaignApi = {
+  list: (page = 0, size = 20, sort = "lastSeenAt", order = "desc", search?: string) =>
+    request<Page<Campaign>>("GET", `/admin/campaigns?${listParams(page, size, sort, order, { search })}`),
+  detail: (id: number) =>
+    request<CampaignDetail>("GET", `/admin/campaigns/${id}`),
+  links: (id: number, page = 0, size = 20, sort = "createDate", order = "desc", search?: string) =>
+    request<Page<CampaignLink>>("GET", `/admin/campaigns/${id}/links?${listParams(page, size, sort, order, { search })}`),
+  allow: (id: number) =>
+    request<CampaignAllowed>("POST", `/admin/campaigns/${id}/allow`),
+  blockPreview: (id: number) =>
+    request<DomainBlockPreview[]>("POST", `/admin/campaigns/${id}/block-preview`),
 }
 
 // Admin

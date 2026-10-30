@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -261,6 +261,80 @@ check("aliasFieldShown: hidden only on hrva.cc links while aliases are off", () 
   assert.equal(aliasFieldShown(off, "go.example.com"), true)
   assert.equal(aliasFieldShown(base, null), true)
   assert.equal(aliasFieldShown(undefined, null), true)
+})
+
+check("reportStatusText: not reported", () => {
+  assert.equal(reportStatusText(null, new Date("2026-10-30T12:00:00Z")), "Not reported")
+})
+
+check("reportStatusText: reported, not suspended yet", () => {
+  const report = (reportedAt) => ({ reportedAt, reportedBy: "karlo@hrva.cc", registrar: "NameSilo, LLC", suspendedAt: null })
+  const now = new Date("2026-10-30T12:00:00Z")
+  assert.equal(reportStatusText(report("2026-10-30T00:05:00"), now), "Reported today, not suspended yet")
+  assert.equal(reportStatusText(report("2026-10-29T23:59:00"), now), "Reported 1 day ago, not suspended yet")
+  assert.equal(reportStatusText(report("2026-10-27T18:00:00Z"), now), "Reported 3 days ago, not suspended yet")
+  assert.equal(reportStatusText(report("2026-10-31T01:00:00"), now), "Reported today, not suspended yet")
+  assert.equal(reportStatusText(report("2026-09-30T10:00:00"), now), "Reported 30 days ago, not suspended yet")
+})
+
+check("reportStatusText: suspended, in UTC d MMM", () => {
+  const suspended = (suspendedAt) => ({ reportedAt: "2026-10-20T10:00:00", reportedBy: "karlo@hrva.cc", registrar: null, suspendedAt })
+  const now = new Date("2026-11-20T12:00:00Z")
+  assert.equal(reportStatusText(suspended("2026-10-31T09:00:00"), now), "Suspended on 31 Oct")
+  assert.equal(reportStatusText(suspended("2026-11-01T23:30:00Z"), now), "Suspended on 1 Nov")
+  assert.equal(reportStatusText(suspended("2026-12-05T00:00:00+02:00"), now), "Suspended on 4 Dec")
+})
+
+check("inBatches: at most 100, in order, none for nothing", () => {
+  assert.equal(BULK_BLOCK_BATCH, 100)
+  assert.deepEqual(inBatches([]), [])
+  const domains = Array.from({ length: 250 }, (_, index) => `d${index}.example`)
+  const batches = inBatches(domains)
+  assert.deepEqual(batches.map((batch) => batch.length), [100, 100, 50])
+  assert.deepEqual(batches.flat(), domains)
+  assert.deepEqual(inBatches(domains.slice(0, 100)).map((batch) => batch.length), [100])
+  assert.deepEqual(inBatches([1, 2, 3], 2), [[1, 2], [3]])
+})
+
+check("addBulkBlock sums the batches", () => {
+  const result = (blocked, skipped, linksDeactivated, heldLinksConverted) => ({
+    blocked: blocked.map((domain) => ({ domain, linksDeactivated: 0, domainsDisabled: 0, heldLinksConverted: 0 })),
+    skipped: skipped.map((domain) => ({ domain, reason: "Already blocked" })),
+    linksDeactivated,
+    heldLinksConverted,
+  })
+  const first = addBulkBlock(NO_BULK_BLOCKS, result(["a.example", "b.example"], [], 5, 3))
+  const second = addBulkBlock(first, result(["c.example"], ["d.example"], 2, 4))
+  assert.deepEqual(second, { blocked: 3, skipped: [{ domain: "d.example", reason: "Already blocked" }], linksDeactivated: 7, heldLinksConverted: 7 })
+  assert.deepEqual(NO_BULK_BLOCKS, { blocked: 0, skipped: [], linksDeactivated: 0, heldLinksConverted: 0 })
+})
+
+check("blockSummaryText adds held links only when some were kept off", () => {
+  const totals = (blocked, linksDeactivated, heldLinksConverted) => ({ blocked, skipped: [], linksDeactivated, heldLinksConverted })
+  assert.equal(blockSummaryText(totals(2, 5, 0)), "Blocked 2 domains, 5 links turned off")
+  assert.equal(blockSummaryText(totals(1, 1, 1)), "Blocked 1 domain, 1 link turned off, 1 held link kept off")
+  assert.equal(blockSummaryText(totals(1200, 3400, 2500)), "Blocked 1,200 domains, 3,400 links turned off, 2,500 held links kept off")
+})
+
+check("a failed batch can be retried only for a 503 or a lost connection", () => {
+  assert.deepEqual([...RETRYABLE_BLOCK_STATUSES], [0, 503])
+})
+
+check("campaignStatusLabel: a hold that has run out reads Hold ended", () => {
+  assert.equal(campaignStatusLabel({ status: "HOLDING", holding: true }), "Holding")
+  assert.equal(campaignStatusLabel({ status: "HOLDING", holding: false }), "Hold ended")
+  assert.equal(campaignStatusLabel({ status: "ALERT_ONLY", holding: false }), "Alert only")
+  assert.equal(campaignStatusLabel({ status: "ALLOWED", holding: false }), "Allowed")
+})
+
+check("campaignCountsText and campaignReportsText", () => {
+  const campaign = { links: { total: 62, active: 0, held: 58, blocked: 4 }, domains: 39, clicks: 970, reports: { reported: 39, suspended: 12 } }
+  assert.equal(campaignCountsText(campaign), "62 links (0 active, 58 held, 4 blocked), 39 domains, 970 clicks")
+  assert.equal(campaignReportsText(campaign), "39 of 39 domains reported, 12 suspended")
+  const small = { links: { total: 1, active: 1, held: 0, blocked: 0 }, domains: 1, clicks: 1, reports: { reported: 0, suspended: 0 } }
+  assert.equal(campaignCountsText(small), "1 link (1 active, 0 held, 0 blocked), 1 domain, 1 click")
+  assert.equal(campaignReportsText(small), "0 of 1 domain reported, 0 suspended")
+  assert.equal(campaignCountsText({ ...campaign, links: { ...campaign.links, total: 1500 }, clicks: 12000 }), "1,500 links (0 active, 58 held, 4 blocked), 39 domains, 12,000 clicks")
 })
 
 check("strings are ASCII", () => {

@@ -14,7 +14,7 @@ import { blockReasonLabels } from "@/lib/labels"
 import type { AnalyticsRange, BlockReason, SafetyStats, SourceHealth, StackedSeries } from "@/lib/types"
 import { formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 
-const reasonOrder: (BlockReason | "unknown")[] = ["SAFE_BROWSING", "BLOCKLIST", "SCAM_SIGNALS", "DOMAIN_RULE", "ADMIN", "USER_BLOCKED", "unknown"]
+const reasonOrder: (BlockReason | "unknown")[] = ["SAFE_BROWSING", "BLOCKLIST", "SCAM_SIGNALS", "CAMPAIGN", "DOMAIN_RULE", "ADMIN", "USER_BLOCKED", "unknown"]
 
 const OTHER_REASONS = "other-reasons"
 

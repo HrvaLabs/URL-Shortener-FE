@@ -58,6 +58,10 @@ const actionLabels: Record<AuditAction, string> = {
   REMOVE_DOMAIN_ALLOWANCE: "Removed domain limit",
   CHANGE_SETTING: "Changed setting",
   RESET_SETTING: "Reset setting",
+  TURN_OFF_SIGN_IN_METHOD: "Turned off sign-in method",
+  TURN_ON_SIGN_IN_METHOD: "Turned on sign-in method",
+  REMOVE_PASSWORD: "Removed password",
+  ALLOW_CAMPAIGN_SHAPE: "Allowed campaign shape",
   UNKNOWN: "Unknown action",
 }
 
@@ -99,6 +103,10 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   REMOVE_DOMAIN_ALLOWANCE: "secondary",
   CHANGE_SETTING: "secondary",
   RESET_SETTING: "secondary",
+  TURN_OFF_SIGN_IN_METHOD: "destructive",
+  TURN_ON_SIGN_IN_METHOD: "success",
+  REMOVE_PASSWORD: "destructive",
+  ALLOW_CAMPAIGN_SHAPE: "success",
   UNKNOWN: "outline",
 }
 

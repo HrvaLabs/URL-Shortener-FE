@@ -681,6 +681,10 @@ export type AuditAction =
   | "REMOVE_DOMAIN_ALLOWANCE"
   | "CHANGE_SETTING"
   | "RESET_SETTING"
+  | "TURN_OFF_SIGN_IN_METHOD"
+  | "TURN_ON_SIGN_IN_METHOD"
+  | "REMOVE_PASSWORD"
+  | "ALLOW_CAMPAIGN_SHAPE"
   | "UNKNOWN"
 
 export interface AuditLog {
@@ -725,7 +729,7 @@ export interface ConnectedApp {
   lastUsed: string | null
 }
 
-export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS"
+export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS" | "CAMPAIGN"
 
 export type SourceKind = "DOMAINS" | "LINKS"
 
@@ -808,6 +812,7 @@ export interface DomainBlockPreview {
   hosts: string[]
   selectedLinks: number
   activeLinks: number
+  heldLinks: number
   rule: DomainRuleType | null
 }
 
@@ -815,6 +820,7 @@ export interface DomainBlocked {
   domain: string
   linksDeactivated: number
   domainsDisabled: number
+  heldLinksConverted: number
 }
 
 export interface DomainSkipped {
@@ -826,6 +832,72 @@ export interface DomainBulkBlockResult {
   blocked: DomainBlocked[]
   skipped: DomainSkipped[]
   linksDeactivated: number
+  heldLinksConverted: number
+}
+
+export type CampaignStatus = "HOLDING" | "ALERT_ONLY" | "ALLOWED"
+
+export interface ReportStatus {
+  reportedAt: string
+  reportedBy: string
+  registrar: string | null
+  suspendedAt: string | null
+}
+
+export interface CampaignLinkCounts {
+  total: number
+  active: number
+  held: number
+  blocked: number
+}
+
+export interface CampaignReportCounts {
+  reported: number
+  suspended: number
+}
+
+export interface Campaign {
+  id: number
+  shape: string
+  path: string
+  queryNames: string[]
+  status: CampaignStatus
+  holding: boolean
+  firstSeenAt: string
+  lastSeenAt: string
+  activeUntil: string | null
+  allowedBy: string | null
+  allowedAt: string | null
+  links: CampaignLinkCounts
+  domains: number
+  clicks: number
+  reports: CampaignReportCounts
+}
+
+export interface CampaignLink {
+  id: number
+  shortUrl: string
+  longUrl: string
+  domain: string
+  createDate: string
+  active: boolean
+  blockReason: BlockReason | null
+  clicks: number
+}
+
+export interface CampaignDomain {
+  domain: string
+  links: number
+  report: ReportStatus | null
+}
+
+export interface CampaignDetail {
+  campaign: Campaign
+  domains: CampaignDomain[]
+}
+
+export interface CampaignAllowed {
+  linksAffected: number
 }
 
 export interface LinksAffected {
@@ -933,6 +1005,12 @@ export type SettingKey =
   | "EMAIL_ADMIN_DAILY"
   | "EMAIL_NEW_USER_NOTICE"
   | "EMAIL_CUSTOM_DOMAIN"
+  | "CAMPAIGN_HOLD"
+  | "CAMPAIGN_HOLD_DAYS"
+  | "ABUSE_REPORTER_NAME"
+  | "ABUSE_REPORTER_ADDRESS"
+  | "ABUSE_CC"
+  | "ABUSE_RECHECK_DAYS"
 
 export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
 

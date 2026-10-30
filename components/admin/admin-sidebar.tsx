@@ -3,7 +3,7 @@
 import { Fragment, useCallback, useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, Bookmark, Contact, Globe, History, LayoutDashboard, LinkIcon, ListFilter, Mail, Shield, ShieldAlert, SlidersHorizontal, Users, type LucideIcon } from "lucide-react"
+import { Activity, Bookmark, Contact, Globe, History, LayoutDashboard, LinkIcon, ListFilter, Mail, Megaphone, Shield, ShieldAlert, SlidersHorizontal, Users, type LucideIcon } from "lucide-react"
 import { useReviewCount } from "@/lib/hooks/useReviewCount"
 import { ReviewCountBadge } from "@/components/admin/review-count-badge"
 import { navItemClass, navItemState, revealInRow } from "@/components/dashboard/dashboard-nav"
@@ -25,6 +25,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     title: "Moderation",
     items: [
       { href: "/admin/review", label: "Review queue", icon: ShieldAlert, badge: "review" },
+      { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
       { href: "/admin/domains", label: "Domains", icon: Globe, badge: "review" },
       { href: "/admin/blocklists", label: "Blocklists", icon: ListFilter },
       { href: "/admin/reserved", label: "Reserved aliases", icon: Bookmark },

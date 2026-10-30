@@ -1,4 +1,5 @@
-import type { PublicSettings, SettingGroup, SettingResponse } from "./types"
+import { parseServerDateTime } from "./analytics"
+import type { Campaign, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
 
 export const ANONYMOUS_PAUSED = "Making links without an account is paused."
 
@@ -111,4 +112,69 @@ export function settingValueText(setting: SettingResponse, value: SettingRespons
   if (Array.isArray(value)) return value.length > 0 ? value.join(", ") : NONE
   if (typeof value === "string") return value || NONE
   return setting.noneLabel ?? NONE
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+const countOf = (count: number, word: string) => `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`
+
+const utcDay = (date: Date) => Math.floor(date.getTime() / DAY_MS)
+
+export function reportStatusText(status: ReportStatus | null, now: Date): string {
+  if (!status) return "Not reported"
+  if (status.suspendedAt) {
+    const suspended = parseServerDateTime(status.suspendedAt)
+    return `Suspended on ${suspended.getUTCDate()} ${MONTH_NAMES[suspended.getUTCMonth()]}`
+  }
+  const days = Math.max(0, utcDay(now) - utcDay(parseServerDateTime(status.reportedAt)))
+  return days === 0 ? "Reported today, not suspended yet" : `Reported ${countOf(days, "day")} ago, not suspended yet`
+}
+
+export const BULK_BLOCK_BATCH = 100
+
+export function inBatches<T>(items: T[], size = BULK_BLOCK_BATCH): T[][] {
+  const batches: T[][] = []
+  for (let start = 0; start < items.length; start += size) batches.push(items.slice(start, start + size))
+  return batches
+}
+
+export interface BulkBlockTotals {
+  blocked: number
+  skipped: DomainSkipped[]
+  linksDeactivated: number
+  heldLinksConverted: number
+}
+
+export const NO_BULK_BLOCKS: BulkBlockTotals = { blocked: 0, skipped: [], linksDeactivated: 0, heldLinksConverted: 0 }
+
+export function addBulkBlock(totals: BulkBlockTotals, result: DomainBulkBlockResult): BulkBlockTotals {
+  return {
+    blocked: totals.blocked + result.blocked.length,
+    skipped: [...totals.skipped, ...result.skipped],
+    linksDeactivated: totals.linksDeactivated + result.linksDeactivated,
+    heldLinksConverted: totals.heldLinksConverted + (result.heldLinksConverted ?? 0),
+  }
+}
+
+export function blockSummaryText({ blocked, linksDeactivated, heldLinksConverted }: BulkBlockTotals): string {
+  const summary = `Blocked ${countOf(blocked, "domain")}, ${countOf(linksDeactivated, "link")} turned off`
+  return heldLinksConverted > 0 ? `${summary}, ${countOf(heldLinksConverted, "held link")} kept off` : summary
+}
+
+export const RETRYABLE_BLOCK_STATUSES: readonly number[] = [0, 503]
+
+export function campaignStatusLabel({ status, holding }: Pick<Campaign, "status" | "holding">): string {
+  if (status === "ALLOWED") return "Allowed"
+  if (status === "ALERT_ONLY") return "Alert only"
+  return holding ? "Holding" : "Hold ended"
+}
+
+export function campaignCountsText({ links, domains, clicks }: Pick<Campaign, "links" | "domains" | "clicks">): string {
+  return `${countOf(links.total, "link")} (${links.active.toLocaleString("en-US")} active, ${links.held.toLocaleString("en-US")} held, ${links.blocked.toLocaleString("en-US")} blocked), ${countOf(domains, "domain")}, ${countOf(clicks, "click")}`
+}
+
+export function campaignReportsText({ domains, reports }: Pick<Campaign, "domains" | "reports">): string {
+  return `${reports.reported.toLocaleString("en-US")} of ${countOf(domains, "domain")} reported, ${reports.suspended.toLocaleString("en-US")} suspended`
 }

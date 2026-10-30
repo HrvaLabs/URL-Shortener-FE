@@ -14,32 +14,38 @@ const addressParam = (name: string) => (typeof window === "undefined" ? null : n
 
 const knownSort = (sort: string | null, sortFields: readonly string[] | undefined) => sort != null && (sortFields == null || sortFields.includes(sort))
 
-export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | "desc" = "desc", sortFields?: readonly string[]) {
-  const [page, setPageState] = useState(() => Math.max(0, parseInt(addressParam("page") ?? "0", 10) || 0))
-  const [size, setSizeState] = useState(() => parseInt(addressParam("size") ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
+export const prefixedParam = (prefix: string, name: string) => (prefix ? `${prefix}${name[0].toUpperCase()}${name.slice(1)}` : name)
+
+export function usePagination(defaultSort = "createDate", defaultOrder: "asc" | "desc" = "desc", sortFields?: readonly string[], prefix = "") {
+  const pageName = prefixedParam(prefix, "page")
+  const sizeName = prefixedParam(prefix, "size")
+  const sortName = prefixedParam(prefix, "sort")
+  const orderName = prefixedParam(prefix, "order")
+  const [page, setPageState] = useState(() => Math.max(0, parseInt(addressParam(pageName) ?? "0", 10) || 0))
+  const [size, setSizeState] = useState(() => parseInt(addressParam(sizeName) ?? String(DEFAULT_SIZE), 10) || DEFAULT_SIZE)
   const [sort, setSortState] = useState(() => {
-    const addressSort = addressParam("sort")
+    const addressSort = addressParam(sortName)
     return knownSort(addressSort, sortFields) ? (addressSort as string) : defaultSort
   })
   const [order, setOrderState] = useState<"asc" | "desc">(() => {
-    const addressOrder = addressParam("order")
-    if (!knownSort(addressParam("sort"), sortFields)) return defaultOrder
+    const addressOrder = addressParam(orderName)
+    if (!knownSort(addressParam(sortName), sortFields)) return defaultOrder
     return addressOrder === "asc" || addressOrder === "desc" ? addressOrder : defaultOrder
   })
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    params.set("page", String(page))
-    params.set("size", String(size))
+    params.set(pageName, String(page))
+    params.set(sizeName, String(size))
     if (sort) {
-      params.set("sort", sort)
-      params.set("order", order)
+      params.set(sortName, sort)
+      params.set(orderName, order)
     } else {
-      params.delete("sort")
-      params.delete("order")
+      params.delete(sortName)
+      params.delete(orderName)
     }
     window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}${window.location.hash}`)
-  }, [page, size, sort, order])
+  }, [pageName, sizeName, sortName, orderName, page, size, sort, order])
 
   const setPage = useCallback((p: number) => {
     setPageState(Math.max(0, p))

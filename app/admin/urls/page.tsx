@@ -607,7 +607,7 @@ function AdminUrls() {
       />
 
       <BlockDomainsDialog
-        urlIds={blockDomainsIds}
+        source={{ urlIds: blockDomainsIds }}
         open={blockDomainsOpen}
         onOpenChange={setBlockDomainsOpen}
         onBlocked={() => {

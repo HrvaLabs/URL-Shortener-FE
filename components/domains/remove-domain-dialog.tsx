@@ -89,7 +89,13 @@ export function RemoveDomainDialog({ domain, busy, onOpenChange, onConfirm, onCl
           </fieldset>
         )}
         <AlertDialogFooter className="gap-2 sm:gap-0">
-          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel
+            aria-disabled={busy}
+            onClick={(event) => { if (busy) event.preventDefault() }}
+            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          >
+            Cancel
+          </AlertDialogCancel>
           <Button
             type="button"
             variant="destructive"

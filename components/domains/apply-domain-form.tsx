@@ -44,7 +44,8 @@ export const ApplyDomainForm = forwardRef<HTMLInputElement, ApplyDomainFormProps
   }
 
   const showErrors = (error: unknown) => {
-    const fields = error instanceof ApiError ? error.fields : {}
+    const conflict = error instanceof ApiError && error.status === 409 && Object.keys(error.fields).length === 0
+    const fields = error instanceof ApiError ? (conflict ? { hostname: error.message } : error.fields) : {}
     const known = Object.entries(fields).filter(([key]) => isFormField(key))
     if (known.length === 0) {
       flushSync(() => {

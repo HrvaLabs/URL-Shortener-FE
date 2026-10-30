@@ -71,7 +71,7 @@ export function DnsRecord({ record }: { record: DomainDnsRecord }) {
         Some DNS providers want only the first part of the name ({firstLabel(record.name)}). If your DNS is on Cloudflare, set the record to DNS only (grey cloud).
       </p>
       <Link href="/help/custom-domains#add-the-record" className="inline-block text-sm text-brand-link">How to add a CNAME</Link>
-      <p role="status" className="sr-only">{copied ? "Copied" : ""}</p>
+      <p role="status" className="sr-only">{copied ? `Copied ${copied}` : ""}</p>
     </div>
   )
 }

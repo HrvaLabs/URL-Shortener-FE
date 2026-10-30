@@ -64,22 +64,24 @@ export function CustomDomainsCard() {
     if (window.location.hash === `#${CARD_ID}`) cardRef.current?.scrollIntoView({ block: "start" })
   }, [isPending])
 
-  const focusNewRow = useCallback(() => {
+  const focusNewRow = useCallback((giveUp: boolean) => {
     const id = pendingFocus.current
     if (id === null) return
     const heading = document.getElementById(headingId(id))
-    if (!heading) return
-    pendingFocus.current = null
-    heading.focus()
+    if (heading || giveUp) pendingFocus.current = null
+    heading?.focus()
   }, [])
 
   useEffect(() => {
-    focusNewRow()
+    focusNewRow(true)
   }, [data, focusNewRow])
 
   const onApplied = (domain: CustomDomain) => {
     pendingFocus.current = domain.id
-    window.requestAnimationFrame(focusNewRow)
+    window.requestAnimationFrame(() => {
+      focusNewRow(false)
+      window.requestAnimationFrame(() => focusNewRow(true))
+    })
   }
 
   const neighbourOf = (trigger: HTMLElement | null): HTMLElement | null => {
@@ -187,36 +189,37 @@ export function CustomDomainsCard() {
   )
 }
 
-const SETTLED: ReadonlySet<CustomDomain["status"]> = new Set(["REJECTED", "DELETED"])
-
 interface DomainRowProps {
   domain: CustomDomain
   onStatusChange: () => void
   onRemove: (trigger: HTMLElement) => void
 }
 
-function DomainRow({ domain, onStatusChange, onRemove }: DomainRowProps) {
-  if (SETTLED.has(domain.status)) {
-    return <DomainRowBody domain={domain} checking={false} retrying={false} onCheck={() => {}} onRetry={() => {}} onRemove={onRemove} />
-  }
-  return <LiveDomainRow domain={domain} onStatusChange={onStatusChange} onRemove={onRemove} />
-}
-
-function LiveDomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowProps) {
-  const detail = useDomain(listed.id, { poll: true })
+function DomainRow({ domain: listed, onStatusChange, onRemove }: DomainRowProps) {
+  const live = isWaitingForSetup(listed.status)
+  const detail = useDomain(listed.id, { poll: true, enabled: live })
   const retry = useRetryMyDomain()
-  const liveStatus = detail.data?.status
+  const [manualCheck, setManualCheck] = useState(false)
+  const liveStatus = live ? detail.data?.status : undefined
 
   useEffect(() => {
     if (liveStatus && liveStatus !== listed.status) onStatusChange()
   }, [liveStatus, listed.status, onStatusChange])
 
+  const check = () => {
+    setManualCheck(true)
+    detail
+      .refetch()
+      .then((result) => { if (result.isError) toast.error(errorText(result.error)) })
+      .finally(() => setManualCheck(false))
+  }
+
   return (
     <DomainRowBody
-      domain={detail.data ?? listed}
-      checking={detail.isFetching}
+      domain={live && detail.data ? detail.data : listed}
+      checking={manualCheck}
       retrying={retry.isPending}
-      onCheck={() => void detail.refetch()}
+      onCheck={check}
       onRetry={() => retry.mutate(listed.id, { onError: (err) => { toast.error(errorText(err)) } })}
       onRemove={onRemove}
     />
@@ -234,16 +237,16 @@ interface DomainRowBodyProps {
 
 function DomainRowBody({ domain, checking, retrying, onCheck, onRetry, onRemove }: DomainRowBodyProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const checkFocused = useRef(false)
   const waiting = isWaitingForSetup(domain.status)
+  const wasWaiting = useRef(waiting)
   const problem = domainProblemLines(domain)
   const withdraw = domain.status === "PENDING_REVIEW"
   const busy = problem?.retry ? retrying : checking
 
   useLayoutEffect(() => {
-    if (waiting || !checkFocused.current) return
-    checkFocused.current = false
-    if (focusIsLost()) headingRef.current?.focus()
+    const was = wasWaiting.current
+    wasWaiting.current = waiting
+    if (!waiting && was && focusIsLost()) headingRef.current?.focus({ preventScroll: true })
   }, [waiting])
 
   return (
@@ -295,8 +298,6 @@ function DomainRowBody({ domain, checking, retrying, onCheck, onRetry, onRemove 
               size="sm"
               aria-disabled={busy}
               aria-busy={busy}
-              onFocus={() => { checkFocused.current = true }}
-              onBlur={() => { checkFocused.current = false }}
               onClick={() => {
                 if (busy) return
                 if (problem?.retry) onRetry()

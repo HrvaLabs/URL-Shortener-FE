@@ -23,10 +23,11 @@ export function useMyDomains() {
   })
 }
 
-export function useDomain(id: number, { poll }: { poll: boolean }) {
+export function useDomain(id: number, { poll, enabled = true }: { poll: boolean; enabled?: boolean }) {
   return useQuery({
     queryKey: [...DOMAINS_KEY, id],
     queryFn: () => domainApi.get(id),
+    enabled,
     refetchInterval: (query) => {
       const status = query.state.data?.status
       return poll && status && POLLED_STATUSES.has(status) ? POLL_INTERVAL : false

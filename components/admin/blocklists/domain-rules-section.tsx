@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react"
+import { useRef, useState, type FormEvent, type RefObject } from "react"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -15,14 +15,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { SortHead, SortSelect, type SortOption } from "@/components/admin/sort-controls"
 import { adminApi } from "@/lib/api-client"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
+import { useListSearch } from "@/lib/hooks/useListSearch"
 import type { DomainRule, DomainRuleCreated, DomainRuleType, Page } from "@/lib/types"
 import { parseServerDateTime } from "@/lib/analytics"
 import { focusTargetAfterRemoving, formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 import { ruleTypeLabels } from "./labels"
 
 const ruleTypes: DomainRuleType[] = ["BLOCK", "ALLOW"]
-
-const SEARCH_DELAY_MS = 300
 
 const DEFAULT_SORT = "createdAt"
 
@@ -80,25 +79,7 @@ export function DomainRulesSection() {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const pagination = usePagination(DEFAULT_SORT)
   const { setPage } = pagination
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
-
-  const applySearch = (value: string) => {
-    const next = value.trim()
-    if (next === search) return
-    setSearch(next)
-    setPage(0)
-  }
-
-  useEffect(() => {
-    const next = searchInput.trim()
-    if (next === search) return
-    const timer = window.setTimeout(() => {
-      setSearch(next)
-      setPage(0)
-    }, SEARCH_DELAY_MS)
-    return () => window.clearTimeout(timer)
-  }, [searchInput, search, setPage])
+  const { search, searchInput, setSearchInput, applySearch } = useListSearch(() => setPage(0))
 
   const list: RulesListState = {
     page: pagination.page,

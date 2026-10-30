@@ -773,6 +773,7 @@ export interface DomainBlockPreview {
 export interface DomainBlocked {
   domain: string
   linksDeactivated: number
+  domainsDisabled: number
 }
 
 export interface DomainSkipped {

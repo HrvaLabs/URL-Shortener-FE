@@ -275,6 +275,7 @@ export const userApi = {
     if (filters.search) params.set("search", filters.search)
     if (filters.active != null) params.set("active", String(filters.active))
     if (filters.possibleScammer) params.set("possibleScammer", "true")
+    if (filters.signInMethod) params.set("signInMethod", filters.signInMethod)
     return request<Page<User>>("GET", `/users?${params}`)
   },
   update: (id: number, data: UserUpdateDto) =>

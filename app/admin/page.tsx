@@ -6,7 +6,7 @@ import { useAllUsers, useUpdateUser, useDeleteUser } from "@/lib/hooks/useUsers"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useListSearch } from "@/lib/hooks/useListSearch"
 import { Pagination } from "@/components/ui/pagination"
-import type { User, UserFilters } from "@/lib/types"
+import type { SignInMethod, User, UserFilters } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -24,6 +24,7 @@ import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
+import { SIGN_IN_METHODS, signInMethodLabels } from "@/lib/sign-in-methods"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { DomainLimitDialog } from "@/components/admin/domain-limit-dialog"
 
@@ -57,12 +58,14 @@ function AdminUsers() {
   const { search, searchInput, setSearchInput } = useListSearch()
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [scammersOnly, setScammersOnly] = useState(false)
-  useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly, setPage])
-  const filterKey = `${search}-${activeFilter}-${scammersOnly}`
+  const [signInFilter, setSignInFilter] = useState<SignInMethod | "all">("all")
+  useEffect(() => { setPage(0) }, [search, activeFilter, scammersOnly, signInFilter, setPage])
+  const filterKey = `${search}-${activeFilter}-${scammersOnly}-${signInFilter}`
   const filters: UserFilters = {
     search: search || undefined,
     active: activeFilter === "all" ? undefined : activeFilter === "active",
     possibleScammer: scammersOnly || undefined,
+    signInMethod: signInFilter === "all" ? undefined : signInFilter,
   }
   const { data: users, isLoading, error } = useAllUsers(filters, page, size, sort, order)
   useClampedPage(page, users?.totalPages, setPage)
@@ -187,6 +190,21 @@ function AdminUsers() {
                 )}
               </div>
               <div>
+                <p className="text-sm font-medium">Sign-in methods</p>
+                {editUser.signInMethods && editUser.signInMethods.length > 0 ? (
+                  <ul className="mt-2 space-y-1.5">
+                    {editUser.signInMethods.map((use) => (
+                      <li key={use.method} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                        <Badge variant={use.method === "PASSWORD" ? "outline" : "secondary"} className="whitespace-nowrap">{signInMethodLabels[use.method] ?? use.method}</Badge>
+                        <span className="tabular-nums text-muted-foreground">Last used {formatDateTime(parseServerDateTime(use.lastUsedAt))}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">None recorded yet</p>
+                )}
+              </div>
+              <div>
                 <Label htmlFor={`${editId}-slots`}>API key slots</Label>
                 <Input id={`${editId}-slots`} type="number" value={editSlots} onChange={(e) => setEditSlots(e.target.value)} className="mt-2" />
               </div>
@@ -221,6 +239,17 @@ function AdminUsers() {
           <option value="all">All status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
+        </select>
+        <select
+          value={signInFilter}
+          onChange={(e) => setSignInFilter(e.target.value as SignInMethod | "all")}
+          aria-label="Filter by sign-in method"
+          className={adminSelectClass}
+        >
+          <option value="all">All sign-in methods</option>
+          {SIGN_IN_METHODS.map((method) => (
+            <option key={method} value={method}>{signInMethodLabels[method]}</option>
+          ))}
         </select>
         <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
           <input
@@ -257,7 +286,7 @@ function AdminUsers() {
               <TableRow>
                 <TableHead className="hidden @min-[61.5rem]:table-cell">ID</TableHead>
                 <SortHead field="email" label="Email" sortDir={sortDir} toggleSort={toggleSort} />
-                <TableHead className="hidden @min-[47rem]:table-cell">Provider</TableHead>
+                <TableHead className="hidden @min-[47rem]:table-cell">Sign-in methods</TableHead>
                 <TableHead className="hidden @min-[61.5rem]:table-cell">Slots</TableHead>
                 <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[47rem]:table-cell" />
                 <SortHead field="lastLogin" label="Last login" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[61.5rem]:table-cell" />
@@ -276,7 +305,7 @@ function AdminUsers() {
                     </div>
                     <div className="mt-1 min-w-40 space-y-1 text-xs tabular-nums text-muted-foreground @min-[61.5rem]:hidden">
                       <div className="flex flex-wrap items-center gap-1.5 @min-[47rem]:hidden">
-                        <ProviderBadge provider={user.authProvider} />
+                        <SignInMethodBadges user={user} />
                         <ActiveBadge active={user.active} />
                       </div>
                       <p>ID {user.id} · {plural(user.apiKeySlots ?? 0, "API key slot")}</p>
@@ -285,7 +314,7 @@ function AdminUsers() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden @min-[47rem]:table-cell">
-                    <ProviderBadge provider={user.authProvider} />
+                    <SignInMethodBadges user={user} />
                   </TableCell>
                   <TableCell className="hidden tabular-nums @min-[61.5rem]:table-cell">{user.apiKeySlots}</TableCell>
                   <TableCell className="hidden tabular-nums text-muted-foreground @min-[47rem]:table-cell">
@@ -416,6 +445,19 @@ function AdminUsers() {
           />
         </div>
       )}
+    </div>
+  )
+}
+
+function SignInMethodBadges({ user }: { user: User }) {
+  if (!user.signInMethods || user.signInMethods.length === 0) return <ProviderBadge provider={user.authProvider} />
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {user.signInMethods.map((use) => (
+        <Badge key={use.method} variant={use.method === "PASSWORD" ? "outline" : "secondary"} className="whitespace-nowrap">
+          {signInMethodLabels[use.method] ?? use.method}
+        </Badge>
+      ))}
     </div>
   )
 }

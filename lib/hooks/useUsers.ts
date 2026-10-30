@@ -11,6 +11,13 @@ export function useAllUsers(filters: UserFilters = {}, page = 0, size = 20, sort
   })
 }
 
+export function useMe() {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: userApi.getMe,
+  })
+}
+
 export function useUpdateUser() {
   const queryClient = useQueryClient()
   return useMutation({

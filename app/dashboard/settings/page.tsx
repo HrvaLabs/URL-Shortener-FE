@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { Download } from "lucide-react"
 import { PageMeta } from "@/components/page-meta"
 import { PasskeysCard } from "@/components/passkeys-card"
+import { SignInMethodsCard } from "@/components/sign-in-methods-card"
 import { TwoStepCard } from "@/components/two-step-card"
 import { ConnectedAppsCard } from "@/components/connected-apps-card"
 import { NotificationsCard } from "@/components/notifications/notifications-card"
@@ -182,6 +183,8 @@ export default function SettingsPage() {
       <NotificationsCard />
 
       <CustomDomainsCard />
+
+      <SignInMethodsCard />
 
       <PasskeysCard />
 

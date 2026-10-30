@@ -15,7 +15,16 @@ export interface User {
   lastLogin: string
   active: boolean
   authProvider?: string
+  signInMethods?: SignInMethodUse[]
   possibleScammer?: boolean
+}
+
+export type SignInMethod = "PASSWORD" | "PASSKEY" | "GOOGLE" | "GITHUB"
+
+export interface SignInMethodUse {
+  method: SignInMethod
+  firstUsedAt: string
+  lastUsedAt: string
 }
 
 export interface UserDto {
@@ -29,6 +38,7 @@ export interface UserDto {
   authProvider?: string
   twoFactorEnabled?: boolean
   twoStepEnabled?: boolean
+  signInMethods?: SignInMethodUse[]
 }
 
 export interface Url {
@@ -624,6 +634,7 @@ export interface UserFilters {
   search?: string
   active?: boolean
   possibleScammer?: boolean
+  signInMethod?: SignInMethod
 }
 
 export type AuditAction =

@@ -70,6 +70,10 @@ export default function PrivacyPage() {
                 notice. We also record when your account was created and when you last logged in.
               </p>
               <p>
+                Which ways you&apos;ve signed in (email and password, passkey, Google or GitHub) and
+                when you last used each. Deleted with your account.
+              </p>
+              <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this data is required to
                 provide your account.
               </p>

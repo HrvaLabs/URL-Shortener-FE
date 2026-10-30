@@ -77,7 +77,7 @@ export default function LinksWithoutAnAccountHelpPage() {
                 Some links made without an account open an hrva.cc page first instead of going straight to the
                 destination. It shows the full address the link goes to, a Continue button and a{" "}
                 <Link href="/report">Report this link</Link> link. It appears when the destination&apos;s domain
-                was registered recently or looks machine-made. The page has no scripts and sets no cookies, and
+                was registered recently or looks machine-made. The page has no scripts and hrva.cc sets no cookies on it, and
                 showing it counts as the click.
               </p>
 

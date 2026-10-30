@@ -128,7 +128,7 @@ export default function PrivacyFirstPage() {
         </p>
         <p>
           Some links made without an account open a warning page that shows the destination first. It has no scripts and
-          sets no cookies.
+          hrva.cc sets no cookies on it.
         </p>
 
         <h2 id="for-you">The GDPR and your own obligations</h2>

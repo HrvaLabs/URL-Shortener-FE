@@ -5,6 +5,7 @@ import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy, QrCode } from "lucide-react"
 import { toast } from "sonner"
+import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Button } from "@/components/ui/button"
@@ -124,9 +125,12 @@ export function QrGenerator() {
           ) : (
             <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
               {!paused && (
-                <p className="text-muted-foreground">
-                  A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
-                </p>
+                <div className="space-y-1.5">
+                  <p className="text-muted-foreground">
+                    A hrva.cc short link makes a simpler code, and with an account you can see how often it is scanned.
+                  </p>
+                  <AnonymousLimitLine />
+                </div>
               )}
               {paused ? (
                 <AnonymousNotice className="w-full" />

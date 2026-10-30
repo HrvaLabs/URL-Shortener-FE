@@ -1,4 +1,5 @@
 import { parseServerDateTime } from "./analytics"
+import type { SwitchableMethod } from "./sign-in-methods"
 import type { AbuseNoContact, AbuseReport, Campaign, DomainBlockPreview, DomainBulkBlockResult, DomainSkipped, PublicSettings, ReportStatus, SettingGroup, SettingResponse } from "./types"
 
 export const ANONYMOUS_PAUSED = "Making links without an account is paused."
@@ -31,6 +32,57 @@ export function signupsPaused(settings: PublicSettings | undefined): boolean {
 
 export function aliasFieldShown(settings: PublicSettings | undefined, domain: string | null): boolean {
   return settings?.customAliases !== false || domain !== null
+}
+
+export function anonymousLimitLine(expiryDays: number | null, visitLimit: number | null): string | null {
+  const limits = [expiryDays === null ? null : countOf(expiryDays, "day"), visitLimit === null ? null : countOf(visitLimit, "visit")].filter(
+    (limit): limit is string => limit !== null,
+  )
+  if (limits.length === 0) return null
+  return `Links made without an account stop working after ${limits.join(" or ")}${limits.length === 2 ? ", whichever comes first" : ""}.`
+}
+
+export function anonymousLimitLineShown(settings: PublicSettings | undefined, signedIn: boolean, authLoading: boolean): string | null {
+  if (authLoading || signedIn || settings === undefined || settings.anonymousLinks === false) return null
+  return anonymousLimitLine(settings.anonymousExpiryDays ?? null, settings.anonymousVisitLimit ?? null)
+}
+
+const PROVIDER_NAMES: Record<SwitchableMethod, string> = { GOOGLE: "Google", GITHUB: "GitHub" }
+
+const PROVIDER_FIELDS = { GOOGLE: "googleSignIn", GITHUB: "githubSignIn" } as const
+
+export const PROVIDER_ORDER: readonly SwitchableMethod[] = ["GOOGLE", "GITHUB"]
+
+export function providerShown(settings: PublicSettings | undefined, provider: SwitchableMethod): boolean {
+  return settings?.[PROVIDER_FIELDS[provider]] !== false
+}
+
+export function providersOff(settings: PublicSettings | undefined): SwitchableMethod[] {
+  return PROVIDER_ORDER.filter((provider) => !providerShown(settings, provider))
+}
+
+export function providerButtonsLayout(settings: PublicSettings | undefined): { shown: SwitchableMethod[]; columns: 1 | 2; divider: boolean } {
+  const shown = PROVIDER_ORDER.filter((provider) => providerShown(settings, provider))
+  return { shown, columns: shown.length === 1 ? 1 : 2, divider: shown.length > 0 }
+}
+
+export function providersOffText(off: readonly SwitchableMethod[]): string | null {
+  if (off.length === 0) return null
+  const names = off.map((provider) => PROVIDER_NAMES[provider])
+  const start = names.length === 1 ? `Sign in with ${names[0]} is` : `Signing in with ${names.join(" and ")} is`
+  return `${start} turned off right now.`
+}
+
+export const FORGOT_PASSWORD_HINT = "No password yet? Use Forgot password to set one."
+
+export function providerDisabledText(provider: SwitchableMethod | null): string {
+  return `${provider ? PROVIDER_NAMES[provider] : "That"} sign-in is turned off on hrva.cc right now. Sign in with your password or a passkey. ${FORGOT_PASSWORD_HINT}`
+}
+
+export const SITE_OFF_TEXT = "Turned off on hrva.cc right now."
+
+export function providerOffSiteWide(settings: PublicSettings | undefined, method: string): boolean {
+  return (method === "GOOGLE" || method === "GITHUB") && !providerShown(settings, method)
 }
 
 export const SETTING_GROUP_LABELS: Record<SettingGroup, string> = {

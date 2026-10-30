@@ -5,6 +5,7 @@ import { flushSync } from "react-dom"
 import Link from "next/link"
 import { Check, Copy } from "lucide-react"
 import { toast } from "sonner"
+import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
 import { UtmFields } from "@/components/utm-fields"
 import { Button } from "@/components/ui/button"
@@ -122,7 +123,12 @@ export function UtmBuilder() {
               </div>
             ) : (
               <div className="flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                {!paused && <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>}
+                {!paused && (
+                  <div className="space-y-1.5">
+                    <p className="text-muted-foreground">Tagged links are long. Shorten it to share it.</p>
+                    <AnonymousLimitLine />
+                  </div>
+                )}
                 {paused ? (
                   <AnonymousNotice className="w-full" />
                 ) : refusal ? (

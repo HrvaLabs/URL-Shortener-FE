@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
 
 const check = (name, run) => {
   try {
@@ -261,6 +261,75 @@ check("aliasFieldShown: hidden only on hrva.cc links while aliases are off", () 
   assert.equal(aliasFieldShown(off, "go.example.com"), true)
   assert.equal(aliasFieldShown(base, null), true)
   assert.equal(aliasFieldShown(undefined, null), true)
+})
+
+check("anonymousLimitLine: days, visits, both, singular and none", () => {
+  assert.equal(anonymousLimitLine(30, null), "Links made without an account stop working after 30 days.")
+  assert.equal(anonymousLimitLine(null, 100), "Links made without an account stop working after 100 visits.")
+  assert.equal(anonymousLimitLine(30, 100), "Links made without an account stop working after 30 days or 100 visits, whichever comes first.")
+  assert.equal(anonymousLimitLine(1, null), "Links made without an account stop working after 1 day.")
+  assert.equal(anonymousLimitLine(null, 1), "Links made without an account stop working after 1 visit.")
+  assert.equal(anonymousLimitLine(1, 1), "Links made without an account stop working after 1 day or 1 visit, whichever comes first.")
+  assert.equal(anonymousLimitLine(3650, 1000000), "Links made without an account stop working after 3,650 days or 1,000,000 visits, whichever comes first.")
+  assert.equal(anonymousLimitLine(null, null), null)
+})
+
+check("anonymousLimitLineShown: signed-out visitors, settings loaded, links not paused", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true, anonymousExpiryDays: 30, anonymousVisitLimit: null }
+  const line = "Links made without an account stop working after 30 days."
+  assert.equal(anonymousLimitLineShown(base, false, false), line)
+  assert.equal(anonymousLimitLineShown(base, true, false), null)
+  assert.equal(anonymousLimitLineShown(base, false, true), null)
+  assert.equal(anonymousLimitLineShown(undefined, false, false), null)
+  assert.equal(anonymousLimitLineShown({ ...base, anonymousLinks: false }, false, false), null)
+  assert.equal(anonymousLimitLineShown({ ...base, anonymousExpiryDays: null }, false, false), null)
+  const old = { anonymousLinks: true, newSignups: true, customAliases: true }
+  assert.equal(anonymousLimitLineShown(old, false, false), null)
+  assert.equal(anonymousLimitLineShown({ ...base, anonymousExpiryDays: undefined, anonymousVisitLimit: 100 }, false, false), "Links made without an account stop working after 100 visits.")
+})
+
+check("providers: hidden only on an explicit false", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true }
+  assert.equal(providerShown(undefined, "GOOGLE"), true)
+  assert.equal(providerShown(base, "GITHUB"), true)
+  assert.equal(providerShown({ ...base, googleSignIn: true, githubSignIn: true }, "GOOGLE"), true)
+  assert.equal(providerShown({ ...base, googleSignIn: false }, "GOOGLE"), false)
+  assert.equal(providerShown({ ...base, googleSignIn: false }, "GITHUB"), true)
+  assert.equal(providerShown({ ...base, githubSignIn: false }, "GITHUB"), false)
+  assert.deepEqual(providersOff(undefined), [])
+  assert.deepEqual(providersOff({ ...base, githubSignIn: false }), ["GITHUB"])
+  assert.deepEqual(providersOff({ ...base, googleSignIn: false, githubSignIn: false }), ["GOOGLE", "GITHUB"])
+})
+
+check("providerButtonsLayout: one column for one button, no divider for none", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true }
+  assert.deepEqual(providerButtonsLayout(undefined), { shown: ["GOOGLE", "GITHUB"], columns: 2, divider: true })
+  assert.deepEqual(providerButtonsLayout({ ...base, googleSignIn: false }), { shown: ["GITHUB"], columns: 1, divider: true })
+  assert.deepEqual(providerButtonsLayout({ ...base, githubSignIn: false }), { shown: ["GOOGLE"], columns: 1, divider: true })
+  assert.deepEqual(providerButtonsLayout({ ...base, googleSignIn: false, githubSignIn: false }), { shown: [], columns: 2, divider: false })
+})
+
+check("provider texts never send a provider-only account to its email and password", () => {
+  assert.equal(
+    providerDisabledText("GOOGLE"),
+    "Google sign-in is turned off on hrva.cc right now. Sign in with your password or a passkey. No password yet? Use Forgot password to set one.",
+  )
+  assert.equal(providerDisabledText("GITHUB").startsWith("GitHub sign-in is turned off on hrva.cc right now."), true)
+  assert.equal(providerDisabledText(null).startsWith("That sign-in is turned off on hrva.cc right now."), true)
+  assert.ok(!providerDisabledText("GOOGLE").includes("email and password"))
+  assert.equal(providersOffText([]), null)
+  assert.equal(providersOffText(["GOOGLE"]), "Sign in with Google is turned off right now.")
+  assert.equal(providersOffText(["GITHUB"]), "Sign in with GitHub is turned off right now.")
+  assert.equal(providersOffText(["GOOGLE", "GITHUB"]), "Signing in with Google and GitHub is turned off right now.")
+})
+
+check("providerOffSiteWide: only a provider whose public field is false", () => {
+  const base = { anonymousLinks: true, newSignups: true, customAliases: true }
+  assert.equal(SITE_OFF_TEXT, "Turned off on hrva.cc right now.")
+  assert.equal(providerOffSiteWide({ ...base, googleSignIn: false }, "GOOGLE"), true)
+  assert.equal(providerOffSiteWide({ ...base, googleSignIn: false }, "GITHUB"), false)
+  assert.equal(providerOffSiteWide({ ...base, githubSignIn: false }, "PASSWORD"), false)
+  assert.equal(providerOffSiteWide(undefined, "GOOGLE"), false)
 })
 
 check("reportStatusText: not reported", () => {

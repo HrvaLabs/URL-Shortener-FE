@@ -17,8 +17,8 @@ export const CONTENT_UPDATED = {
   "/about": "2026-10-29",
   "/privacy-first-url-shortener": "2026-10-29",
   "/developers": "2026-10-30",
-  "/qr": "2026-10-29",
-  "/utm": "2026-10-29",
+  "/qr": "2026-10-30",
+  "/utm": "2026-10-30",
   "/link-in-bio": "2026-10-29",
 } as const
 

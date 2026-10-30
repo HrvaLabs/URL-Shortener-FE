@@ -21,7 +21,9 @@ import { parseServerDateTime } from "@/lib/analytics"
 import { ApiError, REQUEST_FAILED } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useRemovePassword, useTurnOffSignInMethod, useTurnOnSignInMethod } from "@/lib/hooks/useSignInMethods"
+import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { useMe } from "@/lib/hooks/useUsers"
+import { SITE_OFF_TEXT, providerOffSiteWide } from "@/lib/moderation"
 import { isSwitchable, signInMethodLabels } from "@/lib/sign-in-methods"
 import type { SignInMethod, SignInMethodUse } from "@/lib/types"
 import { cn, formatDate, formatDateTime } from "@/lib/utils"
@@ -66,6 +68,7 @@ function dialogText(change: Change, askPassword: boolean): { title: string; desc
 
 export function SignInMethodsCard() {
   const { data: me, isLoading, error, refetch, isFetching } = useMe()
+  const { data: publicSettings } = usePublicSettings()
   const recorded = me?.signInMethods ?? []
   const passwordWithoutRow = me?.passwordSet === true && !recorded.some((use) => use.method === "PASSWORD")
   const methods = passwordWithoutRow ? [{ method: "PASSWORD" as const, firstUsedAt: "", lastUsedAt: "", turnedOffAt: null }, ...recorded] : recorded
@@ -124,6 +127,7 @@ export function SignInMethodsCard() {
                 key={use.method}
                 use={use}
                 passwordSet={me?.passwordSet}
+                siteOff={providerOffSiteWide(publicSettings, use.method)}
                 buttonRef={(node) => { buttons.current[use.method] = node }}
                 onChange={open}
               />
@@ -162,11 +166,13 @@ export function SignInMethodsCard() {
 function MethodRow({
   use,
   passwordSet,
+  siteOff,
   buttonRef,
   onChange,
 }: {
   use: SignInMethodUse
   passwordSet: boolean | undefined
+  siteOff: boolean
   buttonRef: (node: HTMLButtonElement | null) => void
   onChange: (change: Change) => void
 }) {
@@ -185,6 +191,7 @@ function MethodRow({
         {turnedOffAt && (
           <p className="text-xs tabular-nums text-muted-foreground">Turned off {formatDate(parseServerDateTime(turnedOffAt))}</p>
         )}
+        {siteOff && <p className="text-xs text-muted-foreground">{SITE_OFF_TEXT}</p>}
         {noPassword && (
           <p className="text-xs text-muted-foreground">
             No password set. Use <Link href="/reset-password" className="text-brand-link">Forgot password</Link> to set one.

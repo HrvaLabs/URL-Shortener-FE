@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react"
 import { Check, Copy, ExternalLink, Link2 } from "lucide-react"
 import { toast } from "sonner"
 import { DomainPicker } from "@/components/domains/domain-picker"
+import { AnonymousLimitLine } from "@/components/anonymous-limit-line"
 import { AnonymousNotice } from "@/components/anonymous-notice"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -202,6 +203,8 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
           </div>
         )}
       </form>
+
+      <AnonymousLimitLine className="mt-3" />
 
       {result && (
         <div

@@ -44,7 +44,16 @@ export default function LinksWithoutAnAccountHelpPage() {
               <p>
                 A link made without an account isn&apos;t in any dashboard, so it has no stats page. Custom
                 aliases, visit limits, expiry dates and analytics come with a free account, which you can{" "}
-                <Link href="/register">create</Link> whenever new accounts are open.
+                <Link href="/register">create</Link> whenever new accounts are open. When hrva.cc sets an end date
+                or a visit limit for these links, the form says so.
+              </p>
+
+              <h2 id="limits">Limits</h2>
+              <p>
+                Each network can make a limited number of links without an account per hour. hrva.cc can
+                also give these links an end date or a visit limit. When it does, the form says so, for
+                example &quot;Links made without an account stop working after 30 days.&quot; You can&apos;t
+                change these in the forms. With an account you choose your own.
               </p>
 
               <h2 id="checks">Safety checks</h2>

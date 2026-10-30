@@ -136,6 +136,10 @@ export default function PasskeysHelpPage() {
                 A <strong>Security key (second step only)</strong> can&apos;t be used here: sign in with your
                 password, then use the key at the second step.
               </p>
+              <p>
+                When Sign in with Google or GitHub is turned off on hrva.cc, its button is hidden; use your
+                password or a passkey, or Forgot password to set a password.
+              </p>
 
               <h2 id="two-step">Two-step verification with passkeys</h2>
               <ol>

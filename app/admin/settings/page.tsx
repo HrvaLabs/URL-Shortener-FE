@@ -77,7 +77,7 @@ function Settings() {
 
       {isLoading ? (
         <SettingsSkeleton />
-      ) : !data ? (
+      ) : error || !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p role="alert" className="text-sm font-medium text-destructive">Failed to load settings</p>
           <Button

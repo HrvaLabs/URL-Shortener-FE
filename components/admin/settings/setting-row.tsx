@@ -310,7 +310,7 @@ export function SettingRow({ setting, indented }: { setting: SettingResponse; in
       </div>
 
       <AlertDialog open={confirmOff} onOpenChange={setConfirmOff}>
-        <AlertDialogContent>
+        <AlertDialogContent onCloseAutoFocus={(event) => { event.preventDefault(); control.current?.focus() }}>
           <AlertDialogHeader>
             <AlertDialogTitle className={wrap}>Turn off {setting.label}?</AlertDialogTitle>
             <AlertDialogDescription>{SAFETY_OFF_BODY}</AlertDialogDescription>

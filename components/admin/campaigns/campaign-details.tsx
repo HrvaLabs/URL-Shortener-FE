@@ -100,7 +100,7 @@ function CampaignDomains({ campaign }: { campaign: Campaign }) {
                 {shown.map((entry) => (
                   <TableRow key={entry.domain}>
                     <TableCell>
-                      <span className="block min-w-32 font-mono text-[13px] [overflow-wrap:anywhere]">{entry.domain}</span>
+                      <span className="block font-mono text-[13px] [overflow-wrap:anywhere]">{entry.domain}</span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{entry.links.toLocaleString()}</TableCell>
                     <TableCell className="text-muted-foreground">

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { urlApi } from "@/lib/api-client"
+import { refreshPublicSettingsAfterRefusal } from "@/lib/hooks/useSettings"
 import type { CreateUrlDto, UrlUpdateDto, UrlResponse, Page, UrlFilters } from "@/lib/types"
 
 export function useMyUrls(filters: UrlFilters = {}, page = 0, size = 20, sort = "createDate", order = "desc") {
@@ -25,6 +26,7 @@ export function useCreateUrl(apiKey?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["urls"] })
     },
+    onError: (error) => refreshPublicSettingsAfterRefusal(queryClient, error),
   })
 }
 

@@ -48,7 +48,7 @@ export const adminNavGroups: AdminNavGroup[] = [
   },
   {
     title: "Configuration",
-    items: [{ href: "/admin/settings", label: "Settings", icon: SlidersHorizontal }],
+    items: [{ href: "/admin/settings", label: "Site settings", icon: SlidersHorizontal }],
   },
 ]
 

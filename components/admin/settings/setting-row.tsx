@@ -10,11 +10,11 @@ import { Switch } from "@/components/ui/switch"
 import { parseServerDateTime } from "@/lib/analytics"
 import { ApiError } from "@/lib/api-client"
 import { useChangeSetting, useResetSetting } from "@/lib/hooks/useSettings"
-import { settingValueText } from "@/lib/moderation"
+import { noEffectText, settingValueText } from "@/lib/moderation"
 import type { SettingResponse, SettingValue } from "@/lib/types"
 import { cn, formatDateTime } from "@/lib/utils"
 
-const SAFETY_OFF_BODY = "It stays off until you turn it back on. Settings and Stats show a warning while it's off."
+const SAFETY_OFF_BODY = "It stays off until you turn it back on. Site settings and Stats show a warning while it's off."
 
 const busyClassName = "aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 
@@ -203,7 +203,7 @@ function ChangedLine({ setting }: { setting: SettingResponse }) {
   return <>{`Changed${by}${date ? ` on ${date}` : ""}`}</>
 }
 
-export function SettingRow({ setting, indented }: { setting: SettingResponse; indented: boolean }) {
+export function SettingRow({ setting, indented, offParent }: { setting: SettingResponse; indented: boolean; offParent: string | null }) {
   const id = useId()
   const ids: RowIds = { label: `${id}-label`, description: `${id}-description`, input: `${id}-input`, error: `${id}-error` }
   const change = useChangeSetting()
@@ -279,7 +279,10 @@ export function SettingRow({ setting, indented }: { setting: SettingResponse; in
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             {label}
-            <p id={ids.description} className={cn("mt-0.5 text-sm text-muted-foreground", wrap)}>{setting.description}</p>
+            <div id={ids.description} className={cn("mt-0.5 space-y-0.5 text-sm text-muted-foreground", wrap)}>
+              <p>{setting.description}</p>
+              {offParent && <p>{noEffectText(offParent)}</p>}
+            </div>
             {!setting.available && setting.unavailableReason && (
               <p className={cn("mt-1 text-sm text-muted-foreground", wrap)}>{setting.unavailableReason}</p>
             )}
@@ -288,25 +291,23 @@ export function SettingRow({ setting, indented }: { setting: SettingResponse; in
         </div>
         {setting.type === "NUMBER" && <NumberEditor {...editorProps} />}
         {(setting.type === "TEXT" || setting.type === "ADDRESSES") && <TextEditor {...editorProps} />}
-        <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-          <p className={wrap}>Default: {settingValueText(setting, setting.defaultValue)}</p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <p className={wrap}>{setting.changed ? <ChangedLine setting={setting} /> : "Default from configuration"}</p>
-            {setting.changed && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn("h-7 px-2 text-xs", busyClassName)}
-                aria-disabled={busy}
-                aria-busy={busy}
-                onClick={resetToDefault}
-              >
-                Reset to default<span className="sr-only"> for {setting.label}</span>
-              </Button>
-            )}
+        {setting.changed && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <p className={wrap}><ChangedLine setting={setting} /></p>
+            <p className={wrap}>Default: {settingValueText(setting, setting.defaultValue)}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className={cn("h-7 px-2 text-xs", busyClassName)}
+              aria-disabled={busy}
+              aria-busy={busy}
+              onClick={resetToDefault}
+            >
+              Reset to default<span className="sr-only"> for {setting.label}</span>
+            </Button>
           </div>
-        </div>
+        )}
       </div>
 
       <AlertDialog open={confirmOff} onOpenChange={setConfirmOff}>

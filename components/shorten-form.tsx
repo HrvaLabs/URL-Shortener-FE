@@ -15,7 +15,7 @@ import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { useAnonymousLinksPaused, usePublicSettings } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
-import { aliasFieldShown } from "@/lib/moderation"
+import { ALIASES_PAUSED, aliasFieldShown } from "@/lib/moderation"
 import type { UrlResponse } from "@/lib/types"
 import { cn, destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
@@ -169,6 +169,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
 
         {withOptions && (
           <div className={cn("grid grid-cols-1 gap-3", showAlias ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
+            {!showAlias && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere] sm:col-span-2">{ALIASES_PAUSED}</p>}
             {showAlias && (
               <div>
                 <Label htmlFor="alias" className="text-xs text-muted-foreground">Custom alias</Label>

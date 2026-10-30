@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, signupsPaused, aliasFieldShown } = moderation
 
 const check = (name, run) => {
   try {
@@ -53,6 +53,20 @@ const safetySwitch = (label, value, overrides = {}) =>
 check("paused notices", () => {
   assert.equal(ANONYMOUS_PAUSED, "Making links without an account is paused.")
   assert.equal(SIGNUPS_PAUSED, "Creating new accounts is paused.")
+})
+
+check("refusal texts and the switch each one points at", () => {
+  assert.equal(ALIASES_PAUSED, "Custom aliases are turned off right now.")
+  assert.equal(ANONYMOUS_REFUSED, "Sign in to create short URLs")
+  assert.equal(refusedSwitch("Sign in to create short URLs"), "anonymousLinks")
+  assert.equal(refusedSwitch("Custom aliases are turned off right now."), "customAliases")
+  assert.equal(refusedSwitch("Sign in to create short URLs."), null)
+  assert.equal(refusedSwitch("Could not shorten that URL."), null)
+  assert.equal(refusedSwitch(undefined), null)
+})
+
+check("noEffectText", () => {
+  assert.equal(noEffectText("Same-shape alert"), "Has no effect while Same-shape alert is off.")
 })
 
 check("group labels, in the catalogue's order", () => {
@@ -124,6 +138,30 @@ check("groupSettings: groups in the catalogue's order, children under their pare
     { group: "ALERTS", rows: ["SAME_SHAPE_ALERT", "  CAMPAIGN_LINKS"] },
     { group: "DIGEST", rows: ["WEEKLY_DIGEST"] },
   ])
+})
+
+const offParents = (groups) => Object.fromEntries(groups.flatMap((entry) => entry.rows.map((row) => [row.setting.key, row.offParent])))
+
+check("groupSettings: a child under an off parent names it, any other row has none", () => {
+  const settings = catalogue().map((entry) => (entry.key === "SAME_SHAPE_ALERT" ? { ...entry, value: false } : entry))
+  const parents = offParents(groupSettings(settings, ""))
+  assert.equal(parents.CAMPAIGN_LINKS, "Same-shape alert")
+  assert.equal(parents.SAME_SHAPE_ALERT, null)
+  assert.equal(parents.ANONYMOUS_LINKS_PER_HOUR, null)
+  assert.equal(parents.CUSTOM_ALIASES, null)
+})
+
+check("groupSettings: a grandchild names the nearest off ancestor, and the parent is looked up past the filter", () => {
+  const top = setting({ key: "SAME_SHAPE_ALERT", type: "SWITCH", label: "Top", parent: null, value: false })
+  const middle = setting({ key: "CAMPAIGN_LINKS", type: "SWITCH", label: "Middle", parent: "SAME_SHAPE_ALERT", value: true })
+  const bottom = setting({ key: "CAMPAIGN_HOLD", label: "Bottom", description: "Only this one matches.", parent: "CAMPAIGN_LINKS" })
+  assert.equal(offParents(groupSettings([top, middle, bottom], "")).CAMPAIGN_HOLD, "Top")
+  assert.equal(offParents(groupSettings([top, middle, bottom], "only this")).CAMPAIGN_HOLD, "Top")
+})
+
+check("groupSettings: a child under a number parent or an on parent has none", () => {
+  const settings = catalogue()
+  assert.equal(offParents(groupSettings(settings, "")).CAMPAIGN_LINKS, null)
 })
 
 check("groupSettings: a filter matches the label and the description, ignoring case", () => {

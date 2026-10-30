@@ -36,7 +36,7 @@ function PageTitle({ headingRef }: { headingRef?: RefObject<HTMLHeadingElement |
   return (
     <div>
       <h1 ref={headingRef} tabIndex={-1} className="font-display text-2xl focus-visible:ring-0 focus-visible:ring-offset-0">
-        Settings
+        Site settings
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">{subline}</p>
     </div>
@@ -71,13 +71,13 @@ function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title={`Admin ${String.fromCodePoint(0x2014)} Settings`} description={subline} />
+      <PageMeta title={`Admin ${String.fromCodePoint(0x2014)} Site settings`} description={subline} />
       <PageTitle headingRef={headingRef} />
       <SafetySwitchesOff />
 
       {isLoading ? (
         <SettingsSkeleton />
-      ) : error || !data ? (
+      ) : !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p role="alert" className="text-sm font-medium text-destructive">Failed to load settings</p>
           <Button
@@ -92,6 +92,22 @@ function Settings() {
         </div>
       ) : (
         <>
+          {error && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
+              <p role="alert" className="min-w-0 text-sm font-medium text-destructive [overflow-wrap:anywhere]">
+                {"Couldn't refresh the settings. The list may be out of date."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+                onClick={() => { if (!isFetching) retry(refetch) }}
+                aria-disabled={isFetching}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
           <form
             role="search"
             onSubmit={(event: FormEvent<HTMLFormElement>) => {
@@ -125,8 +141,8 @@ function Settings() {
                   {SETTING_GROUP_LABELS[group]}
                 </h2>
                 <ul className="divide-y px-5">
-                  {rows.map(({ setting, indented }) => (
-                    <SettingRow key={setting.key} setting={setting} indented={indented} />
+                  {rows.map(({ setting, indented, offParent }) => (
+                    <SettingRow key={setting.key} setting={setting} indented={indented} offParent={offParent} />
                   ))}
                 </ul>
               </section>

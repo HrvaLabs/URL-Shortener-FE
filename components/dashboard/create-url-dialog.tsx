@@ -4,7 +4,7 @@ import { useId, useState } from "react"
 import { flushSync } from "react-dom"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
-import { aliasFieldShown } from "@/lib/moderation"
+import { ALIASES_PAUSED, aliasFieldShown } from "@/lib/moderation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -115,6 +115,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
               {longUrlError && <p id="create-long-url-error" className="mt-2 text-sm text-destructive">{longUrlError}</p>}
             </div>
             <DomainPicker id={`${id}-domain`} value={domain} onChange={(picked) => { setDomain(picked); setDomainError(null) }} error={domainError} />
+            {!showAlias && <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{ALIASES_PAUSED}</p>}
             {showAlias && (
               <div>
                 <Label htmlFor={`${id}-alias`}>Custom alias (optional)</Label>

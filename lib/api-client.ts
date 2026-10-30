@@ -64,6 +64,7 @@ async function request<T>(
   path: string,
   body?: unknown,
   headers?: Record<string, string>,
+  cache?: RequestCache,
 ): Promise<T> {
   const baseUrl = getApiBaseUrl()
   const token = localStorage.getItem("auth-token")
@@ -86,6 +87,7 @@ async function request<T>(
       method,
       headers: reqHeaders,
       body: body ? JSON.stringify(body) : undefined,
+      cache,
     })
   } catch {
     throw new ApiError(CANT_REACH, 0)
@@ -430,7 +432,7 @@ export const reportApi = {
 // Public numbers
 export const publicApi = {
   getStats: () => request<PublicStatsResponse>("GET", "/public/stats"),
-  getSettings: () => request<PublicSettings>("GET", "/public/settings"),
+  getSettings: (cache?: RequestCache) => request<PublicSettings>("GET", "/public/settings", undefined, undefined, cache),
 }
 
 // Bio pages

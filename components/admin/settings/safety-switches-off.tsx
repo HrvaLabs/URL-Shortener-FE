@@ -21,7 +21,7 @@ export function SafetySwitchesOff({ showLink = false }: { showLink?: boolean }) 
         ))}
         {showLink && (
           <Link href="/admin/settings" className="inline-block rounded-sm underline underline-offset-2 hover:text-foreground/80">
-            Settings
+            Site settings
           </Link>
         )}
       </div>

@@ -1,10 +1,10 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { publicApi, settingsApi } from "@/lib/api-client"
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
+import { ApiError, publicApi, settingsApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
-import { anonymousLinksPaused } from "@/lib/moderation"
+import { anonymousLinksPaused, refusedSwitch } from "@/lib/moderation"
 import type { SettingKey, SettingValue } from "@/lib/types"
 
 const ADMIN_SETTINGS_KEY = ["admin", "settings"]
@@ -41,10 +41,17 @@ export function useResetSetting() {
   })
 }
 
+export function refreshPublicSettingsAfterRefusal(queryClient: QueryClient, error: unknown) {
+  if (!(error instanceof ApiError) || refusedSwitch(error.message) === null) return
+  void queryClient
+    .fetchQuery({ queryKey: PUBLIC_SETTINGS_KEY, queryFn: () => publicApi.getSettings("no-store"), staleTime: 0 })
+    .catch(() => {})
+}
+
 export function usePublicSettings() {
   return useQuery({
     queryKey: PUBLIC_SETTINGS_KEY,
-    queryFn: publicApi.getSettings,
+    queryFn: () => publicApi.getSettings(),
     staleTime: 60_000,
     retry: retryUnlessRefused,
   })

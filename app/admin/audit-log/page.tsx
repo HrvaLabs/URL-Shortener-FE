@@ -127,7 +127,12 @@ const actionLabel = ({ action, failed }: AuditLog): string => {
 
 const sortFields = ["performedAt"]
 
-const addressDate = (value: string | null) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) ? value : "")
+const isCalendarDate = (value: string) => {
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value)
+}
+
+const addressDate = (value: string | null) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && isCalendarDate(value) ? value : "")
 
 const dateInputClass = `${adminSelectClass} tabular-nums`
 

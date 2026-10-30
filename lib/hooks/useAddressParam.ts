@@ -1,11 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-
-const readParam = (name: string) => (typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name))
+import { useSearchParams } from "next/navigation"
 
 export function useAddressParam<T extends string>(name: string, parse: (value: string | null) => T) {
-  const [value, setValue] = useState<T>(() => parse(readParam(name)))
+  const address = parse(useSearchParams().get(name))
+  const [value, setValue] = useState<T>(address)
+  const [seen, setSeen] = useState<T>(address)
+
+  if (address !== seen) {
+    setSeen(address)
+    if (address !== value) setValue(address)
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

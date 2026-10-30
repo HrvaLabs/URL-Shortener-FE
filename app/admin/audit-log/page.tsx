@@ -111,7 +111,8 @@ const targetTypeLabels: Record<string, string> = {
   ReservedAlias: "Reserved alias",
   Blocklist: "Blocklist",
   EmailLog: "Email",
-  Admin: "Site settings",
+  Admin: "Admin action",
+  Setting: "Site setting",
   BioPage: "Bio page",
   BioPageReview: "Bio page",
 }

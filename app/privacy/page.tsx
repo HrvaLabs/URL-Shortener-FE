@@ -179,7 +179,8 @@ export default function PrivacyPage() {
               <p>
                 We send transactional emails: address verification, password reset, security
                 notices (for example when a passkey is added to your account), and a notice when one of
-                your links is blocked or your account is deactivated. We also send the notification emails
+                your links is blocked or your account is deactivated, and notices about your custom domain when
+                it&apos;s approved, not approved, turned off or removed by an admin. We also send the notification emails
                 you turn on, as described under <a href="#notifications">Notifications</a>. We keep a log of
                 emails sent to operate and troubleshoot delivery; for a notification email, the log also
                 notes which notification it was. We do not send marketing email.
@@ -220,8 +221,8 @@ export default function PrivacyPage() {
                 destination, as described under <em>Keeping links safe</em>. Once it&apos;s approved, we send the
                 domain&apos;s name to Cloudflare, which issues and renews its certificate. Certificates are
                 published in public Certificate Transparency logs, so the name of your domain becomes public once
-                it&apos;s set up. We keep this while the domain exists; when you remove it we keep a record of the
-                domain and its dates, and when you delete your account it&apos;s deleted. Visitors who open links
+                it&apos;s set up. We keep this while the domain exists. When you remove it, or it isn&apos;t approved,
+                its record stays, marked removed or not approved, until you delete your account. Visitors who open links
                 on your domain get exactly the same privacy as visitors to hrva.cc: see &ldquo;Link
                 statistics&rdquo;.
               </p>
@@ -347,12 +348,14 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Google Safe Browsing</strong> — destination URLs you shorten, and the
                   addresses they redirect to, are checked against Google&apos;s threat database to
-                  protect visitors from malicious sites. Only the URL is sent, never information
+                  protect visitors from malicious sites, and so is the address of a custom domain you apply
+                  for. Only the URL is sent, never information
                   about you or your visitors.
                 </li>
                 <li>
                   <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a
-                  destination, as described under <em>Keeping links safe</em>.
+                  destination, or of a custom domain you apply for, as described under{" "}
+                  <em>Keeping links safe</em>.
                 </li>
                 <li>
                   <strong>Cloudflare</strong> — delivers the web application and short links
@@ -478,9 +481,9 @@ export default function PrivacyPage() {
                   sent, so it&apos;s never sent twice; kept for 60 days.
                 </li>
                 <li>
-                  <strong>Custom domains</strong> &mdash; kept while the domain exists. When you remove it, we
-                  keep a record of the domain and its dates. Everything about your custom domains is deleted
-                  when you delete your account.
+                  <strong>Custom domains</strong> &mdash; kept while the domain exists. When you remove it, or
+                  it isn&apos;t approved, its record stays, marked removed or not approved, until you delete
+                  your account. Everything about your custom domains is deleted when you delete your account.
                 </li>
                 <li>
                   <strong>Admin audit log</strong> — kept for 12 months, then deleted automatically.
@@ -500,7 +503,7 @@ export default function PrivacyPage() {
                 It also includes your notification consent history and your channels, with masked
                 addresses and the Telegram chat ID, never their tokens or secrets.
                 It also includes your custom domains, with their status, reason, the admin&apos;s note and
-                dates, never their Cloudflare ids.
+                dates, never their Cloudflare ids, internal errors or review flags.
                 You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or

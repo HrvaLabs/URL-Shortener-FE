@@ -19,6 +19,7 @@ const reasonMessages = new Map([
   ["limit", "This link has reached its visit limit."],
   ["inactive", "Its owner has turned this link off."],
   ["missing", missingMessage],
+  ["domain", "This link's domain is turned off right now."],
 ])
 
 function UnavailableDetails({ short, domain, message }: { short: string; domain: string | null; message: string }) {

@@ -278,8 +278,8 @@ export default function CustomDomainsHelpPage() {
                 A domain is <strong>{DOMAIN_STATUS_LABELS.DISABLED}</strong> when an admin turns it off for abuse,
                 or on its own when the account is blocked or the domain is on a blocklist. The card shows the
                 admin&apos;s note, or <Quote>{DISABLED_REASONS[0]}</Quote> or <Quote>{DISABLED_REASONS[1]}</Quote>{" "}
-                Its links stop working until it&apos;s turned back on; visitors see a page saying the link
-                isn&apos;t available. <strong>{DOMAIN_STATUS_LABELS.REJECTED}</strong> and{" "}
+                Its links stop working until it&apos;s turned back on; visitors see a page saying{" "}
+                <Quote>This link&apos;s domain is turned off right now.</Quote> <strong>{DOMAIN_STATUS_LABELS.REJECTED}</strong> and{" "}
                 <strong>{DOMAIN_STATUS_LABELS.DELETED}</strong> domains leave the list after 30 days.
               </p>
 
@@ -289,8 +289,8 @@ export default function CustomDomainsHelpPage() {
                 what to do.
               </p>
               <p>
-                Certificate, removed record, CAA and Cloudflare problems are checked again every hour on their
-                own. Once hrva.cc has stopped looking for the DNS record, it waits for <strong>Check now</strong>,
+                Once a domain needs attention, certificate, removed-record, CAA and Cloudflare problems are
+                checked again every hour on their own. When hrva.cc has stopped looking for the DNS record, it waits for <strong>Check now</strong>,
                 and a failed setup waits for <strong>Retry</strong> once its 24 hours of retries are over.
               </p>
 

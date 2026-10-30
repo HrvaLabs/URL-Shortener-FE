@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from "react"
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import {
-  ArrowRight, ArrowUpRight, BarChart3, Bell, Check, Clock, Contact, Copy, Fingerprint, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
+  ArrowRight, ArrowUpRight, BarChart3, Bell, Check, Clock, Contact, Copy, Fingerprint, Globe, KeyRound, Lock, Megaphone, Plus, QrCode, Search, Tag, Timer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -503,6 +503,34 @@ function FeatureGrid() {
               </p>
               <p className="mt-1.5 pl-5.5 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">
                 hrva.cc/menu <span className="font-sans">to</span> example.com
+              </p>
+            </div>
+          </FeatureCell>
+
+          <FeatureCell
+            className="md:grid md:grid-cols-2 md:items-center lg:col-span-3"
+            icon={Globe}
+            title="Custom domains"
+            description={
+              <>
+                Short links on your own subdomain, like go.example.com/menu. Free, reviewed by a person, and set up for you
+                after one DNS record.{" "}
+                <Link href="/help/custom-domains" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+                  Learn more<span className="sr-only"> about custom domains</span>
+                </Link>
+              </>
+            }
+          >
+            <div aria-hidden="true" className="mx-auto w-full max-w-sm space-y-2.5">
+              <p className="flex items-start gap-2 rounded-xl border bg-background px-4 py-3 font-mono text-sm font-medium [overflow-wrap:anywhere]">
+                <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="min-w-0">
+                  <span className="text-brand">go.example.com</span>/menu
+                </span>
+              </p>
+              <p className="flex items-start gap-2 rounded-xl border bg-background px-4 py-3 font-mono text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0">hrva.cc/menu</span>
               </p>
             </div>
           </FeatureCell>

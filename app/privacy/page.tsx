@@ -209,6 +209,26 @@ export default function PrivacyPage() {
                 legitimate interest (Art. 6(1)(f) GDPR) for keeping the record of your consent.
               </p>
 
+              <h3 id="custom-domains">Custom domains</h3>
+              <p>
+                If you apply for a custom domain, we store the domain, what you told us you&apos;ll use it for,
+                the findings of the automatic safety checks on the domain, the admin&apos;s decision and notes
+                (including why it was turned off, if it is), and the domain&apos;s setup status, including the id
+                Cloudflare gives it, Cloudflare&apos;s status for it and the last error Cloudflare reported. We also store its dates: when you
+                applied, and when it was reviewed, became active, was turned off or was removed. When you apply,
+                and every night while it&apos;s active, the domain goes through the same checks as a link&apos;s
+                destination, as described under <em>Keeping links safe</em>. Once it&apos;s approved, we send the
+                domain&apos;s name to Cloudflare, which issues and renews its certificate. Certificates are
+                published in public Certificate Transparency logs, so the name of your domain becomes public once
+                it&apos;s set up. We keep this while the domain exists; when you remove it we keep a record of the
+                domain and its dates, and when you delete your account it&apos;s deleted. Visitors who open links
+                on your domain get exactly the same privacy as visitors to hrva.cc: see &ldquo;Link
+                statistics&rdquo;.
+              </p>
+              <p>
+                Legal basis: performing the service you asked for (Art. 6(1)(b) GDPR).
+              </p>
+
               <h3 id="security-and-audit-logs">Security and audit logs</h3>
               <p>
                 We keep internal audit logs of security-relevant events (such as logins and
@@ -338,7 +358,8 @@ export default function PrivacyPage() {
                   <strong>Cloudflare</strong> — delivers the web application and short links
                   (hosting/CDN). Your IP address reaches Cloudflare as part of normal traffic
                   delivery, and Cloudflare tells us which country it belongs to, which we keep only
-                  as a daily count.
+                  as a daily count. Cloudflare also receives the names of custom domains, to issue their
+                  certificates.
                 </li>
                 <li>
                   <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc
@@ -364,7 +385,10 @@ export default function PrivacyPage() {
                   by clicks, each with its short link, the domain it points to and its click count.
                   Nothing in a message is cut short: when more alerts come in at once than fit in
                   one message, the rest aren&apos;t posted and the message ends with how many were
-                  left out (&ldquo;and N more&rdquo;). Discord Inc., based in the United States,
+                  left out (&ldquo;and N more&rdquo;). When someone applies for a custom domain, the alert names
+                  the domain, the account number and what the automatic checks found; when a custom domain is
+                  turned off, needs the admin&apos;s attention or is missing from Cloudflare, it names the domain
+                  and the reason. Discord Inc., based in the United States,
                   processes these messages under its own terms, and they stay in the channel until
                   the admin deletes them.
                 </li>
@@ -454,6 +478,11 @@ export default function PrivacyPage() {
                   sent, so it&apos;s never sent twice; kept for 60 days.
                 </li>
                 <li>
+                  <strong>Custom domains</strong> &mdash; kept while the domain exists. When you remove it, we
+                  keep a record of the domain and its dates. Everything about your custom domains is deleted
+                  when you delete your account.
+                </li>
+                <li>
                   <strong>Admin audit log</strong> — kept for 12 months, then deleted automatically.
                 </li>
               </ul>
@@ -470,6 +499,8 @@ export default function PrivacyPage() {
                 It also includes your bio page and its buttons.
                 It also includes your notification consent history and your channels, with masked
                 addresses and the Telegram chat ID, never their tokens or secrets.
+                It also includes your custom domains, with their status, reason, the admin&apos;s note and
+                dates, never their Cloudflare ids.
                 You also have the right to lodge a complaint with the Croatian
                 Personal Data Protection Agency (
                 <a href="https://azop.hr" target="_blank" rel="noopener noreferrer">AZOP</a>) or

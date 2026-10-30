@@ -34,6 +34,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/help/link-in-bio"),
     dated("/help/notifications"),
     dated("/help/install-app"),
+    dated("/help/custom-domains"),
     dated("/report"),
     dated("/privacy"),
     dated("/terms"),

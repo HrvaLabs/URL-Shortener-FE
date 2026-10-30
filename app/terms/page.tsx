@@ -86,6 +86,14 @@ export default function TermsPage() {
                 without notice; you&apos;ll see the reason in the editor.
               </p>
 
+              <h2>Custom domains</h2>
+              <p>
+                You may only use a domain you own or are allowed to use. hrva.cc may refuse an application,
+                and may turn off or remove a custom domain that&apos;s used for abuse, phishing, spam or
+                anything the acceptable use rules forbid. Custom domains are free and come with no
+                guarantee: we may limit how many we offer or stop offering them.
+              </p>
+
               <h2>Reporting abuse</h2>
               <p>
                 To report a short link that leads to phishing, malware, scams or spam, use the{" "}

@@ -92,12 +92,12 @@ export default function SecurityPage() {
             <strong>Sign out everywhere</strong> in Settings ends every other sign-in. Changing or resetting your
             password, or turning a sign-in method off, does the same.
           </li>
-          <li>Sign-in attempts and two-step codes are limited per network and per account, against password guessing.</li>
+          <li>Sign-in attempts are limited per network and per account, and wrong two-step codes per account, against guessing.</li>
           <li>A password reset link works once, expires after 1 hour, and is stored only as a hash.</li>
           <li>Signing up and asking for a password reset give the same answer whether or not an account uses the address.</li>
           <li>You get an email when a passkey is added to your account or a sign-in method changes.</li>
           <li>Only you, and an admin who uses two-step sign-in, can see or change your links and their statistics.</li>
-          <li>Sign-ins and admin actions are recorded in an audit log.</li>
+          <li>Admin actions and changes to sign-in methods are recorded in an audit log.</li>
         </ul>
         <p>
           The <Link href="/help/passkeys">passkeys guide</Link> explains two-step sign-in, recovery codes and what to do

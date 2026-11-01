@@ -1,5 +1,5 @@
 import { parseServerDateTime } from "./analytics"
-import { formatDate, formatTimeAgo, plural } from "./utils"
+import { formatDateTime, formatTimeAgo, plural } from "./utils"
 
 export const MAX_EXPIRY_DAYS = 3650
 
@@ -58,5 +58,23 @@ export const requestsText = (requests: number): string => plural(requests, "requ
 export const lastUsedText = (lastUsedAt: string | null | undefined): string =>
   lastUsedAt ? `Last used ${formatTimeAgo(parseServerDateTime(lastUsedAt))}` : "Never used"
 
+/** An expiry from the backend (a UTC instant) as the viewer's local date and time. */
+export const expiryDateTimeText = (expirationDate: string): string => formatDateTime(parseServerDateTime(expirationDate))
+
 export const expiresText = (expirationDate: string | null | undefined): string =>
-  expirationDate ? `Expires ${formatDate(parseServerDateTime(expirationDate))}` : "Never expires"
+  expirationDate ? `Expires ${expiryDateTimeText(expirationDate)}` : "Never expires"
+
+export interface ExpiryPrefill {
+  choice: ExpiryChoice
+  date: string
+  expiredOn: string | null
+}
+
+/** The Expires field's starting state for a key: no expiry, a future instant as its local date, or the default when it has already passed. */
+export function expiryPrefill(expirationDate: string | null | undefined, now: Date): ExpiryPrefill {
+  if (!expirationDate) return { choice: "never", date: "", expiredOn: null }
+  const instant = parseServerDateTime(expirationDate)
+  if (Number.isNaN(instant.getTime())) return { choice: DEFAULT_EXPIRY_CHOICE, date: "", expiredOn: null }
+  if (instant.getTime() <= now.getTime()) return { choice: DEFAULT_EXPIRY_CHOICE, date: "", expiredOn: expiryDateTimeText(expirationDate) }
+  return { choice: "custom", date: dateInputValue(instant), expiredOn: null }
+}

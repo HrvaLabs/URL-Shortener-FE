@@ -93,7 +93,7 @@ export interface ApiKey {
   apiCallsUsed: number
   lastUsedAt: string | null
   createDate: string
-  expirationDate?: string
+  expirationDate: string | null
   active: boolean
 }
 
@@ -106,7 +106,7 @@ export interface ApiKeyResponse {
   apiCallsUsed: number
   lastUsedAt: string | null
   createDate: string
-  expirationDate?: string
+  expirationDate: string | null
   active: boolean
   status: ApiKeyStatus
   ownerEmail?: string

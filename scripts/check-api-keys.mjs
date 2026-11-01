@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
-const { daysFromToday, expiryChange, keyPrefixText, lastUsedText, requestsText, dateInputValue } = await import("../lib/api-keys.ts")
+const { daysFromToday, expiryChange, expiryDateTimeText, expiryPrefill, keyPrefixText, lastUsedText, requestsText, dateInputValue } = await import("../lib/api-keys.ts")
 
 let failures = 0
 
@@ -65,6 +65,44 @@ check("a custom date needs at least 1 day and at most 3,650", () => {
 
 check("the date input value is the local day", () => {
   assert.equal(dateInputValue(new Date(2026, 0, 5, 23, 30)), "2026-01-05")
+})
+
+const localDayOfInstant = {
+  UTC: { "2026-11-30T03:30:00": "2026-11-30", "2026-11-30T20:00:00": "2026-11-30" },
+  "America/Los_Angeles": { "2026-11-30T03:30:00": "2026-11-29", "2026-11-30T20:00:00": "2026-11-30" },
+  "Pacific/Auckland": { "2026-11-30T03:30:00": "2026-11-30", "2026-11-30T20:00:00": "2026-12-01" },
+}
+
+check("an expiry timestamp is a UTC instant shown as the local day, in every time zone", () => {
+  const zone = process.env.TZ ?? "UTC"
+  const expected = localDayOfInstant[zone]
+  assert.ok(expected, `no expectations for time zone ${zone}`)
+  for (const [instant, day] of Object.entries(expected)) {
+    assert.deepEqual(expiryPrefill(instant, new Date("2026-10-30T12:00:00Z")), { choice: "custom", date: day, expiredOn: null }, `${instant} in ${zone}`)
+  }
+})
+
+check("the shown expiry and the prefill agree", () => {
+  const shown = expiryDateTimeText("2026-11-30T03:30:00")
+  assert.equal(shown, new Date("2026-11-30T03:30:00Z").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }))
+})
+
+check("no expiry starts as No expiry", () => {
+  assert.deepEqual(expiryPrefill(null, today), { choice: "never", date: "", expiredOn: null })
+  assert.deepEqual(expiryPrefill(undefined, today), { choice: "never", date: "", expiredOn: null })
+})
+
+check("an expired key starts at the default, so an untouched Save works", () => {
+  const prefill = expiryPrefill("2026-01-05T10:00:00", new Date("2026-10-30T12:00:00Z"))
+  assert.equal(prefill.choice, "90")
+  assert.equal(prefill.date, "")
+  assert.match(prefill.expiredOn, /2026/)
+  assert.deepEqual(expiryChange(prefill.choice, prefill.date, today), { change: { expiresInDays: 90 } })
+})
+
+check("a key that expires this very second counts as expired", () => {
+  assert.equal(expiryPrefill("2026-10-30T12:00:00", new Date("2026-10-30T12:00:00Z")).choice, "90")
+  assert.equal(expiryPrefill("2026-10-30T12:00:01", new Date("2026-10-30T12:00:00Z")).choice, "custom")
 })
 
 check("a key is listed by its prefix and an ellipsis", () => {

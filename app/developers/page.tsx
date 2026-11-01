@@ -158,7 +158,10 @@ export default function DevelopersPage() {
           Each API key can make 600 requests an hour by default. Every request sent with the key counts, whatever it asks
           for, and the count starts again after a fixed hour. A key that goes over the limit gets a <code>429</code>.
         </p>
-        <p>Every response to a request with an API key, allowed or refused, carries three headers:</p>
+        <p>
+          Responses to requests made with a valid API key, allowed or refused, carry three headers, except while the limit
+          cannot be checked:
+        </p>
         <ul>
           <li>
             <code>RateLimit-Limit</code>: how many requests the key can make in the hour.
@@ -173,7 +176,6 @@ export default function DevelopersPage() {
         <p>
           A refused request also has a <code>Retry-After</code> header with the seconds to wait, and the body{" "}
           <code className="[overflow-wrap:anywhere]">&#123;&quot;error&quot;: &quot;This API key made too many requests. Try again in 12 minutes.&quot;&#125;</code>.
-          A script in a browser can read all four headers.
         </p>
         <p>
           Creating links is also limited per account each hour. Going over that limit is a <code>429</code> as well, with

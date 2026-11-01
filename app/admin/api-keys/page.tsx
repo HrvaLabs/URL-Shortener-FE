@@ -21,7 +21,7 @@ import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime } from "@/lib/utils"
 import { ApiKeyExpiryField } from "@/components/api-key-expiry"
-import { dateInputValue, expiresText, expiryChange, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
+import { expiresText, expiryChange, expiryPrefill, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { Suspense, useRef, useState, type FormEvent } from "react"
@@ -71,6 +71,7 @@ function AdminApiKeys() {
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>("never")
   const [expiryDate, setExpiryDate] = useState("")
+  const [expiredOn, setExpiredOn] = useState<string | null>(null)
   const [expiryError, setExpiryError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiKeyResponse | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -107,7 +108,9 @@ function AdminApiKeys() {
   }
 
   const openEdit = (key: ApiKeyResponse) => {
-    changeExpiry(key.expirationDate ? "custom" : "never", key.expirationDate ? dateInputValue(parseServerDateTime(key.expirationDate)) : "")
+    const prefill = expiryPrefill(key.expirationDate, new Date())
+    changeExpiry(prefill.choice, prefill.date)
+    setExpiredOn(prefill.expiredOn)
     setEditKey(key)
   }
 
@@ -187,6 +190,7 @@ function AdminApiKeys() {
                 <p className="font-mono text-foreground [overflow-wrap:anywhere]">{keyPrefixText(editKey.keyPrefix)}</p>
                 <p className="text-muted-foreground [overflow-wrap:anywhere]">{editKey.ownerEmail || "No owner"}</p>
               </div>
+              {expiredOn && <p className="text-sm text-muted-foreground">Expired on {expiredOn}.</p>}
               <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => changeExpiry(choice, expiryDate)} onCustomDateChange={(date) => changeExpiry(expiryChoice, date)} />
               <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
                 {updateKey.isPending ? "Saving…" : "Save"}

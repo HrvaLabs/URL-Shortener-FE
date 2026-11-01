@@ -18,7 +18,7 @@ import { toast } from "sonner"
 import { cn, focusTargetAfterRemoving, formatDate } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
 import { ApiKeyExpiryField } from "@/components/api-key-expiry"
-import { DEFAULT_EXPIRY_CHOICE, dateInputValue, expiryChange, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
+import { DEFAULT_EXPIRY_CHOICE, expiryChange, expiryDateTimeText, expiryPrefill, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
 import { parseServerDateTime } from "@/lib/analytics"
 
 const keysLabel = (count: number) => (count === 1 ? "1 key" : `${count} keys`)
@@ -69,6 +69,7 @@ export default function ApiKeysPage() {
   const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(DEFAULT_EXPIRY_CHOICE)
   const [expiryDate, setExpiryDate] = useState("")
   const [expiryError, setExpiryError] = useState<string | null>(null)
+  const [expiredOn, setExpiredOn] = useState<string | null>(null)
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
   const [newKeyCopied, setNewKeyCopied] = useState(false)
   const copyButtonRef = useRef<HTMLButtonElement>(null)
@@ -108,7 +109,9 @@ export default function ApiKeysPage() {
   }
 
   const openEdit = (key: ApiKeyResponse) => {
-    resetExpiry(key.expirationDate ? "custom" : "never", key.expirationDate ? dateInputValue(parseServerDateTime(key.expirationDate)) : "")
+    const prefill = expiryPrefill(key.expirationDate, new Date())
+    resetExpiry(prefill.choice, prefill.date)
+    setExpiredOn(prefill.expiredOn)
     setEditKey(key)
   }
 
@@ -246,8 +249,8 @@ export default function ApiKeysPage() {
             {keyPrefixText(key.keyPrefix)}
           </code>
         </TableCell>
-        <TableCell className="hidden text-sm tabular-nums text-muted-foreground md:table-cell">{formatDate(key.createDate)}</TableCell>
-        <TableCell className="hidden text-sm tabular-nums lg:table-cell">{key.expirationDate ? formatDate(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
+        <TableCell className="hidden text-sm tabular-nums text-muted-foreground md:table-cell">{formatDate(parseServerDateTime(key.createDate))}</TableCell>
+        <TableCell className="hidden text-sm tabular-nums lg:table-cell">{key.expirationDate ? expiryDateTimeText(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
         <TableCell className="text-sm tabular-nums">
           <span className="block font-medium">{requestsText(key.apiCallsUsed)}</span>
           <span className="block text-xs text-muted-foreground">{lastUsedText(key.lastUsedAt)}</span>
@@ -369,6 +372,7 @@ export default function ApiKeysPage() {
             <DialogDescription>Choose when this key stops working. It counts from today.</DialogDescription>
           </DialogHeader>
           {editKey && <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{keyPrefixText(editKey.keyPrefix)}</p>}
+          {expiredOn && <p className="text-sm text-muted-foreground">Expired on {expiredOn}.</p>}
           <div className="space-y-4">
             <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => resetExpiry(choice, expiryDate)} onCustomDateChange={(date) => resetExpiry(expiryChoice, date)} />
             <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">

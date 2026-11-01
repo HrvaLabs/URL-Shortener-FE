@@ -17,6 +17,7 @@ const missingOnHost = (host: string) => `There's no ${host} link with this name.
 
 const reasonMessages = new Map([
   ["blocked", "hrva.cc disabled this link because it led to a site reported for phishing, malware or scams."],
+  ["checking", "This link is being checked. Try again later."],
   ["expired", "This link has expired."],
   ["limit", "This link has reached its visit limit."],
   ["inactive", "Its owner has turned this link off."],

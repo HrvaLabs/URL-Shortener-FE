@@ -50,12 +50,21 @@ const listParams = (page: number, size: number, sort?: string, order?: string, e
   return params
 }
 
-function errorMessage(body: unknown, status: number): string {
+interface ProblemBody {
+  title?: unknown
+  detail?: unknown
+  errors?: unknown
+}
+
+const asProblem = (body: unknown): ProblemBody | null =>
+  typeof body === "object" && body !== null && !Array.isArray(body) ? (body as ProblemBody) : null
+
+/** The message of an RFC 9457 problem: its `detail`, else its `title`. */
+export function errorMessage(body: unknown, status: number): string {
   const fallback = status >= 500 ? CANT_REACH : REQUEST_FAILED
-  if (typeof body !== "object" || body === null) return fallback
-  const fields = body as Record<string, unknown>
-  // New API: { "error": "message" }, old API: { "message": "..." }, validation: { "field": "message" }
-  const message = fields.error ?? fields.message ?? Object.values(fields).filter((value) => typeof value === "string").join(". ")
+  const problem = asProblem(body)
+  if (!problem) return fallback
+  const message = typeof problem.detail === "string" && problem.detail ? problem.detail : problem.title
   return typeof message === "string" && message ? message : fallback
 }
 
@@ -506,11 +515,11 @@ export const adminBioApi = {
     request<void>("POST", `/admin/bio-page-reviews/${pageId}/resolve`, reason ? { action, reason } : { action }),
 }
 
-function validationFields(body: unknown): Record<string, string> {
-  if (typeof body !== "object" || body === null || Array.isArray(body)) return {}
-  const fields = body as Record<string, unknown>
-  if (fields.error != null || fields.message != null) return {}
-  return Object.fromEntries(Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
+/** The field errors of an RFC 9457 problem, from its `errors` object. */
+export function validationFields(body: unknown): Record<string, string> {
+  const errors = asProblem(body)?.errors
+  if (typeof errors !== "object" || errors === null || Array.isArray(errors)) return {}
+  return Object.fromEntries(Object.entries(errors).filter((entry): entry is [string, string] => typeof entry[1] === "string"))
 }
 
 export const notificationApi = {

@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
-import { cn, destinationLengthError, formatDateTime, plural, shortHostOf } from "@/lib/utils"
+import { cn, destinationLengthError, formatDateTime, plural, shortHostOf, toDateTimeLocalValue } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
@@ -275,7 +275,7 @@ function AdminUrls() {
     setEditUrl(url)
     setEditLongUrl(url.longUrl)
     setEditVisitLimit(url.visitLimit?.toString() || "")
-    setEditExpiration(url.expirationDate ? url.expirationDate.slice(0, 16) : "")
+    setEditExpiration(url.expirationDate ? toDateTimeLocalValue(parseServerDateTime(url.expirationDate)) : "")
     setEditTags(url.tags?.join(", ") || "")
     setEditPassword("")
     setRemovePassword(false)

@@ -5,9 +5,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const dateTimeWithoutOffset = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/
+
+/** A backend date-time. The API writes UTC with `Z`; an older value without an offset is UTC too. */
+export function parseServerDateTime(value: string): Date {
+  return new Date(dateTimeWithoutOffset.test(value) ? `${value}Z` : value)
+}
+
+const asDate = (date: string | Date): Date => (typeof date === "string" ? parseServerDateTime(date) : new Date(date))
+
+const twoDigits = (value: number) => String(value).padStart(2, "0")
+
+/** A date as the `yyyy-MM-ddTHH:mm` value of a `datetime-local` input, in the viewer's time zone. */
+export function toDateTimeLocalValue(date: Date): string {
+  return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}T${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`
+}
+
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return "—"
-  const d = new Date(date)
+  const d = asDate(date)
   return d.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -17,7 +33,7 @@ export function formatDate(date: string | Date | null | undefined): string {
 
 export function formatDateTime(date: string | Date | null | undefined): string {
   if (!date) return "—"
-  const d = new Date(date)
+  const d = asDate(date)
   return d.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -29,7 +45,7 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 
 export function formatRelativeDate(date: string | Date | null | undefined): string {
   if (!date) return "—"
-  const d = new Date(date)
+  const d = asDate(date)
   const now = new Date()
   const diffMs = d.getTime() - now.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -58,7 +74,7 @@ const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
 
 export function formatTimeAgo(date: string | Date | null): string {
   if (!date) return "—"
-  const seconds = Math.max(0, (Date.now() - new Date(date).getTime()) / 1000)
+  const seconds = Math.max(0, (Date.now() - asDate(date).getTime()) / 1000)
   for (const [unit, unitSeconds] of relativeUnits) {
     if (seconds >= unitSeconds) return relativeTime.format(-Math.floor(seconds / unitSeconds), unit)
   }

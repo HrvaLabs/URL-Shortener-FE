@@ -190,8 +190,8 @@ export default function LinkInBioHelpPage() {
                   URLs page.
                 </li>
                 <li>
-                  <strong>Visit limit reached</strong>: the link has had all the visits it allows. Raise its
-                  visit limit on the URLs page.
+                  <strong>Visit limit reached</strong>: the link has used all the clicks it allows. Raise its
+                  visit limit on the URLs page, then turn the link back on.
                 </li>
                 <li>
                   <strong>Waiting for review</strong>: the automatic checks flagged the link, and it stays

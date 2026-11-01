@@ -35,7 +35,8 @@ export default function LinksHelpPage() {
                 A visit limit counts every click on the link, repeat clicks from the same person included. Bots and
                 link previews don&apos;t count, and neither do HEAD requests from link checkers. Each click is counted
                 before the visitor is sent on, so clicks at the same moment can&apos;t go past the limit. Once the limit
-                is reached, the link stops working and says so.
+                is reached, the link stops working and says so. To use it again, raise its visit limit, then turn it
+                back on.
               </p>
               <p>
                 Your dashboard shows how many clicks have counted, for example &quot;3 of 5 clicks used&quot;. The

@@ -6,7 +6,7 @@ export const CONTENT_UPDATED = {
   "/help/utm": "2026-10-29",
   "/help/passkeys": "2026-11-01",
   "/help/stats": "2026-10-29",
-  "/help/link-in-bio": "2026-10-27",
+  "/help/link-in-bio": "2026-11-01",
   "/help/notifications": "2026-10-29",
   "/help/install-app": "2026-10-29",
   "/help/custom-domains": "2026-10-30",

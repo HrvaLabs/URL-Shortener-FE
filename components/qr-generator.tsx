@@ -75,7 +75,7 @@ export function QrGenerator() {
       })
       resultRef.current?.focus()
     } catch (err) {
-      if (err instanceof ApiError && err.status === 429) {
+      if (err instanceof ApiError && (err.status === 429 || err.status === 503)) {
         flushSync(() => setRefusal(err.message))
         refusalRef.current?.focus()
         return

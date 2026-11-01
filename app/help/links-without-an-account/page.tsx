@@ -53,7 +53,8 @@ export default function LinksWithoutAnAccountHelpPage() {
                 Each network can make a limited number of links without an account per hour. hrva.cc can
                 also give these links an end date or a visit limit. When it does, the form says so, for
                 example &quot;Links made without an account stop working after 30 days.&quot; You can&apos;t
-                change these in the forms. With an account you choose your own.
+                change these in the forms. With an account you choose your own. When hrva.cc can&apos;t count these
+                links for a moment, it doesn&apos;t make them and asks you to try again in a minute or sign in.
               </p>
 
               <h2 id="human-check">The human check</h2>

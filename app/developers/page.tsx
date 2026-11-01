@@ -92,6 +92,7 @@ const errors = [
   { status: "409", text: "The custom alias is already taken." },
   { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds to wait at most." },
   { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds to wait, and detail says how many minutes." },
+  { status: "503", text: "hrva.cc can't check its limits for a moment, so it doesn't make a link without an account or check a link password. Try again after the seconds in Retry-After. Creates with an API key or a signed-in account go on." },
 ]
 
 const problemExample = `HTTP/1.1 409 Conflict

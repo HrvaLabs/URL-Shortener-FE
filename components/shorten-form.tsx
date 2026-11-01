@@ -21,7 +21,7 @@ import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { ALIASES_PAUSED, HUMAN_CHECK_REQUIRED, aliasFieldShown, humanCheckEnabled, type HumanCheckRefusal } from "@/lib/moderation"
 import type { UrlResponse } from "@/lib/types"
-import { cn, destinationLengthError, shortHostOf, shortLinkOf, withQrMarker } from "@/lib/utils"
+import { cn, destinationLengthError, shortHostOf, shortLinkOf, VISIT_LIMIT_HINT, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
@@ -216,7 +216,8 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
             )}
             <div>
               <Label htmlFor="visit-limit" className="text-xs text-muted-foreground">Visit limit</Label>
-              <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-1.5 h-9" />
+              <Input id="visit-limit" type="number" min={1} placeholder="No limit" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} aria-describedby="visit-limit-hint" className="mt-1.5 h-9" />
+              <p id="visit-limit-hint" className="mt-1 text-xs text-muted-foreground">{VISIT_LIMIT_HINT}</p>
             </div>
             <div>
               <Label htmlFor="expires" className="text-xs text-muted-foreground">Expires</Label>

@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
-import { cn, destinationLengthError, formatDateTime, plural, shortHostOf, toDateTimeLocalValue } from "@/lib/utils"
+import { cn, destinationLengthError, formatDateTime, opensText, plural, shortHostOf, toDateTimeLocalValue, VISIT_LIMIT_HINT } from "@/lib/utils"
 import { ApiError, adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
@@ -519,7 +519,10 @@ function AdminUrls() {
                     <span className={cn("block min-w-28 [overflow-wrap:anywhere]", !url.ownerEmail && "text-muted-foreground")}>{url.ownerEmail ?? "Anonymous"}</span>
                     {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
                   </TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums @2xl:table-cell">{url.visits.toLocaleString()}{url.visitLimit > 0 ? ` / ${url.visitLimit.toLocaleString()}` : ""}</TableCell>
+                  <TableCell className="hidden tabular-nums @2xl:table-cell">
+                    <span className="block">{url.visits.toLocaleString()}</span>
+                    {url.visitLimit > 0 && <span className="block text-xs text-muted-foreground">{opensText(url)}</span>}
+                  </TableCell>
                   <TableCell className="hidden tabular-nums text-muted-foreground @min-[57rem]:table-cell">
                     {url.createDate ? <DateTimeLines value={url.createDate} /> : "—"}
                   </TableCell>
@@ -714,8 +717,10 @@ function AdminUrls() {
                   placeholder="e.g. 100 (0 = unlimited)"
                   value={editVisitLimit}
                   onChange={(e) => setEditVisitLimit(e.target.value)}
+                  aria-describedby={`${editId}-visit-limit-hint`}
                   className="mt-2"
                 />
+                <p id={`${editId}-visit-limit-hint`} className="mt-1.5 text-xs text-muted-foreground">{VISIT_LIMIT_HINT}</p>
               </div>
               <div>
                 <label htmlFor={`${editId}-expiration`} className="text-sm font-medium">Expiry date</label>
@@ -786,7 +791,7 @@ function Destination({ url, className }: { url: UrlResponse; className?: string 
 }
 
 const visitorsText = (url: UrlResponse) =>
-  `${plural(url.visits, "unique visitor")}${url.visitLimit > 0 ? ` of a ${url.visitLimit.toLocaleString()} limit` : ""}`
+  `${plural(url.visits, "unique visitor")}${url.visitLimit > 0 ? `, ${opensText(url)}` : ""}`
 
 function UrlStatus({ url }: { url: UrlResponse }) {
   return (

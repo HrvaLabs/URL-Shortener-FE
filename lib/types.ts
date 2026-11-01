@@ -73,6 +73,7 @@ export interface UrlResponse {
   expirationDate?: string
   visits: number
   visitLimit: number
+  opens?: number
   active: boolean
   status?: string
   tags?: string[]

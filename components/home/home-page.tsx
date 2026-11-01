@@ -302,7 +302,7 @@ function FeatureGrid() {
             </div>
           </FeatureCell>
 
-          <FeatureCell icon={Clock} title="Visit limits and expiry" description="Links switch themselves off after a number of visits or at a set time.">
+          <FeatureCell icon={Clock} title="Visit limits and expiry" description="Links switch themselves off after a number of clicks or at a set time. Every click counts, not counting bots, and never more than the limit.">
             <div className="space-y-3 text-sm" aria-hidden="true">
               <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
                 <span className="text-muted-foreground">Visit limit</span>
@@ -316,7 +316,7 @@ function FeatureGrid() {
                 <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <div className="h-full w-[62%] rounded-full bg-brand" />
                 </div>
-                <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">312 of 500 visits used</p>
+                <p className="mt-1.5 text-xs tabular-nums text-muted-foreground">312 of 500 clicks used</p>
               </div>
             </div>
           </FeatureCell>

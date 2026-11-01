@@ -13,7 +13,7 @@ URL.revokeObjectURL = () => {}
 
 const { SESSION_ENDED, adminApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
-const { shortLinkOf } = await import("../lib/utils.ts")
+const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
 let failures = 0
 let answer = () => new Response("")
@@ -122,6 +122,13 @@ await check("shortLinkOf prefers the answer's shortLink and builds one for older
   assert.equal(shortLinkOf({ shortUrl: "menu", shortLink: "https://go.example.com/menu", domain: { id: 7, hostname: "go.example.com" } }), "https://go.example.com/menu")
   assert.equal(shortLinkOf({ shortUrl: "menu", domain: { id: 7, hostname: "go.example.com" } }), "https://go.example.com/menu")
   assert.match(shortLinkOf({ shortUrl: "Ab3" }), /\/Ab3$/)
+})
+
+await check("a visit limit counts clicks, not unique visitors", () => {
+  assert.equal(VISIT_LIMIT_HINT, "Every click counts, not counting bots.")
+  assert.equal(opensText({ opens: 3, visitLimit: 5 }), "3 of 5 clicks used")
+  assert.equal(opensText({ opens: 1, visitLimit: 1 }), "1 of 1 click used")
+  assert.equal(opensText({ visitLimit: 1200 }), "0 of 1,200 clicks used")
 })
 
 if (failures > 0) {

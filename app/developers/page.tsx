@@ -66,6 +66,7 @@ const responseExample = `{
   "expirationDate": null,
   "visits": 0,
   "visitLimit": null,
+  "opens": 0,
   "active": true,
   "status": "ACTIVE",
   "tags": [],
@@ -77,7 +78,7 @@ const responseExample = `{
 const fields = [
   { name: "longUrl", text: "Required. The address to shorten, up to 2,048 characters." },
   { name: "shortUrl", text: "Optional custom alias: up to 32 letters, numbers, hyphens and underscores. Leave it out for a random one." },
-  { name: "visitLimit", text: "Optional. The link stops working after this many visits." },
+  { name: "visitLimit", text: "Optional. The link stops working after this many clicks. Every click counts, also from the same visitor; bots and HEAD requests don't. The answer's opens says how many have counted." },
   { name: "expirationDate", text: "Optional. When the link stops working, as an ISO 8601 date and time with Z or an offset, for example 2026-12-31T23:59:59Z. A value without an offset is read as UTC." },
   { name: "tags", text: "Optional. Up to 10 tags of up to 30 characters each, saved in lowercase." },
   { name: "password", text: "Optional, up to 72 bytes; accented letters count as two. Visitors enter it before they are sent on." },

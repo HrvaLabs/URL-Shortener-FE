@@ -15,7 +15,7 @@ import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { Copy, Check } from "lucide-react"
 import { ApiError } from "@/lib/api-client"
-import { destinationLengthError, shortHostOf, shortLinkOf, withQrMarker } from "@/lib/utils"
+import { destinationLengthError, shortHostOf, shortLinkOf, VISIT_LIMIT_HINT, withQrMarker } from "@/lib/utils"
 import { shortHost } from "@/lib/domains"
 import type { DomainRef } from "@/lib/types"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
@@ -136,7 +136,8 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
             )}
             <div>
               <Label htmlFor={`${id}-visit-limit`}>Visit limit (optional)</Label>
-              <Input id={`${id}-visit-limit`} type="number" placeholder="e.g. 100" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} className="mt-2" />
+              <Input id={`${id}-visit-limit`} type="number" placeholder="e.g. 100" value={visitLimit} onChange={(e) => setVisitLimit(e.target.value)} aria-describedby={`${id}-visit-limit-hint`} className="mt-2" />
+              <p id={`${id}-visit-limit-hint`} className="mt-1.5 text-xs text-muted-foreground">{VISIT_LIMIT_HINT}</p>
             </div>
             <div>
               <Label htmlFor={`${id}-tags`}>Tags (optional, comma-separated)</Label>

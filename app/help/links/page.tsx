@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
-const description = "How random aliases and API keys work on hrva.cc."
+const description = "How random aliases, visit limits and API keys work on hrva.cc."
 
 export const metadata: Metadata = pageMetadata({ title: "Short links and API keys", description, path: "/help/links" })
 
@@ -28,6 +28,18 @@ export default function LinksHelpPage() {
                 When you don&apos;t choose an alias, hrva.cc picks one from letters and digits without 0, O, 1, l and
                 I, so it&apos;s easier to read out and type. Aliases are case-sensitive: hrva.cc/Ab3 and hrva.cc/ab3 are
                 different links. Links made before this rule keep their aliases.
+              </p>
+
+              <h2 id="visit-limits">Visit limits</h2>
+              <p>
+                A visit limit counts every click on the link, repeat clicks from the same person included. Bots and
+                link previews don&apos;t count, and neither do HEAD requests from link checkers. Each click is counted
+                before the visitor is sent on, so clicks at the same moment can&apos;t go past the limit. Once the limit
+                is reached, the link stops working and says so.
+              </p>
+              <p>
+                Your dashboard shows how many clicks have counted, for example &quot;3 of 5 clicks used&quot;. The
+                Visits number counts unique visitors per day, so it can be lower than the clicks used.
               </p>
 
               <h2 id="api-keys">API keys</h2>

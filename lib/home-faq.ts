@@ -31,7 +31,7 @@ export const HOME_FAQS: HomeFaq[] = [
     answer: [
       "With a free account, you can set a ",
       { strong: "visit limit" },
-      " (the link stops working after N visits), an ",
+      " (the link stops working after N clicks; every click counts, not counting bots), an ",
       { strong: "expiration date" },
       " (the link stops working at a set time), or both when you shorten a URL.",
     ],

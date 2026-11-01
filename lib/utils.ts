@@ -134,6 +134,12 @@ export function shortLinkOf(link: { shortUrl: string; shortLink?: string | null;
   return link.shortLink || formatShortUrl(link.shortUrl, link.domain?.hostname)
 }
 
+export const VISIT_LIMIT_HINT = "Every click counts, not counting bots."
+
+export function opensText(link: { opens?: number | null; visitLimit: number }): string {
+  return `${(link.opens ?? 0).toLocaleString("en-US")} of ${link.visitLimit.toLocaleString("en-US")} ${link.visitLimit === 1 ? "click" : "clicks"} used`
+}
+
 export function shortHostOf(hostname?: string | null): string {
   return hostname || getShortBaseUrl().replace(/^https?:\/\//, "")
 }

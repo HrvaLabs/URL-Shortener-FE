@@ -22,7 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { QrCustomizer } from "@/components/qr-customizer"
 import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
 import { toast } from "sonner"
-import { cn, formatDateTime, formatRelativeDate, formatShortUrl, shortHostOf } from "@/lib/utils"
+import { cn, formatDateTime, formatRelativeDate, formatShortUrl, opensText, shortHostOf } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
@@ -290,15 +290,13 @@ function Dashboard() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 whitespace-nowrap tabular-nums">
-                      <span className="text-sm font-medium">{url.visits.toLocaleString()}</span>
-                      {url.visitLimit > 0 && (
-                        <>
-                          <span className="text-xs text-muted-foreground">/ {url.visitLimit.toLocaleString()}</span>
-                          <Progress value={(url.visits / url.visitLimit) * 100} className="h-1.5 w-12" />
-                        </>
-                      )}
-                    </div>
+                    <span className="text-sm font-medium tabular-nums">{url.visits.toLocaleString()}</span>
+                    {url.visitLimit > 0 && (
+                      <div className="mt-1 flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
+                        <Progress value={((url.opens ?? 0) / url.visitLimit) * 100} className="h-1.5 w-12 shrink-0" />
+                        <span>{opensText(url)}</span>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="hidden min-w-32 text-sm tabular-nums text-muted-foreground lg:table-cell">{formatDateTime(parseServerDateTime(url.createDate))}</TableCell>
                   <TableCell className="hidden whitespace-nowrap text-sm tabular-nums lg:table-cell">{formatRelativeDate(url.expirationDate)}</TableCell>

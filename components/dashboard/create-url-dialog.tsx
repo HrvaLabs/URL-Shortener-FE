@@ -35,6 +35,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
   const [expirationDate, setExpirationDate] = useState("")
   const [tags, setTags] = useState("")
   const [password, setPassword] = useState("")
+  const [passwordError, setPasswordError] = useState<string | null>(null)
   const [utm, setUtm] = useState<UtmValues>({})
   const [utmOpen, setUtmOpen] = useState(false)
   const [result, setResult] = useState<{ shortUrl: string; longUrl: string; domain: DomainRef | null } | null>(null)
@@ -59,6 +60,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
     }
     const expDate = expirationDate ? new Date(expirationDate).toISOString() : undefined
     setDomainError(null)
+    setPasswordError(null)
     try {
       const tagList = tags.split(",").map((t) => t.trim()).filter(Boolean)
       const url = await createUrl.mutateAsync({
@@ -80,6 +82,12 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
         document.getElementById(`${id}-domain`)?.focus()
         return
       }
+      if (err instanceof ApiError && err.fields.password) {
+        const message = err.fields.password
+        flushSync(() => setPasswordError(message))
+        document.getElementById(`${id}-password`)?.focus()
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Failed to create URL")
     }
   }
@@ -93,6 +101,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
     setExpirationDate("")
     setTags("")
     setPassword("")
+    setPasswordError(null)
     setUtm({})
     setUtmOpen(false)
     setResult(null)
@@ -135,7 +144,20 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
             </div>
             <div>
               <Label htmlFor={`${id}-password`}>Password (optional)</Label>
-              <Input id={`${id}-password`} type="password" placeholder="Protect this link" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" className="mt-2" />
+              <Input
+                id={`${id}-password`}
+                type="password"
+                placeholder="Protect this link"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
+                autoComplete="new-password"
+                aria-invalid={passwordError ? true : undefined}
+                aria-describedby={passwordError ? `${id}-password-error` : undefined}
+                className="mt-2"
+              />
+              {passwordError && (
+                <p id={`${id}-password-error`} role="alert" className="mt-2 text-sm text-destructive [overflow-wrap:anywhere]">{passwordError}</p>
+              )}
             </div>
             <div>
               <Label htmlFor={`${id}-expires`}>Expiration date (optional)</Label>

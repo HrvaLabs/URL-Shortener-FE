@@ -24,7 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff } from "lucide-react"
 import { toast } from "sonner"
 import { cn, destinationLengthError, formatDateTime, plural, shortHostOf, toDateTimeLocalValue } from "@/lib/utils"
-import { adminApi } from "@/lib/api-client"
+import { ApiError, adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
 import { CANT_TAKE_UTM, destinationToSend, hasUtm, readUtm, rememberUtm, tooLongMessage, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
@@ -163,6 +163,7 @@ function AdminUrls() {
   const [editExpiration, setEditExpiration] = useState("")
   const [editTags, setEditTags] = useState("")
   const [editPassword, setEditPassword] = useState("")
+  const [editPasswordError, setEditPasswordError] = useState<string | null>(null)
   const [removePassword, setRemovePassword] = useState(false)
   const [editUtm, setEditUtm] = useState<UtmValues>({})
   const [editUtmOpen, setEditUtmOpen] = useState(false)
@@ -278,6 +279,7 @@ function AdminUrls() {
     setEditExpiration(url.expirationDate ? toDateTimeLocalValue(parseServerDateTime(url.expirationDate)) : "")
     setEditTags(url.tags?.join(", ") || "")
     setEditPassword("")
+    setEditPasswordError(null)
     setRemovePassword(false)
     setEditUtm(readUtm(withScheme(url.longUrl)))
     setEditUtmOpen(hasUtm(withScheme(url.longUrl)))
@@ -318,6 +320,11 @@ function AdminUrls() {
       toast.success("URL updated")
       setEditUrl(null)
     } catch (err) {
+      if (err instanceof ApiError && err.fields.password) {
+        setEditPasswordError(err.fields.password)
+        document.getElementById(`${editId}-password`)?.focus()
+        return
+      }
       toast.error(err instanceof Error && err.message ? err.message : "Failed to update URL")
     }
   }
@@ -739,11 +746,16 @@ function AdminUrls() {
                   type="password"
                   placeholder={editUrl?.passwordProtected ? "Enter new password to replace" : "Set a password"}
                   value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
+                  onChange={(e) => { setEditPassword(e.target.value); setEditPasswordError(null) }}
                   disabled={removePassword}
                   autoComplete="new-password"
+                  aria-invalid={editPasswordError ? true : undefined}
+                  aria-describedby={editPasswordError ? `${editId}-password-error` : undefined}
                   className="mt-2"
                 />
+                {editPasswordError && (
+                  <p id={`${editId}-password-error`} role="alert" className="mt-2 text-sm text-destructive [overflow-wrap:anywhere]">{editPasswordError}</p>
+                )}
                 {editUrl?.passwordProtected && (
                   <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
                     <input type="checkbox" checked={removePassword} onChange={(e) => setRemovePassword(e.target.checked)} className="h-4 w-4 accent-brand" />

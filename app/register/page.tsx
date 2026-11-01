@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
+import { ApiError } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { SIGNUPS_PAUSED, signupsPaused } from "@/lib/moderation"
@@ -22,6 +23,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
   const { register } = useAuth()
   const router = useRouter()
   const { data: publicSettings } = usePublicSettings()
@@ -38,8 +41,14 @@ export default function RegisterPage() {
       await register(email, password)
       toast.success("Account created! Check your email to verify before signing in.")
       router.push("/login")
-    } catch (err: any) {
-      toast.error(err.message || "Registration failed")
+    } catch (err) {
+      const fieldError = err instanceof ApiError ? err.fields.password : undefined
+      if (fieldError) {
+        setPasswordError(fieldError)
+        passwordRef.current?.focus()
+      } else {
+        toast.error(err instanceof Error && err.message ? err.message : "Registration failed")
+      }
     } finally {
       setLoading(false)
     }
@@ -89,13 +98,22 @@ export default function RegisterPage() {
                 <div>
                   <Label htmlFor="password">Password</Label>
                   <Input
+                    ref={passwordRef}
                     id="password"
                     type="password"
+                    autoComplete="new-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
                     required
+                    aria-invalid={passwordError ? true : undefined}
+                    aria-describedby={passwordError ? "passwordError" : undefined}
                     className="mt-2"
                   />
+                  {passwordError && (
+                    <p id="passwordError" role="alert" className="mt-1.5 text-sm text-destructive [overflow-wrap:anywhere]">
+                      {passwordError}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="confirmPassword">Confirm password</Label>

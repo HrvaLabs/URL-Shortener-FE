@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { authApi } from "@/lib/api-client"
+import { useRef, useState } from "react"
+import { ApiError, authApi } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +16,8 @@ export default function SetPasswordPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const passwordRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const params = useParams()
@@ -32,8 +34,14 @@ export default function SetPasswordPage() {
       await authApi.resetPassword({ token, email, password })
       toast.success("Password changed successfully! Please sign in.")
       router.push("/login")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to reset password")
+    } catch (err) {
+      const fieldError = err instanceof ApiError ? err.fields.password : undefined
+      if (fieldError) {
+        setPasswordError(fieldError)
+        passwordRef.current?.focus()
+      } else {
+        toast.error(err instanceof Error && err.message ? err.message : "Failed to reset password")
+      }
     } finally {
       setLoading(false)
     }
@@ -60,7 +68,23 @@ export default function SetPasswordPage() {
             </div>
             <div>
               <Label htmlFor="password">New password</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="mt-2" />
+              <Input
+                ref={passwordRef}
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
+                required
+                aria-invalid={passwordError ? true : undefined}
+                aria-describedby={passwordError ? "passwordError" : undefined}
+                className="mt-2"
+              />
+              {passwordError && (
+                <p id="passwordError" role="alert" className="mt-1.5 text-sm text-destructive [overflow-wrap:anywhere]">
+                  {passwordError}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="confirmPassword">Confirm password</Label>

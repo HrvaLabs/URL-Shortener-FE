@@ -1,7 +1,8 @@
 import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
-const { daysFromToday, expiryChange, expiryDateTimeText, expiryPrefill, keyPrefixText, lastUsedText, requestsText, dateInputValue } = await import("../lib/api-keys.ts")
+const { daysFromToday, expiryChange, expiryDateTimeText, expiryPrefill, keyPrefixText, lastUsedText, requestsText } = await import("../lib/api-keys.ts")
+const { parseServerDateTime, toDateInputValue, toDateTimeLocalValue } = await import("../lib/utils.ts")
 
 let failures = 0
 
@@ -64,7 +65,7 @@ check("a custom date needs at least 1 day and at most 3,650", () => {
 })
 
 check("the date input value is the local day", () => {
-  assert.equal(dateInputValue(new Date(2026, 0, 5, 23, 30)), "2026-01-05")
+  assert.equal(toDateInputValue(new Date(2026, 0, 5, 23, 30)), "2026-01-05")
 })
 
 const localDayOfInstant = {
@@ -85,6 +86,22 @@ check("an expiry timestamp is a UTC instant shown as the local day, in every tim
 check("the shown expiry and the prefill agree", () => {
   const shown = expiryDateTimeText("2026-11-30T03:30:00")
   assert.equal(shown, new Date("2026-11-30T03:30:00Z").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }))
+})
+
+check("an expiry written with Z (v2.22) and without an offset (before) is the same expiry", () => {
+  const now = new Date("2026-10-30T12:00:00Z")
+  assert.deepEqual(expiryPrefill("2026-11-30T03:30:00Z", now), expiryPrefill("2026-11-30T03:30:00", now))
+  assert.deepEqual(expiryPrefill("2026-11-30T03:30:00.182010Z", now), expiryPrefill("2026-11-30T03:30:00", now))
+  assert.equal(expiryDateTimeText("2026-11-30T03:30:00Z"), expiryDateTimeText("2026-11-30T03:30:00"))
+  assert.equal(expiryPrefill("2026-10-30T12:00:00Z", now).choice, "90")
+  const lastUsed = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+  assert.equal(lastUsedText(lastUsed), lastUsedText(lastUsed.slice(0, 19)))
+})
+
+check("the expiry helpers read dates with the one UTC parser", () => {
+  const instant = parseServerDateTime("2026-11-30T03:30:00Z")
+  assert.equal(expiryPrefill("2026-11-30T03:30:00Z", new Date("2026-10-30T12:00:00Z")).date, toDateTimeLocalValue(instant).slice(0, 10))
+  assert.equal(toDateInputValue(instant), toDateTimeLocalValue(instant).slice(0, 10))
 })
 
 check("no expiry starts as No expiry", () => {

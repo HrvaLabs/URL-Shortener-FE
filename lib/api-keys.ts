@@ -1,5 +1,4 @@
-import { parseServerDateTime } from "./analytics"
-import { formatDateTime, formatTimeAgo, plural } from "./utils"
+import { formatDateTime, formatTimeAgo, parseServerDateTime, plural, toDateInputValue } from "./utils"
 
 export const MAX_EXPIRY_DAYS = 3650
 
@@ -24,11 +23,6 @@ export const NEVER_EXPIRES_NOTE = "This key works until you revoke it."
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 const localDayNumber = (year: number, monthIndex: number, day: number): number => Date.UTC(year, monthIndex, day) / MILLISECONDS_PER_DAY
-
-const twoDigits = (value: number): string => String(value).padStart(2, "0")
-
-/** A date as the `yyyy-MM-dd` an `<input type="date">` uses, in the viewer's own time zone. */
-export const dateInputValue = (date: Date): string => `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`
 
 /** Whole calendar days from `today` to a `yyyy-MM-dd` date, or null when the text is not a real date. */
 export function daysFromToday(date: string, today: Date): number | null {
@@ -76,5 +70,5 @@ export function expiryPrefill(expirationDate: string | null | undefined, now: Da
   const instant = parseServerDateTime(expirationDate)
   if (Number.isNaN(instant.getTime())) return { choice: DEFAULT_EXPIRY_CHOICE, date: "", expiredOn: null }
   if (instant.getTime() <= now.getTime()) return { choice: DEFAULT_EXPIRY_CHOICE, date: "", expiredOn: expiryDateTimeText(expirationDate) }
-  return { choice: "custom", date: dateInputValue(instant), expiredOn: null }
+  return { choice: "custom", date: toDateInputValue(instant), expiredOn: null }
 }

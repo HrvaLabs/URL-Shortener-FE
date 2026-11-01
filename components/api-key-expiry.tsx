@@ -1,7 +1,8 @@
 import { useId } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { EXPIRY_OPTIONS, NEVER_EXPIRES_NOTE, dateInputValue, type ExpiryChoice } from "@/lib/api-keys"
+import { EXPIRY_OPTIONS, NEVER_EXPIRES_NOTE, type ExpiryChoice } from "@/lib/api-keys"
+import { toDateInputValue } from "@/lib/utils"
 
 interface ApiKeyExpiryFieldProps {
   choice: ExpiryChoice
@@ -17,7 +18,7 @@ const SELECT_CLASS =
 const tomorrow = (): string => {
   const date = new Date()
   date.setDate(date.getDate() + 1)
-  return dateInputValue(date)
+  return toDateInputValue(date)
 }
 
 export function ApiKeyExpiryField({ choice, customDate, error, onChoiceChange, onCustomDateChange }: ApiKeyExpiryFieldProps) {

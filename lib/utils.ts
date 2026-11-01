@@ -16,9 +16,14 @@ const asDate = (date: string | Date): Date => (typeof date === "string" ? parseS
 
 const twoDigits = (value: number) => String(value).padStart(2, "0")
 
+/** A date as the `yyyy-MM-dd` value of a `date` input, in the viewer's time zone. */
+export function toDateInputValue(date: Date): string {
+  return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}`
+}
+
 /** A date as the `yyyy-MM-ddTHH:mm` value of a `datetime-local` input, in the viewer's time zone. */
 export function toDateTimeLocalValue(date: Date): string {
-  return `${date.getFullYear()}-${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())}T${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`
+  return `${toDateInputValue(date)}T${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`
 }
 
 export function formatDate(date: string | Date | null | undefined): string {

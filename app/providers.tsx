@@ -2,17 +2,22 @@
 
 import { ThemeProvider } from "next-themes"
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ApiError } from "@/lib/api-client"
 import { AuthProvider } from "@/lib/auth-context"
 import { EM_DASH, SLOGAN } from "@/lib/seo"
 import { reloadIfStaleChunkError } from "@/lib/stale-chunk"
 import { useState, useEffect, type ReactNode } from "react"
 
+const reloadUnlessApiError = (error: Error) => {
+  if (!(error instanceof ApiError)) reloadIfStaleChunkError(error)
+}
+
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
-        queryCache: new QueryCache({ onError: reloadIfStaleChunkError }),
-        mutationCache: new MutationCache({ onError: reloadIfStaleChunkError }),
+        queryCache: new QueryCache({ onError: reloadUnlessApiError }),
+        mutationCache: new MutationCache({ onError: reloadUnlessApiError }),
         defaultOptions: {
           queries: {
             staleTime: 30 * 1000,

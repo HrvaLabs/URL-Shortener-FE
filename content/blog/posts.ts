@@ -92,8 +92,8 @@ export const blogPosts: BlogPost[] = [
         </li>
         <li>
           <strong>Sign-in forms.</strong> Some of those links lead to a page that asks for a password or card
-          details. When hrva.cc can read the page, they are held and don't open until a person has checked them.
-          Visitors are told the link is being checked.
+          details. Such links can be held, and don't open until a person has checked them. Visitors are told the
+          link is being checked.
         </li>
       </ul>
 

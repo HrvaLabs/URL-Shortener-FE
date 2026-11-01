@@ -53,15 +53,32 @@ check("Turbopack's ChunkLoadError is a stale chunk", () => {
   assert.equal(isStaleChunkError(error, ORIGIN), true)
 })
 
-check("webpack, CSS and dynamic import messages are stale chunks", () => {
-  assert.equal(isStaleChunkError(new Error("Loading chunk 812 failed."), ORIGIN), true)
-  assert.equal(isStaleChunkError(new Error("Loading CSS chunk 77 failed."), ORIGIN), true)
+check("Turbopack's real shape: a relative chunk path, no cause", () => {
+  const error = namedError("ChunkLoadError", "Failed to load chunk static/chunks/0a1b2c.js from module 4521")
+  assert.equal(error.cause, undefined)
+  assert.equal(isStaleChunkError(error, ORIGIN), true)
+  assert.equal(isStaleChunkError(namedError("ChunkLoadError", "Loading chunk 812 failed."), ORIGIN), true)
+})
+
+check("CSS and dynamic import failures count only with an own /_next/static/ url", () => {
   assert.equal(
     isStaleChunkError(new TypeError("Failed to fetch dynamically imported module: https://app.hrva.cc/_next/static/chunks/a.js"), ORIGIN),
     true,
   )
-  assert.equal(isStaleChunkError(new TypeError("error loading dynamically imported module"), ORIGIN), true)
-  assert.equal(isStaleChunkError(new TypeError("Importing a module script failed."), ORIGIN), true)
+  assert.equal(
+    isStaleChunkError(new TypeError("error loading dynamically imported module: https://app.hrva.cc/_next/static/chunks/a.js"), ORIGIN),
+    true,
+  )
+  assert.equal(isStaleChunkError(new Error("Loading CSS chunk 77 failed. (/_next/static/css/a.css)"), ORIGIN), true)
+  assert.equal(isStaleChunkError(new TypeError("Failed to fetch dynamically imported module"), ORIGIN), false)
+  assert.equal(isStaleChunkError(new TypeError("error loading dynamically imported module"), ORIGIN), false)
+  assert.equal(isStaleChunkError(new TypeError("Importing a module script failed."), ORIGIN), false)
+  assert.equal(isStaleChunkError(new Error("Loading chunk 812 failed."), ORIGIN), false)
+  assert.equal(isStaleChunkError(new Error("Loading CSS chunk 77 failed."), ORIGIN), false)
+})
+
+check("an own static url in an unrelated message is not a stale chunk", () => {
+  assert.equal(isStaleChunkError(new Error("GET https://app.hrva.cc/_next/static/chunks/a.js 404"), ORIGIN), false)
 })
 
 check("a stale chunk wrapped as a cause is found", () => {
@@ -110,7 +127,7 @@ check("the guard allows one reload per path in the window", () => {
 check("reloadOnce reloads, then refuses a second time on the same path", () => {
   const storage = memoryStorage()
   let reloads = 0
-  const attempt = (now, path = "/admin/health") => reloadOnce({ storage: () => storage, path, now, reload: () => (reloads += 1) })
+  const attempt = (now, path = "/admin/health") => reloadOnce({ storage: () => storage, path, now, online: true, reload: () => (reloads += 1) })
   assert.equal(attempt(5_000), true)
   assert.equal(reloads, 1)
   assert.equal(JSON.parse(storage.items.get(STALE_CHUNK_RELOAD_KEY)).path, "/admin/health")
@@ -133,9 +150,24 @@ check("no storage means no reload, so it can never loop", () => {
       throw new Error("QuotaExceededError")
     },
   })
-  assert.equal(reloadOnce({ storage: blocked, path: "/", now: 1, reload: () => (reloads += 1) }), false)
-  assert.equal(reloadOnce({ storage: writeBlocked, path: "/", now: 1, reload: () => (reloads += 1) }), false)
+  assert.equal(reloadOnce({ storage: blocked, path: "/", now: 1, online: true, reload: () => (reloads += 1) }), false)
+  assert.equal(reloadOnce({ storage: writeBlocked, path: "/", now: 1, online: true, reload: () => (reloads += 1) }), false)
   assert.equal(reloads, 0)
+})
+
+check("storage that silently drops writes means no reload", () => {
+  let reloads = 0
+  const silent = () => ({ getItem: () => null, setItem: () => undefined })
+  assert.equal(reloadOnce({ storage: silent, path: "/", now: 1, online: true, reload: () => (reloads += 1) }), false)
+  assert.equal(reloads, 0)
+})
+
+check("offline means no reload, and nothing is written", () => {
+  const storage = memoryStorage()
+  let reloads = 0
+  assert.equal(reloadOnce({ storage: () => storage, path: "/", now: 1, online: false, reload: () => (reloads += 1) }), false)
+  assert.equal(reloads, 0)
+  assert.equal(storage.items.size, 0)
 })
 
 if (failures > 0) {

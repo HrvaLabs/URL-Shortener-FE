@@ -2,8 +2,9 @@ export const STATIC_PATH_PREFIX = "/_next/static/"
 export const STALE_CHUNK_RELOAD_KEY = "hrva:stale-chunk-reload"
 export const STALE_CHUNK_RELOAD_WINDOW_MS = 30_000
 
-const STALE_CHUNK_MESSAGE =
-  /Failed to load chunk|Loading chunk [^\s]+ failed|Loading CSS chunk|Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|Unable to preload CSS/i
+const CHUNK_LOAD_ERROR = "ChunkLoadError"
+const FAILED_IMPORT_MESSAGE =
+  /Loading CSS chunk|Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|Unable to preload CSS/i
 const URL_IN_MESSAGE = /(https?:\/\/[^\s"'`)]+|\/_next\/[^\s"'`)]+)/g
 const MOST_CAUSES = 5
 
@@ -21,9 +22,10 @@ const isStaleChunkErrorItself = (error: unknown, origin: string): boolean => {
   if (typeof error !== "object" || error === null) return false
   const name = "name" in error ? String(error.name) : ""
   const message = "message" in error ? String(error.message) : ""
-  if (name !== "ChunkLoadError" && !STALE_CHUNK_MESSAGE.test(message)) return false
   const urls = message.match(URL_IN_MESSAGE) ?? []
-  return urls.length === 0 || urls.some((url) => isOwnStaticUrl(url, origin))
+  const namesOwnChunk = urls.some((url) => isOwnStaticUrl(url, origin))
+  if (name === CHUNK_LOAD_ERROR) return urls.length === 0 || namesOwnChunk
+  return FAILED_IMPORT_MESSAGE.test(message) && namesOwnChunk
 }
 
 export const isStaleChunkError = (error: unknown, origin: string): boolean => {
@@ -68,14 +70,18 @@ export interface ReloadOnce {
   storage: () => Pick<Storage, "getItem" | "setItem">
   path: string
   now: number
+  online: boolean
   reload: () => void
 }
 
-export const reloadOnce = ({ storage, path, now, reload }: ReloadOnce): boolean => {
+export const reloadOnce = ({ storage, path, now, online, reload }: ReloadOnce): boolean => {
+  if (!online) return false
   try {
     const store = storage()
     if (reloadedRecently(store.getItem(STALE_CHUNK_RELOAD_KEY), path, now)) return false
-    store.setItem(STALE_CHUNK_RELOAD_KEY, reloadMarker(path, now))
+    const marker = reloadMarker(path, now)
+    store.setItem(STALE_CHUNK_RELOAD_KEY, marker)
+    if (store.getItem(STALE_CHUNK_RELOAD_KEY) !== marker) return false
   } catch {
     return false
   }
@@ -88,6 +94,7 @@ export const reloadForStaleChunk = (): boolean =>
     storage: () => window.sessionStorage,
     path: window.location.pathname,
     now: Date.now(),
+    online: navigator.onLine !== false,
     reload: () => window.location.reload(),
   })
 

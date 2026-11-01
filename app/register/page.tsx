@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
 import { PageMeta } from "@/components/page-meta"
@@ -23,10 +22,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [sentTo, setSentTo] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
   const { register } = useAuth()
-  const router = useRouter()
   const { data: publicSettings } = usePublicSettings()
   const paused = signupsPaused(publicSettings)
 
@@ -39,8 +38,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await register(email, password)
-      toast.success("Account created! Check your email to verify before signing in.")
-      router.push("/login")
+      setSentTo(email)
     } catch (err) {
       const fieldError = err instanceof ApiError ? err.fields.password : undefined
       if (fieldError) {
@@ -76,7 +74,20 @@ export default function RegisterPage() {
               <h1 className="font-display text-2xl">Create an account</h1>
               {!paused && <p className="mt-1.5 text-sm text-muted-foreground">Start managing your links</p>}
             </div>
-            {paused ? (
+            {sentTo ? (
+              <div className="mt-8 space-y-4">
+                <div role="status" className="rounded-lg bg-success/10 p-4 text-center text-sm text-success [overflow-wrap:anywhere]">
+                  Check your inbox at {sentTo} for an email from hrva.cc. It says what to do next.
+                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                  No email after a few minutes? Look in spam, or{" "}
+                  <Link href="/verify-email/resend" className="font-medium text-brand hover:underline">send the verification email again</Link>.
+                </p>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/login">Go to sign in</Link>
+                </Button>
+              </div>
+            ) : paused ? (
               <p className="mt-8 text-center text-sm leading-relaxed text-muted-foreground">
                 {SIGNUPS_PAUSED} <Link href="/login" className="font-medium text-brand hover:underline">Sign in</Link> if you already have an account.
               </p>

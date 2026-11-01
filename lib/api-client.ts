@@ -194,7 +194,7 @@ export const authApi = {
   enableTwoFactor: (code: string) =>
     request<{ recoveryCodes: string[] }>("POST", "/auth/2fa/enable", { code }),
   register: (data: { email: string; password: string }) =>
-    request<string>("POST", "/auth/register", data),
+    request<void>("POST", "/auth/register", data),
   requestPasswordReset: (data: { email: string }) =>
     request<void>("POST", "/auth/password-reset", data),
   resetPassword: (data: { token: string; password: string }) =>

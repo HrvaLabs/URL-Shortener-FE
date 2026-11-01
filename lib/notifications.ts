@@ -1,4 +1,5 @@
 import type { ChannelEvent, ChannelType, DestinationStatus, EmailNotificationType, NotificationChannel, NotificationConsent } from "./types"
+import { parseServerDateTime } from "./utils"
 
 export const MAX_CHANNELS = 10
 
@@ -133,10 +134,6 @@ export const DESTINATION_STATUS_LABELS: Record<DestinationStatus, string> = {
   tls: "The website's secure connection failed.",
 }
 
-const DATE_TIME_WITHOUT_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/
-
-const serverDateTime = (value: string): Date => new Date(DATE_TIME_WITHOUT_OFFSET.test(value) ? `${value}Z` : value)
-
 const RELATIVE_TIME = new Intl.RelativeTimeFormat("en")
 
 const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
@@ -158,11 +155,11 @@ const CALENDAR_DATE = new Intl.DateTimeFormat("en", { year: "numeric", month: "s
 
 export const deliveryLine = (channel: NotificationChannel, now: Date): string => {
   if (channel.autoDisabledAt != null) {
-    return `Turned off on ${CALENDAR_DATE.format(serverDateTime(channel.autoDisabledAt))} after failing for 10 days. Fix the channel, then turn it on.`
+    return `Turned off on ${CALENDAR_DATE.format(parseServerDateTime(channel.autoDisabledAt))} after failing for 10 days. Fix the channel, then turn it on.`
   }
   const delivery = channel.lastDelivery
   if (!delivery) return "No deliveries yet."
-  const when = timeAgo(serverDateTime(delivery.at), now)
+  const when = timeAgo(parseServerDateTime(delivery.at), now)
   if (delivery.status === "SENT") return `Last delivered ${when}.`
   return delivery.error ? `Last delivery failed ${when}: ${delivery.error}` : `Last delivery failed ${when}.`
 }

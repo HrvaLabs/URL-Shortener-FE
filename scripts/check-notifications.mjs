@@ -237,6 +237,16 @@ check("isConsentedTo reads one email type's switch", () => {
   assert.equal(DEAD_LINK_EMAIL_SETTINGS_HREF, "/dashboard/settings#notifications")
 })
 
+check("delivery times read the API's dates with the one UTC parser", () => {
+  const source = readFileSync(new URL("../lib/notifications.ts", import.meta.url), "utf8")
+  assert.match(source, /import \{[^}]*\bparseServerDateTime\b[^}]*\} from "\.\/utils"/)
+  assert.doesNotMatch(source, /new Date\(/)
+  const withZ = channel({ lastDelivery: { status: "FAILED", at: "2026-10-27T10:00:00Z", httpStatus: 500, error: "Couldn't reach the channel." } })
+  const withoutOffset = channel({ lastDelivery: { status: "FAILED", at: "2026-10-27T10:00:00", httpStatus: 500, error: "Couldn't reach the channel." } })
+  assert.equal(deliveryLine(withZ, NOW), deliveryLine(withoutOffset, NOW))
+  assert.equal(deliveryLine(channel({ autoDisabledAt: "2026-10-20T03:00:00.182010Z" }), NOW), deliveryLine(channel({ autoDisabledAt: "2026-10-20T03:00:00" }), NOW))
+})
+
 check("strings are ASCII", () => {
   const source = readFileSync(new URL("../lib/notifications.ts", import.meta.url), "utf8")
   const sourceLine = source.split("\n").findIndex((line) => NOT_ASCII.test(line))

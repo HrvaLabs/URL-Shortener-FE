@@ -92,8 +92,8 @@ export const blogPosts: BlogPost[] = [
         </li>
         <li>
           <strong>Sign-in forms.</strong> Some of those links lead to a page that asks for a password or card
-          details. They are held and don't open until a person has checked them. Visitors are told the link is
-          being checked.
+          details. When hrva.cc can read the page, they are held and don't open until a person has checked them.
+          Visitors are told the link is being checked.
         </li>
       </ul>
 
@@ -545,8 +545,8 @@ export const blogPosts: BlogPost[] = [
           and <strong>Sign out everywhere</strong> ends every other sign-in.
         </li>
         <li>
-          <strong>Secrets.</strong> API keys and password reset links are stored only as hashes. A reset link
-          works once and expires after an hour.
+          <strong>Secrets.</strong> Password reset links are stored only as hashes, and API keys as a hash and
+          their first characters. A reset link works once and expires after an hour.
         </li>
         <li>
           <strong>The API.</strong> Every request is refused unless the route is public or the caller is signed
@@ -578,7 +578,7 @@ export const blogPosts: BlogPost[] = [
         <li>
           <strong>The database is down.</strong> Links in the cache keep redirecting, except links with a visit
           limit, which need the database to count the click. Requests that need the database get a quick 503
-          answer, "hrva.cc can't reach its database right now", instead of waiting.
+          answer, "hrva.cc can't reach its database right now. Try again in a minute.", instead of waiting.
         </li>
         <li>
           <strong>Status.</strong> Uptime and incidents are on the

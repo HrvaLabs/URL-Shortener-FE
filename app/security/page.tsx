@@ -59,8 +59,9 @@ export default function SecurityPage() {
             button and a way to report the link.
           </li>
           <li>
-            Some of those links lead to a page that asks for a password or card details. They are held and don&apos;t
-            open until an admin has checked them; visitors are told the link is being checked.
+            Some of those links lead to a page that asks for a password or card details. When hrva.cc can read the
+            page, they are held and don&apos;t open until an admin has checked them; visitors are told the link is
+            being checked.
           </li>
           <li>The buttons on bio pages are short links, and get the same checks.</li>
           <li>A link&apos;s password is stored as a hash, and wrong guesses are limited.</li>
@@ -96,7 +97,7 @@ export default function SecurityPage() {
           <li>A password reset link works once, expires after 1 hour, and is stored only as a hash.</li>
           <li>Signing up and asking for a password reset give the same answer whether or not an account uses the address.</li>
           <li>You get an email when a passkey is added to your account or a sign-in method changes.</li>
-          <li>Only you, and an admin who uses two-step sign-in, can see or change your links and their statistics.</li>
+          <li>Only you, and an admin who uses two-step sign-in, can change your links or see their statistics.</li>
           <li>Admin actions and changes to sign-in methods are recorded in an audit log.</li>
         </ul>
         <p>
@@ -106,7 +107,7 @@ export default function SecurityPage() {
 
         <h2 id="api-keys">API keys and connected apps</h2>
         <ul>
-          <li>An API key is shown once, when you make it. hrva.cc stores only a hash of it.</li>
+          <li>An API key is shown once, when you make it. hrva.cc stores a hash of it and its first characters.</li>
           <li>You choose when a key expires: after 1 to 3,650 days, or never.</li>
           <li>
             Each key has an hourly request limit (see <Link href="/developers#limits">rate limits</Link>).

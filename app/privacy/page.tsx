@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
               <h2>What we collect and why</h2>
 
-              <h3>Account data</h3>
+              <h3 id="account-data">Account data</h3>
               <p>
                 When you register, we process your email address, an optional display name, and your
                 password, which is stored only as a salted one-way hash. If you sign in with Google,
@@ -246,10 +246,11 @@ export default function PrivacyPage() {
               <p>
                 We keep an audit log of administrative actions and of changes to sign-in methods
                 (turning Google or GitHub sign-in off or back on, and removing a password) to protect
-                the service and its users. Sign-ins are not in it: your account records only when you
-                last signed in, and failed sign-in attempts are kept only as short-lived counters (see{" "}
-                <a href="#retention">How long we keep data</a>). Legal basis: legitimate interest
-                (Art. 6(1)(f) GDPR).
+                the service and its users. Sign-ins are not in it: your account records when you last
+                signed in and when each passkey or sign-in method was last used (see{" "}
+                <a href="#account-data">Account data</a>), and failed sign-in attempts are kept only as
+                short-lived counters (see <a href="#retention">How long we keep data</a>). Legal basis:
+                legitimate interest (Art. 6(1)(f) GDPR).
               </p>
 
               <h3>AI connectors</h3>

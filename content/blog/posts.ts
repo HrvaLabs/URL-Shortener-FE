@@ -21,13 +21,13 @@ export const blogPosts: BlogPost[] = [
     date: "2026-10-22",
     updated: "2026-11-01",
     excerpt:
-      "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check we tried. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
+      "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check they were run against. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
     author: "Karlo Hrvačić",
     tags: ["security", "phishing", "blocklists", "safe browsing"],
     content: `
       <p class="lead">
         In September 2026, a new account used hrva.cc to share links to fake Njuškalo and Jófogás pages.
-        Google Safe Browsing didn't catch them, and neither did anything else we checked them against later.
+        Google Safe Browsing didn't catch them, and neither did anything else they were checked against later.
         This post explains why, and the layers hrva.cc now uses to stop links like these.
       </p>
 
@@ -36,16 +36,16 @@ export const blogPosts: BlogPost[] = [
         Njuškalo and Jófogás are popular classifieds sites in Croatia and Hungary. In mid-September, one new
         account created a batch of hrva.cc links to pages that copied them, on domains such as
         <code>njuskaio[.]cam</code> and <code>jofogas[.]cards</code>. The domains had been registered the same
-        day the links appeared. The links stayed up for weeks before we found them.
+        day the links appeared. The links stayed up for weeks before they were found.
       </p>
       <p>
-        When we checked those domains in October, none of the outside services had flagged them. Google Safe
+        When those domains were checked in October, none of the outside services had flagged them. Google Safe
         Browsing let them through. So did HaGeZi's threat lists, which hold more than two million known bad domains,
         and the malware-blocking DNS from Quad9 and Cloudflare.
       </p>
       <p>
         That isn't a failure of those services. A list can only block a site after someone has spotted it,
-        and a domain registered that same day has no history yet. The lesson for us was that lists alone are too
+        and a domain registered that same day has no history yet. The lesson was that lists alone are too
         slow for scams on fresh domains. So hrva.cc now also looks at how old a domain is, and at whether its
         name imitates a well-known brand.
       </p>
@@ -65,8 +65,8 @@ export const blogPosts: BlogPost[] = [
         <li>
           <strong>Local blocklists.</strong> hrva.cc downloads public blocklists to its own server and
           refreshes them several times a day. Some list harmful domains. Others list exact links, which lets
-          us catch one bad page on a trusted host without blocking the whole host. Because the lists live on
-          our server, checking a link against them sends it nowhere.
+          hrva.cc catch one bad page on a trusted host without blocking the whole host. Because the lists live on
+          hrva.cc's server, checking a link against them sends it nowhere.
         </li>
         <li>
           <strong>Domain age.</strong> hrva.cc asks the domain's registry when the domain was registered. A
@@ -109,8 +109,8 @@ export const blogPosts: BlogPost[] = [
           and the visitor sees a page saying the link isn't available.
         </li>
         <li>
-          <strong>Domain rules.</strong> When a domain is clearly bad, we can block it, and every link to it
-          stops working at once. We can also mark a domain as trusted, to undo a false alarm.
+          <strong>Domain rules.</strong> When a domain is clearly bad, an admin can block it, and every link to it
+          stops working at once. An admin can also mark a domain as trusted, to undo a false alarm.
         </li>
       </ul>
 
@@ -149,8 +149,8 @@ export const blogPosts: BlogPost[] = [
       <ul>
         <li>
           <strong>Bad files on trusted hosts.</strong> A harmful file on a big file-sharing or cloud service
-          is only caught once it's on a list of exact links. We won't block a whole trusted host for one bad
-          file.
+          is only caught once it's on a list of exact links. hrva.cc doesn't block a whole trusted host for one
+          bad file.
         </li>
         <li>
           <strong>Scams on old or hacked domains.</strong> A domain with a long, clean history looks normal
@@ -223,7 +223,7 @@ export const blogPosts: BlogPost[] = [
         <li>
           <strong>It makes a simpler QR code.</strong> Fewer characters give a QR code with fewer, larger squares,
           which is easier to print small and to scan. hrva.cc's QR codes mark their scans, so a link's stats show how
-          many clicks came from print (<a href="/help/stats#qr-scans">QR scans</a>).
+          many clicks came from the QR code (<a href="/help/stats#qr-scans">QR scans</a>).
         </li>
         <li>
           <strong>It can end on purpose.</strong> A link can stop working on a date or after a number of clicks.
@@ -704,8 +704,8 @@ export const blogPosts: BlogPost[] = [
       <h2>Where the changes live</h2>
       <p>
         The master changelog, <code>src/main/resources/db/dbchangelog.xml</code>, includes the other files in order.
-        The oldest describe one table each; since then, each change has its own numbered file named after the
-        feature, such as <code>026-privacy-first-analytics.xml</code> or <code>043-url-opens.xml</code>. Every
+        The oldest files seed the roles, create one table each, or make an early change to a table; since then,
+        each change has its own numbered file named after the feature, such as <code>026-privacy-first-analytics.xml</code> or <code>043-url-opens.xml</code>. Every
         changeset has an id and an author. Liquibase records the changesets it has applied in the database and runs
         only the new ones.
       </p>
@@ -815,8 +815,7 @@ export const blogPosts: BlogPost[] = [
       <ul>
         <li>
           <strong>Redirect checks.</strong> After a link is made, a separate pool of two threads follows the
-          destination's redirects and checks every address along the way. When its queue is full, the link waits for
-          the regular check of active links.
+          destination's redirects and checks every address along the way.
         </li>
         <li>
           <strong>Email.</strong> Emails are sent from background threads, tried up to three times, and recorded in
@@ -830,8 +829,8 @@ export const blogPosts: BlogPost[] = [
 
       <h2>What stays on the request</h2>
       <p>
-        Anything the answer depends on. Making a link checks the destination before the link exists, so a harmful one
-        is refused rather than removed later. The visit-limit count happens before the redirect, because it decides
+        Anything the answer depends on. Making a link runs the checks that can refuse it before the link is saved.
+        The visit-limit count happens before the redirect, because it decides
         whether the visitor gets one. Signing in, and every change to an account, finish before the response.
       </p>
 
@@ -948,8 +947,8 @@ export const blogPosts: BlogPost[] = [
       <h2>Why once isn't enough</h2>
       <p>
         A destination that is clean today can be harmful tomorrow: a site gets hacked, or a page is replaced with a
-        scam after the link has been shared. A list also only holds a site after someone has reported it. So a
-        check when the link is made is only the first one.
+        scam after the link has been shared. A list holds a site only once it is known to be harmful, so the check
+        when the link is made is only the first one.
       </p>
 
       <h2>When hrva.cc asks</h2>
@@ -1003,7 +1002,8 @@ export const blogPosts: BlogPost[] = [
 
       <h2>What it can't catch</h2>
       <p>
-        A list can't hold a site nobody has reported yet, such as a scam on a domain registered the same day.
+        A list can miss a site that is not yet known to be harmful, such as a scam on a domain registered the same
+        day.
         <a href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</a> covers the checks for
         those, and <a href="/blog/safe-browsing-link-sharing">Why Safe Browsing matters for link sharing</a> covers
         what you can do as a visitor.
@@ -1052,7 +1052,7 @@ export const blogPosts: BlogPost[] = [
       <p>
         Whether an action failed became its own column. A migration rewrote the old rows: each method name became its
         constant, a <code>_FAILED</code> suffix became the failed flag, and anything it couldn't match became
-        <code>UNKNOWN</code>, with the old text kept in the details.
+        <code>UNKNOWN</code>, with the old text copied into the details where they were empty.
       </p>
 
       <h2>What an entry holds</h2>
@@ -1100,8 +1100,8 @@ export const blogPosts: BlogPost[] = [
     tags: ["engineering", "rewrite", "react", "nextjs", "angular"],
     content: `
       <p class="lead">
-        From 2022 to May 2026, the web app at app.hrva.cc was written in Angular. In May 2026 it was rewritten in
-        React with Next.js. This post covers what the old app was, what replaced it, and how the change shipped. Every
+        hrva.cc's web app was first written in Angular. In May 2026 it was rewritten in React with Next.js. This
+        post covers what the old app was, what replaced it, and how the change shipped. Every
         date here comes from the
         <a href="https://github.com/HrvaLabs/URL-Shortener-FE" target="_blank" rel="noopener noreferrer">web app's repository</a>.
       </p>
@@ -1109,14 +1109,15 @@ export const blogPosts: BlogPost[] = [
       <h2>The Angular app</h2>
       <p>
         The repository started in February 2022. By 2026 the app ran on Angular 14 with Angular Material components
-        and RxJS, and its last change before the rewrite was in May 2024. It was built with <code>ng build</code>
-        into a folder of static files served at app.hrva.cc, and it talked to the API at hrva.cc.
+        and RxJS, and its last change before the rewrite was in May 2024. Its README built it with
+        <code>ng build</code> into a folder of static files, and its production settings pointed it at the API on
+        hrva.cc.
       </p>
 
       <h2>Why rewrite</h2>
       <p>
-        The rewrite started with a design document dated May 13, 2026. It gives the reason in one line: the Angular
-        app "is fully functional but uses outdated tooling". The document then listed every route the new app needed
+        A design document dated May 13, 2026 set out the rewrite. It gives the reason in one line: the Angular app
+        "is fully functional but uses outdated tooling". The document then listed every route the new app needed
         and every API call it had to make.
       </p>
 
@@ -1137,8 +1138,7 @@ export const blogPosts: BlogPost[] = [
         The new app landed in one commit on May 13, 2026, the Cloudflare Workers build was added the next day, and
         the Angular files were removed on May 16. The API changed in the same week: its build moved from Gradle to
         Maven on May 13, and on May 16 its endpoints moved to plural resource paths, such as
-        <code>/api/v1/urls/{short}/peek</code> instead of <code>/api/v1/url/peek/{short}</code>. The web app has
-        stayed at the same address, app.hrva.cc, and short links have stayed on hrva.cc.
+        <code>/api/v1/urls/{short}/peek</code> instead of <code>/api/v1/url/peek/{short}</code>.
       </p>
 
       <h2>What changed since</h2>
@@ -1170,8 +1170,9 @@ export const blogPosts: BlogPost[] = [
 
       <h2>Without an account: one field, one button</h2>
       <p>
-        The home page opens with an address field and a <strong>Shorten</strong> button. Under them, one line says no
-        account is needed and what signing up adds: custom aliases, visit limits, expiry dates and analytics. The
+        The home page opens with an address field and a <strong>Shorten</strong> button. While links can be made
+        without an account and sign-ups are open, a line under them says no account is needed and what signing up
+        adds: custom aliases, visit limits, expiry dates and analytics. The
         form doesn't show those fields to a visitor without an account, since only an account can use them.
       </p>
       <p>

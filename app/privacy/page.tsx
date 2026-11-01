@@ -459,7 +459,9 @@ export default function PrivacyPage() {
                   <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within
                   an hour. Sign-in counters also count per account under a hash of the email address
                   and expire within 15 minutes; counters of wrong two-step codes or wrong passwords
-                  when confirming a change hold the account number and expire within a day.
+                  when confirming a change hold the account number and expire within a day. Requests for
+                  password reset and verification emails are counted per network and per email address,
+                  each under a hash, for an hour.
                 </li>
                 <li>
                   <strong>Account data</strong> — kept until you delete your account; unused

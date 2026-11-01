@@ -298,7 +298,7 @@ export const blogPosts: BlogPost[] = [
         Once the limit is reached, the link automatically deactivates. No more broken promises — just precise control.
       </p>
 
-      <h2>Analytics for Teams</h2>
+      <h2>All Your Links in One Dashboard</h2>
       <p>
         With an hrva.cc account, all your links are tracked in one dashboard. You can see which links perform best, 
         sort by visit count, and manage them all from a single place. The dashboard even shows you a progress bar 
@@ -893,7 +893,7 @@ export const blogPosts: BlogPost[] = [
 
       <h2>Why an Audit Log?</h2>
       <p>
-        When multiple admins manage a system, you need to know who did what. Did an admin delete a URL 
+        When a system is changed both by an admin and by scheduled jobs, you need to know which one did what. Did an admin delete a URL 
         or did the scheduler deactivate it? Was a user account modified by someone or by the inactivity 
         cleanup? An audit log answers these questions. It's also essential for compliance, debugging, 
         and security investigations.
@@ -956,7 +956,7 @@ export const blogPosts: BlogPost[] = [
       <p>
         The original hrva.cc frontend was built in Angular 14 with Material Design components. It worked, 
         but the development velocity was slowing down. Adding new features required navigating Angular's 
-        module system, dependency injection, and RxJS streams. The team wanted React's simpler mental 
+        module system, dependency injection, and RxJS streams. The rewrite aimed for React's simpler mental 
         model, Next.js's server-side rendering for SEO, and the broader ecosystem of React components.
       </p>
 

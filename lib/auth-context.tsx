@@ -4,11 +4,12 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { ApiError, REQUEST_FAILED, authApi, onSessionEnded, userApi } from "./api-client"
+import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
 
 export const REAUTH_TOAST_ID = "passkeys-reauth"
 
-const SESSION_ENDED_TOAST_ID = "session-ended"
+showSessionEndedOnce()
 
 export type LoginResult =
   | { status: "signed-in" }

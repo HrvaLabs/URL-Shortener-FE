@@ -7,7 +7,7 @@ globalThis.localStorage = {
   setItem: (key, value) => stored.set(key, String(value)),
   removeItem: (key) => stored.delete(key),
 }
-globalThis.document = { createElement: () => ({ click() {} }) }
+globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }), createTextNode: () => ({}), getElementsByTagName: () => [{ appendChild() {} }], head: { appendChild() {} } }
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
@@ -67,6 +67,23 @@ for (const [name, download, body] of downloads) {
     assert.equal(localStorage.getItem("auth-token"), "Bearer renewed")
   })
 }
+
+await check("a page's own toast of the session-ended error joins the sign-out toast", async () => {
+  const { toast } = await import("sonner")
+  const shown = []
+  toast.error = (message, data) => shown.push({ message, id: data?.id })
+  const { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } = await import("../lib/session-ended-toast.ts")
+  showSessionEndedOnce()
+  showSessionEndedOnce()
+
+  toast.error(SESSION_ENDED, { id: SESSION_ENDED_TOAST_ID })
+  toast.error(SESSION_ENDED)
+  toast.error(SESSION_ENDED, { duration: 5000 })
+  toast.error("Too many exports. Try again in an hour.")
+
+  assert.deepEqual(shown.map((entry) => entry.id), [SESSION_ENDED_TOAST_ID, SESSION_ENDED_TOAST_ID, SESSION_ENDED_TOAST_ID, undefined])
+  assert.equal(new Set(shown.filter((entry) => entry.message === SESSION_ENDED).map((entry) => entry.id)).size, 1)
+})
 
 if (failures > 0) {
   console.error(`${failures} check(s) failed`)

@@ -1,0 +1,40 @@
+{
+  "app/connect/content.tsx": {
+    "react-hooks/immutability": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
+  "app/fortune/page.tsx": {
+    "react-hooks/purity": {
+      "count": 1
+    }
+  },
+  "app/register/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/reset-password/[token]/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/reset-password/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/verify-email/resend/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/ui/input.tsx": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  }
+}

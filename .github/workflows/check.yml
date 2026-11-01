@@ -1,0 +1,51 @@
+name: Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx eslint . --pass-on-unpruned-suppressions
+
+      - name: Run every check script
+        shell: bash
+        run: |
+          set -euo pipefail
+          checks=$(node -e 'console.log(Object.keys(require("./package.json").scripts).filter((name) => name.startsWith("check:")).join("\n"))')
+          for check in $checks; do
+            echo "::group::npm run $check"
+            npm run "$check"
+            echo "::endgroup::"
+          done
+
+      - name: Build
+        run: npm run build

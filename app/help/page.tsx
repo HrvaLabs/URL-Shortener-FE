@@ -20,7 +20,7 @@ const guides = [
   {
     href: "/help/passkeys",
     title: "Passkeys and security keys",
-    description: "Sign in without a password, use a passkey or security key as your second step, and sign out everywhere.",
+    description: "Sign in without a password, use a passkey or security key as your second step, passwords and reset links, and sign out everywhere.",
   },
   {
     href: "/help/stats",

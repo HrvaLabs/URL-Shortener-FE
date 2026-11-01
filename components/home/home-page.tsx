@@ -414,7 +414,8 @@ function FeatureGrid() {
               <>
                 Sign in with your fingerprint, face, screen lock or a security key. No password to type, and two-step
                 verification works with them too. Settings lists every way you&apos;ve signed in, with when you last
-                used each. Sign out everywhere signs out your other devices, and so does a password change.{" "}
+                used each. Sign out everywhere signs out your other devices, and so does a password change. A reset link
+                works once, for an hour, and signing up never shows whether an email already has an account.{" "}
                 <Link href="/help/passkeys" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about passkeys</span>
                 </Link>
@@ -715,7 +716,8 @@ function DevelopersSection() {
         <div>
           <h2 className="font-display text-3xl leading-tight sm:text-4xl">Shorten from your own code</h2>
           <p className="mt-3 max-w-lg text-lg leading-relaxed text-muted-foreground">
-            Create an API key in your dashboard and send it in the <code className="whitespace-nowrap rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">X-Api-Key</code> header.
+            Create an API key in your dashboard and send it in the <code className="whitespace-nowrap rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">X-Api-Key</code> header, or as a 
+            <code className="whitespace-nowrap rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground">Bearer</code> token.
             Links made over the API show up in your dashboard like any other.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

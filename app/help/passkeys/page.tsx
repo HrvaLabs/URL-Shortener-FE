@@ -6,7 +6,7 @@ import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
 const description =
-  "How to add a passkey or security key to hrva.cc, sign in with it, use it as your second step, and what to do if you lose one."
+  "How to add a passkey or security key to hrva.cc, sign in with it, use it as your second step, what to do if you lose one, and how passwords and reset links work."
 
 export const metadata: Metadata = pageMetadata({ title: "Passkeys and security keys", description, path: "/help/passkeys" })
 
@@ -181,6 +181,11 @@ export default function PasskeysHelpPage() {
                 sign-in page. <strong>Lost your passkey or codes?</strong> opens this guide at{" "}
                 <a href="#lost-device">If you lose a device or security key</a> in a new tab.
               </p>
+              <p>
+                Admin accounts need two-step verification on to use admin pages and the AI moderation tools. Until it&apos;s
+                on, they say &quot;Turn on two-step sign-in to use admin pages.&quot; and open this setting. Your own
+                account pages keep working.
+              </p>
 
               <h2 id="recovery-codes">Recovery codes</h2>
               <p>
@@ -248,6 +253,39 @@ export default function PasskeysHelpPage() {
                 least one way to sign in. Add a passkey or another method first.&quot; The same goes for
                 removing your last passkey. With two-step verification on, you also have to keep a
                 password, Google or GitHub as your first step.
+              </p>
+
+              <h2 id="passwords">Passwords</h2>
+              <p>
+                A password needs at least 8 characters and at most 72 bytes. Most letters are one byte; accented
+                letters such as č count as two. The rules are shown under every new-password field. The eye button
+                next to it shows or hides what you typed, so there&apos;s no second field to repeat it.
+              </p>
+              <p>
+                If hrva.cc can&apos;t count sign-in attempts for a moment, signing in with a password pauses and says
+                &quot;Signing in with a password isn&apos;t available right now. Try again in a minute.&quot; Passkeys,
+                Google and GitHub sign-in aren&apos;t paused by it.
+              </p>
+
+              <h2 id="forgot-password">Forgot password</h2>
+              <p>
+                <strong>Forgot password</strong> on the sign-in page emails a link to set a new password. The link works
+                once, within 1 hour; asking again replaces the earlier one. The page it opens asks only for the new
+                password. The answer is the same whether or not an account uses the address, so the form never tells
+                anyone who has an account.
+              </p>
+              <p>
+                One address gets at most 3 account emails an hour (reset links, verification links and sign-up notes
+                together). Past that, the form answers the same and no email goes out. One network can ask 10 times
+                an hour; then the form says when to try again.
+              </p>
+
+              <h2 id="sign-up">Signing up with an email that already has an account</h2>
+              <p>
+                Sign-up answers &quot;Check your inbox&quot; either way. If the address already has an account, nothing
+                is created or changed: the account gets an email saying someone tried to sign up with it, with links
+                to sign in and to reset the password. If that account&apos;s email isn&apos;t verified yet, it gets a
+                new verification link instead.
               </p>
 
               <h2 id="sign-out-everywhere">Sign out everywhere</h2>

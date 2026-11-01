@@ -42,7 +42,7 @@ const javascriptExample = `const response = await fetch("${endpoint}", {
   body: JSON.stringify({ longUrl: "https://example.com/autumn-sale", shortUrl: "autumn-sale" }),
 })
 const link = await response.json()
-if (!response.ok) throw new Error(link.error ?? JSON.stringify(link))
+if (!response.ok) throw new Error(link.detail ?? JSON.stringify(link))
 console.log(\`https://hrva.cc/\${link.shortUrl}\`)`
 
 const pythonExample = `import os
@@ -54,14 +54,15 @@ response = requests.post(
     json={"longUrl": "https://example.com/autumn-sale", "shortUrl": "autumn-sale"},
 )
 link = response.json()
-response.raise_for_status()
+if not response.ok:
+    raise RuntimeError(link.get("detail", response.text))
 print(f"https://hrva.cc/{link['shortUrl']}")`
 
 const responseExample = `{
   "id": 1204,
   "longUrl": "https://example.com/autumn-sale",
   "shortUrl": "autumn-sale",
-  "createDate": "2026-10-29T10:00:00",
+  "createDate": "2026-10-29T10:00:00Z",
   "expirationDate": null,
   "visits": 0,
   "visitLimit": null,
@@ -76,18 +77,51 @@ const fields = [
   { name: "longUrl", text: "Required. The address to shorten, up to 2,048 characters." },
   { name: "shortUrl", text: "Optional custom alias: up to 32 letters, numbers, hyphens and underscores. Leave it out for a random one." },
   { name: "visitLimit", text: "Optional. The link stops working after this many visits." },
-  { name: "expirationDate", text: "Optional. When the link stops working, as an ISO 8601 date and time, for example 2026-12-31T23:59:59." },
+  { name: "expirationDate", text: "Optional. When the link stops working, as an ISO 8601 date and time with Z or an offset, for example 2026-12-31T23:59:59Z. A value without an offset is read as UTC." },
   { name: "tags", text: "Optional. Up to 10 tags of up to 30 characters each, saved in lowercase." },
   { name: "password", text: "Optional. Visitors enter it before they are sent on." },
 ]
 
 const errors = [
-  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; or the API key is expired or revoked, or belongs to an inactive account. The body is {\"error\": \"...\"}, or one message per field." },
-  { status: "400", text: "Custom aliases are turned off right now." },
-  { status: "404", text: "The API key doesn't exist." },
+  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; custom aliases are turned off; or the API key is expired or revoked, or belongs to an inactive account." },
+  { status: "401", text: "Nobody is signed in, on an endpoint that needs a signed-in account." },
+  { status: "403", text: "You're signed in, but the account isn't allowed to do this." },
+  { status: "404", text: "The API key or the link doesn't exist." },
   { status: "409", text: "The custom alias is already taken." },
-  { status: "429", text: "Too many links in a short time. The body says: You've created a lot of links in a short time. Try again in an hour." },
-  { status: "429", text: "The API key made too many requests in the hour. The body is {\"error\": \"This API key made too many requests. Try again in <N> minutes.\"}, with \"1 minute\" when one is left, and the Retry-After header says how many seconds to wait." },
+  { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds to wait at most." },
+  { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds to wait, and detail says how many minutes." },
+]
+
+const problemExample = `HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+
+{
+  "type": "about:blank",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "This short URL is already taken. Try another.",
+  "instance": "/api/v1/urls"
+}`
+
+const fieldProblemExample = `HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+
+{
+  "type": "about:blank",
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Custom short URL must be 32 characters or fewer",
+  "instance": "/api/v1/urls",
+  "errors": {
+    "shortUrl": "Custom short URL must be 32 characters or fewer"
+  }
+}`
+
+const shortLinkAnswers = [
+  { status: "302", text: "Found: the Location header is the destination." },
+  { status: "200", text: "A warning page that shows the destination first, for some links made without an account." },
+  { status: "404", text: "There's no link with this name." },
+  { status: "410", text: "The link is gone: hrva.cc blocked it, it expired, it reached its visit limit, or its owner turned it off." },
 ]
 
 export default function DevelopersPage() {
@@ -144,7 +178,19 @@ export default function DevelopersPage() {
       <CodeBlock label="Response" code={responseExample} copyLabel="response example" mono />
 
       <div className="prose-custom">
+        <h2 id="dates">Dates</h2>
+        <p>
+          Every date and time the API sends is ISO 8601 in UTC with a <code>Z</code>, like{" "}
+          <code>2026-10-30T19:02:13Z</code>. Send yours with <code>Z</code> or an offset; a value without one is read as UTC.
+        </p>
+
         <h2 id="errors">Errors</h2>
+        <p>
+          Errors use the standard problem details format (<a href="https://www.rfc-editor.org/rfc/rfc9457">RFC 9457</a>),
+          with the <code>application/problem+json</code> content type. <code>detail</code> is the message to show,{" "}
+          <code>title</code> names the HTTP status, and <code>instance</code> is the path you called. A refused field
+          comes in <code>errors</code>, by field name, and <code>detail</code> repeats the first one.
+        </p>
         <ul>
           {errors.map((error) => (
             <li key={error.text}>
@@ -152,6 +198,11 @@ export default function DevelopersPage() {
             </li>
           ))}
         </ul>
+      </div>
+      <CodeBlock label="An error" code={problemExample} copyLabel="error example" mono />
+      <CodeBlock label="A field error" code={fieldProblemExample} copyLabel="field error example" mono />
+
+      <div className="prose-custom">
 
         <h2 id="limits">Rate limits</h2>
         <p>
@@ -174,14 +225,33 @@ export default function DevelopersPage() {
           </li>
         </ul>
         <p>
-          A refused request also has a <code>Retry-After</code> header with the seconds to wait, and the body{" "}
-          <code className="[overflow-wrap:anywhere]">&#123;&quot;error&quot;: &quot;This API key made too many requests. Try again in 12 minutes.&quot;&#125;</code>.
+          A refused request also has a <code>Retry-After</code> header with the seconds to wait, and a problem details
+          body whose <code>detail</code> is{" "}
+          <code className="[overflow-wrap:anywhere]">This API key made too many requests. Try again in 12 minutes.</code>.
         </p>
         <p>
           Creating links is also limited per account each hour. Going over that limit is a <code>429</code> as well, with
           the message under Errors. Your <Link href="/dashboard/api-keys">API keys</Link> page shows how many requests each
-          key has made, when it was last used and when it expires. A key that is expired or revoked is refused with an{" "}
-          <code>error</code> message.
+          key has made, when it was last used and when it expires. A key that is expired or revoked is refused with a{" "}
+          <code>detail</code> message. Every <code>429</code> has a <code>Retry-After</code> header in seconds.
+        </p>
+
+        <h2 id="short-links">What a short link answers</h2>
+        <p>
+          <code>https://hrva.cc/&#123;short&#125;</code> (with or without a slash at the end) answers:
+        </p>
+        <ul>
+          {shortLinkAnswers.map((answer) => (
+            <li key={answer.status}>
+              <strong>{answer.status}</strong>: {answer.text}
+            </li>
+          ))}
+        </ul>
+        <p>
+          A <code>404</code> or <code>410</code> is a small page for people, or a problem details body when you send{" "}
+          <code>Accept: application/json</code>. A <code>HEAD</code> request gets the same status and headers as a{" "}
+          <code>GET</code> but isn&apos;t counted as a click or a visit, so link checkers and uptime monitors don&apos;t use
+          up a visit limit.
         </p>
 
         <h2 id="expiry">When a key expires</h2>

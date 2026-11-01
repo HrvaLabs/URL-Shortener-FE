@@ -3,10 +3,12 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { ApiError, REQUEST_FAILED, authApi, userApi } from "./api-client"
+import { ApiError, REQUEST_FAILED, authApi, onSessionEnded, userApi } from "./api-client"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
 
 export const REAUTH_TOAST_ID = "passkeys-reauth"
+
+const SESSION_ENDED_TOAST_ID = "session-ended"
 
 export type LoginResult =
   | { status: "signed-in" }
@@ -88,6 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient])
 
   const logout = useCallback(() => endSession(null), [endSession])
+
+  useEffect(() => {
+    onSessionEnded((message) => {
+      endSession(null)
+      toast.error(message, { id: SESSION_ENDED_TOAST_ID })
+    })
+    return () => onSessionEnded(null)
+  }, [endSession])
 
   const logoutTo = useCallback((destination: string) => endSession(destination), [endSession])
 

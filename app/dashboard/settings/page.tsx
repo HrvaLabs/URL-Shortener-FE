@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { userApi } from "@/lib/api-client"
+import { ApiError, userApi } from "@/lib/api-client"
 import { useReauthToast } from "@/lib/hooks/useReauthToast"
 import { useNeedsPassword } from "@/lib/hooks/useSignInMethods"
 import { isLocalAccount } from "@/lib/utils"
@@ -18,6 +18,7 @@ import { PasskeysCard } from "@/components/passkeys-card"
 import { SignInMethodsCard } from "@/components/sign-in-methods-card"
 import { TwoStepCard } from "@/components/two-step-card"
 import { ConnectedAppsCard } from "@/components/connected-apps-card"
+import { SignOutEverywhereCard } from "@/components/sign-out-everywhere-card"
 import { NotificationsCard } from "@/components/notifications/notifications-card"
 import { CustomDomainsCard } from "@/components/domains/custom-domains-card"
 
@@ -29,6 +30,8 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const [newPasswordError, setNewPasswordError] = useState<string | null>(null)
+  const newPasswordRef = useRef<HTMLInputElement>(null)
   const [deletePassword, setDeletePassword] = useState("")
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
@@ -107,12 +110,18 @@ export default function SettingsPage() {
     setPasswordLoading(true)
     try {
       await userApi.updatePassword({ oldPassword, newPassword })
-      toast.success("Password changed successfully!")
+      toast.success("Password changed. Other devices are signed out; this one stays signed in.")
       setOldPassword("")
       setNewPassword("")
       setConfirmPassword("")
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to change password")
+      const fieldError = err instanceof ApiError ? err.fields.newPassword : undefined
+      if (fieldError) {
+        setNewPasswordError(fieldError)
+        newPasswordRef.current?.focus()
+      } else {
+        toast.error(err instanceof Error && err.message ? err.message : "Failed to change password")
+      }
     } finally {
       setPasswordLoading(false)
     }
@@ -168,7 +177,23 @@ export default function SettingsPage() {
               <Separator />
               <div>
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
+                <Input
+                  ref={newPasswordRef}
+                  id="newPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setNewPasswordError(null) }}
+                  required
+                  aria-invalid={newPasswordError ? true : undefined}
+                  aria-describedby={newPasswordError ? "newPasswordError" : undefined}
+                  className="mt-1.5 h-10 max-w-sm"
+                />
+                {newPasswordError && (
+                  <p id="newPasswordError" role="alert" className="mt-1.5 max-w-sm text-sm text-destructive [overflow-wrap:anywhere]">
+                    {newPasswordError}
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
@@ -191,6 +216,8 @@ export default function SettingsPage() {
       <PasskeysCard />
 
       <TwoStepCard />
+
+      <SignOutEverywhereCard />
 
       <ConnectedAppsCard />
 

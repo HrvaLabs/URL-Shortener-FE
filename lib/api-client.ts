@@ -5,6 +5,31 @@ export const REQUEST_FAILED = "Request failed"
 
 export const CANT_REACH = "Can't reach hrva.cc right now. Check your connection and try again."
 
+export const SESSION_ENDED = "Your session ended. Sign in again."
+
+const TOO_MANY_REQUESTS = "Too many attempts. Try again in a few minutes."
+
+const TOKEN_KEY = "auth-token"
+
+let sessionEndedListener: ((message: string) => void) | null = null
+
+export function onSessionEnded(listener: ((message: string) => void) | null) {
+  sessionEndedListener = listener
+}
+
+function keepRenewedToken(sentToken: string | null, response: Response) {
+  const renewed = response.headers.get("Authorization")
+  if (sentToken && renewed?.startsWith("Bearer ") && renewed !== sentToken && localStorage.getItem(TOKEN_KEY) === sentToken) {
+    localStorage.setItem(TOKEN_KEY, renewed)
+  }
+}
+
+function endedSession(sentToken: string | null, status: number, message: string) {
+  if (status !== 401 || message !== SESSION_ENDED || !sentToken || localStorage.getItem(TOKEN_KEY) !== sentToken) return
+  localStorage.removeItem(TOKEN_KEY)
+  sessionEndedListener?.(message)
+}
+
 export class ApiError extends Error {
   status: number
   fields: Record<string, string>
@@ -61,7 +86,7 @@ const asProblem = (body: unknown): ProblemBody | null =>
 
 /** The message of an RFC 9457 problem: its `detail`, else its `title`. */
 export function errorMessage(body: unknown, status: number): string {
-  const fallback = status >= 500 ? CANT_REACH : REQUEST_FAILED
+  const fallback = status >= 500 ? CANT_REACH : status === 429 ? TOO_MANY_REQUESTS : REQUEST_FAILED
   const problem = asProblem(body)
   if (!problem) return fallback
   const message = typeof problem.detail === "string" && problem.detail ? problem.detail : problem.title
@@ -76,7 +101,7 @@ async function request<T>(
   cache?: RequestCache,
 ): Promise<T> {
   const baseUrl = getApiBaseUrl()
-  const token = localStorage.getItem("auth-token")
+  const token = localStorage.getItem(TOKEN_KEY)
 
   const reqHeaders: Record<string, string> = {
     "Content-Type": "application/json",
@@ -104,8 +129,12 @@ async function request<T>(
 
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
-    throw new ApiError(errorMessage(errorBody, response.status), response.status, validationFields(errorBody))
+    const message = errorMessage(errorBody, response.status)
+    endedSession(token, response.status, message)
+    throw new ApiError(message, response.status, validationFields(errorBody))
   }
+
+  keepRenewedToken(token, response)
 
   if (response.status === 204 || response.status === 202) return {} as T
 
@@ -128,6 +157,8 @@ async function request<T>(
 export const authApi = {
   login: (data: { email: string; password: string; rememberMe?: boolean }) =>
     request<LoginResponse>("POST", "/auth/login", data),
+  exchangeOAuthCode: (code: string) =>
+    request<LoginResponse>("POST", "/auth/oauth/exchange", { code }),
   secondStepTotp: (pendingToken: string, code: string) =>
     request<SignedIn>("POST", "/auth/2fa/totp", { pendingToken, code }),
   secondStepPasskeyOptions: (pendingToken: string) =>
@@ -309,6 +340,14 @@ export const userApi = {
     request<void>("DELETE", `/users/${id}`),
   deleteMe: (data?: { password?: string }) =>
     request<void>("DELETE", "/users/me", data),
+  endAllSessions: async () => {
+    const sentToken = localStorage.getItem(TOKEN_KEY)
+    const answer = await request<{ token: string | null }>("POST", "/users/me/sessions/end")
+    if (answer.token?.startsWith("Bearer ") && sentToken && localStorage.getItem(TOKEN_KEY) === sentToken) {
+      localStorage.setItem(TOKEN_KEY, answer.token)
+    }
+    return answer
+  },
   exportMyData: async () => {
     const baseUrl = getApiBaseUrl()
     const token = localStorage.getItem("auth-token")

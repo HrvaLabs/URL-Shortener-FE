@@ -605,6 +605,16 @@ export interface AdminStatsResponse {
   redirectAvgMs?: string
   redirectMaxMs?: string
   redirectCount?: number
+  blocklists?: BlocklistStatus[]
+}
+
+export interface BlocklistStatus {
+  id: number
+  name: string
+  refreshIntervalHours: number
+  lastRefreshedAt: string | null
+  consecutiveErrors: number
+  stale: boolean
 }
 
 export interface RecentUrlItem {

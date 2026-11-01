@@ -508,7 +508,7 @@ export const blogPosts: BlogPost[] = [
         Every URL shortened through hrva.cc is checked against the Google Safe Browsing API v4 before it's 
         saved. If the destination is flagged as malware, phishing, or social engineering, the link is blocked 
         at creation time. But threats evolve — a safe site today can be compromised tomorrow. That's why a 
-        scheduled task rechecks every active URL against Safe Browsing <strong>daily at 2 AM</strong>. 
+        scheduled task rechecks every active URL against Safe Browsing <strong>every night</strong>. 
         Flagged URLs are automatically deactivated, evicted from cache, and the owner is notified by email.
       </p>
 
@@ -892,7 +892,7 @@ export const blogPosts: BlogPost[] = [
 
       <h2>Daily Recheck</h2>
       <p>
-        Every night at 2 AM, a scheduled task runs <code>SafeBrowsingRecheckService.recheckActiveUrls()</code>. 
+        Every night, a scheduled task runs <code>SafeBrowsingRecheckService.recheckActiveUrls()</code>. 
         It queries all active URLs from the database, batches them into pages of 20, and checks each 
         one against Safe Browsing. If a URL is flagged:
       </p>

@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { PageMeta } from "@/components/page-meta"
-import { Database, Zap, Mail } from "lucide-react"
+import { Database, Zap, Mail, ShieldAlert } from "lucide-react"
 import { parseServerDateTime } from "@/lib/analytics"
-import { cn, formatDateTime } from "@/lib/utils"
+import type { BlocklistStatus } from "@/lib/types"
+import { cn, formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
 
 type ServiceState = "ok" | "down" | "unknown"
 
@@ -82,10 +83,10 @@ export default function AdminHealthPage() {
 
   return (
     <div className="space-y-6">
-      <PageMeta title="Admin — Health" description="Live status of the database, Redis and email delivery." />
+      <PageMeta title="Admin — Health" description="Live status of the database, Redis, email delivery and blocklists." />
       <div>
         <h1 className="font-display text-2xl">Health</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Live status of the database, Redis and email delivery. Refreshes every 30 seconds.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Live status of the database, Redis, email delivery and blocklists. Refreshes every 30 seconds.</p>
       </div>
 
       {isLoading ? (
@@ -146,6 +147,61 @@ export default function AdminHealthPage() {
           {" "}&middot; Java {stats.javaVersion}
         </p>
       )}
+
+      {stats?.blocklists && <Blocklists lists={stats.blocklists} />}
     </div>
+  )
+}
+
+function Blocklists({ lists }: { lists: BlocklistStatus[] }) {
+  const stale = lists.filter((list) => list.stale).length
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold">Blocklists</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          A list is stale when it missed two refreshes in a row. Links are still checked against the copy it loaded last.
+        </p>
+      </div>
+      {lists.length === 0 ? (
+        <p className="rounded-xl border bg-card px-5 py-8 text-center text-sm text-muted-foreground">No blocklists yet.</p>
+      ) : (
+        <>
+          <p role="status" className={cn("text-sm font-medium", stale > 0 ? "text-destructive" : "text-success")}>
+            {stale > 0 ? `${plural(stale, "list")} stale.` : "Every list is up to date."}
+          </p>
+          <ul className="divide-y rounded-xl border bg-card">
+            {lists.map((list) => {
+              const refreshed = list.lastRefreshedAt ? parseServerDateTime(list.lastRefreshedAt) : null
+              return (
+                <li key={list.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
+                  <ShieldAlert className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-medium [overflow-wrap:anywhere]">{list.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Last refresh:{" "}
+                      {refreshed ? (
+                        <span className="tabular-nums">
+                          {formatTimeAgo(refreshed)} · {formatDateTime(refreshed)}
+                        </span>
+                      ) : (
+                        "never"
+                      )}
+                    </p>
+                    <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                      Refreshes every {plural(list.refreshIntervalHours, "hour")} · {plural(list.consecutiveErrors, "error")} in a row
+                    </p>
+                  </div>
+                  <Badge variant={list.stale ? "destructive" : "success"} className="shrink-0 gap-1.5">
+                    <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", list.stale ? "bg-destructive" : "bg-success")} />
+                    {list.stale ? "Stale" : "Up to date"}
+                  </Badge>
+                </li>
+              )
+            })}
+          </ul>
+        </>
+      )}
+    </section>
   )
 }

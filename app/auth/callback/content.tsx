@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { ApiError, authApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { FORGOT_PASSWORD_LABEL, SIGNUPS_PAUSED, providerDisabledHeading, providerDisabledText } from "@/lib/moderation"
 import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider, type SwitchableMethod } from "@/lib/sign-in-methods"
@@ -19,6 +20,7 @@ const messages: Record<string, string> = {
   no_email: "Could not retrieve email from provider.",
   account_inactive: "Your account is deactivated. Contact an administrator.",
   two_step_unavailable: "Two-step sign-in isn't available right now. Try again in a minute.",
+  sign_in_unavailable: "Signing in isn't available right now. Try again in a minute.",
   invalid_email: "This account's email address can't be used on hrva.cc. Sign in with another account, or another way.",
   github_email_unverified: "Your GitHub account has no verified email address. Verify one on GitHub, or sign in another way.",
   google_email_unverified: "Your Google account's email address isn't verified.",
@@ -27,7 +29,7 @@ const messages: Record<string, string> = {
 }
 
 type Callback =
-  | { kind: "token"; token: string }
+  | { kind: "code"; code: string }
   | { kind: "second-step"; pendingToken: string; methods: TwoStepMethod[] }
   | { kind: "error"; error: string; fromProvider: boolean; switchedOff?: { provider: SwitchableMethod | null } }
 
@@ -36,11 +38,11 @@ function isTwoStepMethod(value: string): value is TwoStepMethod {
 }
 
 function readCallback(searchParams: URLSearchParams): Callback {
-  const token = searchParams.get("token")
+  const code = searchParams.get("code")
   const pendingToken = searchParams.get("pendingToken")
   const err = searchParams.get("error")
 
-  if (token) return { kind: "token", token }
+  if (code) return { kind: "code", code }
   if (pendingToken) {
     const methods = (searchParams.get("methods") ?? "").split(",").filter(isTwoStepMethod)
     return { kind: "second-step", pendingToken, methods }
@@ -51,7 +53,7 @@ function readCallback(searchParams: URLSearchParams): Callback {
     return { kind: "error", error: providerDisabledText(provider), fromProvider: true, switchedOff: { provider } }
   }
   if (err) return { kind: "error", error: Object.hasOwn(messages, err) ? messages[err] : "Authentication failed.", fromProvider: true }
-  return { kind: "error", error: "Invalid callback — no token received.", fromProvider: false }
+  return { kind: "error", error: "Invalid callback — no sign-in code received.", fromProvider: false }
 }
 
 function withForgotPasswordLink(text: string) {
@@ -92,8 +94,11 @@ export function AuthCallbackLoading() {
 export function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { refreshUser, completeSignIn } = useAuth()
+  const { completeSignIn } = useAuth()
   const [callback] = useState(() => readCallback(searchParams))
+  const [secondStep, setSecondStep] = useState<{ pendingToken: string; methods: TwoStepMethod[] } | null>(() =>
+    callback.kind === "second-step" ? { pendingToken: callback.pendingToken, methods: callback.methods } : null)
+  const exchanged = useRef(false)
   const [error, setError] = useState<string | null>(() => {
     if (callback.kind === "error") return callback.error
     if (callback.kind === "second-step" && callback.methods.length === 0) return SIGN_IN_EXPIRED
@@ -103,34 +108,40 @@ export function AuthCallbackContent() {
   const errorHeadingRef = useRef<HTMLHeadingElement>(null)
 
   useLayoutEffect(() => {
-    if (callback.kind === "second-step") window.history.replaceState(null, "", "/auth/callback")
+    if (callback.kind === "second-step" || callback.kind === "code") window.history.replaceState(null, "", "/auth/callback")
   }, [callback])
 
   useEffect(() => {
     if (error) errorHeadingRef.current?.focus()
   }, [error])
 
-  useEffect(() => {
-    forgetOAuthProvider()
-    if (callback.kind === "token") {
-      const next = sessionStorage.getItem("post-login-next")
-      localStorage.setItem("auth-token", `Bearer ${callback.token}`)
-      refreshUser()
-        .then(() => {
-          router.push(safeNext(next))
-          sessionStorage.removeItem("post-login-next")
-        })
-        .catch(() => setError("Authentication failed."))
-    } else if (callback.kind === "error" && callback.fromProvider) {
-      sessionStorage.removeItem("post-login-next")
-    }
-  }, [callback, router, refreshUser])
-
   const handleSignedIn = useCallback((signedIn: SignedIn) => {
     completeSignIn(signedIn)
     router.replace(safeNext(sessionStorage.getItem("post-login-next")))
     sessionStorage.removeItem("post-login-next")
   }, [completeSignIn, router])
+
+  useEffect(() => {
+    forgetOAuthProvider()
+    if (callback.kind === "code") {
+      if (exchanged.current) return
+      exchanged.current = true
+      localStorage.removeItem("auth-token")
+      authApi.exchangeOAuthCode(callback.code)
+        .then((response) => {
+          if (response.twoStepRequired && response.pendingToken) {
+            setSecondStep({ pendingToken: response.pendingToken, methods: response.methods ?? [] })
+          } else if (response.token && response.user) {
+            handleSignedIn({ token: response.token, user: response.user })
+          } else {
+            setError("Authentication failed.")
+          }
+        })
+        .catch((err) => setError(err instanceof ApiError && err.status === 410 ? SIGN_IN_EXPIRED : err instanceof Error && err.message ? err.message : "Authentication failed."))
+    } else if (callback.kind === "error" && callback.fromProvider) {
+      sessionStorage.removeItem("post-login-next")
+    }
+  }, [callback, handleSignedIn])
 
   const handleExpired = useCallback((message: string) => setError(message), [])
 
@@ -159,13 +170,13 @@ export function AuthCallbackContent() {
     )
   }
 
-  if (callback.kind === "second-step") {
+  if (secondStep) {
     return (
       <AuthCallbackShell>
         <Card className="w-full max-w-sm p-8">
           <SecondStep
-            pendingToken={callback.pendingToken}
-            methods={callback.methods}
+            pendingToken={secondStep.pendingToken}
+            methods={secondStep.methods}
             onSignedIn={handleSignedIn}
             onExpired={handleExpired}
             onBackToSignIn={handleBackToSignIn}

@@ -414,7 +414,7 @@ function FeatureGrid() {
               <>
                 Sign in with your fingerprint, face, screen lock or a security key. No password to type, and two-step
                 verification works with them too. Settings lists every way you&apos;ve signed in, with when you last
-                used each.{" "}
+                used each. Sign out everywhere signs out your other devices, and so does a password change.{" "}
                 <Link href="/help/passkeys" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   Learn more<span className="sr-only"> about passkeys</span>
                 </Link>

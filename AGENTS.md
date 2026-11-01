@@ -31,7 +31,7 @@ GPL-3.0 (`LICENSE`, the same text as the backend's; `"license": "GPL-3.0-only"` 
 
 No test framework is set up.
 
-`npm run lint` exits 0: the 8 errors that predate CI (`app/connect/content.tsx` twice, `app/fortune/page.tsx`, four `no-explicit-any` in the register, reset-password and verify-email pages, `components/ui/input.tsx`) are listed in `eslint-suppressions.json` (ESLint bulk suppressions), so only a new error fails. Fixing one of them: run `npx eslint . --prune-suppressions` and commit the smaller file. Never add to the file with `--suppress-all` to get a new error through.
+`npm run lint` exits 0: the 5 errors that predate CI (`app/connect/content.tsx` twice, `app/fortune/page.tsx`, a `no-explicit-any` in the verify-email resend page, `components/ui/input.tsx`) are listed in `eslint-suppressions.json` (ESLint bulk suppressions), so only a new error fails. Fixing one of them: run `npx eslint . --prune-suppressions` and commit the smaller file. Never add to the file with `--suppress-all` to get a new error through.
 
 CI (`.github/workflows/check.yml`, on pushes and PRs to `main`): `npm ci`, `npx tsc --noEmit`, `npx eslint . --pass-on-unpruned-suppressions` (so a suppression a fix made unused doesn't fail the run), every `check:*` script in `package.json`, and `npm run build`. `codeql.yml` scans `javascript-typescript` (no build) on pushes, PRs and weekly; `.github/dependabot.yml` updates npm and the actions weekly. Every `uses:` is pinned to a full commit SHA with the version in a comment.
 

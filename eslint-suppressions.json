@@ -12,21 +12,6 @@
       "count": 1
     }
   },
-  "app/register/page.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "app/reset-password/[token]/page.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "app/reset-password/page.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "app/verify-email/resend/page.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1

@@ -8,7 +8,7 @@ import { blogPosts } from "@/content/blog/posts"
 export const metadata: Metadata = pageMetadata({
   title: "Blog",
   description:
-    "How hrva.cc stops phishing links, counts visits, caches redirects and migrates its database without downtime, plus practical guides to short links.",
+    "How hrva.cc stops phishing links, counts visits, caches redirects and changes its database, plus guides to short links, analytics and visit limits.",
   path: "/blog",
 })
 
@@ -20,9 +20,9 @@ export default function BlogPage() {
       <main className="flex-1">
         <div className="container py-16 sm:py-20">
           <div className="mx-auto max-w-3xl">
-            <h1 className="font-display text-3xl leading-tight sm:text-4xl">Short links, sharp insights</h1>
+            <h1 className="font-display text-3xl leading-tight sm:text-4xl">Blog</h1>
             <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
-              Articles about URL shortening, link management, analytics, security, and best practices — written by the person behind hrva.cc.
+              Guides to short links, link analytics and visit limits, and posts on how hrva.cc checks links and how it is built.
             </p>
 
             <ul className="mt-10 divide-y border-y">

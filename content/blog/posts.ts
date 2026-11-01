@@ -58,7 +58,7 @@ export const blogPosts: BlogPost[] = [
       <ul>
         <li>
           <strong>Google Safe Browsing.</strong> Every destination is checked against Google's database of
-          phishing and malware sites when the link is created, and again every night. More in
+          phishing and malware sites when the link is created, and again later. More in
           <a href="/blog/safe-browsing-link-sharing">Why Safe Browsing matters for link sharing</a> and
           <a href="/blog/safe-browsing-at-scale">Google Safe Browsing: when links are checked</a>.
         </li>
@@ -100,7 +100,7 @@ export const blogPosts: BlogPost[] = [
       <h2>Checks after a link is live</h2>
       <ul>
         <li>
-          <strong>Every night.</strong> All active links are checked again against Safe Browsing and the
+          <strong>While a link is active.</strong> Active links are checked again against Safe Browsing and the
           latest lists, so a site that turns bad later still gets caught.
         </li>
         <li>
@@ -1146,7 +1146,7 @@ export const blogPosts: BlogPost[] = [
         Bio pages, custom domains, notifications, passkeys, the MCP connector and this blog were all built on the
         rewrite. Since then the app has moved to Tailwind CSS 4, and it now sends a
         content security policy with every page and reloads once when an open tab can't load a file from an older
-        build. It has been open source under the GPL-3.0 licence since October 2026.
+        build. It is open source under the GPL-3.0 licence.
         <a href="/blog/how-we-built-it">How hrva.cc is built</a> describes the whole stack as it is today.
       </p>
     `,
@@ -1247,12 +1247,12 @@ export const blogPosts: BlogPost[] = [
         <li>
           <a href="https://github.com/HrvaLabs/url-shortener" target="_blank" rel="noopener noreferrer">The API</a>:
           Java 25 and Spring Boot 4.1, with PostgreSQL (changed through Liquibase migrations) and Redis. It serves
-          the short links themselves, the REST API and the MCP connector. It has been under GPL-3.0 since May 2024.
+          the short links themselves, the REST API and the MCP connector. Its licence is GPL-3.0.
         </li>
         <li>
           <a href="https://github.com/HrvaLabs/URL-Shortener-FE" target="_blank" rel="noopener noreferrer">The web app</a>:
           Next.js 16 and React 19, deployed on Cloudflare Workers. It is everything at app.hrva.cc, this blog
-          included. It has been under GPL-3.0 since October 2026.
+          included. Its licence is GPL-3.0 too.
         </li>
       </ul>
 

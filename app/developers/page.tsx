@@ -125,6 +125,7 @@ const shortLinkAnswers = [
   { status: "200", text: "A warning page that shows the destination first, for some links made without an account." },
   { status: "404", text: "There's no link with this name." },
   { status: "410", text: "The link is gone: hrva.cc blocked it, it expired, it reached its visit limit, or its owner turned it off." },
+  { status: "503", text: "hrva.cc can't reach its database for a moment. The Retry-After header says how many seconds to wait before trying again." },
 ]
 
 export default function DevelopersPage() {
@@ -259,7 +260,7 @@ export default function DevelopersPage() {
           ))}
         </ul>
         <p>
-          A <code>404</code> or <code>410</code> is a small page for people, or a problem details body when you send{" "}
+          A <code>404</code>, <code>410</code> or <code>503</code> is a small page for people, or a problem details body when you send{" "}
           <code>Accept: application/json</code>. A <code>HEAD</code> request gets the same status and headers as a{" "}
           <code>GET</code> but isn&apos;t counted as a click or a visit, so link checkers and uptime monitors don&apos;t use
           up a visit limit.

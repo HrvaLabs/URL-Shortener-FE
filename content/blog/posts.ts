@@ -58,9 +58,9 @@ export const blogPosts: BlogPost[] = [
       <ul>
         <li>
           <strong>Google Safe Browsing.</strong> Every destination is checked against Google's database of
-          phishing and malware sites when the link is created, and again every night. We wrote about this in
+          phishing and malware sites when the link is created, and again every night. More in
           <a href="/blog/safe-browsing-link-sharing">Why Safe Browsing matters for link sharing</a> and
-          <a href="/blog/safe-browsing-at-scale">Safe Browsing at scale</a>.
+          <a href="/blog/safe-browsing-at-scale">Google Safe Browsing: when links are checked</a>.
         </li>
         <li>
           <strong>Local blocklists.</strong> hrva.cc downloads public blocklists to its own server and
@@ -687,121 +687,158 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "zero-downtime-migrations",
-    title: "Zero-Downtime Migrations: Evolving a Database Without Breaking Anything",
-    shortTitle: "Zero-Downtime Database Migrations",
+    title: "Database Migrations with Liquibase: How hrva.cc Changes Its Schema",
+    shortTitle: "Database Migrations with Liquibase",
     date: "2026-05-19",
-    excerpt: "How we use Liquibase, backward-compatible schema changes, and careful deploy ordering to evolve our PostgreSQL schema without downtime.",
+    updated: "2026-11-01",
+    excerpt:
+      "How hrva.cc changes its PostgreSQL tables: Liquibase changesets applied at startup, schema and data changed together, preconditions for work that may already be done, rollbacks, and tests that run a migration on old rows.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "database", "migrations", "liquibase"],
     content: `
       <p class="lead">
-        Database migrations are the highest-risk operation in any production service. A bad migration means 
-        downtime, data loss, or a midnight rollback. Here's how we approach schema changes at hrva.cc.
+        hrva.cc keeps its data in PostgreSQL, and every change to its tables is a Liquibase changeset that ships with
+        the code that needs it. This post covers how those changesets are laid out, applied, written and tested.
       </p>
 
-      <h2>The Rules of Zero-Downtime Migrations</h2>
+      <h2>Where the changes live</h2>
       <p>
-        Every migration follows three rules: <strong>additive first</strong> (add columns before code reads them), 
-        <strong>backward-compatible</strong> (old code still works with new schema), and 
-        <strong>reversible</strong> (every changeset has a known rollback path).
+        The master changelog, <code>src/main/resources/db/dbchangelog.xml</code>, includes the other files in order.
+        The oldest describe one table each; since then, each change has its own numbered file named after the
+        feature, such as <code>026-privacy-first-analytics.xml</code> or <code>043-url-opens.xml</code>. Every
+        changeset has an id and an author. Liquibase records the changesets it has applied in the database and runs
+        only the new ones.
       </p>
 
-      <h2>Liquibase Changelogs</h2>
+      <h2>Applied when the API starts</h2>
       <p>
-        All schema changes live in <code>src/main/resources/db/changelog/</code> as numbered XML files. 
-        The master changelog at <code>dbchangelog.xml</code> includes them in order. Each changeset has 
-        a unique <code>id</code> and <code>author</code>, and migrations run automatically on application 
-        startup. If changeset 008 hasn't been applied, it runs before the application context finishes loading.
-      </p>
-      <p>
-        The Liquibase changelog covers the full schema evolution — from the initial users table 
-        through URL tracking, API keys, password resets, Safe Browsing columns, IP address tracking, 
-        and the recent audit log and email log tables.
+        The API runs as one Docker container. When a new version starts, Liquibase applies the pending changesets
+        before the API takes any requests, and if a changeset fails, startup stops there. The container's health
+        check allows a two-minute start period, so a first start with a long migration isn't marked unhealthy.
       </p>
 
-      <h2>Add Columns Before Code Reads Them</h2>
+      <h2>Schema and data in one change</h2>
       <p>
-        When adding a new column, we deploy the migration first — before the application code that 
-        references it. During a rolling deploy, old application instances continue running against 
-        the new schema. An old instance that doesn't know about the new column simply ignores it. 
-        A new instance that expects the column finds it already there.
+        A new column often needs values for the rows that already exist. In version 2.23, visit limits started to
+        count every click instead of daily unique visitors. <code>043-url-opens.xml</code> has two changesets: the
+        first adds an <code>opens</code> column, not null with a default of 0; the second copies each limited link's
+        old count into it, so no limited link gained or lost clicks it had left.
+      </p>
+      <p>
+        <code>030-url-short-url-unique-again.xml</code> does the same before a constraint: it renames duplicate
+        short URLs, keeping the name for the link that was being served, and only then adds the unique index.
       </p>
 
-      <h2>Removing Columns: The Reverse</h2>
+      <h2>Changes that may already be done</h2>
       <p>
-        Dropping a column happens in reverse: first deploy code that stops referencing it, wait for 
-        all instances to pick up the change, then deploy the migration that drops it. The gap between 
-        the two deploys is the safety window. We typically wait a full deploy cycle (all instances 
-        confirmed on the new version) before executing destructive operations.
+        Some changesets check first. A precondition with <code>onFail="MARK_RAN"</code> lets Liquibase record a
+        changeset as applied when its work is already there, instead of failing startup: 030 skips the unique index
+        if one with that name already exists, and 026 drops the old <code>ip_address</code> table only if it's still
+        there. One precondition does the opposite: a changeset in 032 halts startup on PostgreSQL older than 15,
+        because the next index needs <code>NULLS NOT DISTINCT</code>, which 15 added.
       </p>
 
-      <h2>The &#x1FA84; Moment</h2>
+      <h2>Rollbacks</h2>
       <p>
-        The trickiest migration was adding <code>lastSafeBrowsingCheck</code> to a table with tens of 
-        thousands of rows — a nullable column with no default. The <code>ALTER TABLE</code> was instant 
-        on PostgreSQL (metadata-only for nullable columns with no default), but backfilling the timestamp 
-        for existing rows took 20 minutes. We used a background batch job so the application stayed 
-        responsive.
+        Most changesets declare how to undo them; 043's first changeset drops the column again. A data change that
+        can't be undone, such as 043's copy or 026's drop, declares an empty rollback, so it's clear that nothing
+        will be restored.
+      </p>
+
+      <h2>Two databases, one changelog</h2>
+      <p>
+        Production runs PostgreSQL; the tests run H2. A changeset that only makes sense on PostgreSQL is marked
+        <code>dbms="postgresql"</code>, such as 042's hash index, and where the syntax differs a changeset carries
+        one statement for each database.
+      </p>
+
+      <h2>Testing a migration</h2>
+      <p>
+        Schema tests run the whole changelog. A migration that rewrites data gets its own test, which runs a test
+        changelog, inserts rows shaped like the old data, applies the migration and checks the result.
+        <code>UrlOpensMigrationTest</code>, for example, checks that a limited link starts with its old count as
+        <code>opens</code> and every other link at 0.
+      </p>
+      <p>
+        The changelogs are in the
+        <a href="https://github.com/HrvaLabs/url-shortener" target="_blank" rel="noopener noreferrer">backend repository</a>.
+        <a href="/blog/how-we-built-it">How hrva.cc is built</a> covers the rest of the stack.
       </p>
     `,
   },
   {
     slug: "async-everything",
-    title: "Async Everything: Keeping Redirects Fast While Counting Millions of Visits",
+    title: "Async Work in a URL Shortener: Keeping Redirects Fast",
     shortTitle: "Async Visit Counting That Keeps Redirects Fast",
     date: "2026-05-19",
-    excerpt: "How we use Spring's TaskExecutor to fire-and-forget visit tracking, email sending, and cache warmup — keeping the redirect path under 5ms.",
+    updated: "2026-11-01",
+    excerpt:
+      "What hrva.cc's redirect does before it answers, what it hands to background threads (counting the click, following redirects, sending email), and what never leaves the request.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "performance", "async", "spring"],
     content: `
       <p class="lead">
-        Every click on a short URL does two things: redirect the user to the destination, and record the 
-        visit. The redirect must be fast. The visit recording can wait. Here's how we separate them.
+        A click on a short link has one job that can't wait, sending the visitor on, and several that can: counting
+        the click, checking where a new link redirects, sending an email. hrva.cc does the first on the request and
+        hands the rest to background threads.
       </p>
 
-      <h2>The Redirect Path</h2>
+      <h2>What the redirect does before it answers</h2>
+      <ol>
+        <li>Finds the link, in the Redis cache or else in PostgreSQL.</li>
+        <li>Checks that it is active, not expired and not over its visit limit. A link with a password goes to its
+        password page instead.</li>
+        <li>Checks the destination against blocklists.</li>
+        <li>For a link with a visit limit, counts the click in PostgreSQL first, with one conditional update, so
+        clicks at the same moment can't go past the limit.</li>
+        <li>Hands the click to a background thread and answers with a redirect.</li>
+      </ol>
       <p>
-        When a user visits <code>hrva.cc/abc123</code>, the backend checks Redis for cached URL data. 
-        If found and valid (not expired, not deactivated, under visit limit), the redirect response is 
-        returned immediately while the visit counter is incremented asynchronously in a background thread.
+        For a cached link without a visit limit, none of these steps touches the database.
+        <a href="/blog/caching-strategy-deep-dive">The caching post</a> covers the cache.
       </p>
 
-      <h2>Async Visit Tracking</h2>
+      <h2>Counting clicks in the background</h2>
       <p>
-        Spring's <code>TaskExecutor</code> runs the visit tracking in a separate thread. The method 
-        <code>fireVisitTracking</code> loads the URL entity from the database (it's already cached for 
-        the redirect, but we re-fetch the entity for the write), checks for duplicate IPs, increments 
-        the counter via <code>url.onVisit()</code>, and saves. If the visit exceeds the limit, the 
-        URL is automatically deactivated.
+        The day of a click is taken when it arrives; the rest runs on a Spring <code>TaskExecutor</code> thread. That
+        thread sorts bots from people, reduces the browser, device, referrer and country to a category, adds to the
+        link's daily totals in PostgreSQL, and checks the day's unique-visitor hash in Redis. A failure there is
+        logged without the visitor's details and never reaches the visitor.
       </p>
       <p>
-        This means the redirect response time is independent of the database write latency. A slow 
-        database write doesn't slow down the redirect. The user gets their 302 response in milliseconds 
-        while the visit is recorded behind the scenes.
-      </p>
-
-      <h2>Async Email Sending</h2>
-      <p>
-        Email is another fire-and-forget operation. Welcome emails, password resets, expiry notifications, 
-        and malware alerts all go through <code>@Async</code> methods. The <code>tryToSendEmail</code> 
-        method attempts to send up to 3 times with exponential backoff, but the caller doesn't wait — 
-        the email is queued and delivered in the background.
+        Counts go straight to the database and aren't held in memory, and when a deploy stops the API, it waits up
+        to 10 seconds for the clicks still queued. <a href="/blog/link-analytics-guide">The link analytics guide</a>
+        lists what is counted.
       </p>
 
-      <h2>Async Cache Warmup</h2>
+      <h2>Other background work</h2>
+      <ul>
+        <li>
+          <strong>Redirect checks.</strong> After a link is made, a separate pool of two threads follows the
+          destination's redirects and checks every address along the way. When its queue is full, the link waits for
+          the regular check of active links.
+        </li>
+        <li>
+          <strong>Email.</strong> Emails are sent from background threads, tried up to three times, and recorded in
+          an email log, where a failed one can be sent again.
+        </li>
+        <li>
+          <strong>Long scheduled jobs.</strong> The destination check, notification deliveries and the click summaries
+          run on their own pool, so they never hold up click counting or email.
+        </li>
+      </ul>
+
+      <h2>What stays on the request</h2>
       <p>
-        On application startup, the <code>CacheWarmup</code> component loads the 20 most visited, 
-        20 most recent, and 20 most recently accessed URLs into Redis. This runs asynchronously 
-        after the application context is ready, so the application starts serving requests immediately 
-        while the cache fills in the background.
+        Anything the answer depends on. Making a link checks the destination before the link exists, so a harmful one
+        is refused rather than removed later. The visit-limit count happens before the redirect, because it decides
+        whether the visitor gets one. Signing in, and every change to an account, finish before the response.
       </p>
 
-      <h2>What We Don't Make Async</h2>
+      <h2>Measuring it</h2>
       <p>
-        Not everything should be async. URL creation, deletion, and schema migrations are synchronous — 
-        the caller waits for confirmation. Authentication is synchronous (you need to know if login 
-        succeeded before proceeding). The rule: if the user needs to see the result, it's synchronous. 
-        If it's bookkeeping that happens after the response, it's async.
+        The admin's System tab shows how long redirects take, separately for links served from the cache and from
+        the database, and the cache's hit rate.
       </p>
     `,
   },
@@ -810,202 +847,245 @@ export const blogPosts: BlogPost[] = [
     title: "Caching Strategy for a URL Shortener: TTL, Warmup, Priming, and Graceful Degradation",
     shortTitle: "Caching Strategy for a URL Shortener",
     date: "2026-05-19",
-    excerpt: "A deep dive into our Redis caching architecture — how we keep 99% of redirects cache-hot, validate stale data, and survive Redis outages.",
+    updated: "2026-11-01",
+    excerpt:
+      "How hrva.cc caches links in Redis: what an entry holds, why it lives for an hour, how every hit is checked again, when entries are evicted, and what happens when Redis or the database is down.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "caching", "redis", "performance"],
     content: `
       <p class="lead">
-        Every redirect at hrva.cc goes through Redis first. The database is the fallback, not the primary 
-        path. Here's how we designed our caching layer to be fast, correct, and resilient.
+        Every click on every short link goes through one endpoint, the redirect. hrva.cc keeps the links it serves in
+        a Redis cache, so most redirects answer without asking PostgreSQL. This post covers how that cache is laid
+        out, kept correct, and what happens when it fails.
       </p>
 
-      <h2>Why Cache at All</h2>
+      <h2>Cache layout</h2>
       <p>
-        The redirect endpoint (<code>GET /{short}</code>) is the hottest path in the system — every click 
-        on every short URL hits it. Without caching, every redirect requires two database queries: one 
-        to check if the URL exists and is active, and another to read the destination URL. With caching, 
-        a single Redis lookup replaces both queries. The database is only touched when the cache is cold 
-        or the cached data is stale.
+        There is one cache, <code>urls</code>. Its key is the link's alias, or the custom domain's id and the alias
+        for a link on a custom domain. The value is the link as the API describes it: the destination, whether it is
+        active, its expiration date, its visit limit and the clicks used, whether it has a password, and whether it
+        opens the warning page first.
       </p>
 
-      <h2>Cache Layout</h2>
+      <h2>TTL: one hour</h2>
       <p>
-        We use a single Redis cache named <code>urls</code>. Each entry maps a short URL code to a 
-        serialized <code>UrlResponse</code> object containing the destination URL, active status, 
-        expiration date, visit count, and visit limit. The cache is configured with a 7-day TTL — 
-        entries expire after a week regardless of access.
+        An entry expires an hour after it is written. Changes evict entries straight away, so the hour only matters
+        if an eviction is missed: it bounds how long a stale entry can outlive the change.
       </p>
 
-      <h2>Validation on Every Cache Hit</h2>
+      <h2>Every hit is checked again</h2>
       <p>
-        A long TTL means entries can become stale. Every cache hit runs <code>isUrlRedirectValid()</code>, 
-        which checks three things from the cached data:
+        A cached entry is never trusted blindly. On every hit, the redirect checks that the link is active, not past
+        its expiration date and not over its visit limit. If any check fails, the entry is evicted and the link is
+        read from the database. The click is also checked against blocklists, and a link with a visit limit still
+        counts its click in PostgreSQL before the visitor is sent on. A hit on a link without a visit limit opens no
+        database transaction at all.
       </p>
+
+      <h2>Warmup and priming</h2>
+      <p>
+        When the API starts, it loads three sets of active links into the cache: the 20 most visited, the 20 newest
+        and the 20 opened most recently. A new link is cached as soon as it is made, so its first visitor already
+        gets a cache hit. A miss reads the link in a read-only transaction and caches it.
+      </p>
+
+      <h2>Eviction</h2>
       <ul>
-        <li>Is the URL still active? (wasn't deactivated by owner or scheduler)</li>
-        <li>Has the expiration date passed?</li>
-        <li>Has the visit limit been reached?</li>
+        <li>Turning a link off or on, or editing it, evicts its entry.</li>
+        <li>Deleting a link clears the whole cache, since deletes are rare.</li>
+        <li>When the click that uses up a visit limit goes through, the entry is evicted.</li>
+        <li>
+          When a link is blocked, its entry is evicted once the block is saved, and again shortly after, so a click
+          that read the link just before can't put the old answer back.
+        </li>
+        <li>
+          Expired links aren't evicted by the job that turns them off. Their entries fail the expiry check on the next
+          hit instead.
+        </li>
       </ul>
+
+      <h2>Graceful degradation</h2>
       <p>
-        If any check fails, the entry is evicted from cache and the request falls through to the database. 
-        This gives us the performance of a 7-day TTL with the correctness of real-time validation.
+        The cache is not a hard dependency. A custom <code>CacheErrorHandler</code> logs every failed cache read, write
+        and eviction and lets the request carry on, so with Redis down, redirects read links from the database.
+        While its connection is down, the Redis client refuses commands at once instead of waiting for a timeout.
+      </p>
+      <p>
+        The other way round also works: with PostgreSQL unreachable, cached links keep redirecting, except links with
+        a visit limit, which need the database to count the click.
       </p>
 
-      <h2>Cache Warmup</h2>
+      <h2>What isn't cached</h2>
       <p>
-        When the application starts, the <code>CacheWarmup</code> component loads the 20 most visited 
-        URLs, the 20 most recently created, and the 20 most recently accessed into Redis. This runs 
-        asynchronously after startup, so the most popular links are cache-hot from the beginning.
+        The redirects themselves. Cloudflare never caches them, so every click reaches the API and is counted.
       </p>
 
-      <h2>Cache Priming</h2>
+      <h2>Watching it</h2>
       <p>
-        New URLs are cached immediately at creation time. When a user shortens a URL, the response is 
-        written to Redis before the HTTP response is sent. The first visitor gets a cache hit.
-      </p>
-
-      <h2>Eviction Strategy</h2>
-      <p>
-        When a URL is deactivated, activated, updated, or deleted, the corresponding cache entry is 
-        evicted immediately. Deactivation and activation evict by key, delete evicts all entries 
-        (it's a rare operation). The scheduled URL deactivation task (runs every minute) does not 
-        evict cache — expired URLs fail validation on cache hit, so the database is only queried 
-        when necessary.
-      </p>
-
-      <h2>Graceful Degradation</h2>
-      <p>
-        Redis is not a hard dependency. A custom <code>CacheErrorHandler</code> catches every Redis 
-        failure — get, put, evict, clear — logs a warning, and returns null. The application falls 
-        through to the database without throwing an error. During a Redis outage, redirects are 
-        slightly slower (two database queries instead of one cache lookup), but the site stays up.
-      </p>
-      <p>
-        The admin dashboard tracks redirect timing separately for cache hits and cache misses via 
-        Micrometer timers, so we can monitor cache effectiveness in real-time.
+        Cache statistics are on, and the admin's System tab shows the cache's hits, misses and hit rate, and how long
+        redirects take from the cache and from the database.
+        <a href="/blog/how-we-built-it">How hrva.cc is built</a> puts this in context with the rest of the API.
       </p>
     `,
   },
   {
     slug: "safe-browsing-at-scale",
-    title: "Safe Browsing at Scale: Checking Every URL Twice",
+    title: "Google Safe Browsing in a URL Shortener: When Links Are Checked",
+    shortTitle: "Google Safe Browsing: When Links Are Checked",
     date: "2026-05-20",
-    excerpt: "How we integrate Google Safe Browsing v4 to check every URL at creation time and recheck all active URLs daily — with auto-deactivation and email notifications.",
+    updated: "2026-11-01",
+    excerpt:
+      "When hrva.cc asks Google Safe Browsing about a link, what it sends, and what happens to a link that Safe Browsing marks as harmful, when it's made and later.",
     author: "Karlo Hrvačić",
     tags: ["security", "safe browsing", "automation", "google"],
     content: `
       <p class="lead">
-        Every URL shortened through hrva.cc is checked against Google Safe Browsing before it's saved. 
-        And then every active URL is rechecked every night. Here's how the pipeline works.
+        Google Safe Browsing is a list Google keeps of sites known for phishing, malware and unwanted software.
+        hrva.cc asks it about links at several points in their life, not only when they are made. This post covers
+        when it asks, what it sends, and what happens when the answer is yes.
       </p>
 
-      <h2>Why Two Checks</h2>
+      <h2>Why once isn't enough</h2>
       <p>
-        A single check at creation time is not enough. A URL that is safe today can be compromised 
-        tomorrow — a legitimate site gets hacked, a benign page gets replaced with phishing content. 
-        The daily recheck catches these cases. Between the two, no link stays live longer than 24 hours 
-        after being flagged.
+        A destination that is clean today can be harmful tomorrow: a site gets hacked, or a page is replaced with a
+        scam after the link has been shared. A list also only holds a site after someone has reported it. So a
+        check when the link is made is only the first one.
       </p>
 
-      <h2>Creation-Time Check</h2>
-      <p>
-        When a user submits a URL to shorten, the <code>DefaultUrlValidator</code> calls 
-        <code>safeBrowsingService.checkUrlsForThreats()</code> before the URL is saved. If Google 
-        Safe Browsing returns any threats, the request is rejected with a validation error. The link 
-        is never created.
-      </p>
-      <p>
-        The SafeBrowsing API client is a singleton that creates batch search requests using Google's 
-        API v4. It gracefully degrades: if the API is unreachable, it returns an empty threat list — 
-        URLs are not blocked due to an API outage. Safety shouldn't become a denial-of-service vector.
-      </p>
-
-      <h2>Daily Recheck</h2>
-      <p>
-        Every night, a scheduled task runs <code>SafeBrowsingRecheckService.recheckActiveUrls()</code>. 
-        It queries all active URLs from the database, batches them into pages of 20, and checks each 
-        one against Safe Browsing. If a URL is flagged:
-      </p>
+      <h2>When hrva.cc asks</h2>
       <ul>
-        <li>The URL is immediately deactivated (<code>active = false</code>)</li>
-        <li>The cache entry is evicted so no one gets redirected to a dangerous page</li>
-        <li>The owner receives an email notification with the threat type detected</li>
+        <li>
+          <strong>When a link is made</strong>, or its destination is changed, before it is saved.
+        </li>
+        <li>
+          <strong>Where it redirects.</strong> After a link is made, hrva.cc follows the destination's redirects and
+          asks about every address along the way.
+        </li>
+        <li>
+          <strong>While the link is active.</strong> Active links are checked again, so a site that turns harmful
+          later is still caught.
+        </li>
+        <li>
+          <strong>For a custom domain.</strong> The address of a domain someone applies for is checked too.
+        </li>
+      </ul>
+      <p>
+        Safe Browsing is one check among several. The <a href="/security">security page</a> lists the others, such
+        as the blocklists every click is checked against.
+      </p>
+
+      <h2>What it sends</h2>
+      <p>
+        hrva.cc uses the Safe Browsing API's URL search (version 5) and sends only the addresses: the destination,
+        and the addresses it redirects to. Nothing about the person who made the link or the people who open it is
+        sent. Google's terms are in its
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
+      </p>
+
+      <h2>When a link is made</h2>
+      <p>
+        If Safe Browsing marks the destination as harmful, the link is never created. The form, the API and the MCP
+        connector get the same answer: "This URL was flagged as unsafe and cannot be shortened".
+      </p>
+
+      <h2>When a live link is found</h2>
+      <ul>
+        <li>The link is blocked and turned off, with Safe Browsing recorded as the reason.</li>
+        <li>Its cache entry is removed, so the next click doesn't open the old destination.</li>
+        <li>
+          Visitors see a hrva.cc page instead: "hrva.cc disabled this link because it led to a site reported for
+          phishing, malware or scams."
+        </li>
+        <li>
+          Its owner can't turn it back on. Only an admin can, and doing so clears the block.
+        </li>
       </ul>
 
-      <h2>The Email Template</h2>
+      <h2>What it can't catch</h2>
       <p>
-        The malware notification email tells the owner which short URL was affected, the destination 
-        URL, the threat type detected, and includes a link to the dashboard where they can review 
-        or delete the link. The email is styled with the same dark theme as the app, matching the 
-        hrva.cc brand.
-      </p>
-
-      <h2>Graceful Degradation</h2>
-      <p>
-        If the Safe Browsing API is down during the daily recheck, the task catches the exception, 
-        logs a warning, and tries again the next night. A single failed recheck doesn't cascade into 
-        data loss or incorrect deactivations.
+        A list can't hold a site nobody has reported yet, such as a scam on a domain registered the same day.
+        <a href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</a> covers the checks for
+        those, and <a href="/blog/safe-browsing-link-sharing">Why Safe Browsing matters for link sharing</a> covers
+        what you can do as a visitor.
       </p>
     `,
   },
   {
     slug: "building-audit-log",
-    title: "Building an Audit Log That Doesn't Suck: AOP, Pointcuts, and Meaningful Events",
-    shortTitle: "Building an Audit Log with AOP Pointcuts",
+    title: "Building an Audit Log with Spring AOP: From a Pointcut List to Annotations",
+    shortTitle: "Building an Audit Log with Spring AOP",
     date: "2026-05-20",
-    excerpt: "How we used Spring AOP to auto-log every admin action — and why we had to exclude read-only endpoints to avoid noise.",
+    updated: "2026-11-01",
+    excerpt:
+      "How hrva.cc records admin actions and sign-in method changes: a Spring AOP aspect around annotated controller methods, typed actions with a failed flag, what goes into an entry, and what stays out.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "audit", "spring", "aop"],
     content: `
       <p class="lead">
-        Every admin action at hrva.cc is automatically logged to the audit trail. Here's how we built it 
-        with Spring AOP, what went wrong on the first attempt, and the final design that captures 
-        meaningful events without noise.
+        hrva.cc keeps an audit log of admin actions and of changes to sign-in methods. Most entries are written by a
+        Spring AOP aspect, so a controller method can't forget to log itself. This post covers how the aspect
+        started, what it became, and what goes into an entry.
       </p>
 
-      <h2>Why an Audit Log?</h2>
+      <h2>What the log is for</h2>
       <p>
-        When a system is changed both by an admin and by scheduled jobs, you need to know which one did what. Did an admin delete a URL 
-        or did the scheduler deactivate it? Was a user account modified by someone or by the inactivity 
-        cleanup? An audit log answers these questions. It's also essential for compliance, debugging, 
-        and security investigations.
+        Links and accounts change for several reasons: their owner, an admin, or a scheduled job. The audit log
+        answers which admin did what, and when. It also records when someone turns Google or GitHub sign-in off or
+        back on for their own account, or removes their password. Sign-ins are not in it.
       </p>
 
-      <h2>First Attempt: Wildcard Pointcut</h2>
+      <h2>The first version: a list of methods</h2>
       <p>
-        Our first version used a broad pointcut: <code>execution(* AdminController.*(..))</code>. 
-        This intercepted every method on the admin controller — including read-only GET endpoints 
-        like <code>getDashboardStats()</code> and <code>getLoginAttempts()</code>. Within an hour, 
-        the audit log was flooded with "getDashboardStats" entries from the dashboard's auto-refresh 
-        (it polls every 30 seconds). The meaningful events were buried in noise.
+        The log arrived in May 2026 as one <code>@Around</code> advice whose pointcut listed seven controller methods
+        by name, such as <code>UrlController.revokeUrl</code> and <code>UserController.deleteUser</code>. The action
+        was the method's name as text, with <code>_FAILED</code> added when the method threw. Every new admin endpoint
+        meant another line in that expression, and a missed line meant an action that was never recorded.
       </p>
 
-      <h2>Second Attempt: Explicit Mutations Only</h2>
+      <h2>Now: an annotation and a typed action</h2>
       <p>
-        We narrowed the pointcut to only match methods that actually change state. The final version 
-        explicitly lists every mutating method across all admin-relevant controllers: 
-        <code>clearLoginAttempts</code>, <code>deleteUser</code>, <code>updateUser</code>, 
-        <code>revokeUrl</code>, <code>activateUrl</code>, <code>deleteUrl</code>, <code>updateUrl</code>. 
-        Read-only endpoints are excluded entirely.
+        Since October 2026 the pointcut is <code>@annotation(audited)</code>. A method is audited when it carries
+        <code>@Audited</code>, and the annotation must name an <code>AuditAction</code>, an enum stored by name, so a
+        method can't be audited without one. A test lists every audited method with its action, so adding or removing
+        one fails the build until the test is updated.
+      </p>
+      <p>
+        Whether an action failed became its own column. A migration rewrote the old rows: each method name became its
+        constant, a <code>_FAILED</code> suffix became the failed flag, and anything it couldn't match became
+        <code>UNKNOWN</code>, with the old text kept in the details.
       </p>
 
-      <h2>The AOP Aspect</h2>
+      <h2>What an entry holds</h2>
+      <ul>
+        <li>the email address of whoever did it, the action, and whether it failed</li>
+        <li>
+          the target: its type, taken from the controller's name, and its id, from the method's first argument or
+          from the response for something just created
+        </li>
+        <li>
+          the details: only the fields the request actually sent, in alphabetical order. A password is written as
+          "changed" or "removed", never its value, and a blocklist's address is left out
+        </li>
+        <li>when it happened</li>
+      </ul>
       <p>
-        The <code>AdminAuditAspect</code> uses <code>@Around</code> advice. Before the method executes, 
-        it captures the user's email, method name, target type (extracted from the controller class name), 
-        and method arguments. The method proceeds normally, and on success the audit entry is saved. 
-        If the method throws, a separate entry is logged with "FAILED" appended to the action name 
-        and the exception message as details.
+        A failed action keeps the error's message as its details. A request refused by validation never reaches the
+        method, so it isn't logged.
       </p>
 
-      <h2>The Audit Log Table</h2>
+      <h2>When the aspect can't see enough</h2>
       <p>
-        The Liquibase migration creates an <code>audit_log</code> table with: <code>performedBy</code> 
-        (admin email), <code>action</code> (method name), <code>targetType</code> (controller name), 
-        <code>targetIdentifier</code> (first argument, usually the ID), <code>details</code> 
-        (serialized arguments), and <code>performedAt</code> (auto-set via <code>@PrePersist</code>). 
-        The admin UI at <code>/admin/audit-log</code> shows all entries in a paginated table with 
-        color-coded action badges — red for deletions, amber for updates, green for activations.
+        Some actions work on something the controller's arguments don't describe, such as blocking a domain or
+        removing a reserved alias, which is gone once removed. The services behind them write their own entries,
+        after their transaction ends, so the entry for a failure survives the rollback.
+      </p>
+
+      <h2>Who sees it, and for how long</h2>
+      <p>
+        The admin pages show the log with search and a filter by action; admin pages need two-step sign-in. Entries
+        are deleted automatically after 12 months. The <a href="/privacy">privacy policy</a> lists the audit log with
+        everything else hrva.cc keeps, and the <a href="/security">security page</a> lists it with the other account
+        protections.
       </p>
     `,
   },

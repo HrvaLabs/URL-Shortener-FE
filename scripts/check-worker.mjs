@@ -3,6 +3,7 @@ import "./resolve-ts-imports.mjs"
 
 const { SCANNER_CACHE_CONTROL, STATIC_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
 const { CONTENT_SECURITY_POLICY, withCallbackHeaders, withContentSecurityPolicy } = await import("../lib/security-headers.ts")
+const { GONE_REASONS, GONE_STATUS, MISSING_STATUS, unavailableStatus, withUnavailableStatus } = await import("../lib/unavailable-status.ts")
 const { readFile } = await import("node:fs/promises")
 
 let failures = 0
@@ -186,9 +187,47 @@ await check("the static copy of the callback page has the same headers in public
   assert.match(headers, /^\/auth\/callback\n  Referrer-Policy: no-referrer\n  Cache-Control: no-store$/m)
 })
 
-await check("the worker wraps Next's answers with the policy and the callback headers", async () => {
+const unavailablePage = () => new Response("<!doctype html>", { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "s-maxage=31536000" } })
+
+await check("/unavailable answers 404 for a missing link and 410 for every other reason, like the backend", async () => {
+  assert.equal(MISSING_STATUS, 404)
+  assert.equal(GONE_STATUS, 410)
+  for (const [query, status] of [["?s=abc&reason=missing", 404], ["", 404], ["?reason=nonsense", 404], ["?reason=", 404], ["?s=abc&reason=blocked", 410], ["?reason=checking&d=go.example.com", 410], ["?reason=expired", 410], ["?reason=limit", 410], ["?reason=inactive", 410], ["?reason=domain", 410]]) {
+    for (const path of ["/unavailable", "/unavailable/"]) {
+      const answer = withUnavailableStatus(new Request(`https://app.hrva.cc${path}${query}`), unavailablePage())
+      assert.equal(answer.status, status, `${path}${query}`)
+      assert.equal(answer.headers.get("content-type"), "text/html; charset=utf-8")
+      assert.equal(answer.headers.get("cache-control"), "s-maxage=31536000")
+      assert.equal(await answer.text(), "<!doctype html>")
+    }
+  }
+})
+
+await check("the status leaves other pages, other statuses and the policy alone", () => {
+  const other = unavailablePage()
+  assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable-link?reason=blocked"), other), other)
+  assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/help?reason=blocked"), other), other)
+  const redirect = new Response(null, { status: 308, headers: { Location: "/unavailable" } })
+  assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable/"), redirect), redirect)
+  const data = new Response("1:", { headers: { "Content-Type": "text/x-component" } })
+  assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable?reason=blocked&_rsc=1"), data), data)
+  const answered = withContentSecurityPolicy(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable?reason=blocked"), unavailablePage()))
+  assert.equal(answered.status, 410)
+  assert.equal(answered.headers.get("content-security-policy"), CONTENT_SECURITY_POLICY)
+  assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable?reason=blocked", { method: "HEAD" }), new Response(null, { status: 200, headers: { "Content-Type": "text/html" } })).status, 410)
+})
+
+await check("every reason the /unavailable page words is 410 here except missing", async () => {
+  const page = await readFile(new URL("../app/unavailable/page.tsx", import.meta.url), "utf8")
+  const reasons = [...page.matchAll(/^\s+\["([a-z]+)", /gm)].map((match) => match[1])
+  assert.deepEqual(new Set(reasons.filter((reason) => reason !== "missing")), GONE_REASONS)
+  assert.ok(reasons.includes("missing"))
+  for (const reason of reasons) assert.equal(unavailableStatus(reason), reason === "missing" ? 404 : 410, reason)
+})
+
+await check("the worker wraps Next's answers with the policy, the unavailable status and the callback headers", async () => {
   const worker = await readFile(new URL("../custom-worker.mjs", import.meta.url), "utf8")
-  assert.match(worker, /withContentSecurityPolicy\(withCallbackHeaders\(request, await nextFetch\(request, env, context\)\)\)/)
+  assert.match(worker, /withContentSecurityPolicy\(withUnavailableStatus\(request, withCallbackHeaders\(request, await nextFetch\(request, env, context\)\)\)\)/)
 })
 
 if (failures > 0) {

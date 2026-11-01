@@ -72,11 +72,11 @@ function UsersBody({ data, days }: UsersBodyProps) {
           { label: "Active", value: apiKeys.active.toLocaleString() },
           { label: "Expired", value: apiKeys.expired.toLocaleString() },
           {
-            label: "Revoked or out of calls",
+            label: "Revoked",
             value: apiKeys.revoked.toLocaleString(),
-            hint: "Turned off by the owner or an admin, or used up their calls.",
+            hint: "Turned off by the owner or an admin.",
           },
-          { label: "API calls used", value: apiKeys.callsUsed.toLocaleString(), hint: "All keys, all time." },
+          { label: "API requests made", value: apiKeys.callsUsed.toLocaleString(), hint: "All keys, all time." },
         ]}
       />
       <StatGrid

@@ -82,11 +82,12 @@ const fields = [
 ]
 
 const errors = [
-  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; or the API key is expired, revoked or out of calls, or belongs to an inactive account. The body is {\"error\": \"...\"}, or one message per field." },
+  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; or the API key is expired or revoked, or belongs to an inactive account. The body is {\"error\": \"...\"}, or one message per field." },
   { status: "400", text: "Custom aliases are turned off right now." },
   { status: "404", text: "The API key doesn't exist." },
   { status: "409", text: "The custom alias is already taken." },
   { status: "429", text: "Too many links in a short time. The body says: You've created a lot of links in a short time. Try again in an hour." },
+  { status: "429", text: "The API key made too many requests in the hour. The body is {\"error\": \"This API key made too many requests. Try again in <N> minutes.\"}, with \"1 minute\" when one is left, and the Retry-After header says how many seconds to wait." },
 ]
 
 export default function DevelopersPage() {
@@ -150,12 +151,52 @@ export default function DevelopersPage() {
           ))}
         </ul>
 
-        <h2 id="limits">Limits</h2>
+        <h2 id="limits">Rate limits</h2>
         <p>
-          Creating links is rate-limited per account, and a <code>429</code> tells you to wait. Each API key also has its
-          own allowance of calls and an expiry date; your <Link href="/dashboard/api-keys">API keys</Link> page shows how
-          many calls a key has used and when it expires. A key that is expired, revoked or out of calls is refused with an{" "}
+          Each API key can make 600 requests an hour by default. Every request sent with the key counts, whatever it asks
+          for, and the count starts again after a fixed hour. A key that goes over the limit gets a <code>429</code>.
+        </p>
+        <p>Every response to a request with an API key, allowed or refused, carries three headers:</p>
+        <ul>
+          <li>
+            <code>RateLimit-Limit</code>: how many requests the key can make in the hour.
+          </li>
+          <li>
+            <code>RateLimit-Remaining</code>: how many it has left.
+          </li>
+          <li>
+            <code>RateLimit-Reset</code>: seconds until the count starts again.
+          </li>
+        </ul>
+        <p>
+          A refused request also has a <code>Retry-After</code> header with the seconds to wait, and the body{" "}
+          <code className="[overflow-wrap:anywhere]">&#123;&quot;error&quot;: &quot;This API key made too many requests. Try again in 12 minutes.&quot;&#125;</code>.
+          A script in a browser can read all four headers.
+        </p>
+        <p>
+          Creating links is also limited per account each hour. Going over that limit is a <code>429</code> as well, with
+          the message under Errors. Your <Link href="/dashboard/api-keys">API keys</Link> page shows how many requests each
+          key has made, when it was last used and when it expires. A key that is expired or revoked is refused with an{" "}
           <code>error</code> message.
+        </p>
+
+        <h2 id="expiry">When a key expires</h2>
+        <p>
+          You choose this when you generate a key: 30 days, 90 days, 1 year, a date you pick, or no expiry. The{" "}
+          <Link href="/dashboard/api-keys">API keys</Link> page can change it later. To make a key with a request
+          instead, send one of these in the body of <code>POST https://hrva.cc/api/v1/api-keys</code>:
+        </p>
+        <ul>
+          <li>
+            <code>expiresInDays</code>: a whole number of days from 1 to 3650.
+          </li>
+          <li>
+            <code>neverExpires</code>: <code>true</code> for a key that works until you revoke it.
+          </li>
+        </ul>
+        <p>
+          Send neither and the key gets the default expiry, as before. Send both and you get a <code>400</code>:{" "}
+          Choose either an expiry in days or no expiry.
         </p>
 
         <h2 id="more">Two more endpoints that need no key</h2>

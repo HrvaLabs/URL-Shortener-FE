@@ -90,8 +90,8 @@ export interface ApiKey {
   id: number
   key: string
   owner: User
-  apiCallsLimit: number
   apiCallsUsed: number
+  lastUsedAt: string | null
   createDate: string
   expirationDate?: string
   active: boolean
@@ -101,8 +101,8 @@ export interface ApiKey {
 export interface ApiKeyResponse {
   id: number
   key: string
-  apiCallsLimit: number
   apiCallsUsed: number
+  lastUsedAt: string | null
   createDate: string
   expirationDate?: string
   active: boolean
@@ -521,10 +521,14 @@ export interface UrlUpdateDto {
   password?: string
 }
 
-export interface ApiKeyUpdateDto {
+/** How long a key lasts: a number of days from now (1 to 3,650) or no end date. Send one of the two, never both. */
+export interface ApiKeyExpiry {
+  expiresInDays?: number
+  neverExpires?: true
+}
+
+export interface ApiKeyUpdateDto extends ApiKeyExpiry {
   id: number
-  apiCallsLimit?: number
-  apiCallsUsed?: number
   expirationDate?: string
   active?: boolean
 }
@@ -1056,6 +1060,7 @@ export type SettingKey =
   | "ANONYMOUS_VISIT_LIMIT"
   | "GOOGLE_SIGN_IN"
   | "GITHUB_SIGN_IN"
+  | "API_KEY_REQUESTS_PER_HOUR"
 
 export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
 

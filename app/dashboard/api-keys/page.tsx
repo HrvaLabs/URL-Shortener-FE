@@ -8,8 +8,6 @@ import type { ApiKeyResponse } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/pagination"
 import { StatusBadge } from "@/components/status-badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -19,7 +17,9 @@ import { Copy, Check, Plus, ShieldAlert, Pencil, Trash2, Eye, EyeOff, ChevronRig
 import { toast } from "sonner"
 import { cn, focusTargetAfterRemoving, formatDate, maskApiKey } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
-import { useAuth } from "@/lib/auth-context"
+import { ApiKeyExpiryField } from "@/components/api-key-expiry"
+import { DEFAULT_EXPIRY_CHOICE, dateInputValue, expiryChange, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
+import { parseServerDateTime } from "@/lib/analytics"
 
 const keysLabel = (count: number) => (count === 1 ? "1 key" : `${count} keys`)
 
@@ -30,7 +30,6 @@ const INACTIVE_PAGE_SIZE = 10
 const DELETE_BUTTON_CLASSES = "h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
 
 export default function ApiKeysPage() {
-  const { isAdmin } = useAuth()
   const activeQuery = useMyApiKeys(true)
   const [inactivePage, setInactivePage] = useState(0)
   const [inactiveSize, setInactiveSize] = useState(INACTIVE_PAGE_SIZE)
@@ -67,9 +66,11 @@ export default function ApiKeysPage() {
   const bulkRef = useRef<HTMLButtonElement>(null)
   const [showGenerate, setShowGenerate] = useState(false)
   const [newKey, setNewKey] = useState<string | null>(null)
-  const [newKeyCopied, setNewKeyCopied] = useState(false)
+  const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>(DEFAULT_EXPIRY_CHOICE)
+  const [expiryDate, setExpiryDate] = useState("")
+  const [expiryError, setExpiryError] = useState<string | null>(null)
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
-  const [editLimit, setEditLimit] = useState("")
+  const [newKeyCopied, setNewKeyCopied] = useState(false)
   const [visibleKeys, setVisibleKeys] = useState<Set<number>>(new Set())
   const [copiedKeyId, setCopiedKeyId] = useState<number | null>(null)
 
@@ -93,9 +94,46 @@ export default function ApiKeysPage() {
     }
   }
 
-  const handleGenerate = async () => {
+  const resetExpiry = (choice: ExpiryChoice, date: string) => {
+    setExpiryChoice(choice)
+    setExpiryDate(date)
+    setExpiryError(null)
+  }
+
+  const openGenerate = () => {
+    resetExpiry(DEFAULT_EXPIRY_CHOICE, "")
+    setShowGenerate(true)
+  }
+
+  const openEdit = (key: ApiKeyResponse) => {
+    resetExpiry(key.expirationDate ? "custom" : "never", key.expirationDate ? dateInputValue(parseServerDateTime(key.expirationDate)) : "")
+    setEditKey(key)
+  }
+
+  const handleEditSave = async () => {
+    if (!editKey) return
+    const result = expiryChange(expiryChoice, expiryDate, new Date())
+    if ("error" in result) {
+      setExpiryError(result.error)
+      return
+    }
     try {
-      const key = await generateKey.mutateAsync()
+      await updateKey.mutateAsync({ id: editKey.id, data: { id: editKey.id, ...result.change } })
+      toast.success("API key updated")
+      setEditKey(null)
+    } catch (err) {
+      toast.error(errorText(err, "Failed to update"))
+    }
+  }
+
+  const handleGenerate = async () => {
+    const result = expiryChange(expiryChoice, expiryDate, new Date())
+    if ("error" in result) {
+      setExpiryError(result.error)
+      return
+    }
+    try {
+      const key = await generateKey.mutateAsync(result.change)
       setNewKey(key.key)
       toast.success("API key generated!")
     } catch (err) {
@@ -199,23 +237,6 @@ export default function ApiKeysPage() {
     }
   }
 
-  const handleEditSave = async () => {
-    if (!editKey) return
-    try {
-      await updateKey.mutateAsync({
-        id: editKey.id,
-        data: {
-          id: editKey.id,
-          apiCallsLimit: Math.max(0, parseInt(editLimit, 10) || 0),
-        },
-      })
-      toast.success("API key updated")
-      setEditKey(null)
-    } catch (err) {
-      toast.error(errorText(err, "Failed to update"))
-    }
-  }
-
   const renderRow = (key: ApiKeyResponse) => {
     const isVisible = visibleKeys.has(key.id)
     const displayKey = isVisible ? key.key : maskApiKey(key.key)
@@ -264,29 +285,29 @@ export default function ApiKeysPage() {
         </TableCell>
         <TableCell className="hidden text-sm tabular-nums text-muted-foreground md:table-cell">{formatDate(key.createDate)}</TableCell>
         <TableCell className="hidden text-sm tabular-nums lg:table-cell">{key.expirationDate ? formatDate(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
-        <TableCell className="whitespace-nowrap text-sm tabular-nums">
-          <span className="font-medium">{key.apiCallsUsed}</span>
-          <span className="text-muted-foreground"> / {key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</span>
+        <TableCell className="text-sm tabular-nums">
+          <span className="block font-medium">{requestsText(key.apiCallsUsed)}</span>
+          <span className="block text-xs text-muted-foreground">{lastUsedText(key.lastUsedAt)}</span>
         </TableCell>
         <TableCell>
           <StatusBadge status={key.status} active={key.active} />
         </TableCell>
         <TableCell className="text-right">
           <div className="flex items-center justify-end gap-0.5">
-            {isAdmin && (
+            {key.active && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    aria-label="Edit limit"
-                    onClick={() => { setEditKey(key); setEditLimit(String(key.apiCallsLimit ?? 0)) }}
+                    aria-label="Edit expiry"
+                    onClick={() => openEdit(key)}
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">Edit limit</TooltipContent>
+                <TooltipContent side="top">Edit expiry</TooltipContent>
               </Tooltip>
             )}
             {key.active && (
@@ -337,7 +358,7 @@ export default function ApiKeysPage() {
           <h1 className="font-display text-2xl">API Keys</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage your API keys for programmatic access</p>
         </div>
-        <Button ref={generateRef} onClick={() => setShowGenerate(true)} size="sm" className="gap-1.5 self-start sm:self-auto">
+        <Button ref={generateRef} onClick={openGenerate} size="sm" className="gap-1.5 self-start sm:self-auto">
           <Plus className="h-4 w-4" />
           Generate Key
         </Button>
@@ -352,6 +373,7 @@ export default function ApiKeysPage() {
           {!newKey ? (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">This will create a new API key associated with your account.</p>
+              <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => resetExpiry(choice, expiryDate)} onCustomDateChange={(date) => resetExpiry(expiryChoice, date)} />
               <Button onClick={handleGenerate} className="w-full" disabled={generateKey.isPending}>
                 {generateKey.isPending ? "Generating…" : "Generate"}
               </Button>
@@ -386,14 +408,13 @@ export default function ApiKeysPage() {
       <Dialog open={!!editKey} onOpenChange={(open) => { if (!open) setEditKey(null) }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit API Key</DialogTitle>
+            <DialogTitle>Edit API key</DialogTitle>
+            <DialogDescription>Choose when this key stops working. It counts from today.</DialogDescription>
           </DialogHeader>
+          {editKey && <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{maskApiKey(editKey.key)}</p>}
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="apiCallsLimit">API Call Limit</Label>
-              <Input id="apiCallsLimit" type="number" value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-1.5 h-10" />
-            </div>
-            <Button onClick={handleEditSave} disabled={updateKey.isPending}>
+            <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => resetExpiry(choice, expiryDate)} onCustomDateChange={(date) => resetExpiry(expiryChoice, date)} />
+            <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
               {updateKey.isPending ? "Saving…" : "Save"}
             </Button>
           </div>
@@ -522,7 +543,7 @@ export default function ApiKeysPage() {
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
           <h2 className="font-semibold">No API keys</h2>
           <p className="mt-1 text-sm text-muted-foreground">Generate an API key to use the URL shortener programmatically.</p>
-          <Button onClick={() => setShowGenerate(true)} size="sm" className="mt-6 gap-1.5">
+          <Button onClick={openGenerate} size="sm" className="mt-6 gap-1.5">
             <Plus className="h-4 w-4" />
             Generate Key
           </Button>

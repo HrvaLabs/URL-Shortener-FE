@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiKeyApi } from "@/lib/api-client"
-import type { ApiKeyFilters, ApiKeyUpdateDto } from "@/lib/types"
+import type { ApiKeyExpiry, ApiKeyFilters, ApiKeyUpdateDto } from "@/lib/types"
 
 export function useMyApiKeys(active?: boolean) {
   return useQuery({
@@ -31,7 +31,7 @@ export function useAllApiKeys(filters: ApiKeyFilters = {}, page = 0, size = 20, 
 export function useGenerateApiKey() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => apiKeyApi.generate(),
+    mutationFn: (expiry?: ApiKeyExpiry) => apiKeyApi.generate(expiry),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apiKeys"] })
     },

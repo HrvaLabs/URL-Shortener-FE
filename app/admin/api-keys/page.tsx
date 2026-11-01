@@ -11,8 +11,7 @@ import { SortHead, SortSelect, adminSelectClass, type SortOption } from "@/compo
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/status-badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -21,19 +20,23 @@ import { ToggleRight, ToggleLeft, Edit, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime, maskApiKey } from "@/lib/utils"
+import { ApiKeyExpiryField } from "@/components/api-key-expiry"
+import { dateInputValue, expiresText, expiryChange, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { Suspense, useRef, useState, type FormEvent } from "react"
 
 const errorText = (error: unknown, fallback: string) => (error instanceof Error && error.message ? error.message : fallback)
 
-const sortFields = ["createDate", "apiCallsUsed", "expirationDate"]
+const sortFields = ["createDate", "apiCallsUsed", "lastUsedAt", "expirationDate"]
 
 const sortOptions: SortOption[] = [
   { field: "createDate", direction: "desc", label: "Newest first" },
   { field: "createDate", direction: "asc", label: "Oldest first" },
-  { field: "apiCallsUsed", direction: "desc", label: "Most calls used" },
-  { field: "apiCallsUsed", direction: "asc", label: "Fewest calls used" },
+  { field: "apiCallsUsed", direction: "desc", label: "Most requests" },
+  { field: "apiCallsUsed", direction: "asc", label: "Fewest requests" },
+  { field: "lastUsedAt", direction: "desc", label: "Last used, newest first" },
+  { field: "lastUsedAt", direction: "asc", label: "Last used, oldest first" },
   { field: "expirationDate", direction: "asc", label: "Expires soonest" },
   { field: "expirationDate", direction: "desc", label: "Expires last" },
 ]
@@ -66,7 +69,9 @@ function AdminApiKeys() {
   const updateKey = useUpdateApiKey()
   const deleteKey = useDeleteApiKey()
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
-  const [editLimit, setEditLimit] = useState("")
+  const [expiryChoice, setExpiryChoice] = useState<ExpiryChoice>("never")
+  const [expiryDate, setExpiryDate] = useState("")
+  const [expiryError, setExpiryError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ApiKeyResponse | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -95,16 +100,26 @@ function AdminApiKeys() {
     }
   }
 
+  const changeExpiry = (choice: ExpiryChoice, date: string) => {
+    setExpiryChoice(choice)
+    setExpiryDate(date)
+    setExpiryError(null)
+  }
+
+  const openEdit = (key: ApiKeyResponse) => {
+    changeExpiry(key.expirationDate ? "custom" : "never", key.expirationDate ? dateInputValue(parseServerDateTime(key.expirationDate)) : "")
+    setEditKey(key)
+  }
+
   const handleEditSave = async () => {
     if (!editKey) return
+    const result = expiryChange(expiryChoice, expiryDate, new Date())
+    if ("error" in result) {
+      setExpiryError(result.error)
+      return
+    }
     try {
-      await updateKey.mutateAsync({
-        id: editKey.id,
-        data: {
-          id: editKey.id,
-          apiCallsLimit: Math.max(0, parseInt(editLimit, 10) || 0),
-        },
-      })
+      await updateKey.mutateAsync({ id: editKey.id, data: { id: editKey.id, ...result.change } })
       toast.success("API key updated")
       setEditKey(null)
     } catch (err) {
@@ -164,15 +179,17 @@ function AdminApiKeys() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit API key</DialogTitle>
+            <DialogDescription>Choose when this key stops working. It counts from today.</DialogDescription>
           </DialogHeader>
           {editKey && (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="apiCallsLimit">API call limit</Label>
-                <Input id="apiCallsLimit" type="number" min={0} value={editLimit} onChange={(e) => setEditLimit(e.target.value)} placeholder="0 = unlimited" className="mt-2" />
+              <div className="space-y-0.5 text-[13px]">
+                <p className="font-mono text-foreground [overflow-wrap:anywhere]">{maskApiKey(editKey.key)}</p>
+                <p className="text-muted-foreground [overflow-wrap:anywhere]">{editKey.ownerEmail || "No owner"}</p>
               </div>
+              <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => changeExpiry(choice, expiryDate)} onCustomDateChange={(date) => changeExpiry(expiryChoice, date)} />
               <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
-                {updateKey.isPending ? "Saving..." : "Save"}
+                {updateKey.isPending ? "Saving…" : "Save"}
               </Button>
             </div>
           )}
@@ -302,7 +319,7 @@ function AdminApiKeys() {
                       <div className="pb-0.5 @md:hidden">
                         <StatusBadge status={key.status} active={key.active} />
                       </div>
-                      <p className="tabular-nums @md:hidden">{key.apiCallsUsed} of {key.apiCallsLimit > 0 ? key.apiCallsLimit : "unlimited"} calls used</p>
+                      <p className="tabular-nums @md:hidden">{requestsText(key.apiCallsUsed)}. {lastUsedText(key.lastUsedAt)}. {expiresText(key.expirationDate)}</p>
                       <p className="[overflow-wrap:anywhere]">{key.ownerEmail || "No owner"}</p>
                       <p className="tabular-nums">Created {key.createDate ? formatDateTime(parseServerDateTime(key.createDate)) : "—"}</p>
                     </div>
@@ -311,7 +328,11 @@ function AdminApiKeys() {
                     <span className="block min-w-44 [overflow-wrap:anywhere]">{key.ownerEmail || "\u2014"}</span>
                   </TableCell>
                   <TableCell className="hidden tabular-nums text-muted-foreground @min-[46rem]:table-cell">{key.createDate ? <DateTimeLines value={key.createDate} /> : "—"}</TableCell>
-                  <TableCell className="hidden whitespace-nowrap tabular-nums @md:table-cell">{key.apiCallsUsed}/{key.apiCallsLimit > 0 ? key.apiCallsLimit : "\u221E"}</TableCell>
+                  <TableCell className="hidden tabular-nums @md:table-cell">
+                    <span className="block">{requestsText(key.apiCallsUsed)}</span>
+                    <span className="block text-xs text-muted-foreground">{lastUsedText(key.lastUsedAt)}</span>
+                    <span className="block text-xs text-muted-foreground">{expiresText(key.expirationDate)}</span>
+                  </TableCell>
                   <TableCell className="hidden @md:table-cell">
                     <StatusBadge status={key.status} active={key.active} />
                   </TableCell>
@@ -319,7 +340,7 @@ function AdminApiKeys() {
                     <div className="flex items-center justify-end gap-0.5">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button onClick={() => { setEditKey(key); setEditLimit(String(key.apiCallsLimit ?? 0)) }}
+                          <button onClick={() => openEdit(key)}
                             aria-label="Edit API key"
                             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                             <Edit className="h-3.5 w-3.5" />

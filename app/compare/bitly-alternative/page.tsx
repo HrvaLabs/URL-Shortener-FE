@@ -78,7 +78,7 @@ const rows: Row[] = [
   },
   {
     feature: "API",
-    hrva: "Free. Each key has its own call allowance, shown on your API keys page.",
+    hrva: "Free. Each key can make 600 requests an hour by default, and your API keys page shows how many it has made.",
     bitly: "1,000 API requests a month on the Free plan.",
     source: "pricing",
   },

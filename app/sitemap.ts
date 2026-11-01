@@ -28,6 +28,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/mcp"),
     dated("/validate"),
     dated("/help"),
+    dated("/help/links"),
     dated("/help/utm"),
     dated("/help/passkeys"),
     dated("/help/stats"),

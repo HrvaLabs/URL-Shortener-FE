@@ -13,6 +13,11 @@ export const metadata: Metadata = pageMetadata({ title: "Help", description, pat
 
 const guides = [
   {
+    href: "/help/links",
+    title: "Short links and API keys",
+    description: "How random aliases and API keys work.",
+  },
+  {
     href: "/help/utm",
     title: "Campaign tracking (UTM)",
     description: "Add UTM tags to a link so your analytics tool can see where visitors came from.",

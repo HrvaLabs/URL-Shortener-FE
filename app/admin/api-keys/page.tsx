@@ -1,6 +1,6 @@
 "use client"
 
-import { useAllApiKeys, useRevokeApiKey, useActivateApiKey, useUpdateApiKey, useDeleteApiKey } from "@/lib/hooks/useApiKeys"
+import { useAllApiKeys, useRevokeApiKey, useUpdateApiKey, useDeleteApiKey } from "@/lib/hooks/useApiKeys"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { useListSearch } from "@/lib/hooks/useListSearch"
 import { useAddressParam } from "@/lib/hooks/useAddressParam"
@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ToggleRight, ToggleLeft, Edit, Search, Trash2 } from "lucide-react"
+import { ToggleRight, Edit, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime } from "@/lib/utils"
@@ -65,7 +65,6 @@ function AdminApiKeys() {
   const { data: apiKeys, isLoading, error, refetch } = useAllApiKeys(filters, page, size, sort, order)
   useClampedPage(page, apiKeys?.totalPages, setPage)
   const revokeKey = useRevokeApiKey()
-  const activateKey = useActivateApiKey()
   const updateKey = useUpdateApiKey()
   const deleteKey = useDeleteApiKey()
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
@@ -89,15 +88,6 @@ function AdminApiKeys() {
       toast.success("API key revoked")
     } catch (err) {
       toast.error(errorText(err, "Failed to revoke"))
-    }
-  }
-
-  const handleActivate = async (id: number) => {
-    try {
-      await activateKey.mutateAsync(id)
-      toast.success("API key activated")
-    } catch (err) {
-      toast.error(errorText(err, "Failed to activate"))
     }
   }
 
@@ -342,17 +332,19 @@ function AdminApiKeys() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-0.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button onClick={() => openEdit(key)}
-                            aria-label="Edit API key"
-                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">Edit API key</TooltipContent>
-                      </Tooltip>
-                      {key.active ? (
+                      {key.active && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button onClick={() => openEdit(key)}
+                              aria-label="Edit API key"
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                              <Edit className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Edit API key</TooltipContent>
+                        </Tooltip>
+                      )}
+                      {key.active && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <button onClick={() => handleRevoke(key.id)} disabled={revokeKey.isPending}
@@ -362,17 +354,6 @@ function AdminApiKeys() {
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top">Revoke API key</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button onClick={() => handleActivate(key.id)} disabled={activateKey.isPending}
-                              aria-label="Activate API key"
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-                              <ToggleLeft className="h-3.5 w-3.5 text-destructive" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">Activate API key</TooltipContent>
                         </Tooltip>
                       )}
                       {!key.active && (

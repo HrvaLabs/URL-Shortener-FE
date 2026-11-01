@@ -337,8 +337,6 @@ export const apiKeyApi = {
     request<ApiKeyResponse>("PUT", `/api-keys/${id}`, data),
   revoke: (id: number) =>
     request<ApiKeyResponse>("PATCH", `/api-keys/${id}/revoke`),
-  activate: (id: number) =>
-    request<ApiKeyResponse>("PATCH", `/api-keys/${id}/activate`),
   delete: (id: number) =>
     request<void>("DELETE", `/api-keys/${id}`),
   deleteInactive: () =>

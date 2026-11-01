@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import "./resolve-ts-imports.mjs"
 
 const { daysFromToday, expiryChange, expiryDateTimeText, expiryPrefill, keyPrefixText, lastUsedText, requestsText } = await import("../lib/api-keys.ts")
@@ -134,6 +135,16 @@ check("usage lines", () => {
   assert.equal(lastUsedText(null), "Never used")
   assert.equal(lastUsedText(undefined), "Never used")
   assert.match(lastUsedText(new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 19)), /^Last used 3 hours ago$/)
+})
+
+check("a revoked or expired key can't be turned back on, only deleted", () => {
+  const source = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8")
+  assert.doesNotMatch(source("lib/api-client.ts"), /api-keys\/\$\{id\}\/activate/)
+  assert.doesNotMatch(source("lib/hooks/useApiKeys.ts"), /useActivateApiKey/)
+  const admin = source("app/admin/api-keys/page.tsx")
+  assert.doesNotMatch(admin, /Activate API key|handleActivate/)
+  assert.match(admin, /\{key\.active && \(\s*<Tooltip>\s*<TooltipTrigger asChild>\s*<button onClick=\{\(\) => openEdit\(key\)\}/)
+  assert.doesNotMatch(source("app/dashboard/api-keys/page.tsx"), /Activate/)
 })
 
 if (failures > 0) {

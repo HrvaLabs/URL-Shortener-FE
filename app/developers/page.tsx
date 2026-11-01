@@ -240,7 +240,8 @@ export default function DevelopersPage() {
           Creating links is also limited per account each hour. Going over that limit is a <code>429</code> as well, with
           the message under Errors. Your <Link href="/dashboard/api-keys">API keys</Link> page shows how many requests each
           key has made, when it was last used and when it expires. A key that is expired or revoked is refused with a{" "}
-          <code>detail</code> message. Every <code>429</code> has a <code>Retry-After</code> header in seconds. Changing your
+          <code>detail</code> message. Revoking is final: a revoked or expired key can&apos;t be turned back on or
+          given a new expiry (<code>PUT</code> answers <code>409</code>), only deleted, so make a new key instead. Every <code>429</code> has a <code>Retry-After</code> header in seconds. Changing your
           password or signing out everywhere doesn&apos;t touch your keys.
         </p>
 

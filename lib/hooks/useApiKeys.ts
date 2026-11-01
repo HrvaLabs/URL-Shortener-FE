@@ -72,13 +72,3 @@ export function useDeleteInactiveApiKeys() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["apiKeys"] }),
   })
 }
-
-export function useActivateApiKey() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: number) => apiKeyApi.activate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["apiKeys"] })
-    },
-  })
-}

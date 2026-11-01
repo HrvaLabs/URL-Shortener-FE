@@ -33,6 +33,8 @@ No test framework is set up.
 
 `npm run lint` exits 0: the 5 errors that predate CI (`app/connect/content.tsx` twice, `app/fortune/page.tsx`, a `no-explicit-any` in the verify-email resend page, `components/ui/input.tsx`) are listed in `eslint-suppressions.json` (ESLint bulk suppressions), so only a new error fails. Fixing one of them: run `npx eslint . --prune-suppressions` and commit the smaller file. Never add to the file with `--suppress-all` to get a new error through.
 
+`package.json` `overrides` pin `glob` to `^14.0.2` and `minimatch` to `^11.0.1` for every package (Dependabot alerts on `glob` <14.0.2 and `minimatch` <11.0.1), so `npm ls glob minimatch --all` shows one version of each. minimatch 11 has no default export, so an ESLint rule that calls `require("minimatch")` as a function throws (`jsx-a11y/label-has-associated-control` and `control-has-associated-label`, plus some `import/*` and `react/*` rules). None of them is on in `eslint-config-next`; check `npm run lint` after enabling one.
+
 CI (`.github/workflows/check.yml`, on pushes and PRs to `main`): `npm ci`, `npx tsc --noEmit`, `npx eslint . --pass-on-unpruned-suppressions` (so a suppression a fix made unused doesn't fail the run), every `check:*` script in `package.json`, and `npm run build`. `codeql.yml` scans `javascript-typescript` (no build) on pushes, PRs and weekly; `.github/dependabot.yml` updates npm and the actions weekly. Every `uses:` is pinned to a full commit SHA with the version in a comment.
 
 ---

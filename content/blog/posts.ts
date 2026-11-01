@@ -576,8 +576,9 @@ export const blogPosts: BlogPost[] = [
           <strong>Redis is down.</strong> Redirects read the link from the database instead of the cache.
         </li>
         <li>
-          <strong>The database is down.</strong> Links in the cache keep redirecting. Requests that need the
-          database get a quick 503 answer, "hrva.cc can't reach its database right now", instead of waiting.
+          <strong>The database is down.</strong> Links in the cache keep redirecting, except links with a visit
+          limit, which need the database to count the click. Requests that need the database get a quick 503
+          answer, "hrva.cc can't reach its database right now", instead of waiting.
         </li>
         <li>
           <strong>Status.</strong> Uptime and incidents are on the

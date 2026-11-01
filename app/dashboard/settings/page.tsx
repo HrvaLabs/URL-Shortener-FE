@@ -8,6 +8,7 @@ import { useNeedsPassword } from "@/lib/hooks/useSignInMethods"
 import { isLocalAccount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { NewPasswordInput } from "@/components/auth/new-password-input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -28,7 +29,6 @@ export default function SettingsPage() {
   const [profileLoading, setProfileLoading] = useState(false)
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [newPasswordError, setNewPasswordError] = useState<string | null>(null)
   const newPasswordRef = useRef<HTMLInputElement>(null)
@@ -103,17 +103,12 @@ export default function SettingsPage() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
     setPasswordLoading(true)
     try {
       await userApi.updatePassword({ oldPassword, newPassword })
       toast.success("Password changed. Other devices are signed out; this one stays signed in.")
       setOldPassword("")
       setNewPassword("")
-      setConfirmPassword("")
     } catch (err) {
       const fieldError = err instanceof ApiError ? err.fields.newPassword : undefined
       if (fieldError) {
@@ -177,27 +172,15 @@ export default function SettingsPage() {
               <Separator />
               <div>
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input
+                <NewPasswordInput
                   ref={newPasswordRef}
                   id="newPassword"
-                  type="password"
-                  autoComplete="new-password"
                   value={newPassword}
                   onChange={(e) => { setNewPassword(e.target.value); setNewPasswordError(null) }}
                   required
-                  aria-invalid={newPasswordError ? true : undefined}
-                  aria-describedby={newPasswordError ? "newPasswordError" : undefined}
-                  className="mt-1.5 h-10 max-w-sm"
+                  error={newPasswordError}
+                  className="mt-1.5 max-w-sm"
                 />
-                {newPasswordError && (
-                  <p id="newPasswordError" role="alert" className="mt-1.5 max-w-sm text-sm text-destructive [overflow-wrap:anywhere]">
-                    {newPasswordError}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
               <Button type="submit" disabled={passwordLoading} size="sm">
                 {passwordLoading ? "Changing…" : "Change password"}

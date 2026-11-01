@@ -25,8 +25,8 @@ export default function ResetPasswordPage() {
       await authApi.requestPasswordReset({ email })
       setSent(true)
       toast.success("If the email exists, recovery instructions have been sent.")
-    } catch (err: any) {
-      toast.error(err.message || "Failed to request password reset")
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to request password reset")
     } finally {
       setLoading(false)
     }

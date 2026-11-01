@@ -3,7 +3,7 @@
 import { useRef, useState } from "react"
 import { ApiError, authApi } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { NewPasswordInput } from "@/components/auth/new-password-input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
@@ -14,7 +14,6 @@ import { PageMeta } from "@/components/page-meta"
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
@@ -24,14 +23,10 @@ export default function SetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
     setLoading(true)
     try {
       await authApi.resetPassword({ token, password })
-      toast.success("Password changed successfully! Please sign in.")
+      toast.success("Password changed. Sign in with the new one.")
       router.push("/login")
     } catch (err) {
       const fieldError = err instanceof ApiError ? err.fields.password : undefined
@@ -63,27 +58,15 @@ export default function SetPasswordPage() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
               <Label htmlFor="password">New password</Label>
-              <Input
+              <NewPasswordInput
                 ref={passwordRef}
                 id="password"
-                type="password"
-                autoComplete="new-password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
                 required
-                aria-invalid={passwordError ? true : undefined}
-                aria-describedby={passwordError ? "passwordError" : undefined}
+                error={passwordError}
                 className="mt-2"
               />
-              {passwordError && (
-                <p id="passwordError" role="alert" className="mt-1.5 text-sm text-destructive [overflow-wrap:anywhere]">
-                  {passwordError}
-                </p>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="mt-2" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Resetting…" : "Reset password"}

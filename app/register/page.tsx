@@ -14,13 +14,13 @@ import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
 import { PageMeta } from "@/components/page-meta"
+import { NewPasswordInput } from "@/components/auth/new-password-input"
 import { ProviderButtons } from "@/components/auth/provider-buttons"
 import { ArrowLeft } from "lucide-react"
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -31,10 +31,6 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
     setLoading(true)
     try {
       await register(email, password)
@@ -99,6 +95,7 @@ export default function RegisterPage() {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -108,32 +105,13 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
+                  <NewPasswordInput
                     ref={passwordRef}
                     id="password"
-                    type="password"
-                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
                     required
-                    aria-invalid={passwordError ? true : undefined}
-                    aria-describedby={passwordError ? "passwordError" : undefined}
-                    className="mt-2"
-                  />
-                  {passwordError && (
-                    <p id="passwordError" role="alert" className="mt-1.5 text-sm text-destructive [overflow-wrap:anywhere]">
-                      {passwordError}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
+                    error={passwordError}
                     className="mt-2"
                   />
                 </div>

@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
 const { SCANNER_CACHE_CONTROL, STATIC_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
-const { CONTENT_SECURITY_POLICY, withContentSecurityPolicy } = await import("../lib/security-headers.ts")
+const { CONTENT_SECURITY_POLICY, withCallbackHeaders, withContentSecurityPolicy } = await import("../lib/security-headers.ts")
 const { readFile } = await import("node:fs/promises")
 
 let failures = 0
@@ -169,9 +169,26 @@ await check("static files get the same policy from public/_headers", async () =>
   assert.match(headers, new RegExp(`^/\\*\\n  Content-Security-Policy: ${CONTENT_SECURITY_POLICY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "m"))
 })
 
-await check("the worker wraps Next's answers with the policy", async () => {
+await check("the sign-in callback page is never stored and sends no referrer", async () => {
+  for (const url of ["https://app.hrva.cc/auth/callback", "https://app.hrva.cc/auth/callback/", "https://app.hrva.cc/auth/callback?code=x&_rsc=1"]) {
+    const page = withCallbackHeaders(new Request(url), new Response("<!doctype html>", { headers: { "Content-Type": "text/html", "Cache-Control": "s-maxage=31536000" } }))
+    assert.equal(page.headers.get("referrer-policy"), "no-referrer", url)
+    assert.equal(page.headers.get("cache-control"), "no-store", url)
+    assert.equal(await page.text(), "<!doctype html>")
+  }
+  const other = new Response("<!doctype html>", { headers: { "Cache-Control": "s-maxage=31536000" } })
+  assert.equal(withCallbackHeaders(new Request("https://app.hrva.cc/auth/callbacks"), other), other)
+  assert.equal(withCallbackHeaders(new Request("https://app.hrva.cc/login"), other), other)
+})
+
+await check("the static copy of the callback page has the same headers in public/_headers", async () => {
+  const headers = await readFile(new URL("../public/_headers", import.meta.url), "utf8")
+  assert.match(headers, /^\/auth\/callback\n  Referrer-Policy: no-referrer\n  Cache-Control: no-store$/m)
+})
+
+await check("the worker wraps Next's answers with the policy and the callback headers", async () => {
   const worker = await readFile(new URL("../custom-worker.mjs", import.meta.url), "utf8")
-  assert.match(worker, /withContentSecurityPolicy\(await nextFetch\(request, env, context\)\)/)
+  assert.match(worker, /withContentSecurityPolicy\(withCallbackHeaders\(request, await nextFetch\(request, env, context\)\)\)/)
 })
 
 if (failures > 0) {

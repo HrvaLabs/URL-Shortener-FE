@@ -13,13 +13,12 @@ import { ApiError, authApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { FORGOT_PASSWORD_LABEL, SIGNUPS_PAUSED, providerDisabledHeading, providerDisabledText } from "@/lib/moderation"
 import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider, type SwitchableMethod } from "@/lib/sign-in-methods"
-import { TWO_STEP_METHODS, type SignedIn, type TwoStepMethod } from "@/lib/types"
+import type { SignedIn, TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
 
 const messages: Record<string, string> = {
   no_email: "Could not retrieve email from provider.",
   account_inactive: "Your account is deactivated. Contact an administrator.",
-  two_step_unavailable: "Two-step sign-in isn't available right now. Try again in a minute.",
   sign_in_unavailable: "Signing in isn't available right now. Try again in a minute.",
   invalid_email: "This account's email address can't be used on hrva.cc. Sign in with another account, or another way.",
   github_email_unverified: "Your GitHub account has no verified email address. Verify one on GitHub, or sign in another way.",
@@ -30,23 +29,13 @@ const messages: Record<string, string> = {
 
 type Callback =
   | { kind: "code"; code: string }
-  | { kind: "second-step"; pendingToken: string; methods: TwoStepMethod[] }
   | { kind: "error"; error: string; fromProvider: boolean; switchedOff?: { provider: SwitchableMethod | null } }
-
-function isTwoStepMethod(value: string): value is TwoStepMethod {
-  return (TWO_STEP_METHODS as readonly string[]).includes(value)
-}
 
 function readCallback(searchParams: URLSearchParams): Callback {
   const code = searchParams.get("code")
-  const pendingToken = searchParams.get("pendingToken")
   const err = searchParams.get("error")
 
   if (code) return { kind: "code", code }
-  if (pendingToken) {
-    const methods = (searchParams.get("methods") ?? "").split(",").filter(isTwoStepMethod)
-    return { kind: "second-step", pendingToken, methods }
-  }
   if (err === "provider_turned_off") return { kind: "error", error: providerTurnedOffText(providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()), fromProvider: true }
   if (err === "provider_disabled") {
     const provider = providerFromParam(searchParams.get("provider")) ?? readOAuthProvider()
@@ -96,19 +85,14 @@ export function AuthCallbackContent() {
   const searchParams = useSearchParams()
   const { completeSignIn } = useAuth()
   const [callback] = useState(() => readCallback(searchParams))
-  const [secondStep, setSecondStep] = useState<{ pendingToken: string; methods: TwoStepMethod[] } | null>(() =>
-    callback.kind === "second-step" ? { pendingToken: callback.pendingToken, methods: callback.methods } : null)
+  const [secondStep, setSecondStep] = useState<{ pendingToken: string; methods: TwoStepMethod[] } | null>(null)
   const exchanged = useRef(false)
-  const [error, setError] = useState<string | null>(() => {
-    if (callback.kind === "error") return callback.error
-    if (callback.kind === "second-step" && callback.methods.length === 0) return SIGN_IN_EXPIRED
-    return null
-  })
+  const [error, setError] = useState<string | null>(() => (callback.kind === "error" ? callback.error : null))
   const switchedOff = callback.kind === "error" && error === callback.error ? callback.switchedOff : undefined
   const errorHeadingRef = useRef<HTMLHeadingElement>(null)
 
   useLayoutEffect(() => {
-    if (callback.kind === "second-step" || callback.kind === "code") window.history.replaceState(null, "", "/auth/callback")
+    if (callback.kind === "code") window.history.replaceState(null, "", "/auth/callback")
   }, [callback])
 
   useEffect(() => {

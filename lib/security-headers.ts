@@ -21,3 +21,14 @@ export const withContentSecurityPolicy = (response: Response): Response => {
   secured.headers.set(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY)
   return secured
 }
+
+const CALLBACK_PATH = "/auth/callback"
+
+export const withCallbackHeaders = (request: Request, response: Response): Response => {
+  const path = new URL(request.url).pathname.replace(/\/$/, "")
+  if (path !== CALLBACK_PATH) return response
+  const kept = new Response(response.body, response)
+  kept.headers.set("Referrer-Policy", "no-referrer")
+  kept.headers.set("Cache-Control", "no-store")
+  return kept
+}

@@ -198,7 +198,7 @@ export const authApi = {
   requestPasswordReset: (data: { email: string }) =>
     request<void>("POST", "/auth/password-reset", data),
   resetPassword: (data: { token: string; email: string; password: string }) =>
-    request<User>("POST", "/auth/password-reset/confirm", data),
+    request<void>("POST", "/auth/password-reset/confirm", data),
   verifyEmail: (token: string) =>
     request<void>("POST", "/auth/verify-email/confirm", { token }),
   resendVerification: (email: string) =>

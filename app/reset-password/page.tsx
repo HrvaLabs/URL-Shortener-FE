@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
           {sent ? (
             <div className="mt-8 space-y-4">
               <div className="rounded-lg bg-success/10 p-4 text-center text-sm text-success">
-                If an account with that email exists, we&apos;ve sent password reset instructions.
+                If an account uses that email, we&apos;ve sent it a link to set a new password. The link works once, for 1 hour.
               </div>
               <Button asChild variant="outline" className="w-full gap-2">
                 <Link href="/login">

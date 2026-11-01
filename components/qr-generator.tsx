@@ -20,7 +20,7 @@ import { HUMAN_CHECK_REQUIRED, humanCheckEnabled, signupsPaused, type HumanCheck
 import type { UrlResponse } from "@/lib/types"
 import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
-import { destinationLengthError, formatShortUrl } from "@/lib/utils"
+import { destinationLengthError, shortLinkOf } from "@/lib/utils"
 import { withScheme } from "@/lib/utm"
 
 const fileNameFor = (address: string): string => {
@@ -70,7 +70,7 @@ export function QrGenerator() {
     try {
       const created = await createUrl.mutateAsync({ longUrl: address, humanCheckToken })
       flushSync(() => {
-        setShortLink({ destination: address, url: formatShortUrl(created.shortUrl), created })
+        setShortLink({ destination: address, url: shortLinkOf(created), created })
         setCopied(false)
       })
       resultRef.current?.focus()

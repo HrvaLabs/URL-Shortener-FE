@@ -20,7 +20,7 @@ import { HUMAN_CHECK_REQUIRED, humanCheckEnabled, signupsPaused, type HumanCheck
 import type { UrlResponse } from "@/lib/types"
 import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
-import { destinationLengthError, formatShortUrl } from "@/lib/utils"
+import { destinationLengthError, shortLinkOf } from "@/lib/utils"
 import { destinationToSend, hasUtmValues, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
 
 function CopyLine({ text, label }: { text: string; label: string }) {
@@ -89,7 +89,7 @@ export function UtmBuilder() {
     }
     try {
       const created = await createUrl.mutateAsync({ longUrl: tagged, humanCheckToken })
-      flushSync(() => setShortLink({ destination: tagged, url: formatShortUrl(created.shortUrl), created }))
+      flushSync(() => setShortLink({ destination: tagged, url: shortLinkOf(created), created }))
       resultRef.current?.focus()
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {

@@ -13,6 +13,7 @@ URL.revokeObjectURL = () => {}
 
 const { SESSION_ENDED, adminApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
+const { shortLinkOf } = await import("../lib/utils.ts")
 
 let failures = 0
 let answer = () => new Response("")
@@ -106,6 +107,21 @@ await check("any other 403 doesn't", async () => {
   await assert.rejects(adminApi.getReviewQueue({ size: 1 }), (error) => error.message === "Access denied")
   assert.deepEqual(heard, [])
   onAdminTwoStepRequired(null)
+})
+
+await check("urlApi.create reads a 201 answer with its shortLink", async () => {
+  stored.set("auth-token", "Bearer kept")
+  const created = { id: 7, shortUrl: "Ab3", longUrl: "https://example.com", shortLink: "https://hrva.cc/Ab3" }
+  answer = () => new Response(JSON.stringify(created), { status: 201, headers: { "Content-Type": "application/json", Location: "https://hrva.cc/api/v1/urls/Ab3/peek" } })
+  const link = await urlApi.create({ longUrl: "https://example.com" })
+  assert.equal(link.shortLink, "https://hrva.cc/Ab3")
+  assert.equal(shortLinkOf(link), "https://hrva.cc/Ab3")
+})
+
+await check("shortLinkOf prefers the answer's shortLink and builds one for older answers", () => {
+  assert.equal(shortLinkOf({ shortUrl: "menu", shortLink: "https://go.example.com/menu", domain: { id: 7, hostname: "go.example.com" } }), "https://go.example.com/menu")
+  assert.equal(shortLinkOf({ shortUrl: "menu", domain: { id: 7, hostname: "go.example.com" } }), "https://go.example.com/menu")
+  assert.match(shortLinkOf({ shortUrl: "Ab3" }), /\/Ab3$/)
 })
 
 if (failures > 0) {

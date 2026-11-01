@@ -43,7 +43,7 @@ const javascriptExample = `const response = await fetch("${endpoint}", {
 })
 const link = await response.json()
 if (!response.ok) throw new Error(link.detail ?? JSON.stringify(link))
-console.log(\`https://hrva.cc/\${link.shortUrl}\`)`
+console.log(link.shortLink)`
 
 const pythonExample = `import os
 import requests
@@ -56,7 +56,7 @@ response = requests.post(
 link = response.json()
 if not response.ok:
     raise RuntimeError(link.get("detail", response.text))
-print(f"https://hrva.cc/{link['shortUrl']}")`
+print(link["shortLink"])`
 
 const responseExample = `{
   "id": 1204,
@@ -70,7 +70,8 @@ const responseExample = `{
   "status": "ACTIVE",
   "tags": [],
   "passwordProtected": false,
-  "ownerEmail": "you@example.com"
+  "ownerEmail": "you@example.com",
+  "shortLink": "https://hrva.cc/autumn-sale"
 }`
 
 const fields = [
@@ -174,9 +175,11 @@ export default function DevelopersPage() {
 
         <h2 id="response">What you get back</h2>
         <p>
-          A <code>200 OK</code> with the new link. The short link is <code>https://hrva.cc/</code> followed by{" "}
-          <code>shortUrl</code>. <code>status</code> is <code>ACTIVE</code>, <code>LIMIT_REACHED</code>,{" "}
-          <code>EXPIRED</code>, <code>BLOCKED</code> or <code>DEACTIVATED</code>.
+          A <code>201 Created</code> with the new link. <code>shortLink</code> is the full short link, and the{" "}
+          <code>Location</code> header points to the link&apos;s peek URL,{" "}
+          <code className="[overflow-wrap:anywhere]">https://hrva.cc/api/v1/urls/&#123;short&#125;/peek</code>.{" "}
+          <code>status</code> is <code>ACTIVE</code>, <code>LIMIT_REACHED</code>, <code>EXPIRED</code>, <code>BLOCKED</code> or{" "}
+          <code>DEACTIVATED</code>.
         </p>
       </div>
       <CodeBlock label="Response" code={responseExample} copyLabel="response example" mono />

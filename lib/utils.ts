@@ -130,6 +130,10 @@ export function formatShortUrl(short: string, hostname?: string | null): string 
   return hostname ? `https://${hostname}/${short}` : `${getShortBaseUrl()}/${short}`
 }
 
+export function shortLinkOf(link: { shortUrl: string; shortLink?: string | null; domain?: { hostname: string } | null }): string {
+  return link.shortLink || formatShortUrl(link.shortUrl, link.domain?.hostname)
+}
+
 export function shortHostOf(hostname?: string | null): string {
   return hostname || getShortBaseUrl().replace(/^https?:\/\//, "")
 }

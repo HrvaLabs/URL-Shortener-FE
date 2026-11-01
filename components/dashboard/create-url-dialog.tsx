@@ -15,7 +15,7 @@ import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { Copy, Check } from "lucide-react"
 import { ApiError } from "@/lib/api-client"
-import { destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
+import { destinationLengthError, shortHostOf, shortLinkOf, withQrMarker } from "@/lib/utils"
 import { shortHost } from "@/lib/domains"
 import type { DomainRef } from "@/lib/types"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
@@ -173,7 +173,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
             <div className="flex items-center justify-between gap-2 rounded-lg border bg-muted/40 py-1.5 pl-3 pr-1.5">
               <span className="min-w-0 font-mono text-sm font-medium text-brand [overflow-wrap:anywhere]"><span className="font-normal text-muted-foreground">{shortHost(result.domain, shortHostOf())}/</span>{result.shortUrl}</span>
               <Button variant="ghost" size="icon" aria-label="Copy short URL" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" onClick={() => {
-                navigator.clipboard.writeText(formatShortUrl(result.shortUrl, result.domain?.hostname))
+                navigator.clipboard.writeText(shortLinkOf(result))
                 setCopied(true)
                 setTimeout(() => setCopied(false), 2000)
                 toast.success("Copied!")
@@ -186,7 +186,7 @@ export function CreateUrlDialog({ open, onOpenChange, onCloseAutoFocus }: Create
             </p>
             <div className="flex justify-center">
               <div className="inline-block rounded-lg border bg-white p-2">
-                <QRCodeSVG value={withQrMarker(formatShortUrl(result.shortUrl, result.domain?.hostname))} size={150} fgColor="#0e0e11" bgColor="#ffffff" />
+                <QRCodeSVG value={withQrMarker(shortLinkOf(result))} size={150} fgColor="#0e0e11" bgColor="#ffffff" />
               </div>
             </div>
             <Button variant="outline" className="w-full" onClick={handleClose}>Done</Button>

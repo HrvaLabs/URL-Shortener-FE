@@ -84,6 +84,7 @@ export interface UrlResponse {
   ownerPossibleScammer?: boolean
   finalUrl?: string | null
   warningPage?: boolean
+  shortLink?: string
 }
 
 export interface ApiKey {

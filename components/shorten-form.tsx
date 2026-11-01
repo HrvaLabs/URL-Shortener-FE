@@ -21,7 +21,7 @@ import { useTurnstile } from "@/lib/hooks/useTurnstile"
 import { useCreateUrl } from "@/lib/hooks/useUrls"
 import { ALIASES_PAUSED, HUMAN_CHECK_REQUIRED, aliasFieldShown, humanCheckEnabled, type HumanCheckRefusal } from "@/lib/moderation"
 import type { UrlResponse } from "@/lib/types"
-import { cn, destinationLengthError, formatShortUrl, shortHostOf, withQrMarker } from "@/lib/utils"
+import { cn, destinationLengthError, shortHostOf, shortLinkOf, withQrMarker } from "@/lib/utils"
 import { CANT_TAKE_UTM, destinationToSend, rememberUtm, tooLongMessage, tooLongWithUtm, type UtmValues } from "@/lib/utm"
 
 interface ShortenFormProps {
@@ -143,7 +143,7 @@ export function ShortenForm({ initialUrl = "", withOptions = false, size = "defa
     }
   }
 
-  const shortUrl = result ? formatShortUrl(result.shortUrl, result.domain?.hostname) : ""
+  const shortUrl = result ? shortLinkOf(result) : ""
 
   return (
     <div className={cn("w-full", className)}>

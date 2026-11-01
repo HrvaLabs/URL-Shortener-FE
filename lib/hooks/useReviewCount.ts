@@ -5,7 +5,7 @@ import { adminApi, adminBioApi, adminDomainApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 
 export function useReviewCount() {
-  const { isAdmin } = useAuth()
+  const { isAdmin, adminNeedsTwoStep } = useAuth()
   return useQuery({
     queryKey: ["admin", "review", "count"],
     queryFn: async () => {
@@ -17,7 +17,7 @@ export function useReviewCount() {
       if (results.every((result) => result.status === "rejected")) throw (results[0] as PromiseRejectedResult).reason
       return results.reduce((total, result) => total + (result.status === "fulfilled" ? result.value.totalElements : 0), 0)
     },
-    enabled: isAdmin,
+    enabled: isAdmin && !adminNeedsTwoStep,
     refetchInterval: 60_000,
   })
 }

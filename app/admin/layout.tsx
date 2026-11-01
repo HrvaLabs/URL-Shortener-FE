@@ -7,9 +7,11 @@ import { DashboardNav, wideContainerClass } from "@/components/dashboard/dashboa
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { ADMIN_TWO_STEP_REQUIRED, ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "@/lib/admin-two-step"
+import { toast } from "sonner"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAdmin, logoutDestination } = useAuth()
+  const { user, isLoading, isAdmin, adminNeedsTwoStep, logoutDestination } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
@@ -17,8 +19,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!isLoading) {
       if (!user) router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`)
       else if (!isAdmin) router.push("/dashboard")
+      else if (adminNeedsTwoStep) {
+        toast.info(ADMIN_TWO_STEP_REQUIRED, { id: ADMIN_TWO_STEP_TOAST_ID })
+        router.replace(ADMIN_TWO_STEP_SETTINGS)
+      }
     }
-  }, [user, isLoading, isAdmin, router, pathname, logoutDestination])
+  }, [user, isLoading, isAdmin, adminNeedsTwoStep, router, pathname, logoutDestination])
 
   if (isLoading) {
     return (
@@ -31,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (!user || !isAdmin) return null
+  if (!user || !isAdmin || adminNeedsTwoStep) return null
 
   return (
     <div className="min-h-screen bg-background">

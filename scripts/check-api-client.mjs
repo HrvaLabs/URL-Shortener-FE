@@ -11,7 +11,8 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { SESSION_ENDED, adminApi, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
+const { SESSION_ENDED, adminApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
+const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 
 let failures = 0
 let answer = () => new Response("")
@@ -83,6 +84,28 @@ await check("a page's own toast of the session-ended error joins the sign-out to
 
   assert.deepEqual(shown.map((entry) => entry.id), [SESSION_ENDED_TOAST_ID, SESSION_ENDED_TOAST_ID, SESSION_ENDED_TOAST_ID, undefined])
   assert.equal(new Set(shown.filter((entry) => entry.message === SESSION_ENDED).map((entry) => entry.id)).size, 1)
+})
+
+await check("an admin page answering the two-step 403 tells the listener and keeps the token", async () => {
+  stored.set("auth-token", "Bearer admin")
+  const heard = []
+  onAdminTwoStepRequired((message) => heard.push(message))
+  answer = () => problem(403, ADMIN_TWO_STEP_REQUIRED)
+  await assert.rejects(adminApi.getReviewQueue({ size: 1 }), (error) => error.message === ADMIN_TWO_STEP_REQUIRED && error.status === 403)
+  await assert.rejects(adminApi.exportUrlsCsv(), (error) => error.message === ADMIN_TWO_STEP_REQUIRED && error.status === 403)
+  assert.deepEqual(heard, [ADMIN_TWO_STEP_REQUIRED, ADMIN_TWO_STEP_REQUIRED])
+  assert.equal(localStorage.getItem("auth-token"), "Bearer admin")
+  onAdminTwoStepRequired(null)
+})
+
+await check("any other 403 doesn't", async () => {
+  stored.set("auth-token", "Bearer user")
+  const heard = []
+  onAdminTwoStepRequired((message) => heard.push(message))
+  answer = () => problem(403, "Access denied")
+  await assert.rejects(adminApi.getReviewQueue({ size: 1 }), (error) => error.message === "Access denied")
+  assert.deepEqual(heard, [])
+  onAdminTwoStepRequired(null)
 })
 
 if (failures > 0) {

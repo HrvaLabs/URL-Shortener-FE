@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "./utils"
+import { ADMIN_TWO_STEP_REQUIRED } from "./admin-two-step"
 import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
@@ -13,8 +14,18 @@ const TOKEN_KEY = "auth-token"
 
 let sessionEndedListener: ((message: string) => void) | null = null
 
+let adminTwoStepListener: ((message: string) => void) | null = null
+
 export function onSessionEnded(listener: ((message: string) => void) | null) {
   sessionEndedListener = listener
+}
+
+export function onAdminTwoStepRequired(listener: ((message: string) => void) | null) {
+  adminTwoStepListener = listener
+}
+
+function adminTwoStepRequired(status: number, message: string) {
+  if (status === 403 && message === ADMIN_TWO_STEP_REQUIRED) adminTwoStepListener?.(message)
 }
 
 function keepRenewedToken(sentToken: string | null, response: Response) {
@@ -131,6 +142,7 @@ async function request<T>(
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
     endedSession(token, response.status, message)
+    adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody))
   }
 
@@ -167,6 +179,7 @@ async function download(path: string): Promise<Response> {
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
     endedSession(token, response.status, message)
+    adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody))
   }
 

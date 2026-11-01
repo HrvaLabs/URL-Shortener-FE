@@ -13,14 +13,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ADMIN_TWO_STEP_REQUIRED, TWO_STEP_TITLE_ID } from "@/lib/admin-two-step"
 import { REQUEST_FAILED, authApi, twoStepApi } from "@/lib/api-client"
+import { useAuth } from "@/lib/auth-context"
 import { useRefreshTwoStep, useTwoStepStatus } from "@/lib/hooks/useTwoStep"
 import { useWebAuthnSupported } from "@/lib/hooks/useWebAuthnSupported"
 import type { TwoStepStatus } from "@/lib/types"
 import { abortPasskeyRequest, getPasskey, isWebAuthnSupported, passkeyErrorMessage } from "@/lib/webauthn"
 
 export const OPEN_TURN_OFF_EVENT = "two-step:open-turn-off"
-export const TWO_STEP_TITLE_ID = "two-step-title"
+export { TWO_STEP_TITLE_ID }
 
 const LOW_RECOVERY_CODES = 2
 
@@ -55,6 +57,7 @@ function secondStepSummary(status: TwoStepStatus): string {
 }
 
 export function TwoStepCard() {
+  const { adminNeedsTwoStep } = useAuth()
   const { data: status, isLoading, isFetching, error, refetch } = useTwoStepStatus()
   const refreshTwoStep = useRefreshTwoStep()
   const supported = useWebAuthnSupported()
@@ -280,6 +283,11 @@ export function TwoStepCard() {
           <RecoveryCodes codes={recoveryCodes} onDone={closeRecoveryCodes} />
         ) : (
           <>
+            {adminNeedsTwoStep && !status.enabled && (
+              <p role="status" className="rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm">
+                {ADMIN_TWO_STEP_REQUIRED} Set up an authenticator app or a passkey below, then turn two-step verification on.
+              </p>
+            )}
             {status.enabled && (
               <p className="text-sm">
                 <span className="font-medium">Your second step:</span> {secondStepSummary(status)}

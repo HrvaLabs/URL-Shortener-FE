@@ -2,9 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ApiError, REQUEST_FAILED, authApi, onSessionEnded, userApi } from "./api-client"
+import { ApiError, REQUEST_FAILED, authApi, onAdminTwoStepRequired, onSessionEnded, userApi } from "./api-client"
 import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
+import { ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "./admin-two-step"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
 
 export const REAUTH_TOAST_ID = "passkeys-reauth"
@@ -19,6 +21,7 @@ interface AuthContextType {
   user: UserDto | null
   isLoading: boolean
   isAdmin: boolean
+  adminNeedsTwoStep: boolean
   login: (email: string, password: string, rememberMe?: boolean) => Promise<LoginResult>
   completeSignIn: (signedIn: SignedIn) => void
   register: (email: string, password: string) => Promise<void>
@@ -32,6 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [user, setUser] = useState<UserDto | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [logoutDestination, setLogoutDestination] = useState<string | null>(null)
@@ -100,12 +104,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => onSessionEnded(null)
   }, [endSession])
 
+  useEffect(() => {
+    onAdminTwoStepRequired((message) => {
+      if (!window.location.pathname.startsWith("/admin")) return
+      toast.info(message, { id: ADMIN_TWO_STEP_TOAST_ID })
+      void refreshUser()
+      router.replace(ADMIN_TWO_STEP_SETTINGS)
+    })
+    return () => onAdminTwoStepRequired(null)
+  }, [refreshUser, router])
+
   const logoutTo = useCallback((destination: string) => endSession(destination), [endSession])
 
   const isAdmin = user?.authorities?.some((a) => a.name === "ROLE_ADMIN") ?? false
+  const adminNeedsTwoStep = isAdmin && user?.twoStepEnabled !== true
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAdmin, login, completeSignIn, register, logout, logoutTo, logoutDestination, refreshUser }}>
+    <AuthContext.Provider value={{ user, isLoading, isAdmin, adminNeedsTwoStep, login, completeSignIn, register, logout, logoutTo, logoutDestination, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

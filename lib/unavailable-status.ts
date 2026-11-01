@@ -1,12 +1,12 @@
 export const UNAVAILABLE_PATH = "/unavailable"
 
+export const MISSING_REASON = "missing"
+
 export const MISSING_STATUS = 404
 
 export const GONE_STATUS = 410
 
-export const GONE_REASONS = new Set(["blocked", "checking", "expired", "limit", "inactive", "domain"])
-
-export const unavailableStatus = (reason: string | null): number => (reason !== null && GONE_REASONS.has(reason) ? GONE_STATUS : MISSING_STATUS)
+export const unavailableStatus = (reason: string | null): number => (!reason || reason === MISSING_REASON ? MISSING_STATUS : GONE_STATUS)
 
 const isHtml = (response: Response) => response.headers.get("content-type")?.toLowerCase().startsWith("text/html") ?? false
 

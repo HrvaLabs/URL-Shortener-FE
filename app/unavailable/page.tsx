@@ -15,15 +15,22 @@ const missingMessage = "There's no hrva.cc link with this name."
 
 const missingOnHost = (host: string) => `There's no ${host} link with this name.`
 
+const inactiveMessage = "Its owner has turned this link off."
+
 const reasonMessages = new Map([
   ["blocked", "hrva.cc disabled this link because it led to a site reported for phishing, malware or scams."],
   ["checking", "This link is being checked. Try again later."],
   ["expired", "This link has expired."],
   ["limit", "This link has reached its visit limit."],
-  ["inactive", "Its owner has turned this link off."],
+  ["inactive", inactiveMessage],
   ["missing", missingMessage],
   ["domain", "This link's domain is turned off right now."],
 ])
+
+const unavailableMessage = (reason: string | null) => {
+  if (!reason) return missingMessage
+  return reasonMessages.get(reason) ?? inactiveMessage
+}
 
 function UnavailableDetails({ short, domain, message }: { short: string; domain: string | null; message: string }) {
   const host = domain === null ? shortHostOf() : isHostnameShaped(domain) ? domain : null
@@ -52,7 +59,7 @@ function UnavailableContent() {
   const searchParams = useSearchParams()
   const short = searchParams.get("s")?.trim() ?? ""
   const domain = searchParams.get("d")?.trim() || null
-  const reason = reasonMessages.get(searchParams.get("reason") ?? "") ?? missingMessage
+  const reason = unavailableMessage(searchParams.get("reason"))
   const message = reason === missingMessage && domain && isHostnameShaped(domain) ? missingOnHost(domain) : reason
   return <UnavailableDetails short={short} domain={domain} message={message} />
 }

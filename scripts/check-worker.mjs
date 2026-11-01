@@ -3,7 +3,7 @@ import "./resolve-ts-imports.mjs"
 
 const { SCANNER_CACHE_CONTROL, STATIC_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
 const { CONTENT_SECURITY_POLICY, withCallbackHeaders, withContentSecurityPolicy } = await import("../lib/security-headers.ts")
-const { GONE_REASONS, GONE_STATUS, MISSING_STATUS, unavailableStatus, withUnavailableStatus } = await import("../lib/unavailable-status.ts")
+const { GONE_STATUS, MISSING_REASON, MISSING_STATUS, unavailableStatus, withUnavailableStatus } = await import("../lib/unavailable-status.ts")
 const { readFile } = await import("node:fs/promises")
 
 let failures = 0
@@ -189,10 +189,10 @@ await check("the static copy of the callback page has the same headers in public
 
 const unavailablePage = () => new Response("<!doctype html>", { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "s-maxage=31536000" } })
 
-await check("/unavailable answers 404 for a missing link and 410 for every other reason, like the backend", async () => {
+await check("/unavailable answers 404 for a missing link or no reason and 410 for every other reason, like the backend", async () => {
   assert.equal(MISSING_STATUS, 404)
   assert.equal(GONE_STATUS, 410)
-  for (const [query, status] of [["?s=abc&reason=missing", 404], ["", 404], ["?reason=nonsense", 404], ["?reason=", 404], ["?s=abc&reason=blocked", 410], ["?reason=checking&d=go.example.com", 410], ["?reason=expired", 410], ["?reason=limit", 410], ["?reason=inactive", 410], ["?reason=domain", 410]]) {
+  for (const [query, status] of [["?s=abc&reason=missing", 404], ["", 404], ["?s=abc", 404], ["?reason=", 404], ["?reason=nonsense", 410], ["?reason=MISSING", 410], ["?s=abc&reason=blocked", 410], ["?reason=checking&d=go.example.com", 410], ["?reason=expired", 410], ["?reason=limit", 410], ["?reason=inactive", 410], ["?reason=domain", 410]]) {
     for (const path of ["/unavailable", "/unavailable/"]) {
       const answer = withUnavailableStatus(new Request(`https://app.hrva.cc${path}${query}`), unavailablePage())
       assert.equal(answer.status, status, `${path}${query}`)
@@ -217,12 +217,13 @@ await check("the status leaves other pages, other statuses and the policy alone"
   assert.equal(withUnavailableStatus(new Request("https://app.hrva.cc/unavailable?reason=blocked", { method: "HEAD" }), new Response(null, { status: 200, headers: { "Content-Type": "text/html" } })).status, 410)
 })
 
-await check("every reason the /unavailable page words is 410 here except missing", async () => {
+await check("every reason the /unavailable page words is 410 here except missing, and an unknown one is worded as inactive", async () => {
   const page = await readFile(new URL("../app/unavailable/page.tsx", import.meta.url), "utf8")
   const reasons = [...page.matchAll(/^\s+\["([a-z]+)", /gm)].map((match) => match[1])
-  assert.deepEqual(new Set(reasons.filter((reason) => reason !== "missing")), GONE_REASONS)
-  assert.ok(reasons.includes("missing"))
-  for (const reason of reasons) assert.equal(unavailableStatus(reason), reason === "missing" ? 404 : 410, reason)
+  assert.deepEqual(new Set(reasons), new Set(["blocked", "checking", "expired", "limit", "inactive", "missing", "domain"]))
+  assert.equal(MISSING_REASON, "missing")
+  for (const reason of reasons) assert.equal(unavailableStatus(reason), reason === MISSING_REASON ? 404 : 410, reason)
+  assert.match(page, /if \(!reason\) return missingMessage\n\s+return reasonMessages\.get\(reason\) \?\? inactiveMessage/)
 })
 
 await check("the worker wraps Next's answers with the policy, the unavailable status and the callback headers", async () => {

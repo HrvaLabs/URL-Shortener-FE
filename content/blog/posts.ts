@@ -201,114 +201,158 @@ export const blogPosts: BlogPost[] = [
     slug: "why-use-a-url-shortener",
     title: "Why You Should Use a URL Shortener in 2026",
     date: "2026-05-15",
+    updated: "2026-11-01",
     excerpt:
-      "Long URLs are ugly, hard to share, and easy to mistype. A URL shortener solves these problems — but modern tools go far beyond just shrinking links.",
+      "What a short link does better than a long one, what hrva.cc checks before it sends anyone on, what you get with and without an account, and when a long link is the better choice.",
     author: "Karlo Hrvačić",
     tags: ["URL shortener", "link management", "productivity"],
     content: `
       <p class="lead">
-        Every day, millions of long, unreadable URLs are shared across email, social media, messaging apps, and printed materials. 
-        A URL shortener makes them manageable — but the best ones do much more than shrink a link.
+        A long address is hard to read out, easy to mistype and often breaks across lines in an email. A short link
+        fixes that. A shortener can also do things a plain address can't: stop a link on a date, stop it after a
+        number of clicks, and count how often it was opened.
       </p>
 
-      <h2>Beyond the Short Link</h2>
-      <p>
-        A good URL shortener like <a href="/">hrva.cc</a> doesn't just turn a 500-character URL into a 20-character one. 
-        It gives you control over every link you share. You can set visit limits, expiration dates, and track how many 
-        times each link was clicked — all without needing a separate analytics tool.
-      </p>
-
-      <h2>Why Length Matters</h2>
-      <p>
-        Long URLs break in messages, wrap awkwardly in emails, and look suspicious on social media. 
-        A short, clean link like <code>hrva.cc/abc123</code> is immediately more trustworthy — and it fits 
-        anywhere. Twitter's character limit, SMS messages, and even printed QR codes all benefit from shorter links.
-      </p>
-
-      <h2>Control Every Link You Share</h2>
-      <p>
-        Once you shorten a URL, it's out there. But what if you need to change the destination? Or what if you 
-        only want it to work for a limited time? Modern URL shorteners let you:
-      </p>
+      <h2>What a short link does</h2>
       <ul>
-        <li><strong>Set expiration dates</strong> — links automatically stop working after a specific date</li>
-        <li><strong>Limit visits</strong> — perfect for time-sensitive campaigns or shared documents</li>
-        <li><strong>Track clicks</strong> — see exactly how many people visited each link</li>
-        <li><strong>Create custom aliases</strong> — make your short links brand-readable</li>
+        <li>
+          <strong>It's easy to type and read out.</strong> <code>hrva.cc/summer-sale</code> is easier to copy from a
+          poster or say on the phone than an address full of parameters. When hrva.cc picks the alias itself, it
+          leaves out 0, O, 1, l and I, which are easy to mix up (<a href="/help/links#aliases">how aliases work</a>).
+        </li>
+        <li>
+          <strong>It makes a simpler QR code.</strong> Fewer characters give a QR code with fewer, larger squares,
+          which is easier to print small and to scan. hrva.cc's QR codes mark their scans, so a link's stats show how
+          many clicks came from print (<a href="/help/stats#qr-scans">QR scans</a>).
+        </li>
+        <li>
+          <strong>It can end on purpose.</strong> A link can stop working on a date or after a number of clicks.
+          <a href="/blog/expiration-dates-visit-limits">How expiration dates and visit limits work</a> explains both.
+        </li>
+        <li>
+          <strong>It counts clicks.</strong> With an account, each link has a stats page with daily clicks, unique
+          visitors, referring sites, countries and devices, and no visitor's IP address is stored.
+          <a href="/blog/link-analytics-guide">The link analytics guide</a> covers what is counted.
+        </li>
       </ul>
 
-      <h2>Security First</h2>
+      <h2>What hrva.cc checks</h2>
       <p>
-        One feature that sets hrva.cc apart is Google Safe Browsing integration. Every long URL is checked against 
-        Google's threat database before it's shortened. If the destination is flagged as malware or phishing, 
-        the link is blocked — protecting everyone who clicks your short links.
+        A short link hides where it goes until someone opens it, so hrva.cc checks the destination before it sends
+        anyone there. Every destination is checked against Google Safe Browsing and public blocklists when the link
+        is made and again while the link is active, and every click is checked against blocklists. Links to other URL
+        shorteners are refused, so a short link can't hide another one. The <a href="/security">security page</a>
+        lists every check.
       </p>
 
-      <h2>Getting Started</h2>
+      <h2>With and without an account</h2>
       <p>
-        Shortening a URL takes seconds. Paste your long URL, optionally set an alias or expiration, and you're done. 
-        No account required for basic use — and creating a free account unlocks analytics, custom aliases, and more.
+        Without an account, you paste an address on the <a href="/">home page</a> and get a short link to copy. It
+        has no stats page, hrva.cc may give it an end date or a visit limit (the form says so), and some of these
+        links open a page that shows the destination first.
+        <a href="/help/links-without-an-account">Links made without an account</a> has the details.
+      </p>
+      <p>
+        A free account adds custom aliases, visit limits, expiry dates, passwords, tags and stats, plus
+        <a href="/help/utm">campaign (UTM) tags</a>, a <a href="/link-in-bio">bio page</a>, a
+        <a href="/help/custom-domains">custom domain</a>, <a href="/help/notifications">notifications</a>,
+        <a href="/developers">API keys</a> and the <a href="/mcp">MCP connector</a> for AI assistants. hrva.cc has
+        no paid plans and shows no ads.
+      </p>
+
+      <h2>When a long link is better</h2>
+      <p>
+        A full address tells the reader where it goes before they click. When that matters, for example for a bank
+        or a sign-in page, share the full address or say where the link leads. For a hrva.cc link,
+        <a href="/validate">Check a link</a> shows the destination without opening it.
       </p>
     `,
   },
   {
     slug: "link-analytics-guide",
-    title: "The Complete Guide to Link Analytics",
+    title: "Link Analytics Guide: What hrva.cc Counts, and What It Doesn't",
+    shortTitle: "Link Analytics Guide: What hrva.cc Counts",
     date: "2026-05-12",
+    updated: "2026-11-01",
     excerpt:
-      "Knowing how many people clicked your link is just the beginning. Here's what link analytics can tell you — and why it matters for your marketing.",
+      "What a link's stats show, how to read clicks, unique visitors and bot clicks, where UTM tags fit in, and what hrva.cc never records about the people who click.",
     author: "Karlo Hrvačić",
     tags: ["analytics", "marketing", "link tracking"],
     content: `
       <p class="lead">
-        You've shared a link. Now what? Did anyone click it? How many times? Link analytics give you answers — 
-        and the data can shape your entire marketing strategy.
+        Link analytics answers a few questions: how many people opened a link, on which days, and roughly where they
+        came from. This guide covers what hrva.cc counts for each link, how to read the numbers, and what it never
+        records.
       </p>
 
-      <h2>What Link Analytics Tell You</h2>
+      <h2>What a link's stats show</h2>
       <p>
-        At its simplest, link analytics tells you how many times a short URL was visited. But modern tools go deeper. 
-        With hrva.cc, you can see:
+        With an account, each link has a stats page. For every day, hrva.cc keeps totals:
       </p>
       <ul>
-        <li><strong>Total visits</strong> — the raw number of clicks on each link</li>
-        <li><strong>Visit limits</strong> — set a maximum number of clicks before the link deactivates</li>
-        <li><strong>Real-time tracking</strong> — see visits as they happen</li>
+        <li><strong>Clicks:</strong> each time someone was sent on to the destination.</li>
+        <li><strong>Unique visitors:</strong> each person counted once per link per day.</li>
+        <li><strong>Bot clicks:</strong> bots and link previews, counted apart and left out of every other number.</li>
+        <li>
+          <strong>Referrers:</strong> the domain of the site a click came from, such as <code>t.co</code>, never the
+          full page address.
+        </li>
+        <li><strong>Countries, devices, browsers and operating systems:</strong> a count for each.</li>
+        <li><strong>QR scans:</strong> clicks from a QR code made by hrva.cc, shown next to the other clicks.</li>
       </ul>
-
-      <h2>Why Analytics Matter</h2>
       <p>
-        If you're sharing links for business — whether in email campaigns, social media posts, or documentation — 
-        knowing your click-through rates tells you what's working. A link that gets 100 clicks is performing 
-        differently than one that gets 3. Without analytics, you're guessing.
+        You can look at the last 7, 30, 90 or 365 days. The Analytics page in the dashboard adds up all your links
+        and lists the ones with the most clicks.
       </p>
 
-      <h2>Visit Limits: Control Your Links</h2>
-      <p>
-        One unique feature of hrva.cc is the ability to set a hard limit on how many times a link can be clicked. 
-        This is incredibly useful for:
-      </p>
+      <h2>Reading the numbers</h2>
       <ul>
-        <li>Limited-time offers or coupons</li>
-        <li>Event registrations with capped attendance</li>
-        <li>Document sharing with controlled distribution</li>
-        <li>APIs where you want to meter access</li>
+        <li>
+          <strong>Clicks and unique visitors differ.</strong> Someone who opens a link three times in a day is three
+          clicks and one unique visitor. The same person on two days, or on two of your links, counts as two unique
+          visitors, because the count starts over for each link and each day.
+        </li>
+        <li>
+          <strong>Link previews aren't people.</strong> When a link is posted in a chat app, the app often fetches it
+          to show a preview. hrva.cc counts link previews as bot clicks, so they don't add to your clicks.
+        </li>
+        <li>
+          <strong>Direct means no referrer.</strong> A click counts as direct when the browser didn't say where it
+          came from, for example when the link was typed in or opened from an app that doesn't send one.
+        </li>
+        <li>
+          <strong>Visits isn't clicks.</strong> The Visits number on your links page adds up each day's unique
+          visitors, so it can be lower than the clicks.
+        </li>
       </ul>
+
+      <h2>Campaigns and UTM tags</h2>
       <p>
-        Once the limit is reached, the link automatically deactivates. No more broken promises — just precise control.
+        hrva.cc counts the click on the short link. To see what visitors do after they arrive, add UTM tags to the
+        destination; your own analytics tool reads them. The <a href="/utm">UTM builder</a> adds them, and the
+        <a href="/help/utm">campaign tracking guide</a> explains each field. A short link also passes its own query
+        string on, so <code>hrva.cc/abc?ref=mail</code> opens the destination with <code>ref=mail</code> added
+        (<a href="/help/links#query-strings">query strings</a>).
       </p>
 
-      <h2>All Your Links in One Dashboard</h2>
+      <h2>What hrva.cc doesn't record</h2>
       <p>
-        With an hrva.cc account, all your links are tracked in one dashboard. You can see which links perform best, 
-        sort by visit count, and manage them all from a single place. The dashboard even shows you a progress bar 
-        for links with visit limits, so you always know how close a link is to its cap.
+        IP addresses, full browser identifiers and full referring addresses are never stored, and nothing is recorded
+        about a single click. Short links set no cookies and run no scripts. Unique visitors are counted with a
+        one-way hash and a key that changes every day; the hashes and the key are kept only in Redis and deleted a
+        few hours after the day ends, so the same visitor can't be followed across days or links.
+        <a href="/privacy-first-url-shortener">URL shortener without tracking</a> shows how, with links to the code,
+        and the <a href="/privacy">privacy policy</a> lists everything that is kept.
+      </p>
+      <p>
+        Only you, and an admin who uses two-step sign-in, can see a link's stats. Anyone who has the short link can
+        see where it goes and how many times it has been opened.
       </p>
 
-      <h2>Privacy and Analytics</h2>
+      <h2>Stats without opening the dashboard</h2>
       <p>
-        Link analytics doesn't have to mean invading privacy. hrva.cc tracks visit counts without collecting personal data. 
-        You know how many people visited, not who they are — giving you useful data while respecting your audience's privacy.
+        You can turn on a weekly summary email, and a daily click summary for a chat channel or webhook. Nothing is
+        on by default (<a href="/help/notifications#what-you-can-get">what you can get</a>).
       </p>
     `,
   },
@@ -316,56 +360,75 @@ export const blogPosts: BlogPost[] = [
     slug: "expiration-dates-visit-limits",
     title: "How Expiration Dates and Visit Limits Work",
     date: "2026-05-10",
+    updated: "2026-11-01",
     excerpt:
-      "Set it and forget it — expiration dates and visit limits give you full control over your links, even after you've shared them.",
+      "An expiration date stops a link at a set time, a visit limit after a number of clicks. How each works on hrva.cc, what visitors see afterwards, and how to get a reminder.",
     author: "Karlo Hrvačić",
     tags: ["features", "expiration", "control"],
     content: `
       <p class="lead">
-        Once you share a link, you lose control — unless you use a URL shortener with expiration dates and visit limits. 
-        Here's how they work and why you'd use each one.
+        A shared link keeps working until something stops it. An expiration date and a visit limit are two ways to
+        stop it on purpose. Both come with a free account, and you set them when you make the link.
       </p>
 
-      <h2>Expiration Dates</h2>
+      <h2>Expiration dates</h2>
       <p>
-        An expiration date tells a short URL to stop working at a specific time. When someone visits an expired link, 
-        they won't be redirected — the link simply doesn't work anymore. This is perfect for:
+        An expiration date is the date and time a link stops working. The form takes your local time, and hrva.cc
+        stores it in UTC. The date is checked on every click, so the link never opens after it; a visitor sees
+        "This link has expired." It suits:
       </p>
       <ul>
-        <li><strong>Time-sensitive promotions</strong> — "Sale ends Friday" links that auto-disable</li>
-        <li><strong>Event links</strong> — conference registrations, webinar access links</li>
-        <li><strong>Shared documents</strong> — contracts or proposals with a viewing window</li>
-        <li><strong>Temporary access</strong> — any link that should self-destruct after a date</li>
+        <li>a sale or an offer that ends on a known day</li>
+        <li>a registration link that should close with the event</li>
+        <li>a document shared for a review with a deadline</li>
       </ul>
-
-      <h2>Visit Limits</h2>
       <p>
-        A visit limit sets a maximum number of clicks. Once that number is reached, the link deactivates. 
-        This is different from an expiration date — a link with a visit limit of 100 could last a day or a year, 
-        depending on how popular it is.
+        Through the API, a date without a time zone is read as UTC (<a href="/developers#dates">dates in the API</a>).
+      </p>
+
+      <h2>Visit limits</h2>
+      <p>
+        A visit limit is the number of clicks a link allows. Every click counts, repeat clicks from the same person
+        included. Bots, link previews and HEAD requests from link checkers don't. Each click is counted before the
+        visitor is sent on, so clicks at the same moment can't go past the limit. The click that reaches the limit is
+        the last one to open the link; after it, visitors see "This link has reached its visit limit."
       </p>
       <p>
-        Visit limits are great for:
+        Your dashboard shows how many clicks have counted, for example "3 of 5 clicks used". The Visits number counts
+        unique visitors per day, so it can be lower. A visit limit suits:
       </p>
       <ul>
-        <li>Exclusive content that should only be accessed a fixed number of times</li>
-        <li>Exhaustive A/B testing where you need exactly N visits per variant</li>
-        <li>API rate limiting where a key should only make a set number of calls</li>
+        <li>a download meant for a set number of people</li>
+        <li>a coupon or an invitation that should work a set number of times</li>
       </ul>
-
-      <h2>Combined: Maximum Control</h2>
       <p>
-        You can set both an expiration date and a visit limit on the same link. The link deactivates as soon as 
-        <em>either</em> condition is met — whichever comes first. This gives you the ultimate control: "This link 
-        works at most 500 times, and never after December 31st."
+        <a href="/help/links#visit-limits">Visit limits</a> in the help has the details.
       </p>
 
-      <h2>How hrva.cc Handles Expired Links</h2>
+      <h2>Both on one link</h2>
       <p>
-        Expired and deactivated links are checked every minute by our background scheduler. The moment a link 
-        passes its expiration date or hits its visit limit, it's automatically deactivated. The system also 
-        sends you an email notification if you have expiring links coming up in the next 24 hours — so you 
-        can extend them before they die.
+        A link can have both, and it stops at whichever comes first: "works at most 500 times, and never after
+        December 31".
+      </p>
+
+      <h2>What visitors see</h2>
+      <p>
+        An expired or used-up link answers with a short hrva.cc page that says why, with the status
+        <code>410 Gone</code> and a link to report it. It never sends the visitor on to the destination.
+      </p>
+
+      <h2>Reminders</h2>
+      <p>
+        Turn on <strong>Expiry reminders</strong> in Settings to get an email a day before one of your links expires.
+        Like every notification, it stays off until you turn it on
+        (<a href="/help/notifications#what-you-can-get">notifications</a>).
+      </p>
+
+      <h2>Links made without an account</h2>
+      <p>
+        hrva.cc can give links made without an account an end date or a visit limit. When it does, the form says so,
+        and the limits can't be changed there
+        (<a href="/help/links-without-an-account#limits">limits for links without an account</a>).
       </p>
     `,
   },
@@ -373,60 +436,69 @@ export const blogPosts: BlogPost[] = [
     slug: "url-shortening-best-practices-2026",
     title: "URL Shortening Best Practices for 2026",
     date: "2026-05-08",
+    updated: "2026-11-01",
     excerpt:
-      "URL shorteners are everywhere — but not all short links are created equal. Follow these best practices to keep your links trustworthy, trackable, and effective.",
+      "Seven habits that make short links easier to trust, to measure and to keep working: readable aliases, an end for time-bound links, UTM tags, reading stats right, destination checks, dead-link alerts and a tidy dashboard.",
     author: "Karlo Hrvačić",
     tags: ["best practices", "tips", "SEO"],
     content: `
       <p class="lead">
-        A short link is more than a convenience — it's a trust signal. Follow these best practices to make your 
-        short URLs work harder for you.
+        A short link hides its destination, so people decide whether to trust it from the link itself and from where
+        they found it. These practices make short links easier to trust, to measure and to keep working.
       </p>
 
-      <h2>1. Use Custom Aliases When It Matters</h2>
+      <h2>1. Use a readable alias for public links</h2>
       <p>
-        Auto-generated short codes are fine for internal use, but for public-facing links — social media, 
-        marketing campaigns, print materials — use a custom alias. A link like <code>hrva.cc/summer-sale</code> 
-        is more memorable and trustworthy than <code>hrva.cc/x7K9m</code>.
-      </p>
-      <p>
-        Custom aliases also give your audience a hint about where the link leads before they click. This 
-        transparency builds trust and improves click-through rates.
+        A random alias is fine for a link you send to one person. For a poster, a slide or a social post, choose your
+        own: <code>hrva.cc/summer-sale</code> says more than <code>hrva.cc/x7Kp9</code> and is easier to type.
+        Aliases are case-sensitive, so <code>hrva.cc/Sale</code> and <code>hrva.cc/sale</code> are different links;
+        lower case is easier to read out. Custom aliases come with a free account.
       </p>
 
-      <h2>2. Always Set Expiration for Time-Sensitive Content</h2>
+      <h2>2. Give time-bound links an end</h2>
       <p>
-        If your link is tied to an event, promotion, or deadline, set an expiration date. This prevents 
-        stale links from circulating after they're no longer relevant. A link to last year's conference 
-        that still redirects is a bad experience for everyone.
+        A link to an event, an offer or a form with a deadline should stop when it's over. Set an expiration date or
+        a visit limit when you make it (<a href="/blog/expiration-dates-visit-limits">how they work</a>). Visitors then
+        see that the link has expired instead of an outdated page.
       </p>
 
-      <h2>3. Monitor Your Link Analytics</h2>
+      <h2>3. Tag campaigns at the destination</h2>
       <p>
-        Don't share and forget. Check your analytics dashboard to see which links are performing and which aren't. 
-        If a link has zero visits after a week, maybe it's not reaching the right audience. If another link 
-        has thousands of visits and is close to its limit, you might want to create a replacement.
+        Put a campaign's UTM tags on the destination, so your analytics tool sees where visitors came from. The
+        <a href="/utm">UTM builder</a> adds them and can shorten the result. For a one-off parameter, add it to the
+        short link instead: hrva.cc passes a short link's query string on to the destination, and the destination's
+        own value wins a clash (<a href="/help/links#query-strings">query strings</a>).
       </p>
 
-      <h2>4. Choose a Safe Shortener</h2>
+      <h2>4. Read the stats before acting on them</h2>
       <p>
-        Not all URL shorteners check destination URLs for malware. Using a shortener without Safe Browsing 
-        protection can expose your audience to phishing or malware sites. hrva.cc checks every URL against 
-        Google Safe Browsing before shortening — and rechecks active links daily.
+        Clicks count every open, unique visitors count each person once per link per day, and bots and link previews
+        are kept apart. A link posted in a busy chat can show bot clicks before any person opens it.
+        <a href="/blog/link-analytics-guide">The link analytics guide</a> explains each number.
       </p>
 
-      <h2>5. Keep Your Dashboard Organized</h2>
+      <h2>5. Use a shortener that checks destinations</h2>
       <p>
-        With dozens or hundreds of short links, organization matters. Use the search and filter features to 
-        find links by keyword, status, or date range. The hrva.cc dashboard supports all of these — no more 
-        scrolling through endless rows to find the link you need.
+        A shortener that doesn't check where links go can be used to hide phishing and malware. hrva.cc checks every
+        destination when the link is made and again while it is active, checks every click against blocklists, and
+        refuses links to other shorteners. The <a href="/security">security page</a> lists the checks. When you get a
+        hrva.cc link and aren't sure about it, <a href="/validate">Check a link</a> shows where it goes without
+        opening it.
       </p>
 
-      <h2>6. Plan for Link Rot</h2>
+      <h2>6. Watch for dead destinations</h2>
       <p>
-        Links die. Services shut down, pages move, domains expire. Use a URL shortener that lets you update 
-        the destination of an existing short link. hrva.cc supports this — so if your long URL changes, 
-        your short link still works.
+        Pages move and sites close. hrva.cc checks whether each active link's destination still answers, and your
+        dashboard marks a link whose destination looks dead. You can also get an email or a chat alert when that
+        happens (<a href="/help/notifications#dead-links">dead links</a>). You can't change where a hrva.cc link goes
+        once it's made, so when a page moves, make a new link and replace the old one where you shared it.
+      </p>
+
+      <h2>7. Keep the dashboard tidy</h2>
+      <p>
+        Your links page can be searched, filtered by status or tag, narrowed to expired links, and sorted by visits,
+        creation date or expiry date, with 10 to 100 links per page. Turn off the links you no longer need, or delete
+        them; deleting a link also deletes its stats.
       </p>
     `,
   },

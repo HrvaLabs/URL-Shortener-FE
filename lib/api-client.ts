@@ -154,6 +154,26 @@ async function request<T>(
 }
 
 // Auth
+async function download(path: string): Promise<Response> {
+  const token = localStorage.getItem(TOKEN_KEY)
+  let response: Response
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, { headers: token ? { Authorization: token } : {} })
+  } catch {
+    throw new ApiError(CANT_REACH, 0)
+  }
+
+  if (!response.ok) {
+    const errorBody = await readBody(response).catch(() => undefined)
+    const message = errorMessage(errorBody, response.status)
+    endedSession(token, response.status, message)
+    throw new ApiError(message, response.status, validationFields(errorBody))
+  }
+
+  keepRenewedToken(token, response)
+  return response
+}
+
 export const authApi = {
   login: (data: { email: string; password: string; rememberMe?: boolean }) =>
     request<LoginResponse>("POST", "/auth/login", data),
@@ -279,12 +299,7 @@ export const urlApi = {
   delete: (id: number) =>
     request<void>("DELETE", `/urls/${id}`),
   exportCsv: async () => {
-    const baseUrl = getApiBaseUrl()
-    const token = localStorage.getItem("auth-token")
-    const response = await fetch(`${baseUrl}/urls/export`, {
-      headers: token ? { "Authorization": token } : {},
-    })
-    if (!response.ok) throw new Error("Failed to export")
+    const response = await download("/urls/export")
     const blob = await response.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -349,12 +364,7 @@ export const userApi = {
     return answer
   },
   exportMyData: async () => {
-    const baseUrl = getApiBaseUrl()
-    const token = localStorage.getItem("auth-token")
-    const response = await fetch(`${baseUrl}/users/me/export`, {
-      headers: token ? { "Authorization": token } : {},
-    })
-    if (!response.ok) throw new Error("Failed to export data")
+    const response = await download("/users/me/export")
     const data = await response.json()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
     const url = URL.createObjectURL(blob)
@@ -491,12 +501,7 @@ export const adminApi = {
   checkUrl: (url: string) =>
     request<UrlCheckResult>("POST", "/admin/url-check", { url }),
   exportUrlsCsv: async () => {
-    const baseUrl = getApiBaseUrl()
-    const token = localStorage.getItem("auth-token")
-    const response = await fetch(`${baseUrl}/admin/urls/export`, {
-      headers: token ? { "Authorization": token } : {},
-    })
-    if (!response.ok) throw new Error("Failed to export")
+    const response = await download("/admin/urls/export")
     const blob = await response.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")

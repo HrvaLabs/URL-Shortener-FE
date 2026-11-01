@@ -131,7 +131,7 @@ export default function DevelopersPage() {
       lead={
         <p>
           The API is free: create a key on your <Link href="/dashboard/api-keys" className="text-brand-link">API keys</Link>{" "}
-          page and send it in the <InlineCode>X-Api-Key</InlineCode> header. Links made over the API land in your
+          page and send it in the <InlineCode>X-Api-Key</InlineCode> header, or as <InlineCode>Authorization: Bearer</InlineCode>. Links made over the API land in your
           dashboard like any other, with the same analytics and safety checks.
         </p>
       }
@@ -151,6 +151,10 @@ export default function DevelopersPage() {
           </li>
           <li>
             Send a <InlineCode>POST</InlineCode> to <InlineCode wrap>{endpoint}</InlineCode> with the key and a JSON body.
+            The key goes in <InlineCode>X-Api-Key: hrva_…</InlineCode> or, for tools that only send bearer tokens, in{" "}
+            <InlineCode wrap>Authorization: Bearer hrva_…</InlineCode>. A bearer value that starts with{" "}
+            <InlineCode>hrva_</InlineCode> is read as a key, anything else as a sign-in. Send one key; two different ones
+            are refused with a <InlineCode>400</InlineCode>.
           </li>
         </ol>
         <CodeBlock label="curl" code={curlExample} copyLabel="curl example" prompt />

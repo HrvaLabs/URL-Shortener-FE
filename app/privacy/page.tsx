@@ -454,7 +454,15 @@ export default function PrivacyPage() {
                 of the tools it uses (short links, link lists and visit stats). It is not our
                 processor; it handles that data under its own terms.
               </p>
-              <p>Donations go through Revolut or PayPal on their own sites; hrva.cc receives nothing about them.</p>
+              <h3 id="donations">Donations</h3>
+              <p>
+                The Revolut and PayPal buttons under Support hrva.cc on the <Link href="/about#support">About page</Link> are
+                hrva.cc short links. Opening one is counted like any other short link visit (see
+                Link statistics above), then your browser goes to Revolut or PayPal and you are on their
+                site. hrva.cc sends them nothing beyond that redirect, and it receives nothing about a
+                donation. Each company&apos;s own terms apply there: the <a href="https://www.revolut.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Revolut Privacy Policy</a> and
+                the <a href="https://www.paypal.com/legalhub/paypal/privacy-full" target="_blank" rel="noopener noreferrer">PayPal Privacy Statement</a>.
+              </p>
 
               <h2>How long we keep data</h2>
               <ul>

@@ -90,8 +90,8 @@ const errors = [
   { status: "403", text: "You're signed in, but the account isn't allowed to do this." },
   { status: "404", text: "The API key or the link doesn't exist." },
   { status: "409", text: "The custom alias is already taken, or a link that used all its clicks is turned back on before its visit limit is raised." },
-  { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds to wait at most." },
-  { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds to wait, and detail says how many minutes." },
+  { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds are left until the limit resets." },
+  { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds are left in the hour, and detail says how many minutes." },
   { status: "503", text: "hrva.cc can't check its limits for a moment, so it doesn't make a link without an account or check a link password. Try again after the seconds in Retry-After. Creates with an API key or a signed-in account go on." },
 ]
 
@@ -235,7 +235,7 @@ export default function DevelopersPage() {
           </li>
         </ul>
         <p>
-          A refused request also has a <code>Retry-After</code> header with the seconds to wait, and a problem details
+          A refused request also has a <code>Retry-After</code> header with the seconds left until the limit resets, and a problem details
           body whose <code>detail</code> is{" "}
           <code className="[overflow-wrap:anywhere]">This API key made too many requests. Try again in 12 minutes.</code>.
         </p>
@@ -244,7 +244,7 @@ export default function DevelopersPage() {
           the message under Errors. Your <Link href="/dashboard/api-keys">API keys</Link> page shows how many requests each
           key has made, when it was last used and when it expires. A key that is expired or revoked is refused with a{" "}
           <code>detail</code> message. Revoking is final: a revoked or expired key can&apos;t be turned back on or
-          given a new expiry (<code>PUT</code> answers <code>409</code>), only deleted, so make a new key instead. Every <code>429</code> has a <code>Retry-After</code> header in seconds. Changing your
+          given a new expiry (<code>PUT</code> answers <code>409</code>), only deleted, so make a new key instead. Every <code>429</code> has a <code>Retry-After</code> header with the seconds left until the limit resets. Changing your
           password or signing out everywhere doesn&apos;t touch your keys.
         </p>
 

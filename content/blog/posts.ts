@@ -1091,174 +1091,218 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "angular-to-react-rewrite",
-    title: "Rewriting an Angular App to React Without Stopping Development",
-    shortTitle: "Rewriting an Angular App in React",
+    title: "Rewriting an Angular App in React and Next.js",
     date: "2026-05-20",
-    excerpt: "How we migrated from Angular 14 to Next.js 16 while keeping the live app running — and the lessons we learned about incremental rewrites.",
+    updated: "2026-11-01",
+    excerpt:
+      "hrva.cc's web app was an Angular 14 app until May 2026. What it was, what the Next.js rewrite replaced, how it shipped alongside a reworked API, and what has changed since.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "rewrite", "react", "nextjs", "angular"],
     content: `
       <p class="lead">
-        Rewriting a production frontend is risky. Users don't care about your tech stack — they care 
-        that the site works. Here's how we migrated from Angular 14 to Next.js 16 without downtime 
-        and without slowing down feature development.
+        From 2022 to May 2026, the web app at app.hrva.cc was written in Angular. In May 2026 it was rewritten in
+        React with Next.js. This post covers what the old app was, what replaced it, and how the change shipped. Every
+        date here comes from the
+        <a href="https://github.com/HrvaLabs/URL-Shortener-FE" target="_blank" rel="noopener noreferrer">web app's repository</a>.
       </p>
 
-      <h2>Why Rewrite</h2>
+      <h2>The Angular app</h2>
       <p>
-        The original hrva.cc frontend was built in Angular 14 with Material Design components. It worked, 
-        but the development velocity was slowing down. Adding new features required navigating Angular's 
-        module system, dependency injection, and RxJS streams. The rewrite aimed for React's simpler mental 
-        model, Next.js's server-side rendering for SEO, and the broader ecosystem of React components.
+        The repository started in February 2022. By 2026 the app ran on Angular 14 with Angular Material components
+        and RxJS, and its last change before the rewrite was in May 2024. It was built with <code>ng build</code>
+        into a folder of static files served at app.hrva.cc, and it talked to the API at hrva.cc.
       </p>
 
-      <h2>The Dual-Deploy Strategy</h2>
+      <h2>Why rewrite</h2>
       <p>
-        We deployed the new React frontend to <code>app.hrva.cc</code> while the old Angular app 
-        remained at the root domain. During the transition period, both apps were live. The backend 
-        API served both — the API was already versioned, so both frontends could coexist. Users 
-        who found the new app at <code>app.hrva.cc</code> could use it immediately, while existing 
-        bookmarks to the root domain still worked.
+        The rewrite started with a design document dated May 13, 2026. It gives the reason in one line: the Angular
+        app "is fully functional but uses outdated tooling". The document then listed every route the new app needed
+        and every API call it had to make.
       </p>
 
-      <h2>What We Kept</h2>
+      <h2>What replaced what</h2>
+      <ul>
+        <li>Angular and its modules became Next.js with the App Router and React.</li>
+        <li>Angular Material became Radix UI primitives styled with Tailwind CSS.</li>
+        <li>RxJS services for server data became TanStack Query.</li>
+        <li>Forms moved to React Hook Form with Zod schemas.</li>
+        <li>
+          Static files became a Cloudflare Worker built with OpenNext, and public pages are prerendered when the
+          site is built.
+        </li>
+      </ul>
+
+      <h2>How it shipped</h2>
       <p>
-        The backend API stayed unchanged during the rewrite (it was already well-designed with 
-        RESTful endpoints). The data model, authentication flow, and business logic were identical. 
-        The rewrite was purely a frontend concern — the backend didn't know or care whether Angular 
-        or React was talking to it.
+        The new app landed in one commit on May 13, 2026, the Cloudflare Workers build was added the next day, and
+        the Angular files were removed on May 16. The API changed in the same week: its build moved from Gradle to
+        Maven on May 13, and on May 16 its endpoints moved to plural resource paths, such as
+        <code>/api/v1/urls/{short}/peek</code> instead of <code>/api/v1/url/peek/{short}</code>. The web app has
+        stayed at the same address, app.hrva.cc, and short links have stayed on hrva.cc.
       </p>
 
-      <h2>What We Redid</h2>
+      <h2>What changed since</h2>
       <p>
-        The entire UI was rebuilt from scratch with a new design system — glassmorphism cards, amber 
-        accent colors, dark theme by default, responsive layout. We replaced Angular Material with 
-        Radix UI primitives and Tailwind CSS. The state management went from RxJS to TanStack Query. 
-        The build system went from Angular CLI to Next.js with TurboPack.
-      </p>
-
-      <h2>The Switch</h2>
-      <p>
-        After a month of parallel operation, we switched the root domain's DNS to point to the new 
-        frontend. The old Angular app was decommissioned. The entire migration took 3 months from 
-        decision to completion, with zero user-facing downtime. The key lesson: a gradual, 
-        coexistence-based migration is less dramatic than a big-bang rewrite, and it's safer.
+        Bio pages, custom domains, notifications, passkeys, the MCP connector and this blog were all built on the
+        rewrite. Since then the app has moved to Tailwind CSS 4, and it now sends a
+        content security policy with every page and reloads once when an open tab can't load a file from an older
+        build. It has been open source under the GPL-3.0 licence since October 2026.
+        <a href="/blog/how-we-built-it">How hrva.cc is built</a> describes the whole stack as it is today.
       </p>
     `,
   },
   {
     slug: "designing-url-shortener-ui",
-    title: "Designing a URL Shortener UI That Works for Everyone",
-    shortTitle: "Designing a URL Shortener UI for Everyone",
+    title: "Designing a URL Shortener UI for Visitors and Account Holders",
+    shortTitle: "Designing a URL Shortener UI",
     date: "2026-05-21",
-    excerpt: "The design decisions behind hrva.cc's interface — why we removed the advanced options toggle, how we upsell without being pushy, and what we learned from user behavior.",
+    updated: "2026-11-01",
+    excerpt:
+      "How hrva.cc's interface serves someone who wants one short link and someone who manages many: one form that grows with an account, what the result shows, and how the links page is built.",
     author: "Karlo Hrvačić",
     tags: ["design", "ux", "ui", "product"],
     content: `
       <p class="lead">
-        A URL shortener has two very different user types: the visitor who wants to shorten one link 
-        quickly, and the power user who needs custom aliases, visit limits, and analytics. The UI 
-        must serve both without confusing either. Here's how we designed for that.
+        A URL shortener has two kinds of user: someone who wants one short link now, and someone who makes links
+        every week and wants aliases, limits and stats. hrva.cc gives both the same form and lets it grow with an
+        account. This post covers how that works and the decisions behind it.
       </p>
 
-      <h2>The Anonymous Flow: Paste, Shorten, Done</h2>
+      <h2>Without an account: one field, one button</h2>
       <p>
-        The landing page's hero section is deliberately minimal: a URL input field and a "Shorten" 
-        button. No account required, no options to configure, no friction. The user pastes a URL, 
-        clicks Shorten, and gets their short link instantly. This is the path that 80% of visitors take.
+        The home page opens with an address field and a <strong>Shorten</strong> button. Under them, one line says no
+        account is needed and what signing up adds: custom aliases, visit limits, expiry dates and analytics. The
+        form doesn't show those fields to a visitor without an account, since only an account can use them.
+      </p>
+      <p>
+        When hrva.cc sets an end date or a visit limit for links made without an account, a line under the form says
+        so before you shorten. When making links without an account is paused, a notice says so above the form, and
+        the field and button stay visible but can't be used.
       </p>
 
-      <h2>What We Removed</h2>
+      <h2>The human check stays out of the way</h2>
       <p>
-        The original design had a "Show advanced options" toggle that revealed custom alias, visit 
-        limit, and expiration date fields. We removed it from the anonymous flow because those 
-        features don't work for unauthenticated users — the backend clears them. Showing options 
-        that silently do nothing is worse than not showing them at all. Instead, after a visitor 
-        shortens a link, we show a subtle upsell: "Create a free account to set custom aliases, 
-        visit limits, and track analytics."
+        When the human check is on, it starts only once you focus or type in the form, never when the page opens.
+        Usually you see nothing; sometimes a box to tick appears under the field.
       </p>
 
-      <h2>The Logged-In Flow: Power Tools Visible</h2>
+      <h2>The result</h2>
       <p>
-        When a user logs in, the same form changes. Custom alias, visit limit, and expiration date 
-        fields are always visible — no toggle needed. The user is already authenticated and intentional; 
-        hiding power features behind an accordion only adds friction. The form has a clear separation 
-        with a "Optional settings" label and a subtle border above the advanced fields.
+        After shortening, the result shows the short link and the full destination, wrapped rather than cut off, with
+        a <strong>Copy</strong> button and a button that opens the destination. Keyboard focus moves to
+        <strong>Copy</strong>, so the next key press can copy the link. On wider screens a QR code is shown next to
+        it. For a link made without an account, a note says when it stops working, if hrva.cc set an end, and
+        whether it opens a warning page first.
       </p>
 
-      <h2>The Dashboard</h2>
+      <h2>With an account: the same form, more fields</h2>
       <p>
-        The dashboard shows all URLs in a sortable, filterable, paginated table. Users can search by 
-        keyword, filter by status (active/inactive), and check "Expired only" to see links past their 
-        expiration date. Each row has quick actions: copy URL, open destination, generate QR code, 
-        view analytics, deactivate, and delete. The pagination always shows the total element count 
-        and page size selector.
+        Signed in, the home page shows the same form with its options always visible: a custom alias (with a
+        custom domain picker if you have one), a visit limit with the hint "Every click counts, not counting bots.",
+        and an expiry date. Campaign (UTM) tags sit in a section below that you can open. Your six newest links are
+        listed beside the form, or under it on narrow screens.
       </p>
 
-      <h2>What We Learned</h2>
+      <h2>The links page</h2>
       <p>
-        The toggle pattern assumed users would discover advanced options and use them. In practice, 
-        anonymous visitors who want a quick short link don't explore hidden sections — they paste 
-        and click Shorten. Showing options that don't work for their current auth state added 
-        confusion without benefit. The upsell card after shortening is more transparent: it tells 
-        them exactly what they'd get by creating an account, right when they've just experienced 
-        the core value of the tool.
+        The dashboard lists every link in a table you can search, filter by status or tag, narrow to expired links,
+        and sort by visits, creation date or expiry date, with 10 to 100 links per page. Each row shows the short link,
+        "3 of 5 clicks used" when it has a visit limit, and a badge when the destination looks dead; on wider screens
+        it also shows the destination in full and the link's tags. Its actions are copy, view stats, open the destination, show the QR code, turn off or
+        back on, and delete.
+      </p>
+      <p>
+        Sortable column headers tell screen readers which way they are sorted, and actions that can't be undone, such
+        as deleting a link, ask first.
+      </p>
+
+      <h2>What changed since May</h2>
+      <p>
+        The first version of the rewrite had a "Show advanced options" toggle on the home page that revealed alias,
+        visit limit and expiry fields even to visitors without an account. It was removed in May 2026, three days
+        after the rewrite landed, in favour of the layout above.
+        <a href="/blog/angular-to-react-rewrite">Rewriting an Angular app in React and Next.js</a> covers the rewrite
+        itself.
       </p>
     `,
   },
   {
     slug: "open-source-url-shortener",
-    title: "Open Sourcing a URL Shortener: What We Learned",
+    title: "Open Source URL Shortener: What's Public and How to Run It",
     date: "2026-05-21",
-    excerpt: "Why we made hrva.cc open source, what the community taught us, and the surprising number of people who want to self-host their link infrastructure.",
+    updated: "2026-11-01",
+    excerpt:
+      "Both parts of hrva.cc are open source under the GPL-3.0 licence. What's in the two repositories, what the licence allows, how the code is checked in public, and what running your own copy takes.",
     author: "Karlo Hrvačić",
     tags: ["open source", "community", "self-hosting", "business"],
     content: `
       <p class="lead">
-        hrva.cc is open source — the entire codebase is on GitHub under an MIT license. Here's why we 
-        did it, what we got out of it, and what surprised us about running an open source URL shortener.
+        hrva.cc is open source: the API and the web app are public on GitHub under the GPL-3.0 licence. This post
+        covers what's in the two repositories, what the licence allows, what being public lets you check, and what
+        running your own copy takes.
       </p>
 
-      <h2>Why Open Source?</h2>
+      <h2>The two repositories</h2>
+      <ul>
+        <li>
+          <a href="https://github.com/HrvaLabs/url-shortener" target="_blank" rel="noopener noreferrer">The API</a>:
+          Java 25 and Spring Boot 4.1, with PostgreSQL (changed through Liquibase migrations) and Redis. It serves
+          the short links themselves, the REST API and the MCP connector. It has been under GPL-3.0 since May 2024.
+        </li>
+        <li>
+          <a href="https://github.com/HrvaLabs/URL-Shortener-FE" target="_blank" rel="noopener noreferrer">The web app</a>:
+          Next.js 16 and React 19, deployed on Cloudflare Workers. It is everything at app.hrva.cc, this blog
+          included. It has been under GPL-3.0 since October 2026.
+        </li>
+      </ul>
+
+      <h2>What the licence allows</h2>
       <p>
-        The decision was practical, not ideological. URL shorteners are a commodity — there are hundreds 
-        of them. Making the code open source differentiates hrva.cc from closed competitors. It signals 
-        transparency (you can see exactly how your data is handled), trust (you can audit the security 
-        code), and longevity (if hrva.cc ever shuts down, the code doesn't disappear).
+        GPL-3.0 lets anyone run, study, change and share the code. Whoever distributes a changed version has to share
+        its source under the same licence. The full terms are in each repository's <code>LICENSE</code> file.
       </p>
 
-      <h2>The Surprise: Self-Hosting Demand</h2>
+      <h2>What you can check</h2>
       <p>
-        The most unexpected outcome was the number of people who want to self-host. Companies with 
-        compliance requirements (GDPR, SOC2, internal data policies) prefer to run their own instance 
-        rather than trust a third-party service. Universities want to provide link shorteners for their 
-        students. Developers want to experiment with the architecture. The Docker image with 
-        multi-arch support (amd64 + arm64) was a direct response to this demand.
+        The privacy policy and the <a href="/security">security page</a> describe what hrva.cc does with data and
+        what it checks; with the code public, those statements can be compared with the code.
+        <a href="/privacy-first-url-shortener#check-it">URL shortener without tracking</a> links straight to the
+        lines that hash visitors for the unique-visitor count. The <a href="/changelog">changelog</a> lists every
+        user-facing change, and it lives in the API's repository next to the code it describes.
       </p>
 
-      <h2>What Open Source Changed</h2>
+      <h2>How the code is checked</h2>
+      <ul>
+        <li>The API is built and tested with Maven on every push and pull request to <code>main</code>.</li>
+        <li>The web app is type-checked, linted, checked and built on every push and pull request.</li>
+        <li>GitHub CodeQL scans both repositories on every change and every week.</li>
+        <li>Dependabot proposes dependency updates for both, and OSV-Scanner checks the API's dependencies for known
+        vulnerabilities.</li>
+      </ul>
+
+      <h2>Running your own copy</h2>
       <p>
-        Publishing the code improved the project in unexpected ways. Knowing that strangers will read 
-        the code made us write better code — cleaner interfaces, better documentation (in the form of 
-        clear naming and structure), and more thorough tests. The test suite grew significantly as we 
-        added coverage for edge cases we wouldn't have bothered with internally.
+        The API's README has the short version: start PostgreSQL and Redis with the Docker Compose file in
+        <code>docker/</code>, then run the app with Maven and the <code>local</code> profile. A push to
+        <code>main</code> also builds a Docker image for amd64 and arm64. For production, the README lists what the
+        API needs:
+      </p>
+      <ul>
+        <li>PostgreSQL 15 or newer and Redis 6.2 or newer</li>
+        <li>two keys it won't start without: one that signs MCP access tokens and one that encrypts notification channels</li>
+        <li>an origin that accepts traffic only from Cloudflare, because the per-network rate limits and country counts read Cloudflare's headers</li>
+      </ul>
+      <p>
+        The human check and custom domains need Cloudflare keys of their own; without them the API still starts, with
+        no human check and no custom domain approvals. The web app deploys to Cloudflare Workers with
+        <code>npm run deploy</code>.
       </p>
 
-      <h2>What We Didn't Expect</h2>
+      <h2>Questions and reports</h2>
       <p>
-        The hardest part of open source is not the code — it's the issue triage. Setting up issue 
-        templates, responding to questions, reviewing contributions, and deciding what to accept 
-        takes more time than writing the code itself. We learned to be clear about what we will 
-        and won't accept: bug fixes and small features yes, major architectural changes no 
-        (unless they align with the roadmap).
-      </p>
-
-      <h2>Would We Do It Again?</h2>
-      <p>
-        Absolutely. The open source version drives adoption that the hosted version alone wouldn't get. 
-        People find hrva.cc through GitHub, try the hosted version, and some become paying API users. 
-        The self-hosters would never have used a closed-source shortener anyway — they're not lost 
-        revenue, they're free marketing.
+        Questions, bugs and feature requests go to GitHub issues. Security problems don't belong in a public issue:
+        write to <a href="mailto:abuse@hrva.cc">abuse@hrva.cc</a>, as the
+        <a href="/security#report">security page</a> describes.
       </p>
     `,
   },

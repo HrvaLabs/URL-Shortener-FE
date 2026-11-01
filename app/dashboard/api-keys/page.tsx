@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useRef, useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { useMyApiKeys, useMyInactiveApiKeys, useGenerateApiKey, useRevokeApiKey, useUpdateApiKey, useDeleteApiKey, useDeleteInactiveApiKeys } from "@/lib/hooks/useApiKeys"
 import { useClampedPage } from "@/lib/hooks/usePagination"
 import { ApiError } from "@/lib/api-client"
@@ -13,12 +13,12 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Copy, Check, Plus, ShieldAlert, Pencil, Trash2, Eye, EyeOff, ChevronRight } from "lucide-react"
+import { Copy, Check, Plus, ShieldAlert, Pencil, Trash2, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
-import { cn, focusTargetAfterRemoving, formatDate, maskApiKey } from "@/lib/utils"
+import { cn, focusTargetAfterRemoving, formatDate } from "@/lib/utils"
 import { PageMeta } from "@/components/page-meta"
 import { ApiKeyExpiryField } from "@/components/api-key-expiry"
-import { DEFAULT_EXPIRY_CHOICE, dateInputValue, expiryChange, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
+import { DEFAULT_EXPIRY_CHOICE, dateInputValue, expiryChange, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
 import { parseServerDateTime } from "@/lib/analytics"
 
 const keysLabel = (count: number) => (count === 1 ? "1 key" : `${count} keys`)
@@ -71,24 +71,26 @@ export default function ApiKeysPage() {
   const [expiryError, setExpiryError] = useState<string | null>(null)
   const [editKey, setEditKey] = useState<ApiKeyResponse | null>(null)
   const [newKeyCopied, setNewKeyCopied] = useState(false)
-  const [visibleKeys, setVisibleKeys] = useState<Set<number>>(new Set())
-  const [copiedKeyId, setCopiedKeyId] = useState<number | null>(null)
+  const copyButtonRef = useRef<HTMLButtonElement>(null)
 
-  const toggleKeyVisibility = (id: number) => {
-    setVisibleKeys((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  useEffect(() => {
+    if (newKey) copyButtonRef.current?.focus()
+  }, [newKey])
+
+  const closeGenerate = () => {
+    setShowGenerate(false)
+    setNewKey(null)
+    setNewKeyCopied(false)
+    generateKey.reset()
   }
 
-  const copyKeyToClipboard = async (key: string, id: number) => {
+  const copyNewKey = async () => {
+    if (!newKey) return
     try {
-      await navigator.clipboard.writeText(key)
-      setCopiedKeyId(id)
-      setTimeout(() => setCopiedKeyId(null), 2000)
-      toast.success("API key copied!")
+      await navigator.clipboard.writeText(newKey)
+      setNewKeyCopied(true)
+      setTimeout(() => setNewKeyCopied(false), 2000)
+      toast.success("Copied!")
     } catch {
       toast.error("Failed to copy")
     }
@@ -133,8 +135,8 @@ export default function ApiKeysPage() {
       return
     }
     try {
-      const key = await generateKey.mutateAsync(result.change)
-      setNewKey(key.key)
+      const created = await generateKey.mutateAsync(result.change)
+      setNewKey(created.key)
       toast.success("API key generated!")
     } catch (err) {
       toast.error(errorText(err, "Failed to generate API key"))
@@ -237,51 +239,12 @@ export default function ApiKeysPage() {
     }
   }
 
-  const renderRow = (key: ApiKeyResponse) => {
-    const isVisible = visibleKeys.has(key.id)
-    const displayKey = isVisible ? key.key : maskApiKey(key.key)
-
-    return (
+  const renderRow = (key: ApiKeyResponse) => (
       <TableRow key={key.id}>
         <TableCell>
-          <div className="flex items-center gap-1">
-            <code className="mr-1 rounded-md border bg-muted/40 px-2 py-0.5 font-mono text-[13px] text-foreground">
-              {displayKey}
-            </code>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={isVisible ? "Hide key" : "Reveal key"}
-                  onClick={() => toggleKeyVisibility(key.id)}
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {isVisible ? "Hide key" : "Reveal key"}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Copy key"
-                  onClick={() => copyKeyToClipboard(key.key, key.id)}
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                  {copiedKeyId === key.id
-                    ? <Check className="h-3.5 w-3.5 text-success" />
-                    : <Copy className="h-3.5 w-3.5" />
-                  }
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Copy key</TooltipContent>
-            </Tooltip>
-          </div>
+          <code className="rounded-md border bg-muted/40 px-2 py-0.5 font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">
+            {keyPrefixText(key.keyPrefix)}
+          </code>
         </TableCell>
         <TableCell className="hidden text-sm tabular-nums text-muted-foreground md:table-cell">{formatDate(key.createDate)}</TableCell>
         <TableCell className="hidden text-sm tabular-nums lg:table-cell">{key.expirationDate ? formatDate(key.expirationDate) : <span className="text-muted-foreground">Never</span>}</TableCell>
@@ -347,8 +310,7 @@ export default function ApiKeysPage() {
           </div>
         </TableCell>
       </TableRow>
-    )
-  }
+  )
 
   return (
     <div className="space-y-6">
@@ -364,10 +326,10 @@ export default function ApiKeysPage() {
         </Button>
       </div>
 
-      <Dialog open={showGenerate} onOpenChange={(open) => { setShowGenerate(open); if (!open) setNewKey(null) }}>
-        <DialogContent>
+      <Dialog open={showGenerate} onOpenChange={(open) => { if (!open) closeGenerate() }}>
+        <DialogContent onInteractOutside={(event) => { if (newKey) event.preventDefault() }}>
           <DialogHeader>
-            <DialogTitle>{newKey ? "API Key Generated" : "Generate New API Key"}</DialogTitle>
+            <DialogTitle>{newKey ? "API key generated" : "Generate new API key"}</DialogTitle>
             {!newKey && <DialogDescription>Create a new API key for programmatic URL shortening.</DialogDescription>}
           </DialogHeader>
           {!newKey ? (
@@ -383,21 +345,16 @@ export default function ApiKeysPage() {
               <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
                 <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-warning">
                   <ShieldAlert className="h-4 w-4 shrink-0" />
-                  Copy this key now. You won&apos;t be able to see it again!
+                  Copy this key now. You won&apos;t see it again.
                 </p>
                 <div className="flex items-center justify-between gap-2 rounded-md border bg-background py-1.5 pl-3 pr-1.5">
                   <code className="min-w-0 font-mono text-xs text-foreground [overflow-wrap:anywhere]">{newKey}</code>
-                  <Button variant="ghost" size="icon" aria-label="Copy key" onClick={() => {
-                    navigator.clipboard.writeText(newKey)
-                    setNewKeyCopied(true)
-                    setTimeout(() => setNewKeyCopied(false), 2000)
-                    toast.success("Copied!")
-                  }} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
+                  <Button ref={copyButtonRef} variant="ghost" size="icon" aria-label="Copy key" onClick={copyNewKey} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground">
                     {newKeyCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
-              <Button variant="outline" className="w-full" onClick={() => { setShowGenerate(false); setNewKey(null) }}>
+              <Button variant="outline" className="w-full" onClick={closeGenerate}>
                 Done
               </Button>
             </div>
@@ -411,7 +368,7 @@ export default function ApiKeysPage() {
             <DialogTitle>Edit API key</DialogTitle>
             <DialogDescription>Choose when this key stops working. It counts from today.</DialogDescription>
           </DialogHeader>
-          {editKey && <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{maskApiKey(editKey.key)}</p>}
+          {editKey && <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{keyPrefixText(editKey.keyPrefix)}</p>}
           <div className="space-y-4">
             <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => resetExpiry(choice, expiryDate)} onCustomDateChange={(date) => resetExpiry(expiryChoice, date)} />
             <Button onClick={handleEditSave} disabled={updateKey.isPending} className="w-full">
@@ -436,7 +393,7 @@ export default function ApiKeysPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {revokeTarget && (
-            <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{maskApiKey(revokeTarget.key)}</p>
+            <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{keyPrefixText(revokeTarget.keyPrefix)}</p>
           )}
           {revokeError && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{revokeError}</p>
@@ -472,7 +429,7 @@ export default function ApiKeysPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteTarget && (
-            <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{maskApiKey(deleteTarget.key)}</p>
+            <p className="font-mono text-[13px] text-foreground [overflow-wrap:anywhere]">{keyPrefixText(deleteTarget.keyPrefix)}</p>
           )}
           {deleteError && (
             <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{deleteError}</p>

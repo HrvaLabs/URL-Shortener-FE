@@ -69,11 +69,6 @@ export function plural(count: number, word: string): string {
   return `${count.toLocaleString("en-US")} ${word}${count === 1 ? "" : "s"}`
 }
 
-export function maskApiKey(key: string): string {
-  if (key.length <= 8) return key
-  return key.slice(0, 4) + "••••" + key.slice(-4)
-}
-
 const removeRowSelector = "[data-remove-row]"
 
 export function focusTargetAfterRemoving(trigger: HTMLElement | null, fallback: HTMLElement | null): HTMLElement | null {

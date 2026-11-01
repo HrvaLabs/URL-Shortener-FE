@@ -111,7 +111,9 @@ export default function DevelopersPage() {
           </li>
           <li>
             Open <Link href="/dashboard/api-keys" className="text-brand-link">API keys</Link>, generate a key and keep it
-            secret, for example in an environment variable called <InlineCode>HRVA_API_KEY</InlineCode>.
+            secret, for example in an environment variable called <InlineCode>HRVA_API_KEY</InlineCode>. A key looks like{" "}
+            <InlineCode>hrva_…</InlineCode> and is shown once, when you create it, so copy it then. hrva.cc stores only a
+            hash of it, and the page lists your keys by their first characters.
           </li>
           <li>
             Send a <InlineCode>POST</InlineCode> to <InlineCode wrap>{endpoint}</InlineCode> with the key and a JSON body.
@@ -184,7 +186,8 @@ export default function DevelopersPage() {
         <p>
           You choose this when you generate a key: 30 days, 90 days, 1 year, a date you pick, or no expiry. The{" "}
           <Link href="/dashboard/api-keys">API keys</Link> page can change it later. To make a key with a request
-          instead, send one of these in the body of <code>POST https://hrva.cc/api/v1/api-keys</code>:
+          instead, send one of these in the body of <code>POST https://hrva.cc/api/v1/api-keys</code>. The answer has the full key
+          in <code>key</code> once; later requests return only <code>keyPrefix</code>, the first characters of the key:
         </p>
         <ul>
           <li>

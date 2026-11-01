@@ -32,6 +32,7 @@ export function useGenerateApiKey() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (expiry?: ApiKeyExpiry) => apiKeyApi.generate(expiry),
+    gcTime: 0,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apiKeys"] })
     },

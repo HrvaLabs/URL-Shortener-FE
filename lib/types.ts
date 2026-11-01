@@ -88,7 +88,7 @@ export interface UrlResponse {
 
 export interface ApiKey {
   id: number
-  key: string
+  keyPrefix: string
   owner: User
   apiCallsUsed: number
   lastUsedAt: string | null
@@ -97,17 +97,24 @@ export interface ApiKey {
   active: boolean
 }
 
-/** New API response — no urls field */
+export type ApiKeyStatus = "ACTIVE" | "EXPIRED" | "REVOKED"
+
+/** What every key list and update returns. The full key is never in it: the backend keeps only a hash. */
 export interface ApiKeyResponse {
   id: number
-  key: string
+  keyPrefix: string
   apiCallsUsed: number
   lastUsedAt: string | null
   createDate: string
   expirationDate?: string
   active: boolean
-  status?: string
+  status: ApiKeyStatus
   ownerEmail?: string
+}
+
+/** The answer to creating a key, the only one that has the full key. It is shown once and not kept. */
+export interface ApiKeyCreated extends ApiKeyResponse {
+  key: string
 }
 
 export type AnalyticsRange = 7 | 30 | 90 | 365

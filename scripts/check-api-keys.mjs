@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
-const { daysFromToday, expiryChange, lastUsedText, requestsText, dateInputValue } = await import("../lib/api-keys.ts")
+const { daysFromToday, expiryChange, keyPrefixText, lastUsedText, requestsText, dateInputValue } = await import("../lib/api-keys.ts")
 
 let failures = 0
 
@@ -65,6 +65,11 @@ check("a custom date needs at least 1 day and at most 3,650", () => {
 
 check("the date input value is the local day", () => {
   assert.equal(dateInputValue(new Date(2026, 0, 5, 23, 30)), "2026-01-05")
+})
+
+check("a key is listed by its prefix and an ellipsis", () => {
+  assert.equal(keyPrefixText("hrva_GgwVPd"), "hrva_GgwVPd\u2026")
+  assert.equal(keyPrefixText("hrva_G"), "hrva_G\u2026")
 })
 
 check("usage lines", () => {

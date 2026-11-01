@@ -51,6 +51,8 @@ export function expiryChange(choice: ExpiryChoice, customDate: string, today: Da
   return { change: { expiresInDays: days } }
 }
 
+export const keyPrefixText = (keyPrefix: string): string => `${keyPrefix}\u2026`
+
 export const requestsText = (requests: number): string => plural(requests, "request")
 
 export const lastUsedText = (lastUsedAt: string | null | undefined): string =>

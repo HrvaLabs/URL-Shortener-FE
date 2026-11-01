@@ -19,9 +19,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ToggleRight, ToggleLeft, Edit, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
-import { formatDateTime, maskApiKey } from "@/lib/utils"
+import { formatDateTime } from "@/lib/utils"
 import { ApiKeyExpiryField } from "@/components/api-key-expiry"
-import { dateInputValue, expiresText, expiryChange, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
+import { dateInputValue, expiresText, expiryChange, keyPrefixText, lastUsedText, requestsText, type ExpiryChoice } from "@/lib/api-keys"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
 import { Suspense, useRef, useState, type FormEvent } from "react"
@@ -184,7 +184,7 @@ function AdminApiKeys() {
           {editKey && (
             <div className="space-y-4">
               <div className="space-y-0.5 text-[13px]">
-                <p className="font-mono text-foreground [overflow-wrap:anywhere]">{maskApiKey(editKey.key)}</p>
+                <p className="font-mono text-foreground [overflow-wrap:anywhere]">{keyPrefixText(editKey.keyPrefix)}</p>
                 <p className="text-muted-foreground [overflow-wrap:anywhere]">{editKey.ownerEmail || "No owner"}</p>
               </div>
               <ApiKeyExpiryField choice={expiryChoice} customDate={expiryDate} error={expiryError} onChoiceChange={(choice) => changeExpiry(choice, expiryDate)} onCustomDateChange={(date) => changeExpiry(expiryChoice, date)} />
@@ -212,7 +212,7 @@ function AdminApiKeys() {
           </AlertDialogHeader>
           {deleteTarget && (
             <div className="space-y-0.5 text-[13px]">
-              <p className="font-mono text-foreground [overflow-wrap:anywhere]">{maskApiKey(deleteTarget.key)}</p>
+              <p className="font-mono text-foreground [overflow-wrap:anywhere]">{keyPrefixText(deleteTarget.keyPrefix)}</p>
               <p className="text-muted-foreground [overflow-wrap:anywhere]">{deleteTarget.ownerEmail || "No owner"}</p>
             </div>
           )}
@@ -314,7 +314,7 @@ function AdminApiKeys() {
               {apiKeys.content.map((key: ApiKeyResponse) => (
                 <TableRow key={key.id}>
                   <TableCell>
-                    <span className="whitespace-nowrap font-mono text-[13px]">{maskApiKey(key.key)}</span>
+                    <span className="whitespace-nowrap font-mono text-[13px]">{keyPrefixText(key.keyPrefix)}</span>
                     <div className="mt-1 min-w-36 space-y-0.5 text-xs text-muted-foreground @min-[46rem]:hidden">
                       <div className="pb-0.5 @md:hidden">
                         <StatusBadge status={key.status} active={key.active} />

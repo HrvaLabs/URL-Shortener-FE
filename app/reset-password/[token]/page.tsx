@@ -13,7 +13,6 @@ import { Logo } from "@/components/logo"
 import { PageMeta } from "@/components/page-meta"
 
 export default function SetPasswordPage() {
-  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [passwordError, setPasswordError] = useState<string | null>(null)
@@ -31,7 +30,7 @@ export default function SetPasswordPage() {
     }
     setLoading(true)
     try {
-      await authApi.resetPassword({ token, email, password })
+      await authApi.resetPassword({ token, password })
       toast.success("Password changed successfully! Please sign in.")
       router.push("/login")
     } catch (err) {
@@ -59,13 +58,9 @@ export default function SetPasswordPage() {
         <Card className="w-full max-w-sm p-8">
           <div className="text-center">
             <h1 className="font-display text-2xl">Set new password</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">Enter your email and new password</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">Choose a new password for your account</p>
           </div>
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2" />
-            </div>
             <div>
               <Label htmlFor="password">New password</Label>
               <Input

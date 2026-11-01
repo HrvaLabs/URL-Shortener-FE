@@ -133,7 +133,7 @@ export default function PrivacyPage() {
                 names and phishing words; a hit sends the page to an admin, and the notes, any visitor
                 reports, and an admin&apos;s reason for hiding the page or taking back its handle are
                 kept with the page and deleted with it. Admin actions on a page, such as hiding it or
-                taking back its handle, are also recorded in the admin audit log (see{" "}
+                taking back its handle, are also recorded in the audit log (see{" "}
                 <a href="#security-and-audit-logs">Security and audit logs</a>). A handle an admin takes
                 back is also kept on the reserved list, with the admin&apos;s reason but without a link
                 to you, until an admin releases it.
@@ -244,9 +244,12 @@ export default function PrivacyPage() {
 
               <h3 id="security-and-audit-logs">Security and audit logs</h3>
               <p>
-                We keep internal audit logs of security-relevant events (such as logins and
-                administrative actions) to protect the service and its users. Legal basis:
-                legitimate interest (Art. 6(1)(f) GDPR).
+                We keep an audit log of administrative actions and of changes to sign-in methods
+                (turning Google or GitHub sign-in off or back on, and removing a password) to protect
+                the service and its users. Sign-ins are not in it: your account records only when you
+                last signed in, and failed sign-in attempts are kept only as short-lived counters (see{" "}
+                <a href="#retention">How long we keep data</a>). Legal basis: legitimate interest
+                (Art. 6(1)(f) GDPR).
               </p>
 
               <h3>AI connectors</h3>
@@ -464,7 +467,7 @@ export default function PrivacyPage() {
                 the <a href="https://www.paypal.com/legalhub/paypal/privacy-full" target="_blank" rel="noopener noreferrer">PayPal Privacy Statement</a>.
               </p>
 
-              <h2>How long we keep data</h2>
+              <h2 id="retention">How long we keep data</h2>
               <ul>
                 <li>
                   <strong>Unique-visitor hashes and the daily key</strong> — kept only in Redis and
@@ -496,7 +499,7 @@ export default function PrivacyPage() {
                   <strong>Bio pages</strong> — kept until you delete the page or your account; their
                   daily view counts, review notes, visitor reports and an admin&apos;s reasons go with
                   them. The audit log&apos;s record of admin actions on the page is kept as listed for
-                  the admin audit log below. An old handle is kept for 30 days after a change or deletion. A
+                  the audit log below. An old handle is kept for 30 days after a change or deletion. A
                   handle an admin takes back is also kept on the reserved list, with the admin&apos;s
                   reason but without a link to you, until an admin releases it.
                 </li>
@@ -530,7 +533,7 @@ export default function PrivacyPage() {
                   your account. Everything about your custom domains is deleted when you delete your account.
                 </li>
                 <li>
-                  <strong>Admin audit log</strong> — kept for 12 months, then deleted automatically.
+                  <strong>Audit log</strong> (admin actions and sign-in method changes) — kept for 12 months, then deleted automatically.
                 </li>
               </ul>
 

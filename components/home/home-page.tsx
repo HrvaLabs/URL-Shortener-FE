@@ -384,7 +384,8 @@ function FeatureGrid() {
                 <Link href="/utm" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
                   free UTM builder
                 </Link>
-                , no account needed.
+                , no account needed. Tags added to the short link itself, like hrva.cc/abc?utm_source=mail, are passed on
+                to the destination.
               </>
             }
           >

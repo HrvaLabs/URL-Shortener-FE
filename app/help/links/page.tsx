@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
-const description = "How random aliases, visit limits and API keys work on hrva.cc."
+const description = "How random aliases, visit limits, query strings and API keys work on hrva.cc."
 
 export const metadata: Metadata = pageMetadata({ title: "Short links and API keys", description, path: "/help/links" })
 
@@ -40,6 +40,15 @@ export default function LinksHelpPage() {
               <p>
                 Your dashboard shows how many clicks have counted, for example &quot;3 of 5 clicks used&quot;. The
                 Visits number counts unique visitors per day, so it can be lower than the clicks used.
+              </p>
+
+              <h2 id="query-strings">Query strings</h2>
+              <p>
+                A short link passes its query string on to the destination. hrva.cc/abc?ref=mail opens the
+                destination with ref=mail added after the destination&apos;s own parameters, and before its #fragment,
+                which stays. When both have a parameter with the same name, the destination&apos;s value is used.
+                hrva.cc&apos;s own qr marker, which its QR codes add, isn&apos;t passed on. Only the query is added: the
+                site the link opens never changes. A link with a password opens its destination as saved.
               </p>
 
               <h2 id="api-keys">API keys</h2>

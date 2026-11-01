@@ -5,6 +5,7 @@ import "./globals.css"
 import { Providers } from "./providers"
 import { SiteJsonLd } from "@/components/json-ld"
 import { ServiceWorker } from "@/components/service-worker"
+import { StaleChunkReload } from "@/components/stale-chunk-reload"
 import {
   AUTHOR_NAME,
   AUTHOR_URL,
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <SiteJsonLd />
         <ServiceWorker />
+        <StaleChunkReload />
       </body>
     </html>
   )

@@ -4,10 +4,12 @@ import { useEffect } from "react"
 import { ErrorFallback } from "@/components/error-fallback"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { reloadIfStaleChunkError } from "@/lib/stale-chunk"
 
 export default function ErrorPage({ error, retry }: { error: unknown; retry: () => void }) {
   useEffect(() => {
     console.error(error)
+    reloadIfStaleChunkError(error)
   }, [error])
 
   return (

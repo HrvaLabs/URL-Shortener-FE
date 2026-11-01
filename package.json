@@ -20,6 +20,7 @@
     "check:domains": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-domains.mjs",
     "check:moderation": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-moderation.mjs",
     "check:worker": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-worker.mjs",
+    "check:stale-chunk": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-stale-chunk.mjs",
     "check:api-client": "node scripts/check-invisible.mjs && NODE_ENV=production node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-api-client.mjs",
     "build:cf": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

@@ -1,15 +1,18 @@
 "use client"
 
 import { ThemeProvider } from "next-themes"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/lib/auth-context"
 import { EM_DASH, SLOGAN } from "@/lib/seo"
+import { reloadIfStaleChunkError } from "@/lib/stale-chunk"
 import { useState, useEffect, type ReactNode } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        queryCache: new QueryCache({ onError: reloadIfStaleChunkError }),
+        mutationCache: new MutationCache({ onError: reloadIfStaleChunkError }),
         defaultOptions: {
           queries: {
             staleTime: 30 * 1000,

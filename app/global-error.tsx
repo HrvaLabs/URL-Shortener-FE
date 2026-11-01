@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import "./globals.css"
 import { ErrorFallback } from "@/components/error-fallback"
 import { Logo } from "@/components/logo"
+import { reloadIfStaleChunkError } from "@/lib/stale-chunk"
 
 function prefersDark() {
   try {
@@ -17,6 +18,7 @@ function prefersDark() {
 export default function GlobalError({ error, retry }: { error: unknown; retry: () => void }) {
   useEffect(() => {
     console.error(error)
+    reloadIfStaleChunkError(error)
     document.documentElement.classList.toggle("dark", prefersDark())
   }, [error])
 

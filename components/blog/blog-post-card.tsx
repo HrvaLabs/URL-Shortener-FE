@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import type { BlogPost } from "@/content/blog/posts"
 import { PostAuthor } from "@/components/blog/post-author"
+import { PostUpdated } from "@/components/blog/post-updated"
 
 export function BlogPostCard({ post }: { post: BlogPost }) {
   return (
@@ -14,6 +15,7 @@ export function BlogPostCard({ post }: { post: BlogPost }) {
             day: "numeric",
           })}
         </time>
+        {post.updated && <PostUpdated date={post.updated} />}
         <span aria-hidden="true"> · </span>
         <PostAuthor name={post.author} />
       </p>

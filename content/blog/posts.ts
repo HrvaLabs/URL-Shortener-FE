@@ -3,6 +3,7 @@ export interface BlogPost {
   title: string
   shortTitle?: string
   date: string
+  updated?: string
   excerpt: string
   author: string
   tags: string[]
@@ -18,6 +19,7 @@ export const blogPosts: BlogPost[] = [
     slug: "how-hrva-cc-stops-phishing-links",
     title: "How hrva.cc stops phishing links",
     date: "2026-10-22",
+    updated: "2026-11-01",
     excerpt:
       "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check we tried. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
     author: "Karlo Hrvačić",
@@ -50,7 +52,8 @@ export const blogPosts: BlogPost[] = [
 
       <h2>Checks when a link is created</h2>
       <p>
-        No single check catches everything, so hrva.cc runs several. Each one covers gaps in the others.
+        No single check catches everything, so hrva.cc runs several. Each one covers gaps in the others. The
+        <a href="/security">security page</a> lists them with hrva.cc's other protections.
       </p>
       <ul>
         <li>
@@ -83,6 +86,15 @@ export const blogPosts: BlogPost[] = [
           redirects to a scam. After a link is created, hrva.cc follows its redirects in the background and
           checks every address along the way.
         </li>
+        <li>
+          <strong>Warning page.</strong> Some links made without an account open a page first. It shows the full
+          destination, a Continue button and a way to report the link.
+        </li>
+        <li>
+          <strong>Sign-in forms.</strong> Some of those links lead to a page that asks for a password or card
+          details. They are held and don't open until a person has checked them. Visitors are told the link is
+          being checked.
+        </li>
       </ul>
 
       <h2>Checks after a link is live</h2>
@@ -107,7 +119,8 @@ export const blogPosts: BlogPost[] = [
         Some links look doubtful but are fine. A small business on a new domain, or a real login page, can
         trip the same signals as a scam. Blocking those automatically would hurt real people, so doubtful
         links aren't blocked. They go to a review queue, and a person decides: the link is fine, the domain
-        is trusted, or the link, the domain or the account gets blocked.
+        is trusted, or the link, the domain or the account gets blocked. A link that is held, like one that
+        leads to a sign-in form, opens only once a person has allowed it.
       </p>
       <p>
         Accounts that act like typical scam accounts are marked as possible scammers in that queue, so
@@ -421,60 +434,73 @@ export const blogPosts: BlogPost[] = [
     slug: "safe-browsing-link-sharing",
     title: "Why Safe Browsing Matters for Link Sharing",
     date: "2026-05-05",
+    updated: "2026-11-01",
     excerpt:
-      "How Google Safe Browsing keeps your short links safe — and why every URL shortener should check destinations before sharing them.",
+      "A short link hides where it goes until someone opens it. What hrva.cc checks before it sends anyone on, what Google Safe Browsing receives, and what a list like it can't catch.",
     author: "Karlo Hrvačić",
     tags: ["security", "safe browsing", "privacy"],
     content: `
       <p class="lead">
-        When you share a short link, you're vouching for the destination. But what if that destination has been 
-        compromised since you last visited? Safe Browsing integration catches threats before your audience does.
+        A short link hides where it goes until someone opens it. So before hrva.cc sends anyone on, it checks the
+        destination. Google Safe Browsing is one of those checks.
       </p>
 
-      <h2>What Is Google Safe Browsing?</h2>
+      <h2>What Safe Browsing is</h2>
       <p>
-        Google Safe Browsing is a database of known malicious websites — phishing pages, malware hosts, 
-        unwanted software, and social engineering sites. Every day, Google discovers thousands of new threats 
-        and adds them to the list. Services like Chrome, Firefox, and Safari use Safe Browsing to warn users 
-        before they visit dangerous sites.
+        Google Safe Browsing is a list Google keeps of sites known for phishing, malware and unwanted software.
+        hrva.cc asks it about every destination.
       </p>
 
-      <h2>How hrva.cc Uses Safe Browsing</h2>
-      <p>
-        Every URL submitted to hrva.cc is checked against Google Safe Browsing before it's shortened. If the 
-        URL is flagged, the short link is blocked immediately — giving you protection at the moment of creation.
-      </p>
-      <p>
-        But threats evolve. A URL that was safe yesterday could be compromised today. That's why hrva.cc 
-        <strong>rechecks all active URLs daily</strong> through an automated background job. If a previously 
-        safe URL is later flagged, the short link is automatically deactivated and the owner is notified 
-        by email.
-      </p>
-
-      <h2>What Happens When a Threat Is Detected</h2>
-      <p>
-        If a URL is flagged by Safe Browsing, hrva.cc:
-      </p>
+      <h2>What hrva.cc checks</h2>
       <ul>
-        <li>Blocks the short link from being created (at creation time)</li>
-        <li>Deactivates the link automatically (during daily recheck)</li>
-        <li>Notifies the link owner by email with the threat type detected</li>
-        <li>Evicts the link from the cache so no one gets redirected to a dangerous page</li>
+        <li>
+          <strong>When a link is made.</strong> The destination is checked against Safe Browsing and against public
+          blocklists that hrva.cc keeps on its own server. A destination marked as harmful is refused.
+        </li>
+        <li>
+          <strong>Where it redirects.</strong> After a link is made, hrva.cc follows the destination's redirects and
+          checks every address along the way.
+        </li>
+        <li>
+          <strong>While the link is active.</strong> Links are checked again later, so a site that turns harmful after
+          the link was made still gets caught. A link found then stops working, and visitors see a page saying it
+          isn't available.
+        </li>
+        <li>
+          <strong>On every click.</strong> The destination is checked against blocklists before the visitor is sent
+          on.
+        </li>
       </ul>
-
-      <h2>Why This Matters for Your Audience</h2>
       <p>
-        Every short link you share is a reflection of your judgment. If someone clicks a link you shared and 
-        lands on a malware page, they won't blame the shortener — they'll blame you. Safe Browsing protection 
-        is your safety net, catching threats before they reach your audience.
+        Links the checks are unsure about go to a review queue, and a person decides what happens to them.
       </p>
 
-      <h2>The Bottom Line</h2>
+      <h2>What Safe Browsing receives</h2>
       <p>
-        Not all URL shorteners check destination URLs. Many are simply pass-through services that redirect 
-        without looking. By choosing a shortener with automatic threat scanning and proactive rechecking, 
-        you're protecting both yourself and everyone who clicks your links.
+        hrva.cc sends Google the destination address, and the addresses it redirects to. It sends nothing about the
+        person who made the link or the people who open it. Google's terms are in its
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
       </p>
+
+      <h2>What a list can't catch</h2>
+      <p>
+        A list can only hold a site after someone has spotted it. A scam on a domain registered the same day isn't
+        on any list yet. That's why Safe Browsing is one check among several.
+        <a href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</a> covers the others,
+        and the <a href="/security">security page</a> lists them in one place.
+      </p>
+
+      <h2>What you can do</h2>
+      <ul>
+        <li>
+          <strong>Check before you open.</strong> <a href="/validate">Check a link</a> shows where a hrva.cc link
+          goes without opening it.
+        </li>
+        <li>
+          <strong>Report it.</strong> If a hrva.cc link leads somewhere harmful, report it on the
+          <a href="/report">report page</a>.
+        </li>
+      </ul>
     `,
   },
   {
@@ -482,176 +508,107 @@ export const blogPosts: BlogPost[] = [
     title: "How hrva.cc Handles Security, Speed, Reliability, and Migration",
     shortTitle: "How hrva.cc Is Built: Security, Speed, Reliability",
     date: "2026-05-18",
+    updated: "2026-11-01",
     excerpt:
-      "A deep dive into the architecture behind hrva.cc — how we keep links fast, safe, and always available through Redis caching, JWT auth, Safe Browsing, and zero-downtime migrations.",
+      "What hrva.cc runs on, how it protects links and accounts, how redirects stay fast, what happens when a part of it fails, and how changes are shipped.",
     author: "Karlo Hrvačić",
     tags: ["engineering", "architecture", "infrastructure", "security"],
     content: `
       <p class="lead">
-        Building a URL shortener sounds simple: accept a long URL, generate a short code, redirect when someone visits it. 
-        But making that redirect fast, secure, and reliable at scale — while evolving the platform without downtime — is 
-        where the real engineering lives. Here's how hrva.cc is built.
+        hrva.cc turns a long address into a short one and sends visitors on when they open it. This post describes
+        how it is built: what it runs on, how it protects links and accounts, how redirects stay fast, what happens
+        when a part of it fails, and how changes are shipped.
       </p>
 
-      <h2>Stack Overview</h2>
+      <h2>What it runs on</h2>
       <p>
-        hrva.cc runs on a Spring Boot 4.0.6 backend (Java 25) with a Next.js 16 frontend (React 19). 
-        The backend uses PostgreSQL for persistent storage, Redis for caching, and MailHog for email in development. 
-        The frontend is deployed on Cloudflare Workers, and the backend runs in Docker with multi-arch builds 
-        (amd64 + arm64) via GitHub Actions.
+        The API is a Spring Boot 4.1 application on Java 25, with PostgreSQL for data and Redis for the cache and
+        counters. It runs on Oracle Cloud in Frankfurt, Germany. The web app is Next.js 16 with React 19, deployed
+        on Cloudflare Workers. Both are open source under the GPL-3.0 licence: the
+        <a href="https://github.com/HrvaLabs/url-shortener" target="_blank" rel="noopener noreferrer">API</a> and
+        the <a href="https://github.com/HrvaLabs/URL-Shortener-FE" target="_blank" rel="noopener noreferrer">web app</a>.
       </p>
 
-      <h2>Security: Defense in Depth</h2>
-
-      <h3>Threat Scanning at Every Level</h3>
+      <h2>Security</h2>
       <p>
-        Every URL shortened through hrva.cc is checked against the Google Safe Browsing API v4 before it's 
-        saved. If the destination is flagged as malware, phishing, or social engineering, the link is blocked 
-        at creation time. But threats evolve — a safe site today can be compromised tomorrow. That's why a 
-        scheduled task rechecks every active URL against Safe Browsing <strong>every night</strong>. 
-        Flagged URLs are automatically deactivated, evicted from cache, and the owner is notified by email.
+        The <a href="/security">security page</a> lists what hrva.cc checks and protects. In short:
+      </p>
+      <ul>
+        <li>
+          <strong>Links.</strong> Every destination is checked against Google Safe Browsing and public blocklists
+          when the link is made and again while it is active. Redirects are followed and checked, and every click
+          is checked against blocklists. Links the checks are unsure about go to a person.
+        </li>
+        <li>
+          <strong>Accounts.</strong> Passwords are stored as bcrypt hashes. Two-step sign-in works with an
+          authenticator app, passkeys and recovery codes, and admin pages need it. Sign-in attempts are limited,
+          and <strong>Sign out everywhere</strong> ends every other sign-in.
+        </li>
+        <li>
+          <strong>Secrets.</strong> API keys and password reset links are stored only as hashes. A reset link
+          works once and expires after an hour.
+        </li>
+        <li>
+          <strong>The API.</strong> Every request is refused unless the route is public or the caller is signed
+          in. When the server fetches an address someone gave it, it connects only to public internet addresses.
+        </li>
+      </ul>
+
+      <h2>Speed</h2>
+      <p>
+        The redirect is the busiest path: every click on every short link goes through it. A link's details are
+        cached in Redis, so a redirect that finds its link in the cache answers without a database query, unless
+        the link has a visit limit, whose clicks are counted in the database first. Before it uses a cached entry,
+        the redirect checks again that the link is active, not expired and not over its visit limit.
+      </p>
+      <p>
+        New links are cached as soon as they are made, and the most used links are loaded into the cache when the
+        API starts. Counting a click for the link's statistics runs in the background, so the redirect doesn't wait
+        for it.
+      </p>
+      <p>
+        The web app's public pages, this blog included, are prerendered when the site is built.
       </p>
 
-      <h3>JWT Authentication</h3>
+      <h2>Reliability</h2>
+      <ul>
+        <li>
+          <strong>Redis is down.</strong> Redirects read the link from the database instead of the cache.
+        </li>
+        <li>
+          <strong>The database is down.</strong> Links in the cache keep redirecting. Requests that need the
+          database get a quick 503 answer, "hrva.cc can't reach its database right now", instead of waiting.
+        </li>
+        <li>
+          <strong>Status.</strong> Uptime and incidents are on the
+          <a href="https://status.hrva.cc/status/url" target="_blank" rel="noopener noreferrer">status page</a>.
+        </li>
+      </ul>
+
+      <h2>Shipping changes</h2>
+      <ul>
+        <li>
+          <strong>Database changes</strong> are Liquibase changelogs, applied in order when the API starts.
+        </li>
+        <li>
+          <strong>The API</strong> is built and tested with Maven on every push and pull request to
+          <code>main</code>. A push to <code>main</code> also publishes a Docker image for amd64 and arm64.
+        </li>
+        <li>
+          <strong>The web app</strong> is type-checked, linted, checked and built on every push and pull request to
+          <code>main</code>.
+        </li>
+        <li>
+          <strong>Scanning.</strong> GitHub CodeQL scans both repositories on every change and every week, and
+          Dependabot proposes dependency updates.
+        </li>
+      </ul>
+
+      <h2>How it got here</h2>
       <p>
-        All authenticated requests use stateless JWT tokens with configurable expiry (default 10 hours). 
-        Tokens are signed with a server-side secret and verified on every request through a custom 
-        <code>JwtFilter</code> that sits in the Spring Security chain. No session state, no server-side 
-        token storage — just cryptographic verification.
-      </p>
-
-      <h3>Rate Limiting</h3>
-      <p>
-        Login attempts are rate-limited using a Guava in-memory cache — 20 attempts per IP per day. 
-        After that, the IP is blocked until the window expires or an admin clears the limit from the 
-        dashboard. The admin panel also shows a live view of all active rate limits with a one-click clear button.
-      </p>
-
-      <h3>OWASP Basics</h3>
-      <p>
-        Actuator endpoints are locked down: <code>/actuator/health</code> is public, everything else 
-        requires <code>ROLE_ADMIN</code>. CORS is configured to only allow the frontend origin. 
-        The <code>ForwardedHeaderFilter</code> ensures correct IP resolution behind proxies. 
-        Input validation happens at the controller, service, and entity levels.
-      </p>
-
-      <h2>Speed: Every Millisecond Counts</h2>
-
-      <h3>Redis Caching</h3>
-      <p>
-        The redirect endpoint (<code>GET /{short}</code>) is the hottest path in the system — every click 
-        on every short URL goes through it. Initially it made two database queries per redirect. Now it's 
-        cache-first: on every request, we check Redis. If the URL data is cached and still valid 
-        (not expired, not over its visit limit, not deactivated), we serve the redirect from cache 
-        without touching the database. Visit tracking happens asynchronously in the background.
-      </p>
-
-      <h3>Cache Warmup and Priming</h3>
-      <p>
-        On application startup, the <code>CacheWarmup</code> component loads the 20 most visited, 
-        20 most recent, and 20 most recently accessed URLs into Redis — so the most popular links 
-        are hot from the start. New URLs are cached immediately on creation via 
-        <code>cacheUrlResponse()</code>. The TTL is set to 7 days, but stale data is caught by 
-        validation logic on every cache hit. Redis graceful degradation means if Redis is down, 
-        we fall through to the database without error.
-      </p>
-
-      <h3>Read-Optimized Transactions</h3>
-      <p>
-        All service-layer methods default to <code>@Transactional(readOnly = true)</code>. Only write 
-        operations explicitly override this. This gives the database query planner better optimization 
-        hints and prevents accidental writes in read paths.
-      </p>
-
-      <h3>Frontend Performance</h3>
-      <p>
-        The Next.js frontend uses server-side rendering for initial page loads, then takes over as a 
-        single-page app. The landing page is static and prerendered. Fonts are loaded via 
-        <code>next/font</code> with swap display. Animations use CSS-only keyframes (no JavaScript 
-        animation libraries) with zero external runtime dependencies for styling.
-      </p>
-
-      <h2>Reliability: Built to Handle Failures</h2>
-
-      <h3>Cache Graceful Degradation</h3>
-      <p>
-        Redis is a performance accelerator, not a hard dependency. A custom <code>CacheErrorHandler</code> 
-        catches every Redis failure — get, put, evict, clear — logs it, and returns null, causing the 
-        application to fall through to the database. A Redis outage means slightly slower requests, not 
-        downtime.
-      </p>
-
-      <h3>SafeBrowsing Graceful Degradation</h3>
-      <p>
-        The Google Safe Browsing API client is a singleton that retries on failure. If the API is 
-        unreachable, it returns an empty threat list — URLs are not blocked due to an API outage. 
-        The daily recheck task will catch any threats once the API is available again.
-      </p>
-
-      <h3>Async Visit Tracking</h3>
-      <p>
-        Visit counting is fully asynchronous. When someone clicks a short link, the redirect response is 
-        sent immediately, and a background task increments the visit counter using Spring's 
-        <code>TaskExecutor</code>. This means the redirect response time is independent of database 
-        write latency. Visit limits are checked on every redirect via the cached data, and the 
-        async write enforces the final deactivation.
-      </p>
-
-      <h3>Health Monitoring</h3>
-      <p>
-        The admin dashboard shows real-time status of PostgreSQL, Redis, JVM heap, uptime, and request 
-        counts. The system health page provides green/red indicators for every service layer. 
-        Micrometer metrics track redirect response times (cache hit vs. cache miss), and the 
-        admin panel displays average and max redirect latency.
-      </p>
-
-      <h2>Migration: Evolve Without Downtime</h2>
-
-      <h3>Liquibase for Schema Changes</h3>
-      <p>
-        All database changes go through Liquibase changelogs — versioned, sequential, and 
-        reversible. Migrations run automatically on application startup. The changelog has 9 
-        migrations covering the full schema evolution from initial users table to audit logging 
-        and email tracking.
-      </p>
-
-      <h3>Angular to React Rewrite</h3>
-      <p>
-        The frontend was originally built in Angular 14. It was completely rewritten to Next.js 16 
-        (React 19) in 2026. The rewrite was done alongside the existing Angular deployment, with 
-        the new frontend deployed to a separate subdomain (<code>app.hrva.cc</code>) while the 
-        old Angular app remained at the root domain. Once the new frontend was fully tested, 
-        the root domain was switched via a 302 redirect.
-      </p>
-
-      <h3>Gradle to Maven Migration</h3>
-      <p>
-        The backend was migrated from Gradle to Maven for faster builds and simpler CI configuration. 
-        This was a single-commit migration that touched only build files and directory structure — 
-        zero runtime code changes. The CI pipeline was updated simultaneously to use <code>mvn package</code> 
-        instead of <code>gradle build</code>.
-      </p>
-
-      <h3>Docker Multi-Arch CI</h3>
-      <p>
-        Every push to <code>main</code> triggers a GitHub Actions workflow that runs all 150+ backend 
-        tests, builds the application, and pushes a multi-arch Docker image (amd64 + arm64) to 
-        GitHub Container Registry. PRs run only the build and tests — no image push. Production 
-        deployments pull the image via Portainer with environment variables for OAuth2 secrets.
-      </p>
-
-      <h3>Deployment Safety</h3>
-      <p>
-        Rolling updates ensure zero-downtime deploys. Database schema changes via Liquibase are 
-        backward-compatible: new columns are added before code that reads them is deployed, and 
-        removed only after no running code references them. The scheduled SafeBrowsing recheck 
-        and URL deactivation tasks have configurable schedules in case maintenance windows are needed.
-      </p>
-
-      <h2>The Numbers</h2>
-      <p>
-        As of May 2026: 150+ automated tests covering controllers, services, validators, converters, and 
-        models. All tests run on every commit. Redis handles thousands of cache lookups with a 7-day TTL.
+        The web app was first written in Angular and was rewritten in Next.js in 2026
+        (<a href="/blog/angular-to-react-rewrite">how the rewrite went</a>). The API's build moved from Gradle to
+        Maven.
       </p>
     `,
   },

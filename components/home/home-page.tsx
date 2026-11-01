@@ -559,7 +559,11 @@ function FeatureGrid() {
           <Link href="/stats" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             hrva.cc in numbers
           </Link>{" "}
-          page shows how many harmful links are blocked and how fast reports are reviewed.
+          page shows how many harmful links are blocked and how fast reports are reviewed. The{" "}
+          <Link href="/security" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+            security page
+          </Link>{" "}
+          lists what hrva.cc checks and protects.
         </p>
       </div>
     </section>

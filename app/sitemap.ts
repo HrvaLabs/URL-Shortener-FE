@@ -10,12 +10,12 @@ const dated = (path: DatedPath): MetadataRoute.Sitemap[number] => ({
 })
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const newestPost = blogPosts.map((post) => post.date).sort().at(-1)
+  const newestPost = blogPosts.map((post) => post.updated ?? post.date).sort().at(-1)
 
   return [
     dated("/"),
     { url: absoluteUrl("/blog"), lastModified: newestPost },
-    ...blogPosts.map((post) => ({ url: absoluteUrl(`/blog/${post.slug}`), lastModified: post.date })),
+    ...blogPosts.map((post) => ({ url: absoluteUrl(`/blog/${post.slug}`), lastModified: post.updated ?? post.date })),
     { url: absoluteUrl("/changelog") },
     { url: absoluteUrl("/stats") },
     dated("/about"),
@@ -40,5 +40,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     dated("/report"),
     dated("/privacy"),
     dated("/terms"),
+    dated("/security"),
   ]
 }

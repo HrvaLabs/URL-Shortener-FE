@@ -8,6 +8,7 @@ import { blogPosts, type BlogPost } from "@/content/blog/posts"
 import { JSON_LD_IDS, JsonLdScript, breadcrumbList, reference } from "@/components/json-ld"
 import { OG_IMAGE, absoluteUrl, pageMetadata } from "@/lib/seo"
 import { PostAuthor } from "@/components/blog/post-author"
+import { PostUpdated } from "@/components/blog/post-updated"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
 export async function generateStaticParams() {
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     socialTitle: post.title,
     description: post.excerpt,
     path: `/blog/${post.slug}`,
-    article: { publishedTime: post.date, tags: post.tags },
+    article: { publishedTime: post.date, modifiedTime: post.updated, tags: post.tags },
   })
 }
 
@@ -42,7 +43,7 @@ const postJsonLd = (post: BlogPost) => {
         headline: post.title,
         description: post.excerpt,
         datePublished: post.date,
-        dateModified: post.date,
+        dateModified: post.updated ?? post.date,
         inLanguage: "en",
         keywords: post.tags.join(", "),
         image: absoluteUrl(OG_IMAGE.url),
@@ -97,6 +98,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     day: "numeric",
                   })}
                 </time>
+                {post.updated && <PostUpdated date={post.updated} />}
                 <span aria-hidden="true"> · </span>
                 <PostAuthor name={post.author} />
               </p>

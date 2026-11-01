@@ -15,6 +15,7 @@ export const CONTENT_UPDATED = {
   "/validate": "2026-10-21",
   "/privacy": "2026-11-01",
   "/terms": "2026-10-30",
+  "/security": "2026-11-01",
   "/about": "2026-10-29",
   "/privacy-first-url-shortener": "2026-11-01",
   "/developers": "2026-11-01",

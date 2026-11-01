@@ -70,7 +70,8 @@ export default function LinksWithoutAnAccountHelpPage() {
               <p>
                 Links made without an account are checked too, and only the admin sees the result, except the{" "}
                 <a href="#warning-page">warning page</a> below. The{" "}
-                <Link href="/privacy">Privacy Policy</Link> describes what hrva.cc keeps about them.
+                <Link href="/privacy">Privacy Policy</Link> describes what hrva.cc keeps about them, and the{" "}
+                <Link href="/security">security page</Link> lists what hrva.cc checks.
               </p>
 
               <h2 id="warning-page">Warning page</h2>

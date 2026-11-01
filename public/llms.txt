@@ -43,6 +43,7 @@ Shortening works without an account. A free account adds custom aliases, visit l
 - [About hrva.cc](https://app.hrva.cc/about): who runs it, how it is paid for, where it runs and how to reach it
 - [URL shortener without tracking](https://app.hrva.cc/privacy-first-url-shortener): what hrva.cc keeps when someone clicks a link, and what it never stores
 - [Privacy policy](https://app.hrva.cc/privacy): what is stored and for how long
+- [Security](https://app.hrva.cc/security): what hrva.cc checks and protects (links, accounts, API keys, the site), and how to report a vulnerability
 - [How hrva.cc stops phishing links](https://app.hrva.cc/blog/how-hrva-cc-stops-phishing-links): the checks every link goes through, and what they still miss
 - [Public statistics](https://app.hrva.cc/stats): site-wide totals, harmful links blocked and review times
 - [Check where a short link goes](https://app.hrva.cc/validate): see a link's destination before you open it

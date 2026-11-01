@@ -40,6 +40,7 @@ const reasonOptions = [
   { value: "reported by a visitor", label: "Reported by a visitor" },
   { value: "Spamhaus", label: "Spamhaus" },
   { value: "Random-looking", label: "Random-looking domain" },
+  { value: "Sign-in form", label: "Sign-in form" },
 ]
 
 const ageOptions = [

@@ -753,7 +753,7 @@ export interface ConnectedApp {
   lastUsed: string | null
 }
 
-export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS" | "CAMPAIGN"
+export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS" | "CAMPAIGN" | "SIGN_IN_FORM"
 
 export type SourceKind = "DOMAINS" | "LINKS"
 

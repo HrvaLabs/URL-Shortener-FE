@@ -247,7 +247,7 @@ lib/          — Shared logic
 
 ### Safety copy
 
-- Say what runs when. On every click only the local blocklists that block outright are checked. Google Safe Browsing and the other checks (blocklists, Spamhaus, domain age, lookalike signals, redirects) run when a link is made, and Safe Browsing and the lists again every night. Never say Safe Browsing checks every click.
+- Say what runs when. On every click only the local blocklists that block outright are checked. Google Safe Browsing and the other checks (blocklists, Spamhaus, domain age, lookalike signals, redirects) run when a link is made, and Safe Browsing and the lists again every night. Never say Safe Browsing checks every click. Since v2.23 a new link made without an account that gets the warning page has its destination page read once by hrva.cc's server, and a sign-in or card form holds it for review (block reason `SIGN_IN_FORM`, label "Sign-in form hold"; visitors see the usual blocked answer). The help page's Warning page section, the privacy page's Destination page bullet and the privacy-first page's Link safety paragraph say so; keep them in step with the backend.
 
 ### Styling
 - Tailwind CSS 4 with shadcn-style HSL CSS variables in `app/globals.css`, which also holds the theme (`@theme`; there is no `tailwind.config.js`); visual rules live in `DESIGN.md`

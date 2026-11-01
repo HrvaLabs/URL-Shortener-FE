@@ -22,4 +22,5 @@ export const blockReasonLabels: Record<BlockReason, string> = {
   USER_BLOCKED: "Owner's account blocked",
   SCAM_SIGNALS: "Scam signals",
   CAMPAIGN: "Campaign hold",
+  SIGN_IN_FORM: "Sign-in form hold",
 }

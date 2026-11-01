@@ -80,6 +80,13 @@ export default function LinksWithoutAnAccountHelpPage() {
                 was registered recently or looks machine-made. The page has no scripts and hrva.cc sets no cookies on it, and
                 showing it counts as the click.
               </p>
+              <p>
+                When a new link gets the warning page, hrva.cc&apos;s server opens the destination page once, right after
+                the link is made. If the page asks for a password, a username or ID number, or a card number, the link
+                is put on hold and doesn&apos;t open until an admin checks it. If the page can&apos;t be read, the
+                warning page stays as it is. The destination&apos;s server sees a request from hrva.cc, not from you
+                or your visitors.
+              </p>
 
               <h2 id="paused">When it&apos;s paused</h2>
               <p>

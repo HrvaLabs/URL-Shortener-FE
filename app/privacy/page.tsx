@@ -297,6 +297,13 @@ export default function PrivacyPage() {
                   its redirects and check where they lead. The destination&apos;s server sees a request
                   from hrva.cc, never from the visitor, and no visitor data is sent.
                 </li>
+                <li>
+                  <strong>Destination page</strong> — for some links made without an account (those that
+                  open the warning page), the hrva.cc server opens the destination page once after the link
+                  is made, to see whether it asks for sign-in or card details. The destination&apos;s server
+                  sees a request from hrva.cc, not from the visitor, and no visitor data is sent. hrva.cc keeps
+                  only which kind of field it found, not the page.
+                </li>
               </ul>
               <p>
                 Links that lead to known or very likely harmful sites are refused or disabled

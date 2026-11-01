@@ -1,7 +1,7 @@
 export const CONTENT_UPDATED = {
   "/": "2026-11-01",
   "/help": "2026-11-01",
-  "/help/links-without-an-account": "2026-10-30",
+  "/help/links-without-an-account": "2026-11-01",
   "/help/utm": "2026-10-29",
   "/help/passkeys": "2026-11-01",
   "/help/stats": "2026-10-29",
@@ -15,7 +15,7 @@ export const CONTENT_UPDATED = {
   "/privacy": "2026-11-01",
   "/terms": "2026-10-30",
   "/about": "2026-10-29",
-  "/privacy-first-url-shortener": "2026-10-30",
+  "/privacy-first-url-shortener": "2026-11-01",
   "/developers": "2026-11-01",
   "/qr": "2026-10-30",
   "/utm": "2026-10-30",

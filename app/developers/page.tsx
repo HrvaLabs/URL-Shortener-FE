@@ -79,7 +79,7 @@ const fields = [
   { name: "visitLimit", text: "Optional. The link stops working after this many visits." },
   { name: "expirationDate", text: "Optional. When the link stops working, as an ISO 8601 date and time with Z or an offset, for example 2026-12-31T23:59:59Z. A value without an offset is read as UTC." },
   { name: "tags", text: "Optional. Up to 10 tags of up to 30 characters each, saved in lowercase." },
-  { name: "password", text: "Optional. Visitors enter it before they are sent on." },
+  { name: "password", text: "Optional, up to 72 bytes; accented letters count as two. Visitors enter it before they are sent on." },
 ]
 
 const errors = [
@@ -233,7 +233,8 @@ export default function DevelopersPage() {
           Creating links is also limited per account each hour. Going over that limit is a <code>429</code> as well, with
           the message under Errors. Your <Link href="/dashboard/api-keys">API keys</Link> page shows how many requests each
           key has made, when it was last used and when it expires. A key that is expired or revoked is refused with a{" "}
-          <code>detail</code> message. Every <code>429</code> has a <code>Retry-After</code> header in seconds.
+          <code>detail</code> message. Every <code>429</code> has a <code>Retry-After</code> header in seconds. Changing your
+          password or signing out everywhere doesn&apos;t touch your keys.
         </p>
 
         <h2 id="short-links">What a short link answers</h2>

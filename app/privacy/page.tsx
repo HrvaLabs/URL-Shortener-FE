@@ -67,7 +67,9 @@ export default function PrivacyPage() {
                 your device sent when you added it. We also store a random identifier that
                 links your passkeys to your account. Your fingerprint, face or PIN never leaves your
                 device, and hrva.cc never receives it. When you add a passkey, we email you a security
-                notice. We also record when your account was created and when you last logged in.
+                notice. We also record when your account was created, when you last logged in, and
+                when its sessions were last ended (by Sign out everywhere, a password change or reset,
+                or turning a sign-in method off), so older sign-in tokens stop working.
               </p>
               <p>
                 Which ways you&apos;ve signed in (email and password, passkey, Google or GitHub), when
@@ -455,7 +457,9 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Rate-limit counters</strong> — hold a hashed IP address and expire within
-                  an hour.
+                  an hour. Sign-in counters also count per account under a hash of the email address
+                  and expire within 15 minutes; counters of wrong two-step codes or wrong passwords
+                  when confirming a change hold the account number and expire within a day.
                 </li>
                 <li>
                   <strong>Account data</strong> — kept until you delete your account; unused

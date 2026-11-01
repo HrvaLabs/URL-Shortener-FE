@@ -212,6 +212,10 @@ export default function PasskeysHelpPage() {
                   key or authenticator app.
                 </li>
                 <li>Turning two-step verification off needs one of those as well.</li>
+                <li>
+                  Select <strong>Sign out everywhere</strong> in Settings, so the lost device is signed out
+                  too.
+                </li>
               </ol>
               <p>
                 If you have none of them, email{" "}
@@ -244,6 +248,19 @@ export default function PasskeysHelpPage() {
                 least one way to sign in. Add a passkey or another method first.&quot; The same goes for
                 removing your last passkey. With two-step verification on, you also have to keep a
                 password, Google or GitHub as your first step.
+              </p>
+
+              <h2 id="sign-out-everywhere">Sign out everywhere</h2>
+              <p>
+                <strong>Sign out everywhere</strong> in Settings signs out every other browser and device
+                where you&apos;re signed in. The one you use stays signed in. The others see &quot;Your session
+                ended. Sign in again.&quot; the next time they open hrva.cc.
+              </p>
+              <p>
+                The same happens on its own when you change your password, reset it with Forgot password,
+                remove your password, or turn off Google or GitHub sign-in. After a reset every device is
+                signed out, the one you used included. API keys and connected AI apps keep working; revoke a
+                key or disconnect an app in Settings to stop them.
               </p>
 
               <h2 id="privacy">Passkeys and your privacy</h2>

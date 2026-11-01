@@ -2,6 +2,8 @@ import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
 const { SCANNER_CACHE_CONTROL, STATIC_CACHE_CONTROL, isJunkPath, junkPathResponse } = await import("../lib/junk-paths.ts")
+const { CONTENT_SECURITY_POLICY, withContentSecurityPolicy } = await import("../lib/security-headers.ts")
+const { readFile } = await import("node:fs/promises")
 
 let failures = 0
 
@@ -127,6 +129,49 @@ await check("any method gets the 404, HEAD included", () => {
 await check("encoded dots are not decoded, so they fall through to Next", () => {
   assert.equal(isJunkPath("/%2eenv"), false)
   assert.equal(isJunkPath("/admin%2ephp"), false)
+})
+
+await check("every HTML answer from the worker carries the content security policy", async () => {
+  const page = withContentSecurityPolicy(new Response("<!doctype html>", { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "s-maxage=31536000" } }))
+  assert.equal(page.headers.get("content-security-policy"), CONTENT_SECURITY_POLICY)
+  assert.equal(page.headers.get("cache-control"), "s-maxage=31536000")
+  assert.equal(await page.text(), "<!doctype html>")
+})
+
+await check("other answers pass through untouched", () => {
+  const data = new Response("{}", { headers: { "Content-Type": "text/x-component" } })
+  assert.equal(withContentSecurityPolicy(data), data)
+  const stale = junkPathResponse(new Request("https://app.hrva.cc/.env"))
+  assert.equal(withContentSecurityPolicy(stale), stale)
+})
+
+await check("the policy allows only this site, hrva.cc for the API and Turnstile", () => {
+  const directives = Object.fromEntries(CONTENT_SECURITY_POLICY.split("; ").map((directive) => {
+    const [name, ...sources] = directive.split(" ")
+    return [name, sources.join(" ")]
+  }))
+  assert.deepEqual(directives, {
+    "default-src": "'self'",
+    "script-src": "'self' 'unsafe-inline' https://challenges.cloudflare.com",
+    "style-src": "'self' 'unsafe-inline'",
+    "img-src": "'self' data: https:",
+    "connect-src": "'self' https://hrva.cc",
+    "frame-src": "https://challenges.cloudflare.com",
+    "frame-ancestors": "'none'",
+    "base-uri": "'self'",
+    "form-action": "'self'",
+    "object-src": "'none'",
+  })
+})
+
+await check("static files get the same policy from public/_headers", async () => {
+  const headers = await readFile(new URL("../public/_headers", import.meta.url), "utf8")
+  assert.match(headers, new RegExp(`^/\\*\\n  Content-Security-Policy: ${CONTENT_SECURITY_POLICY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "m"))
+})
+
+await check("the worker wraps Next's answers with the policy", async () => {
+  const worker = await readFile(new URL("../custom-worker.mjs", import.meta.url), "utf8")
+  assert.match(worker, /withContentSecurityPolicy\(await nextFetch\(request, env, context\)\)/)
 })
 
 if (failures > 0) {

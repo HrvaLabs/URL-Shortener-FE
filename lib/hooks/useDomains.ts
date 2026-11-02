@@ -67,6 +67,14 @@ export function useRetryMyDomain() {
   })
 }
 
+export function useUseAgainDomain() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => domainApi.useAgain(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: DOMAINS_KEY }),
+  })
+}
+
 export function useRequestMoreDomains() {
   const queryClient = useQueryClient()
   return useMutation({

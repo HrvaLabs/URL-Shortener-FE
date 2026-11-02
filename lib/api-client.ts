@@ -626,6 +626,8 @@ export const domainApi = {
     request<DomainRemoval>("DELETE", `/users/me/domains/${id}?links=${links}`),
   retry: (id: number) =>
     request<CustomDomain>("POST", `/users/me/domains/${id}/retry`),
+  useAgain: (id: number) =>
+    request<CustomDomain>("POST", `/users/me/domains/${id}/use-again`),
   requestMore: (requestedTotal: number, reason: string) =>
     request<DomainRequest>("POST", "/users/me/domains/requests", { requestedTotal, reason }),
   withdrawRequest: (id: number) =>

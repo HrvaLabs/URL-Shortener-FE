@@ -46,6 +46,12 @@ const {
   domainRequestTotalError,
   domainRequestDefaultTotal,
   adminRequestLimitLine,
+  USE_AGAIN_HINTS,
+  USE_AGAIN_PENDING_LINE,
+  USE_AGAIN_LABEL,
+  removedDomainsLabel,
+  splitRemovedDomains,
+  useAgainLines,
 } = domains
 
 const check = (name, run) => {
@@ -84,6 +90,7 @@ const domain = (overrides = {}) => ({
   problemText: null,
   disabledNote: null,
   links: 0,
+  useAgain: null,
   ...overrides,
 })
 
@@ -379,6 +386,35 @@ check("domain request lines", () => {
   assert.equal(adminRequestLimitLine({ currentLimit: 1, used: 1, limitAtRequest: 1, status: "WAITING" }), "Limit 1, 1 in use")
   assert.equal(adminRequestLimitLine({ currentLimit: 2, used: 1, limitAtRequest: 1, status: "WAITING" }), "Limit 2, 1 in use (1 when asked)")
   assert.equal(adminRequestLimitLine({ currentLimit: 3, used: 1, limitAtRequest: 1, status: "APPROVED" }), "Limit 3, 1 in use")
+})
+
+check("removed domains are split from live ones and counted in the label", () => {
+  const live = [domain({ id: 1 }), domain({ id: 3, status: "DISABLED" })]
+  const removed = [domain({ id: 2, status: "DELETED", useAgain: "SKIPS_REVIEW" }), domain({ id: 4, status: "DELETED", useAgain: null })]
+  assert.deepEqual(splitRemovedDomains([live[0], removed[0], live[1], removed[1]]), { live, removed })
+  assert.deepEqual(splitRemovedDomains([]), { live: [], removed: [] })
+  assert.deepEqual(splitRemovedDomains(live), { live, removed: [] })
+  assert.deepEqual(splitRemovedDomains(removed), { live: [], removed })
+  assert.equal(removedDomainsLabel(0), "Removed domains (0)")
+  assert.equal(removedDomainsLabel(3), "Removed domains (3)")
+})
+
+check("use again copy", () => {
+  assert.equal(USE_AGAIN_LABEL, "Use again")
+  assert.deepEqual(USE_AGAIN_HINTS, {
+    SKIPS_REVIEW: "You removed this domain yourself, so it's set up again straight away.",
+    NEEDS_REVIEW: "It's reviewed again before it's set up.",
+  })
+  assert.equal(USE_AGAIN_PENDING_LINE, "Still being removed from Cloudflare. Use again becomes available in a few minutes.")
+})
+
+check("useAgainLines by what the API allows", () => {
+  const removed = (useAgain) => domain({ status: "DELETED", useAgain })
+  assert.deepEqual(useAgainLines(removed("SKIPS_REVIEW")), { button: true, line: USE_AGAIN_HINTS.SKIPS_REVIEW })
+  assert.deepEqual(useAgainLines(removed("NEEDS_REVIEW")), { button: true, line: USE_AGAIN_HINTS.NEEDS_REVIEW })
+  assert.deepEqual(useAgainLines(removed("CLOUDFLARE_REMOVAL_PENDING")), { button: false, line: USE_AGAIN_PENDING_LINE })
+  assert.deepEqual(useAgainLines(removed(null)), { button: false, line: null })
+  assert.deepEqual(useAgainLines(domain()), { button: false, line: null })
 })
 
 check("strings are ASCII", () => {

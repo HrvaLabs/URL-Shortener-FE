@@ -1469,6 +1469,8 @@ export type DomainProblem =
 
 export type DomainLinkMode = "MOVE" | "DEACTIVATE"
 
+export type DomainUseAgain = "SKIPS_REVIEW" | "NEEDS_REVIEW" | "CLOUDFLARE_REMOVAL_PENDING"
+
 export type CloudflareTokenStatus = "OK" | "MISSING" | "INVALID" | "NO_PERMISSION" | "UNREACHABLE"
 
 export type DomainDisableReason = "ADMIN" | "USER_BLOCKED" | "DOMAIN_RULE" | "BLOCKLIST"
@@ -1505,6 +1507,7 @@ export interface CustomDomain {
   problemText: string | null
   disabledNote: string | null
   links: number
+  useAgain: DomainUseAgain | null
 }
 
 export interface MyDomains {

@@ -110,6 +110,33 @@ export const domainRemovalSummary = ({ moved, renamed, deactivated }: DomainRemo
   return null
 }
 
+export const splitRemovedDomains = (domains: CustomDomain[]): { live: CustomDomain[]; removed: CustomDomain[] } => ({
+  live: domains.filter((domain) => domain.status !== "DELETED"),
+  removed: domains.filter((domain) => domain.status === "DELETED"),
+})
+
+export const removedDomainsLabel = (count: number): string => `Removed domains (${count})`
+
+export const USE_AGAIN_LABEL = "Use again"
+
+export const USE_AGAIN_HINTS = {
+  SKIPS_REVIEW: "You removed this domain yourself, so it's set up again straight away.",
+  NEEDS_REVIEW: "It's reviewed again before it's set up.",
+} as const
+
+export const USE_AGAIN_PENDING_LINE = "Still being removed from Cloudflare. Use again becomes available in a few minutes."
+
+export interface UseAgainLines {
+  button: boolean
+  line: string | null
+}
+
+export const useAgainLines = ({ useAgain }: Pick<CustomDomain, "useAgain">): UseAgainLines => {
+  if (useAgain === "SKIPS_REVIEW" || useAgain === "NEEDS_REVIEW") return { button: true, line: USE_AGAIN_HINTS[useAgain] }
+  if (useAgain === "CLOUDFLARE_REMOVAL_PENDING") return { button: false, line: USE_AGAIN_PENDING_LINE }
+  return { button: false, line: null }
+}
+
 export const DOMAIN_STATUSES = Object.keys(DOMAIN_STATUS_LABELS) as CustomDomainStatus[]
 
 export const isDomainStatus = (value: string | null | undefined): value is CustomDomainStatus =>

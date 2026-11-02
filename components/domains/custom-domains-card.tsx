@@ -20,8 +20,12 @@ import {
   domainProblemLines,
   domainRemovalSummary,
   isWaitingForSetup,
+  removedDomainsLabel,
+  splitRemovedDomains,
+  USE_AGAIN_LABEL,
+  useAgainLines,
 } from "@/lib/domains"
-import { useDomain, useMyDomains, useRemoveDomain, useRetryMyDomain } from "@/lib/hooks/useDomains"
+import { useDomain, useMyDomains, useRemoveDomain, useRetryMyDomain, useUseAgainDomain } from "@/lib/hooks/useDomains"
 import { useFocusAfterRetry } from "@/lib/hooks/useFocusAfterRetry"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import type { CustomDomain, DomainLinkMode } from "@/lib/types"
@@ -131,6 +135,7 @@ export function CustomDomainsCard() {
   }
 
   const applyState = data ? domainApplyState(data) : null
+  const { live, removed } = data ? splitRemovedDomains(data.domains) : { live: [], removed: [] }
 
   return (
     <Card ref={cardRef} id={CARD_ID} className="scroll-mt-40 md:scroll-mt-24">
@@ -167,11 +172,11 @@ export function CustomDomainsCard() {
           )
         ) : (
           <>
-            {data.domains.length === 0 ? (
+            {live.length === 0 ? (
               <p className="text-sm text-muted-foreground">No custom domains yet.</p>
             ) : (
               <ul ref={listRef} aria-label="Your custom domains" className="divide-y rounded-lg border">
-                {data.domains.map((domain) => (
+                {live.map((domain) => (
                   <DomainRow
                     key={domain.id}
                     domain={domain}
@@ -189,6 +194,16 @@ export function CustomDomainsCard() {
                 ))}
               </ul>
             )}
+            {removed.length > 0 && (
+              <details className="rounded-lg border">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium">{removedDomainsLabel(removed.length)}</summary>
+                <ul aria-label="Removed domains" className="divide-y border-t">
+                  {removed.map((domain) => (
+                    <RemovedDomainRow key={domain.id} domain={domain} onUsedAgain={onApplied} />
+                  ))}
+                </ul>
+              </details>
+            )}
             {applyState === "form" && <ApplyDomainForm ref={hostnameRef} onApplied={onApplied} />}
             {applyState === "limit" && <p className="text-sm text-muted-foreground">{domainLimitLine(data.limit)}</p>}
             {applyState === "off" && <p className="text-sm text-muted-foreground">Custom domains aren&apos;t available right now.</p>}
@@ -204,6 +219,40 @@ export function CustomDomainsCard() {
         onCloseAutoFocus={(event) => removal.onCloseAutoFocus(event, removeTrigger.current)}
       />
     </Card>
+  )
+}
+
+function RemovedDomainRow({ domain, onUsedAgain }: { domain: CustomDomain; onUsedAgain: (created: CustomDomain) => void }) {
+  const useAgain = useUseAgainDomain()
+  const lines = useAgainLines(domain)
+  const busy = useAgain.isPending
+
+  return (
+    <li className="space-y-2 px-4 py-4">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <h4 className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{domain.hostname}</h4>
+        <DomainStatusBadge status={domain.status} />
+      </div>
+      <p className="text-xs text-muted-foreground">Applied {serverDate(domain.createdAt)}</p>
+      {lines.button && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-disabled={busy}
+          aria-busy={busy}
+          onClick={() => {
+            if (busy) return
+            useAgain.mutate(domain.id, { onSuccess: onUsedAgain })
+          }}
+          className={rowButton}
+        >
+          {busy ? "Using again..." : USE_AGAIN_LABEL}
+        </Button>
+      )}
+      {lines.line && <p className="text-sm text-muted-foreground">{lines.line}</p>}
+      {useAgain.isError && <p role="alert" className="text-sm text-destructive [overflow-wrap:anywhere]">{errorText(useAgain.error)}</p>}
+    </li>
   )
 }
 

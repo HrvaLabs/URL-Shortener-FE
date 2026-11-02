@@ -76,6 +76,13 @@ export default function PrivacyPage() {
                 you last used each, and any you turned off. Deleted with your account.
               </p>
               <p>
+                When one of your links was last blocked, and whether an admin set changing where your
+                links point to always allowed or never allowed for your account. Both decide whether
+                your links&apos; destinations can change (see{" "}
+                <a href="/help/links#destination">Changing where a link points</a>). Deleted with your
+                account.
+              </p>
+              <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this data is required to
                 provide your account.
               </p>
@@ -255,11 +262,22 @@ export default function PrivacyPage() {
                 Legal basis: performing the service you asked for (Art. 6(1)(b) GDPR).
               </p>
 
+              <h3 id="destination-history">Link destination changes</h3>
+              <p>
+                When the destination of one of your links changes, we record the old and the new
+                destination, when it changed, the email address of the account that made the change,
+                whether it was made signed in or with an API key, and whether an admin saved it although
+                the link checks would have refused it. Admins can see this history, to look into a link
+                whose destination changed. It is kept while the link exists and deleted with it. Legal
+                basis: legitimate interest (Art. 6(1)(f) GDPR).
+              </p>
+
               <h3 id="security-and-audit-logs">Security and audit logs</h3>
               <p>
-                We keep an audit log of administrative actions and of changes to sign-in methods
-                (turning Google or GitHub sign-in off or back on, and removing a password) to protect
-                the service and its users. Sign-ins are not in it: your account records when you last
+                We keep an audit log of administrative actions, of changes you make to your links
+                (editing them, changing where they point, turning them off or back on and deleting
+                them) and of changes to sign-in methods (turning Google or GitHub sign-in off or back
+                on, and removing a password) to protect the service and its users. Sign-ins are not in it: your account records when you last
                 signed in and when each passkey or sign-in method was last used (see{" "}
                 <a href="#account-data">Account data</a>), and failed sign-in attempts are kept only as
                 short-lived counters (see <a href="#retention">How long we keep data</a>). Legal basis:
@@ -552,7 +570,10 @@ export default function PrivacyPage() {
                   request you withdraw while it waits is deleted at once.
                 </li>
                 <li>
-                  <strong>Audit log</strong> (admin actions and sign-in method changes) — kept for 12 months, then deleted automatically.
+                  <strong>Link destination history</strong> &mdash; kept while the link exists, and deleted with it.
+                </li>
+                <li>
+                  <strong>Audit log</strong> (admin actions, changes to your links and sign-in method changes) — kept for 12 months, then deleted automatically.
                 </li>
               </ul>
 

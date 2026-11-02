@@ -2,7 +2,7 @@
 
 > hrva.cc is a free, open-source URL shortener from HrvaLabs (https://hrvalabs.net), with link-in-bio pages and an MCP server for AI assistants. It has no ads and counts visits without storing visitor IP addresses.
 
-Shortening works without an account. A free account adds custom aliases, visit limits, expiry dates, password protection, tags, QR codes that count their scans, per-link analytics, a campaign tracking (UTM) builder, API keys, passkeys and two-step verification, link-in-bio pages at hrva.cc/@yourname, and opt-in notifications. Link statistics are daily totals. Unique visitors are counted with a one-way hash under a random key that changes every day, kept only in Redis and deleted a few hours after the day ends. Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, every click is checked against the blocklists that block outright, and visitors can report links.
+Shortening works without an account. A free account adds custom aliases, editing links after they are made (and turning expired or used-up ones back on), visit limits, expiry dates, password protection, tags, QR codes that count their scans, per-link analytics, a campaign tracking (UTM) builder, API keys, passkeys and two-step verification, link-in-bio pages at hrva.cc/@yourname, and opt-in notifications. Link statistics are daily totals. Unique visitors are counted with a one-way hash under a random key that changes every day, kept only in Redis and deleted a few hours after the day ends. Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, every click is checked against the blocklists that block outright, and visitors can report links.
 
 - Name: hrva.cc, a HrvaLabs project (https://hrvalabs.net/)
 - Author: Karlo Hrvačić (https://karlo.cc)
@@ -29,6 +29,7 @@ Shortening works without an account. A free account adds custom aliases, visit l
 ## Guides
 
 - [Help index](https://app.hrva.cc/help): guides to every feature
+- [Short links and API keys](https://app.hrva.cc/help/links): random aliases, editing a link, turning an expired or used-up link back on, changing where a link points and its rules, visit limits, query strings and API keys
 - [Bio pages (link-in-bio)](https://app.hrva.cc/help/link-in-bio): one page with all your links at hrva.cc/@yourname
 - [Campaign tracking (UTM)](https://app.hrva.cc/help/utm): add UTM tags to a short link
 - [Passkeys and security keys](https://app.hrva.cc/help/passkeys): sign in without a password, and two-step verification

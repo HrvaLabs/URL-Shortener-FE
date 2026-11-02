@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
-const description = "How random aliases, visit limits, query strings and API keys work on hrva.cc."
+const description = "How random aliases, editing links, turning them back on, changing where they point, visit limits, query strings and API keys work on hrva.cc."
 
 export const metadata: Metadata = pageMetadata({ title: "Short links and API keys", description, path: "/help/links" })
 
@@ -30,13 +30,54 @@ export default function LinksHelpPage() {
                 different links. Links made before this rule keep their aliases.
               </p>
 
+              <h2 id="edit">Editing a link</h2>
+              <p>
+                In <Link href="/dashboard">My URLs</Link>, <strong>Edit link</strong> (the pencil on each link) opens the
+                link&apos;s form. You can change its visit limit, its expiry date, its password (set, change or{" "}
+                <strong>Remove password</strong>), its tags and, when allowed, where it points. Leave the visit limit or
+                the expiry date empty for none. A visit limit at or below the clicks already used turns the link off, and
+                an expiry date in the past is refused. The short link, its stats and its QR codes stay the same.
+              </p>
+
+              <h2 id="turn-back-on">Turning a link back on</h2>
+              <p>
+                An expired link or one that used all its clicks opens in the same form. Give it a later expiry date or
+                none, or a higher visit limit or none, and tick <strong>Turn this link back on when I save</strong>. Turning
+                a link back on runs the same checks as making a new one, so a destination they would refuse today keeps
+                the link off. A blocked link can&apos;t be turned back on.
+              </p>
+
+              <h2 id="destination">Changing where a link points</h2>
+              <p>
+                A new destination gets the same checks as a new link and is refused or checked by an admin just like
+                one. Each link&apos;s destination can change 5 times a day. Every change is recorded with the old and new
+                destination, when it was made and by which account, and admins can see it.
+              </p>
+              <p>On hrva.cc links, your account needs to be in good standing:</p>
+              <ul>
+                <li>two-step sign-in is on (see <Link href="/help/passkeys#two-step">two-step sign-in</Link>);</li>
+                <li>the account is at least 30 days old;</li>
+                <li>its email is verified, or it signs in with Google or GitHub;</li>
+                <li>none of its links is blocked or being checked, and none was blocked in the last 90 days.</li>
+              </ul>
+              <p>
+                Links on your own <Link href="/help/custom-domains">custom domain</Link> can change without these, while
+                the domain is active and the link isn&apos;t blocked or being checked. Links made without an account
+                can&apos;t change where they point. An admin can turn destination changes off for an account or for
+                everyone. When the destination can&apos;t change, the form shows it read-only with the exact list of
+                what is missing under <strong>Why the destination can&apos;t change</strong>; the rest of the link can
+                still be edited. API keys follow the same rules (see the{" "}
+                <Link href="/developers#edit">API quickstart</Link>).
+              </p>
+
               <h2 id="visit-limits">Visit limits</h2>
               <p>
                 A visit limit counts every click on the link, repeat clicks from the same person included. Bots and
                 link previews don&apos;t count, and neither do HEAD requests from link checkers. Each click is counted
                 before the visitor is sent on, so clicks at the same moment can&apos;t go past the limit. Once the limit
-                is reached, the link stops working and says so. To use it again, raise its visit limit, then turn it
-                back on.
+                is reached, the link stops working and says so. To use it again, edit it to raise or remove its visit
+                limit and turn it back on in the same save (see{" "}
+                <a href="#turn-back-on">Turning a link back on</a>).
               </p>
               <p>
                 Your dashboard shows how many clicks have counted, for example &quot;3 of 5 clicks used&quot;. The

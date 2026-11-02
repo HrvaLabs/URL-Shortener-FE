@@ -87,13 +87,38 @@ const fields = [
 const errors = [
   { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; custom aliases are turned off; or the API key is expired or revoked, or belongs to an inactive account." },
   { status: "401", text: "Nobody is signed in, on an endpoint that needs a signed-in account." },
-  { status: "403", text: "You're signed in, but the account isn't allowed to do this." },
+  { status: "403", text: "You're signed in, or used a key, but the account isn't allowed to do this, for example the link isn't yours or its destination can't change yet (see Editing a link)." },
   { status: "404", text: "The API key or the link doesn't exist." },
-  { status: "409", text: "The custom alias is already taken, or a link that used all its clicks is turned back on before its visit limit is raised." },
+  { status: "409", text: "The custom alias is already taken; a link that used all its clicks is turned back on before its visit limit is raised or removed; an expired link is turned back on with PATCH .../activate before its expiry is changed; or another active link already uses its short URL." },
   { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds are left until the limit resets." },
   { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds are left in the hour, and detail says how many minutes." },
   { status: "503", text: "hrva.cc can't check its limits for a moment, so it doesn't make a link without an account or check a link password. Try again after the seconds in Retry-After. Creates with an API key or a signed-in account go on." },
 ]
+
+const editFields = [
+  { name: "id", text: "Required. The link's id, the same as in the path (the create answer's id)." },
+  { name: "longUrl", text: "Optional. A new destination; leave it out to keep the current one. Anything that differs once https:// is added counts as a change (see the rules below)." },
+  { name: "visitLimit", text: "Replaced by what you send: send the current limit to keep it. null or 0 removes it. A limit at or below the clicks already counted turns the link off." },
+  { name: "expirationDate", text: "Replaced by what you send: send the current one to keep it, even after it has passed. null removes it. A new one must be in the future." },
+  { name: "tags", text: "Optional. An array replaces the tags; leave it out to keep them." },
+  { name: "password", text: "Optional. A new password sets it, \"\" removes it; leave it out to keep it." },
+  { name: "active", text: "Optional. true turns the link back on (an expired link needs a later expiry or none, a used-up one a higher limit or none), false turns it off." },
+]
+
+const editProblemExample = `HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+
+{
+  "type": "about:blank",
+  "title": "Forbidden",
+  "status": 403,
+  "detail": "You can't change where this link points yet. Turn on two-step sign-in. Available from 1 December 2026.",
+  "instance": "/api/v1/urls/1204",
+  "missing": [
+    { "code": "TWO_STEP_SIGN_IN", "text": "Turn on two-step sign-in", "availableFrom": null },
+    { "code": "ACCOUNT_AGE", "text": "Available from 1 December 2026", "availableFrom": "2026-12-01T10:00:00Z" }
+  ]
+}`
 
 const problemExample = `HTTP/1.1 409 Conflict
 Content-Type: application/problem+json
@@ -186,6 +211,38 @@ export default function DevelopersPage() {
         </p>
       </div>
       <CodeBlock label="Response" code={responseExample} copyLabel="response example" mono />
+
+      <div className="prose-custom">
+        <h2 id="edit">Editing a link</h2>
+        <p>
+          <code className="[overflow-wrap:anywhere]">PUT https://hrva.cc/api/v1/urls/&#123;id&#125;</code> with the same{" "}
+          <code>X-Api-Key</code> (or <code>Authorization: Bearer hrva_…</code>) changes a link the key&apos;s account owns.
+          It answers <code>200</code> with the link, in the same shape as above. The body:
+        </p>
+        <ul>
+          {editFields.map((field) => (
+            <li key={field.name}>
+              <code>{field.name}</code>: {field.text}
+            </li>
+          ))}
+        </ul>
+        <p>
+          A new destination gets the same checks as a new link and is refused with the same errors. On hrva.cc links the
+          account needs good standing; links on its own custom domain don&apos;t, and links made without an account never
+          change. The rules are on <Link href="/help/links#destination">Changing where a link points</Link>. When the
+          destination can&apos;t change, the answer is a <code>403</code> whose <code>missing</code> lists what is
+          missing, each with a stable <code>code</code>, the <code>text</code> to show and, when it is met by itself
+          later, <code>availableFrom</code>. Each link&apos;s destination can change 5 times a day: the sixth is a{" "}
+          <code>429</code> whose <code>Retry-After</code> header has the seconds left and whose <code>detail</code> says
+          how long, for example{" "}
+          <code className="[overflow-wrap:anywhere]">This link&apos;s destination can change 5 times a day. Try again in 43 minutes.</code>{" "}
+          While changes can&apos;t be counted the answer is a <code>503</code> with <code>Retry-After: 60</code>. Signed in on
+          the web, <code className="[overflow-wrap:anywhere]">GET https://hrva.cc/api/v1/urls/&#123;id&#125;/destination-change</code>{" "}
+          answers <code>allowed</code>, the same <code>missing</code> list and <code>changesLeft</code> for the day without
+          counting anything; it doesn&apos;t take an API key.
+        </p>
+      </div>
+      <CodeBlock label="A destination that can't change yet" code={editProblemExample} copyLabel="destination refusal example" mono />
 
       <div className="prose-custom">
         <h2 id="dates">Dates</h2>

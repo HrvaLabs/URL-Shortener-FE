@@ -236,8 +236,8 @@ export const URLS_PAGE = "URLs page"
 export const LINK_STATE_LABELS: Record<Exclude<BioLinkState, "LIVE">, { badge: string; hint: string }> = {
   IN_REVIEW: { badge: "Waiting for review", hint: "Not shown on your page until an admin has checked the link." },
   DEACTIVATED: { badge: "Link turned off", hint: `Turn ${ALIAS} back on on the ${URLS_PAGE} to show it again.` },
-  EXPIRED: { badge: "Link expired", hint: `Give ${ALIAS} a later expiry date on the ${URLS_PAGE} to show it again.` },
-  LIMIT_REACHED: { badge: "Visit limit reached", hint: `Raise the visit limit of ${ALIAS} on the ${URLS_PAGE} to show it again.` },
+  EXPIRED: { badge: "Link expired", hint: `Edit ${ALIAS} on the ${URLS_PAGE}: give it a later expiry date or remove it, and turn it back on.` },
+  LIMIT_REACHED: { badge: "Visit limit reached", hint: `Edit ${ALIAS} on the ${URLS_PAGE}: raise or remove its visit limit, and turn it back on.` },
   BLOCKED: { badge: "Link blocked", hint: "Blocked links can't be shown. Remove this button." },
   DOMAIN_OFF: { badge: "Domain turned off", hint: "Not shown on your page while its custom domain isn't active. Check it under Custom domains in Settings." },
 }

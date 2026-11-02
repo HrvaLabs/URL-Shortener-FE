@@ -67,6 +67,10 @@ export default function SecurityPage() {
             don&apos;t open until an admin has checked them; visitors are told the link is being checked.
           </li>
           <li>The buttons on bio pages are short links, and get the same checks.</li>
+          <li>
+            A link&apos;s destination can change only after the same checks as a new link, and every change is
+            recorded. Turning an expired or used-up link back on gets those checks too.
+          </li>
           <li>A link&apos;s password is stored as a hash, and wrong guesses are limited.</li>
           <li>
             Links the checks are unsure about go to a review queue, and a person decides what happens to them. The
@@ -107,7 +111,7 @@ export default function SecurityPage() {
             Only you, and an admin who uses two-step sign-in, can change your links or see their analytics. Anyone who
             has a short link can see where it goes and how many times it has been opened.
           </li>
-          <li>Admin actions and changes to sign-in methods are recorded in an audit log.</li>
+          <li>Admin actions, changes to sign-in methods and changes to where a link points are recorded in an audit log.</li>
         </ul>
         <p>
           The <Link href="/help/passkeys">passkeys guide</Link> explains two-step sign-in, recovery codes and what to do

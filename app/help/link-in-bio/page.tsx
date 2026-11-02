@@ -186,12 +186,14 @@ export default function LinkInBioHelpPage() {
                   page.
                 </li>
                 <li>
-                  <strong>Link expired</strong>: the link passed its expiry date. Give it a later one on the
-                  URLs page.
+                  <strong>Link expired</strong>: the link passed its expiry date. Use <strong>Edit link</strong> on
+                  the URLs page to give it a later one or remove it, and tick{" "}
+                  <strong>Turn this link back on when I save</strong>.
                 </li>
                 <li>
-                  <strong>Visit limit reached</strong>: the link has used all the clicks it allows. Raise its
-                  visit limit on the URLs page, then turn the link back on.
+                  <strong>Visit limit reached</strong>: the link has used all the clicks it allows. Use{" "}
+                  <strong>Edit link</strong> on the URLs page to raise or remove its visit limit, and tick{" "}
+                  <strong>Turn this link back on when I save</strong>.
                 </li>
                 <li>
                   <strong>Waiting for review</strong>: the automatic checks flagged the link, and it stays

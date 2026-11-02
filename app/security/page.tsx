@@ -53,6 +53,10 @@ export default function SecurityPage() {
           </li>
           <li>Every click is checked against blocklists too, so a destination listed later stops working on the next click.</li>
           <li>Where a destination redirects is followed, and every address along the way is checked as well.</li>
+          <li>
+            A web address passed on in a short link&apos;s query is checked on each click too, and isn&apos;t passed
+            on if it would be blocked. Links made without an account pass nothing on.
+          </li>
           <li>Links to other URL shorteners are refused, so a short link can&apos;t hide another one.</li>
           <li>
             Some links made without an account open a warning page first. It shows the full destination, a Continue

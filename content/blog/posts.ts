@@ -330,9 +330,9 @@ export const blogPosts: BlogPost[] = [
       <p>
         hrva.cc counts the click on the short link. To see what visitors do after they arrive, add UTM tags to the
         destination; your own analytics tool reads them. The <a href="/utm">UTM builder</a> adds them, and the
-        <a href="/help/utm">campaign tracking guide</a> explains each field. A short link also passes its own query
-        string on, so <code>hrva.cc/abc?ref=mail</code> opens the destination with <code>ref=mail</code> added
-        (<a href="/help/links#query-strings">query strings</a>).
+        <a href="/help/utm">campaign tracking guide</a> explains each field. A short link made with an account also
+        passes its own query string on, so <code>hrva.cc/abc?ref=mail</code> opens the destination with
+        <code>ref=mail</code> added (<a href="/help/links#query-strings">query strings</a>).
       </p>
 
       <h2>What hrva.cc doesn't record</h2>
@@ -466,8 +466,8 @@ export const blogPosts: BlogPost[] = [
       <p>
         Put a campaign's UTM tags on the destination, so your analytics tool sees where visitors came from. The
         <a href="/utm">UTM builder</a> adds them and can shorten the result. For a one-off parameter, add it to the
-        short link instead: hrva.cc passes a short link's query string on to the destination, and the destination's
-        own value wins a clash (<a href="/help/links#query-strings">query strings</a>).
+        short link instead: hrva.cc passes the query string of a link made with an account on to the destination, and
+        the destination's own value wins a clash (<a href="/help/links#query-strings">query strings</a>).
       </p>
 
       <h2>4. Read the stats before acting on them</h2>

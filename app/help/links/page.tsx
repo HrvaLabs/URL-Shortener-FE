@@ -51,6 +51,11 @@ export default function LinksHelpPage() {
                 hrva.cc&apos;s own qr marker, which its QR codes add, isn&apos;t passed on. Only the query is added: the
                 site the link opens never changes. A link with a password opens its destination as saved.
               </p>
+              <p>
+                A link made without an account passes nothing on: it always opens its destination as it was checked.
+                When a value passed on is a web address that hrva.cc would block, nothing is passed on and the
+                destination opens as saved.
+              </p>
 
               <h2 id="api-keys">API keys</h2>
               <p>

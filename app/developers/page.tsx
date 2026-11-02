@@ -269,7 +269,9 @@ export default function DevelopersPage() {
           The short link&apos;s query string is passed on: <code>https://hrva.cc/&#123;short&#125;?ref=mail</code> redirects
           to the destination with <code>ref=mail</code> added after its own parameters and before its fragment. On a name
           clash the destination&apos;s value wins, the <code>qr</code> marker is dropped, and repeated keys and their
-          encoding stay as sent. Only the query changes, never the destination&apos;s host.
+          encoding stay as sent. Only the query changes, never the destination&apos;s host. A link made without an
+          account passes nothing on. When a value passed on is a web address, encoded or not, that hrva.cc would
+          block, the whole query is dropped and the redirect goes to the destination as saved.
         </p>
 
         <h2 id="expiry">When a key expires</h2>

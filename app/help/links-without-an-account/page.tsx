@@ -45,7 +45,8 @@ export default function LinksWithoutAnAccountHelpPage() {
                 A link made without an account isn&apos;t in any dashboard, so it has no stats page. Custom
                 aliases, visit limits, expiry dates and analytics come with a free account, which you can{" "}
                 <Link href="/register">create</Link> whenever new accounts are open. When hrva.cc sets an end date
-                or a visit limit for these links, the form says so.
+                or a visit limit for these links, the form says so. Such a link opens its destination as it was
+                checked: a query string added to the short link isn&apos;t passed on.
               </p>
 
               <h2 id="limits">Limits</h2>

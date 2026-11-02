@@ -407,3 +407,14 @@ export function blockTotalsText(rows: DomainBlockPreview[]): string {
   const active = rows.reduce((sum, row) => sum + row.activeLinks, 0)
   return `${countOf(rows.length, "domain")}, ${countOf(held, "held link")}, ${countOf(active, "active link")} on the site`
 }
+
+export type ReviewBadgeCounts = { links: number; bioPages: number; domains: number; domainRequests: number; total: number }
+
+export function reviewBadgeCounts(results: PromiseSettledResult<{ totalElements: number }>[]): ReviewBadgeCounts {
+  if (results.every((result) => result.status === "rejected")) throw (results[0] as PromiseRejectedResult).reason
+  const [links, bioPages, domains, domainRequests] = [0, 1, 2, 3].map((index) => {
+    const result = results[index]
+    return result?.status === "fulfilled" ? result.value.totalElements : 0
+  })
+  return { links, bioPages, domains, domainRequests, total: links + bioPages + domains + domainRequests }
+}

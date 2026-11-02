@@ -42,8 +42,8 @@ export function navItemState(isActive: boolean) {
 
 function AdminLink({ pathname }: { pathname: string }) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
-  const { data: reviewCount } = useReviewCount()
-  const reviewCountLoaded = reviewCount !== undefined
+  const { data: counts } = useReviewCount()
+  const reviewCountLoaded = counts !== undefined
   const linkRef = useRef<HTMLAnchorElement>(null)
 
   useEffect(() => {
@@ -58,7 +58,7 @@ function AdminLink({ pathname }: { pathname: string }) {
       className={cn(navItemClass, navItemState(isAdminRoute))}
     >
       Admin
-      {!!reviewCount && <ReviewCountBadge count={reviewCount} />}
+      {!!counts?.total && <ReviewCountBadge count={counts.total} />}
     </Link>
   )
 }

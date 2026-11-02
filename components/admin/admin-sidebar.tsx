@@ -9,7 +9,7 @@ import { ReviewCountBadge } from "@/components/admin/review-count-badge"
 import { navItemClass, navItemState, revealInRow } from "@/components/dashboard/dashboard-nav"
 import { cn } from "@/lib/utils"
 
-export type AdminNavItem = { href: string; label: string; icon: LucideIcon; badge?: "review"; sections?: string[] }
+export type AdminNavItem = { href: string; label: string; icon: LucideIcon; badge?: "review" | "domains"; sections?: string[] }
 
 export type AdminNavGroup = { title: string; items: AdminNavItem[] }
 
@@ -26,7 +26,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { href: "/admin/review", label: "Review queue", icon: ShieldAlert, badge: "review" },
       { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
-      { href: "/admin/domains", label: "Domains", icon: Globe, badge: "review", sections: ["/admin/domains/requests"] },
+      { href: "/admin/domains", label: "Domains", icon: Globe, badge: "domains", sections: ["/admin/domains/requests"] },
       { href: "/admin/blocklists", label: "Blocklists", icon: ListFilter },
       { href: "/admin/reserved", label: "Reserved aliases", icon: Bookmark },
     ],
@@ -68,12 +68,12 @@ function chipRowMask({ start, end }: { start: boolean; end: boolean }): string |
 
 export function AdminSidebar() {
   const pathname = usePathname()
-  const { data: reviewCount } = useReviewCount()
+  const { data: counts } = useReviewCount()
   const headingId = useId()
   const activeChipRef = useRef<HTMLAnchorElement>(null)
   const chipRowRef = useRef<HTMLElement>(null)
   const [hidden, setHidden] = useState({ start: false, end: false })
-  const reviewCountLoaded = reviewCount !== undefined
+  const reviewCountLoaded = counts !== undefined
 
   const measureChipRow = useCallback(() => {
     const row = chipRowRef.current
@@ -96,8 +96,16 @@ export function AdminSidebar() {
     return () => observer.disconnect()
   }, [measureChipRow])
 
-  const badgeFor = (item: AdminNavItem, className?: string) =>
-    item.badge === "review" && !!reviewCount && <ReviewCountBadge count={reviewCount} className={className} />
+  const badgeCount = (item: AdminNavItem) => {
+    if (item.badge === "review") return (counts?.links ?? 0) + (counts?.bioPages ?? 0)
+    if (item.badge === "domains") return (counts?.domains ?? 0) + (counts?.domainRequests ?? 0)
+    return 0
+  }
+
+  const badgeFor = (item: AdminNavItem, className?: string) => {
+    const count = badgeCount(item)
+    return count > 0 && <ReviewCountBadge count={count} className={className} />
+  }
 
   return (
     <>

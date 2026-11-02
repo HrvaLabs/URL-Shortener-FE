@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_UNCONFIRMED, humanCheckRefusal, NOT_AVAILABLE, switchUnavailable, switchChecked, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, linkEndsText, WARNING_PAGE_NOTE, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerDisabledHeading, FORGOT_PASSWORD_LABEL, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_UNCONFIRMED, humanCheckRefusal, NOT_AVAILABLE, switchUnavailable, switchChecked, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, linkEndsText, WARNING_PAGE_NOTE, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerDisabledHeading, FORGOT_PASSWORD_LABEL, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText, reviewBadgeCounts } = moderation
 
 const check = (name, run) => {
   try {
@@ -636,6 +636,15 @@ check("blockTotalsText sums the domains, held links and active links", () => {
   const row = (heldLinks, activeLinks) => ({ domain: "x", hosts: ["x"], selectedLinks: 1, activeLinks, heldLinks, rule: null })
   assert.equal(blockTotalsText([row(1, 0), row(1, 0)]), "2 domains, 2 held links, 0 active links on the site")
   assert.equal(blockTotalsText([row(1, 1)]), "1 domain, 1 held link, 1 active link on the site")
+})
+
+check("reviewBadgeCounts keeps links, bio pages, domain applications and limit requests apart", () => {
+  const found = (totalElements) => ({ status: "fulfilled", value: { totalElements } })
+  const failed = { status: "rejected", reason: new Error("down") }
+  assert.deepEqual(reviewBadgeCounts([found(0), found(0), found(1), found(0)]), { links: 0, bioPages: 0, domains: 1, domainRequests: 0, total: 1 })
+  assert.deepEqual(reviewBadgeCounts([found(2), found(3), found(4), found(5)]), { links: 2, bioPages: 3, domains: 4, domainRequests: 5, total: 14 })
+  assert.deepEqual(reviewBadgeCounts([found(2), failed, found(4), failed]), { links: 2, bioPages: 0, domains: 4, domainRequests: 0, total: 6 })
+  assert.throws(() => reviewBadgeCounts([failed, failed, failed, failed]), /down/)
 })
 
 check("strings are ASCII", () => {

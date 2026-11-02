@@ -63,8 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const userData = await fetchMeThroughRestart(token)
+      if (localStorage.getItem("auth-token") !== token) return
       if (userData) setUser(userData)
     } catch (err) {
+      if (localStorage.getItem("auth-token") !== token) return
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         localStorage.removeItem("auth-token")
         setUser(null)

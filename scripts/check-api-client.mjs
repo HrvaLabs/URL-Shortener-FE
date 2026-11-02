@@ -192,6 +192,19 @@ await check("analytics queries ride out a restart and still give up on refusals 
   assert.equal(retryUnlessRefused(1, new ApiError("down", 500)), false)
 })
 
+await check("refreshUser applies its result only while the token it asked with is still stored", async () => {
+  const { readFileSync } = await import("node:fs")
+  const source = readFileSync(new URL("../lib/auth-context.tsx", import.meta.url), "utf8")
+  const body = source.slice(source.indexOf("const refreshUser"), source.indexOf("useEffect(() => {"))
+  const guard = 'if (localStorage.getItem("auth-token") !== token) return'
+  const apply = body.indexOf("if (userData) setUser(userData)")
+  const failure = body.indexOf("} catch (err) {")
+  const removal = body.indexOf('localStorage.removeItem("auth-token")')
+  assert.ok(apply > 0 && failure > 0 && removal > 0)
+  assert.ok(body.lastIndexOf(guard, apply) > body.indexOf("await fetchMeThroughRestart(token)"), "no guard before setUser")
+  assert.ok(body.lastIndexOf(guard, removal) > failure, "no guard in the error branch")
+})
+
 if (failures > 0) {
   console.error(`${failures} check(s) failed`)
   process.exit(1)

@@ -335,7 +335,7 @@ function AdminUrls() {
           />
           {deadCount?.totalElements != null ? `Dead destinations only (${deadCount.totalElements.toLocaleString()})` : "Dead destinations only"}
         </label>
-        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[61rem]:hidden" />
+        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} className="@min-[64rem]:hidden" />
       </div>
 
       {selectedIds.size > 0 && (
@@ -414,10 +414,10 @@ function AdminUrls() {
                 </TableHead>
                 <TableHead>Short URL</TableHead>
                 <TableHead className="hidden @min-[78.25rem]:table-cell">Long URL</TableHead>
-                <SortHead field="owner.email" label="Owner" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[61rem]:table-cell" />
-                <SortHead field="visits" label="Unique visitors" sortDir={sortDir} toggleSort={toggleSort} className="hidden @2xl:table-cell" />
-                <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[61rem]:table-cell" />
-                <TableHead className="hidden @2xl:table-cell">Status</TableHead>
+                <SortHead field="owner.email" label="Owner" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[64rem]:table-cell" />
+                <SortHead field="visits" label="Unique visitors" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[48rem]:table-cell" />
+                <SortHead field="createDate" label="Created" sortDir={sortDir} toggleSort={toggleSort} className="hidden @min-[64rem]:table-cell" />
+                <TableHead className="hidden @min-[48rem]:table-cell">Status</TableHead>
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -439,32 +439,32 @@ function AdminUrls() {
                     </span>
                     <div className="mt-1 min-w-40 space-y-0.5 text-xs text-muted-foreground @lg:min-w-56 @min-[78.25rem]:hidden">
                       <Destination url={url} />
-                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 @min-[61rem]:hidden">
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 @min-[64rem]:hidden">
                         <span className="[overflow-wrap:anywhere]">{url.ownerEmail ?? "Anonymous"}</span>
                         {url.ownerPossibleScammer && <Badge variant="warning">Possible scammer</Badge>}
                       </div>
-                      <p className="tabular-nums @min-[61rem]:hidden">Created {url.createDate ? formatDateTime(parseServerDateTime(url.createDate)) : "—"}</p>
-                      <p className="tabular-nums @2xl:hidden">{visitorsText(url)}</p>
-                      <div className="pt-0.5 @2xl:hidden">
+                      <p className="tabular-nums @min-[64rem]:hidden">Created {url.createDate ? formatDateTime(parseServerDateTime(url.createDate)) : "—"}</p>
+                      <p className="tabular-nums @min-[48rem]:hidden">{visitorsText(url)}</p>
+                      <div className="pt-0.5 @min-[48rem]:hidden">
                         <UrlStatus url={url} />
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden text-muted-foreground @min-[78.25rem]:table-cell">
-                    <Destination url={url} className="min-w-[22rem]" />
+                    <Destination url={url} className="min-w-[20rem]" />
                   </TableCell>
-                  <TableCell className="hidden @min-[61rem]:table-cell">
+                  <TableCell className="hidden @min-[64rem]:table-cell">
                     <span className={cn("block min-w-28 [overflow-wrap:anywhere]", !url.ownerEmail && "text-muted-foreground")}>{url.ownerEmail ?? "Anonymous"}</span>
                     {url.ownerPossibleScammer && <Badge variant="warning" className="mt-1 whitespace-nowrap">Possible scammer</Badge>}
                   </TableCell>
-                  <TableCell className="hidden tabular-nums @2xl:table-cell">
+                  <TableCell className="hidden tabular-nums @min-[48rem]:table-cell">
                     <span className="block">{url.visits.toLocaleString()}</span>
                     {url.visitLimit > 0 && <span className="block text-xs text-muted-foreground">{opensText(url)}</span>}
                   </TableCell>
-                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[61rem]:table-cell">
+                  <TableCell className="hidden tabular-nums text-muted-foreground @min-[64rem]:table-cell">
                     {url.createDate ? <DateTimeLines value={url.createDate} /> : "—"}
                   </TableCell>
-                  <TableCell className="hidden @2xl:table-cell">
+                  <TableCell className="hidden @min-[48rem]:table-cell">
                     <UrlStatus url={url} />
                   </TableCell>
                   <TableCell className="sticky right-0 bg-card text-right transition-colors group-hover:bg-[linear-gradient(hsl(var(--muted)/0.4),hsl(var(--muted)/0.4))] group-data-[state=selected]:bg-brand-soft">

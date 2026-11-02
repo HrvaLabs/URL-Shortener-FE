@@ -139,8 +139,10 @@ export const useAgainLines = ({ useAgain }: Pick<CustomDomain, "useAgain">): Use
 
 export const DOMAIN_STATUSES = Object.keys(DOMAIN_STATUS_LABELS) as CustomDomainStatus[]
 
+export const ADMIN_FILTER_STATUSES = DOMAIN_STATUSES.filter((status) => status !== "DELETED")
+
 export const isDomainStatus = (value: string | null | undefined): value is CustomDomainStatus =>
-  typeof value === "string" && (DOMAIN_STATUSES as string[]).includes(value)
+  typeof value === "string" && (ADMIN_FILTER_STATUSES as string[]).includes(value)
 
 export const ADMIN_LINK_MODE_HINTS: Record<DomainLinkMode, string> = {
   MOVE: "Links keep their alias when it's free on hrva.cc and get a new one otherwise.",

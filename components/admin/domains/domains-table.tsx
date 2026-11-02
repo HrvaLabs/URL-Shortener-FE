@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { parseServerDateTime } from "@/lib/analytics"
 import {
-  DOMAIN_STATUSES,
+  ADMIN_FILTER_STATUSES,
   DOMAIN_STATUS_LABELS,
   adminRecheckHint,
   canAdminRetry,
@@ -36,19 +36,26 @@ import { cn, formatDateTime, plural } from "@/lib/utils"
 
 const SEARCH_PARAM = "search"
 
+const REMOVED_SEARCH_PARAM = "removedSearch"
+
+const REMOVED_PREFIX = "removed"
+
 const STATUS_PARAM = "status"
 
 const SEARCH_DELAY_MS = 300
 
 const sortFields = ["createdAt", "hostname", "status"]
 
-const sortOptions: SortOption[] = [
+const removedSortOptions: SortOption[] = [
   { field: "createdAt", direction: "desc", label: "Newest first" },
   { field: "createdAt", direction: "asc", label: "Oldest first" },
   { field: "hostname", direction: "asc", label: "Domain, A to Z" },
   { field: "hostname", direction: "desc", label: "Domain, Z to A" },
-  { field: "status", direction: "asc", label: "Grouped by status" },
 ]
+
+const sortOptions: SortOption[] = [...removedSortOptions, { field: "status", direction: "asc", label: "Grouped by status" }]
+
+const removedSortFields = ["createdAt", "hostname"]
 
 const NOT_ON_PAGE = "This domain isn't on this page. Search for its name to find it."
 
@@ -84,17 +91,25 @@ interface OpenDialog {
 interface DomainsTableProps {
   highlightId: number | null
   headingRef: RefObject<HTMLElement | null>
+  removed?: boolean
 }
 
-export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
+export function DomainsTable({ highlightId, headingRef, removed = false }: DomainsTableProps) {
   const searchParams = useSearchParams()
-  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination("createdAt", "desc", sortFields)
-  const [searchInput, setSearchInput] = useState(() => searchParams.get(SEARCH_PARAM) ?? "")
-  const [search, setSearch] = useState(() => (searchParams.get(SEARCH_PARAM) ?? "").trim())
-  const [status, setStatus] = useState<CustomDomainStatus | "">(() => {
+  const searchParam = removed ? REMOVED_SEARCH_PARAM : SEARCH_PARAM
+  const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination(
+    "createdAt",
+    "desc",
+    removed ? removedSortFields : sortFields,
+    removed ? REMOVED_PREFIX : "",
+  )
+  const [searchInput, setSearchInput] = useState(() => searchParams.get(searchParam) ?? "")
+  const [search, setSearch] = useState(() => (searchParams.get(searchParam) ?? "").trim())
+  const [filterStatus, setStatus] = useState<CustomDomainStatus | "">(() => {
     const value = searchParams.get(STATUS_PARAM)
-    return isDomainStatus(value) ? value : ""
+    return !removed && isDomainStatus(value) ? value : ""
   })
+  const status: CustomDomainStatus | "" = removed ? "DELETED" : filterStatus
   const [linkedWithSearch] = useState(() => (searchParams.has(SEARCH_PARAM) ? highlightId : null))
   const [lookedUpId, setLookedUpId] = useState<number | null>(null)
   const filters: AdminDomainFilters = { status: status || undefined, search: search || undefined, page, size, sort, order }
@@ -102,7 +117,7 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const applications = useAdminDomains(applicationFilters(0))
   useClampedPage(page, data?.totalPages, setPage)
   const domains = data?.content ?? []
-  const filtered = !!search || !!status
+  const filtered = !!search || (!removed && !!status)
   const disable = useDisableDomain()
   const enable = useEnableDomain()
   const retryDomain = useRetryDomain()
@@ -135,9 +150,9 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
   const notOnPage = loaded && !isPlaceholderData && lookedUpId === highlightId && !inTable && !inApplications
 
   useEffect(() => {
-    writeParam(STATUS_PARAM, status || null)
-    writeParam(SEARCH_PARAM, search || null)
-  }, [status, search])
+    if (!removed) writeParam(STATUS_PARAM, status || null)
+    writeParam(searchParam, search || null)
+  }, [removed, searchParam, status, search])
 
   useEffect(() => {
     const next = searchInput.trim()
@@ -267,19 +282,21 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
             placeholder="Search by domain or owner email"
-            aria-label="Search by domain or owner email"
+            aria-label={removed ? "Search removed domains by domain or owner email" : "Search by domain or owner email"}
             className="h-9 pl-9"
           />
         </form>
-        <select value={status} onChange={(event) => changeStatus(event.target.value)} aria-label="Filter by status" className={adminSelectClass}>
-          <option value="">All</option>
-          {DOMAIN_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {DOMAIN_STATUS_LABELS[value]}
-            </option>
-          ))}
-        </select>
-        <SortSelect options={sortOptions} sort={sort} order={order} onChange={setSortOrder} />
+        {!removed && (
+          <select value={status} onChange={(event) => changeStatus(event.target.value)} aria-label="Filter by status" className={adminSelectClass}>
+            <option value="">All</option>
+            {ADMIN_FILTER_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {DOMAIN_STATUS_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        )}
+        <SortSelect options={removed ? removedSortOptions : sortOptions} sort={sort} order={order} onChange={setSortOrder} />
       </div>
 
       {notOnPage && (
@@ -305,8 +322,8 @@ export function DomainsTable({ highlightId, headingRef }: DomainsTableProps) {
         </div>
       ) : domains.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-16 text-center">
-          <p className="font-semibold">{filtered ? "No domains match." : "No custom domains yet."}</p>
-          {!filtered && <p className="mt-1 text-sm text-muted-foreground">Applications show up here once someone applies in Settings.</p>}
+          <p className="font-semibold">{filtered ? "No domains match." : removed ? "No removed domains." : "No custom domains yet."}</p>
+          {!filtered && !removed && <p className="mt-1 text-sm text-muted-foreground">Applications show up here once someone applies in Settings.</p>}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border bg-card">
@@ -439,9 +456,11 @@ function DomainNotes({ domain }: { domain: AdminDomain }) {
   const recheck = adminRecheckHint(domain)
   const disabledNote = domain.status === "DISABLED" ? domain.disabledNote : null
   const notePrefix = domain.disabledReason === "ADMIN" ? "Turned off: " : ""
-  if (!problemText && !domain.lastError && !recheck && !disabledNote) return null
+  const removedAt = domain.status === "DELETED" ? domain.deletedAt : null
+  if (!problemText && !domain.lastError && !recheck && !disabledNote && !removedAt) return null
   return (
     <div className="max-w-md space-y-0.5 text-xs">
+      {removedAt && <p className="tabular-nums text-muted-foreground">Removed {serverDateTime(removedAt)}</p>}
       {disabledNote && <p className="[overflow-wrap:anywhere]">{notePrefix}{disabledNote}</p>}
       {problemText && <p className="text-destructive [overflow-wrap:anywhere]">{problemText}</p>}
       {domain.lastError && <p className="text-muted-foreground [overflow-wrap:anywhere]">Cloudflare said: {domain.lastError}</p>}

@@ -7,6 +7,7 @@ import { PageMeta } from "@/components/page-meta"
 import { ApplicationsSection } from "@/components/admin/domains/applications-section"
 import { DomainSummaryBar } from "@/components/admin/domains/domain-summary-bar"
 import { DomainsLoading, DomainsTable } from "@/components/admin/domains/domains-table"
+import { RemovedDomainsSection } from "@/components/admin/domains/removed-domains-section"
 import { useAdminDomainRequests } from "@/lib/hooks/useDomains"
 
 const subline = "Custom domains: review applications, keep an eye on the Cloudflare cap, and turn off or remove a domain."
@@ -40,6 +41,7 @@ function DomainsContent({ headingRef }: { headingRef: RefObject<HTMLElement | nu
     <div className="space-y-6">
       <ApplicationsSection highlightId={highlightId} fallbackFocusRef={headingRef} />
       <DomainsTable highlightId={highlightId} headingRef={headingRef} />
+      <RemovedDomainsSection headingRef={headingRef} />
     </div>
   )
 }

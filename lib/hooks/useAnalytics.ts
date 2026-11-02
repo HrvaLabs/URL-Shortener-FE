@@ -1,11 +1,8 @@
 "use client"
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { analyticsApi, ApiError } from "@/lib/api-client"
+import { analyticsApi, retryUnlessRefused } from "@/lib/api-client"
 import type { AnalyticsRange } from "@/lib/types"
-
-export const retryUnlessRefused = (failureCount: number, error: Error) =>
-  !(error instanceof ApiError && error.status >= 400 && error.status < 500) && failureCount < 1
 
 export function useAnalyticsOverview(days: AnalyticsRange) {
   return useQuery({

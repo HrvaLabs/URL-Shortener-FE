@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { SESSION_ENDED, adminApi, authApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
+const { ApiError, SESSION_ENDED, adminApi, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -138,6 +138,55 @@ await check("the OAuth code is exchanged with the verifier of the browser that s
   assert.equal(sent.length, 1)
   assert.match(sent[0].url, /\/auth\/oauth\/exchange$/)
   assert.deepEqual(JSON.parse(sent[0].body), { code: "one-time-code", verifier: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk" })
+})
+
+await check("retries wait 1 s, 2 s, 4 s, then 8 s each", () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 20].map(retryDelay), [1000, 2000, 4000, 8000, 8000, 8000, 8000])
+})
+
+await check("a restart is retried for 120 s of waiting in total, then given up", () => {
+  const restart = new ApiError("Can't reach hrva.cc right now.", 502)
+  let waited = 0
+  let attempt = 0
+  while (shouldRetry(attempt, restart)) waited += retryDelay(attempt++)
+  assert.equal(attempt, 17)
+  assert.equal(waited, 119_000)
+  assert.ok(waited + retryDelay(attempt) > 120_000)
+  assert.equal(shouldRetry(5, restart), true)
+  assert.equal(shouldRetry(16, restart), true)
+  assert.equal(shouldRetry(17, restart), false)
+  assert.equal(shouldRetry(40, new TypeError("Failed to fetch")), false)
+})
+
+await check("a network failure, 502, 503 and 504 are restart errors; nothing else is", () => {
+  for (const status of [0, 502, 503, 504]) assert.equal(isRestartError(new ApiError("down", status)), true, String(status))
+  for (const message of ["Failed to fetch", "Load failed", "NetworkError when attempting to fetch resource."]) {
+    assert.equal(isRestartError(new TypeError(message)), true, message)
+  }
+  for (const status of [400, 401, 403, 404, 409, 422, 429, 500, 501]) assert.equal(isRestartError(new ApiError("no", status)), false, String(status))
+  assert.equal(isRestartError(new TypeError("undefined is not a function")), false)
+  assert.equal(isRestartError(new Error("Failed to fetch")), false)
+  assert.equal(isRestartError(undefined), false)
+})
+
+await check("restart errors keep retrying and other errors retry once", () => {
+  assert.equal(shouldRetry(5, new ApiError("down", 502)), true)
+  assert.equal(shouldRetry(5, new ApiError("down", 503)), true)
+  assert.equal(shouldRetry(5, new ApiError("down", 504)), true)
+  assert.equal(shouldRetry(5, new TypeError("Failed to fetch")), true)
+  assert.equal(shouldRetry(5, new ApiError("down", 0)), true)
+  assert.equal(shouldRetry(0, new ApiError("Request failed", 400)), true)
+  assert.equal(shouldRetry(1, new ApiError("Request failed", 400)), false)
+  for (const status of [401, 403, 404, 409, 422, 429, 500]) assert.equal(shouldRetry(1, new ApiError("no", status)), false, String(status))
+  assert.equal(shouldRetry(1, new Error("boom")), false)
+})
+
+await check("analytics queries ride out a restart and still give up on refusals at once", () => {
+  assert.equal(retryUnlessRefused(5, new ApiError("down", 503)), true)
+  assert.equal(retryUnlessRefused(17, new ApiError("down", 503)), false)
+  for (const status of [400, 401, 403, 404, 429]) assert.equal(retryUnlessRefused(0, new ApiError("no", status)), false, String(status))
+  assert.equal(retryUnlessRefused(0, new ApiError("down", 500)), true)
+  assert.equal(retryUnlessRefused(1, new ApiError("down", 500)), false)
 })
 
 if (failures > 0) {

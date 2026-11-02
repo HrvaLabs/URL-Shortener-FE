@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ApiError, bioApi } from "@/lib/api-client"
+import { ApiError, bioApi, retryUnlessRefused } from "@/lib/api-client"
 import { handleFormatError } from "@/lib/bio"
-import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
 import type { BioHandleAvailability, BioPage, BioPageUpdate } from "@/lib/types"
 
 export const BIO_PAGE_KEY = ["bio", "me"] as const

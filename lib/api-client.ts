@@ -54,6 +54,38 @@ export class ApiError extends Error {
   }
 }
 
+const RESTART_STATUSES = [0, 502, 503, 504]
+
+const NETWORK_FAILURE = /fetch|network|load failed/i
+
+export const RESTART_RETRY_WINDOW_MS = 120_000
+
+const FIRST_RETRY_DELAY_MS = 1_000
+
+const LONGEST_RETRY_DELAY_MS = 8_000
+
+const RETRIES_OTHER_ERRORS = 1
+
+export const isRestartError = (error: unknown): boolean =>
+  error instanceof ApiError
+    ? RESTART_STATUSES.includes(error.status)
+    : error instanceof TypeError && NETWORK_FAILURE.test(error.message)
+
+export const retryDelay = (attempt: number): number =>
+  Math.min(FIRST_RETRY_DELAY_MS * 2 ** attempt, LONGEST_RETRY_DELAY_MS)
+
+const waitedIncludingRetry = (attempt: number): number => {
+  let total = 0
+  for (let index = 0; index <= attempt; index++) total += retryDelay(index)
+  return total
+}
+
+export const shouldRetry = (failureCount: number, error: Error): boolean =>
+  isRestartError(error) ? waitedIncludingRetry(failureCount) <= RESTART_RETRY_WINDOW_MS : failureCount < RETRIES_OTHER_ERRORS
+
+export const retryUnlessRefused = (failureCount: number, error: Error): boolean =>
+  !(error instanceof ApiError && error.status >= 400 && error.status < 500) && shouldRetry(failureCount, error)
+
 interface PageWrapper {
   page: { totalPages: number; totalElements: number; number?: number; size?: number }
   totalPages?: number

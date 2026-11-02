@@ -1,8 +1,7 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { publicApi } from "@/lib/api-client"
-import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
+import { publicApi, retryUnlessRefused } from "@/lib/api-client"
 
 export function usePublicStats() {
   return useQuery({

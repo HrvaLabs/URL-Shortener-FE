@@ -1,9 +1,8 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query"
-import { ApiError, publicApi, settingsApi } from "@/lib/api-client"
+import { ApiError, publicApi, retryUnlessRefused, settingsApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
 import { anonymousLinksPaused, refusedSwitch } from "@/lib/moderation"
 import type { SettingKey, SettingValue } from "@/lib/types"
 

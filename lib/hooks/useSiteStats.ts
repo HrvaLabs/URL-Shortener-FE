@@ -1,8 +1,7 @@
 "use client"
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { adminApi } from "@/lib/api-client"
-import { retryUnlessRefused } from "@/lib/hooks/useAnalytics"
+import { adminApi, retryUnlessRefused } from "@/lib/api-client"
 import type { AnalyticsRange } from "@/lib/types"
 
 export function useTrafficStats(days: AnalyticsRange) {

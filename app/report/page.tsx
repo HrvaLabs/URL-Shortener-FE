@@ -9,6 +9,7 @@ import type { ReportCategory } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { Textarea } from "@/components/ui/textarea"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
@@ -31,8 +32,10 @@ const categories: { value: ReportCategory; label: string }[] = [
   { value: "OTHER", label: "Something else" },
 ]
 
-const selectClass =
-  "flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+const selectClass = cn(
+  "flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0",
+  selectChevronClass,
+)
 
 type ReportStatus = { kind: "idle" } | { kind: "sent" } | { kind: "failed"; message: string }
 

@@ -7,6 +7,7 @@ import { LinkStateBadge, LinkStateHint, UrlsPageText } from "@/components/bio/li
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { Switch } from "@/components/ui/switch"
 import {
   BIO_ICON_LABELS,
@@ -30,8 +31,10 @@ const ICON_OPTIONS = Object.entries(BIO_ICON_LABELS) as [BioIcon, string][]
 
 const DISABLED_CLASSES = "aria-disabled:pointer-events-none aria-disabled:opacity-50"
 
-const SELECT_CLASSES =
-  "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+const SELECT_CLASSES = cn(
+  "h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-[border-color,box-shadow] duration-150 focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+  selectChevronClass,
+)
 
 type ButtonField = "title" | "icon" | "visible" | "remove" | "handle" | "hint" | "error"
 

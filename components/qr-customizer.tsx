@@ -4,8 +4,9 @@ import { useId, useRef, useState } from "react"
 import { QRCodeCanvas, QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { Download } from "lucide-react"
-import { withQrMarker } from "@/lib/utils"
+import { cn, withQrMarker } from "@/lib/utils"
 
 type Level = "L" | "M" | "Q" | "H"
 
@@ -90,7 +91,7 @@ export function QrCustomizer({ value, filename = "qr-code", marker = true }: QrC
 
         <div className="flex items-center gap-3">
           <Label htmlFor={`${id}-level`} className="w-16 shrink-0">Quality</Label>
-          <select id={`${id}-level`} value={level} onChange={(e) => setLevel(e.target.value as Level)} className="h-9 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0">
+          <select id={`${id}-level`} value={level} onChange={(e) => setLevel(e.target.value as Level)} className={cn("h-9 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0", selectChevronClass)}>
             <option value="L">Low (more data)</option>
             <option value="M">Medium</option>
             <option value="Q">Quartile</option>

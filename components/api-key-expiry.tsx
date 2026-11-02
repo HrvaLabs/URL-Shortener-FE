@@ -1,8 +1,9 @@
 import { useId } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { EXPIRY_OPTIONS, NEVER_EXPIRES_NOTE, type ExpiryChoice } from "@/lib/api-keys"
-import { toDateInputValue } from "@/lib/utils"
+import { cn, toDateInputValue } from "@/lib/utils"
 
 interface ApiKeyExpiryFieldProps {
   choice: ExpiryChoice
@@ -12,8 +13,10 @@ interface ApiKeyExpiryFieldProps {
   onCustomDateChange: (date: string) => void
 }
 
-const SELECT_CLASS =
-  "mt-1.5 flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+const SELECT_CLASS = cn(
+  "mt-1.5 flex h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0",
+  selectChevronClass,
+)
 
 const tomorrow = (): string => {
   const date = new Date()

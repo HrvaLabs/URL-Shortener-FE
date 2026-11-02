@@ -1,15 +1,14 @@
 import { useLayoutEffect, useRef } from "react"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { TableHead } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
 export const adminFieldClass =
   "h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
 
-const chevronClass =
-  "appearance-none bg-no-repeat bg-[position:right_0.75rem_center] bg-[length:1rem] pr-9 bg-[url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2724%27%20height=%2724%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%236b6b70%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E)] dark:bg-[url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2724%27%20height=%2724%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23a1a1a8%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E)]"
 
-export const adminSelectClass = `${adminFieldClass} ${chevronClass}`
+export const adminSelectClass = `${adminFieldClass} ${selectChevronClass}`
 
 type SortDirection = "asc" | "desc"
 

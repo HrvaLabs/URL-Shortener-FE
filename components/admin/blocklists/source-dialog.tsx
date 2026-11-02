@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { selectChevronClass } from "@/components/ui/select-chevron"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { adminApi } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 import type { BlocklistSource, BlocklistSourceInput, SourceAction, SourceKind } from "@/lib/types"
 import { actionLabels, kindLabels } from "./labels"
 
@@ -17,7 +19,7 @@ const MAX_FALLBACK_URLS = 3
 const MIN_INTERVAL_HOURS = 1
 const MAX_INTERVAL_HOURS = 168
 
-const selectClassName = "mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0"
+const selectClassName = cn("mt-2 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.04)] focus-visible:border-ring focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-ring/15 focus-visible:ring-offset-0", selectChevronClass)
 
 const isHttpsUrl = (value: string) => {
   try {

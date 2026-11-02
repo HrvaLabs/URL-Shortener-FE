@@ -92,7 +92,7 @@ const errors = [
   { status: "409", text: "The custom alias is already taken; a link that used all its clicks is turned back on before its visit limit is raised or removed; an expired link is turned back on with PATCH .../activate before its expiry is changed; or another active link already uses its short URL." },
   { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds are left until the limit resets." },
   { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds are left in the hour, and detail says how many minutes." },
-  { status: "503", text: "hrva.cc can't check its limits for a moment, so it doesn't make a link without an account or check a link password. Try again after the seconds in Retry-After. Creates with an API key or a signed-in account go on." },
+  { status: "503", text: "hrva.cc can't check its limits for a moment, so it pauses what they protect: links made with or without an account or an API key, every request with an API key, link password checks and destination changes. Try again after the seconds in Retry-After. Short links keep working." },
 ]
 
 const editFields = [

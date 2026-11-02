@@ -179,7 +179,8 @@ export default function NotificationsHelpPage() {
                 </li>
                 <li>
                   <strong>Daily click summary</strong>: yesterday&apos;s clicks on your links, sent after
-                  midnight, and skipped when there were none.
+                  midnight, and skipped when there were none. A channel message lists up to 20 links, the ones
+                  with the most clicks first, then says <strong>and N more</strong>, with N the number left out.
                 </li>
                 <li>
                   <strong>Weekly summary</strong>: last week&apos;s clicks, every Monday morning.
@@ -361,7 +362,9 @@ export default function NotificationsHelpPage() {
                 </li>
               </ol>
               <p>
-                Messages never ping anyone and show no link previews.
+                Messages never ping anyone and show no link previews. Like the other channel types, a Discord
+                channel you add shows a destination host that is an IP address, or a name that looks like an email
+                address, as it is.
               </p>
 
               <h3 id="slack">Slack</h3>

@@ -157,8 +157,9 @@ export default function PrivacyPage() {
                 </li>
                 <li>your light or dark theme choice, in <em>localStorage</em>, if you pick one</li>
                 <li>
-                  the last five campaign (UTM) tags you used, in <em>localStorage</em>, so the link
-                  form can suggest them again
+                  the last five campaign (UTM) tags you used for each field, in <em>localStorage</em>, so the link
+                  form can suggest them again; <strong>Clear</strong> under the UTM fields, next to{" "}
+                  <strong>Remembered on this device</strong>, removes them
                 </li>
                 <li>
                   the page to return to after you sign in with Google or GitHub, in{" "}

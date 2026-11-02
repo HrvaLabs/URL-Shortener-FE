@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
-const description = "What the public numbers mean, and how hrva.cc tells QR scans from other clicks."
+const description = "What the public numbers mean, what your analytics overview breaks down, and how hrva.cc tells QR scans from other clicks."
 
 export const metadata: Metadata = pageMetadata({ title: "How to read the public stats", description, path: "/help/stats" })
 
@@ -25,7 +25,8 @@ export default function StatsHelpPage() {
             <div className="mt-8 rounded-xl border bg-muted/40 p-5">
               <p className="leading-7 text-foreground">
                 In short: the hrva.cc in numbers page shows site-wide numbers, most of them for the last 30
-                full days. Link analytics show QR scans apart from other clicks.
+                full days. Your own analytics overview breaks clicks down across all your links, and link
+                analytics show QR scans apart from other clicks.
               </p>
             </div>
 
@@ -65,6 +66,19 @@ export default function StatsHelpPage() {
               <p>
                 Nothing on the page is about a single link, person, country or referrer.{" "}
                 <Link href="/stats">Open hrva.cc in numbers</Link>.
+              </p>
+
+              <h2 id="overview">Your analytics overview</h2>
+              <p>
+                Sign in and open <Link href="/dashboard/analytics">Analytics</Link> for numbers across all your
+                links. Under the clicks chart and your top links, it shows <strong>QR scans and other clicks</strong>,{" "}
+                <strong>Referrers</strong>, <strong>Countries</strong>, <strong>Devices</strong>,{" "}
+                <strong>Browsers</strong> and <strong>Operating systems</strong> for the range you pick at the
+                top. Referrers, countries, devices, browsers and operating systems each list the 10 with the most
+                clicks and add the rest together as <strong>Other</strong>.
+              </p>
+              <p>
+                One link&apos;s analytics page has the same lists for that link alone.
               </p>
 
               <h2 id="qr-scans">QR scans and other clicks</h2>

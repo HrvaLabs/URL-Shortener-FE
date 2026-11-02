@@ -14,6 +14,9 @@ import {
   LINK_MODE_LABELS,
   PROVISIONING_FAILED_TEXT,
   PROVISIONING_GAVE_UP_TEXT,
+  USE_AGAIN_HINTS,
+  USE_AGAIN_LABEL,
+  USE_AGAIN_PENDING_LINE,
   DOMAIN_LIMIT_MAX,
   DOMAIN_REQUEST_STATUS_LABELS,
   domainLimitLine,
@@ -21,7 +24,7 @@ import {
 import type { CustomDomainStatus, DomainProblem } from "@/lib/types"
 
 const description =
-  "Use your own subdomain for hrva.cc short links: who can apply, the DNS record to add at common providers, what each status means, and how to remove a domain."
+  "Use your own subdomain for hrva.cc short links: who can apply, the DNS record to add at common providers, what each status means, how to remove a domain and how to use a removed one again."
 
 export const metadata: Metadata = pageMetadata({ title: "Custom domains", description, path: "/help/custom-domains" })
 
@@ -428,7 +431,7 @@ export default function CustomDomainsHelpPage() {
                 </li>
               </ol>
               <p>
-                Removing can&apos;t be undone. The links stop working on your domain at once, whichever you
+                Removing can&apos;t be undone, though you can <a href="#use-again">use the domain again</a>. The links stop working on your domain at once, whichever you
                 choose, so printed QR codes and shared links that use your domain stop working too. Links you turn
                 off can&apos;t be turned back on, because their domain is gone. Once it&apos;s removed, you can
                 delete the CNAME record at your DNS provider.
@@ -436,6 +439,51 @@ export default function CustomDomainsHelpPage() {
               <p>
                 An admin can also remove a domain, with the same two choices, and you get an email when that
                 happens.
+              </p>
+
+              <h2 id="use-again">Use a removed domain again</h2>
+              <p>
+                A domain you removed stays on the card for 30 days, in a closed section called{" "}
+                <strong>Removed domains (n)</strong>, where n is how many there are. Open it and select{" "}
+                <strong>{USE_AGAIN_LABEL}</strong> next to the domain. That adds the domain as a new one, with no links
+                on it.
+              </p>
+              <p>
+                It&apos;s set up again without a review when you removed the domain yourself after it was{" "}
+                <strong>{DOMAIN_STATUS_LABELS.ACTIVE}</strong>. Two things can still send it to review: a check
+                flags the domain, or there&apos;s no room for new domains right now. The card says{" "}
+                <Quote>{USE_AGAIN_HINTS.SKIPS_REVIEW}</Quote>
+              </p>
+              <p>
+                It goes back to review, as when you first applied, when:
+              </p>
+              <ul>
+                <li>an admin removed it, or an admin or a blocklist rule turned it off before you removed it;</li>
+                <li>it never became <strong>{DOMAIN_STATUS_LABELS.ACTIVE}</strong>;</li>
+                <li>its name is international, with letters beyond a to z (an <code>xn--</code> name);</li>
+                <li>its name is on a blocklist now;</li>
+                <li>your account has been flagged as a possible scammer.</li>
+              </ul>
+              <p>
+                In those cases the card says <Quote>{USE_AGAIN_HINTS.NEEDS_REVIEW}</Quote> After you select{" "}
+                <strong>{USE_AGAIN_LABEL}</strong>, the domain shows as <strong>{DOMAIN_STATUS_LABELS.PENDING_REVIEW}</strong>.
+              </p>
+              <p>
+                <strong>{USE_AGAIN_LABEL}</strong> isn&apos;t offered in two cases:
+              </p>
+              <ul>
+                <li>
+                  Another account holds the name. The removed domain shows with no button and no line under it.
+                </li>
+                <li>
+                  Cloudflare is still removing the domain. The card says <Quote>{USE_AGAIN_PENDING_LINE}</Quote>{" "}
+                  Check back in a few minutes.
+                </li>
+              </ul>
+              <p>
+                A domain you use again counts toward your domain limit like any other, so at the limit,{" "}
+                <strong>{USE_AGAIN_LABEL}</strong> is refused until you remove or withdraw another domain. Removed
+                domains don&apos;t count.
               </p>
 
               <h2 id="privacy">Custom domains and your privacy</h2>

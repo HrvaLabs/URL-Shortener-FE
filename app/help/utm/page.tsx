@@ -88,9 +88,10 @@ export default function UtmHelpPage() {
                 isn&apos;t saved until you shorten a value or the long URL.
               </p>
               <p>
-                Values you used recently are offered as suggestions; they&apos;re kept in your browser
-                only. After you shorten a link on the home page, the fields are cleared and the section
-                closes. The <strong>What are UTM tags?</strong> link in the section opens this page.
+                Values you used recently are offered as suggestions. The last five for each field are
+                remembered on this device, in your browser only. Under the fields, <strong>Remembered on this
+                device.</strong> has a <strong>Clear</strong> button that forgets them all. After you shorten a
+                link on the home page, the fields are cleared and the section closes. The <strong>What are UTM tags?</strong> link in the section opens this page.
               </p>
 
               <p>

@@ -45,18 +45,22 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
         if (current) setPrepared(challenge)
       })
       .catch(() => {
-        // No Web Crypto (an insecure origin): the start goes without a challenge and the callback says it didn't work.
+        // No Web Crypto (an insecure origin): the buttons stay disabled, since a start without a challenge can't finish.
       })
     return () => {
       current = false
     }
   }, [])
 
-  const startOf = (provider: SwitchableMethod) =>
-    `${getBackendOrigin()}/oauth2/authorization/${PATHS[provider]}${prepared ? `?challenge=${prepared.challenge}` : ""}`
+  const startOf = (provider: SwitchableMethod, challenge: string) =>
+    `${getBackendOrigin()}/oauth2/authorization/${PATHS[provider]}?challenge=${challenge}`
 
-  const keepForCallback = (provider: SwitchableMethod) => {
-    if (prepared) keepSignInVerifier(prepared.verifier)
+  const keepForCallback = (provider: SwitchableMethod, event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!prepared) {
+      event.preventDefault()
+      return
+    }
+    keepSignInVerifier(prepared.verifier)
     rememberOAuthProvider(provider)
     if (next) sessionStorage.setItem("post-login-next", next)
     else sessionStorage.removeItem("post-login-next")
@@ -80,10 +84,12 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
               return (
                 <Button key={provider} asChild variant="outline" className="w-full gap-2">
                   <a
-                    href={startOf(provider)}
-                    onClick={() => keepForCallback(provider)}
-                    onAuxClick={() => keepForCallback(provider)}
-                    onContextMenu={() => keepForCallback(provider)}
+                    href={prepared ? startOf(provider, prepared.challenge) : undefined}
+                    aria-disabled={prepared ? undefined : true}
+                    onClick={(event) => keepForCallback(provider, event)}
+                    onAuxClick={(event) => keepForCallback(provider, event)}
+                    onContextMenu={(event) => keepForCallback(provider, event)}
+                    className="aria-disabled:cursor-progress aria-disabled:opacity-50"
                   >
                     <Mark />
                     {signInMethodLabels[provider]}

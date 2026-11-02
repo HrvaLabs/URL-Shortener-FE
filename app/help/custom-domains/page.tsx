@@ -461,7 +461,7 @@ export default function CustomDomainsHelpPage() {
                 <li>an admin removed it, or an admin or a blocklist rule turned it off before you removed it;</li>
                 <li>it never became <strong>{DOMAIN_STATUS_LABELS.ACTIVE}</strong>;</li>
                 <li>its name is international, with letters beyond a to z (an <code>xn--</code> name);</li>
-                <li>its name is on a blocklist now;</li>
+                <li>an admin block rule matches its name;</li>
                 <li>your account has been flagged as a possible scammer.</li>
               </ul>
               <p>
@@ -469,11 +469,20 @@ export default function CustomDomainsHelpPage() {
                 <strong>{USE_AGAIN_LABEL}</strong>, the domain shows as <strong>{DOMAIN_STATUS_LABELS.PENDING_REVIEW}</strong>.
               </p>
               <p>
-                <strong>{USE_AGAIN_LABEL}</strong> isn&apos;t offered in two cases:
+                A name the link check blocks, such as one a blocklist source lists, isn&apos;t sent to review.{" "}
+                <strong>{USE_AGAIN_LABEL}</strong> is refused with <Quote>This domain can&apos;t be used on hrva.cc.</Quote>
+              </p>
+              <p>
+                <strong>{USE_AGAIN_LABEL}</strong> isn&apos;t offered in three cases:
               </p>
               <ul>
                 <li>
-                  Another account holds the name. The removed domain shows with no button and no line under it.
+                  Another domain, yours or someone else&apos;s, holds the name. After you use a domain again, the old
+                  removed one stays in the list for up to 30 days with no button and no line under it.
+                </li>
+                <li>
+                  The name no longer passes the rules for a domain name. The removed domain shows with no button and no
+                  line under it.
                 </li>
                 <li>
                   Cloudflare is still removing the domain. The card says <Quote>{USE_AGAIN_PENDING_LINE}</Quote>{" "}

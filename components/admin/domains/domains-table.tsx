@@ -46,16 +46,25 @@ const SEARCH_DELAY_MS = 300
 
 const sortFields = ["createdAt", "hostname", "status"]
 
-const removedSortOptions: SortOption[] = [
+const domainSortOptions: SortOption[] = [
   { field: "createdAt", direction: "desc", label: "Newest first" },
   { field: "createdAt", direction: "asc", label: "Oldest first" },
   { field: "hostname", direction: "asc", label: "Domain, A to Z" },
   { field: "hostname", direction: "desc", label: "Domain, Z to A" },
 ]
 
-const sortOptions: SortOption[] = [...removedSortOptions, { field: "status", direction: "asc", label: "Grouped by status" }]
+const sortOptions: SortOption[] = [...domainSortOptions, { field: "status", direction: "asc", label: "Grouped by status" }]
 
-const removedSortFields = ["createdAt", "hostname"]
+const removedSortOptions: SortOption[] = [
+  { field: "deletedAt", direction: "desc", label: "Removed, newest first" },
+  { field: "deletedAt", direction: "asc", label: "Removed, oldest first" },
+  { field: "createdAt", direction: "desc", label: "Created, newest first" },
+  { field: "createdAt", direction: "asc", label: "Created, oldest first" },
+  { field: "hostname", direction: "asc", label: "Domain, A to Z" },
+  { field: "hostname", direction: "desc", label: "Domain, Z to A" },
+]
+
+const removedSortFields = ["deletedAt", "createdAt", "hostname"]
 
 const NOT_ON_PAGE = "This domain isn't on this page. Search for its name to find it."
 
@@ -98,7 +107,7 @@ export function DomainsTable({ highlightId, headingRef, removed = false }: Domai
   const searchParams = useSearchParams()
   const searchParam = removed ? REMOVED_SEARCH_PARAM : SEARCH_PARAM
   const { page, size, sort, order, setPage, setSize, toggleSort, setSortOrder, sortDir } = usePagination(
-    "createdAt",
+    removed ? "deletedAt" : "createdAt",
     "desc",
     removed ? removedSortFields : sortFields,
     removed ? REMOVED_PREFIX : "",

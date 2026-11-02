@@ -10,8 +10,10 @@ import { cn, plural } from "@/lib/utils"
 import {
   CANT_TAKE_UTM,
   QUICK_SOURCES,
+  clearRecentUtm,
   destinationToSend,
   followTags,
+  hasRecentUtm,
   hasUtmValues,
   pickQuickSource,
   readUtm,
@@ -69,7 +71,17 @@ const readRecent = (): RecentValues => {
 }
 
 const noRecent = (): RecentValues | null => null
-const subscribeToNothing = () => () => {}
+
+const recentListeners = new Set<() => void>()
+
+const subscribeToRecent = (listener: () => void) => {
+  recentListeners.add(listener)
+  window.addEventListener("storage", listener)
+  return () => {
+    recentListeners.delete(listener)
+    window.removeEventListener("storage", listener)
+  }
+}
 
 export function UtmFields({ destination, value, onChange, open, onOpenChange, variant = "home" }: UtmFieldsProps) {
   const id = useId()
@@ -88,7 +100,7 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
   const tooLong = tooLongWithUtm(destination, destinationToSend(destination, true, value))
   const missingSource = !value.utm_source?.trim() && Boolean(value.utm_medium?.trim() || value.utm_campaign?.trim())
   const notAdded = open ? 0 : valuesNotAdded(value, found)
-  const recent = useSyncExternalStore(subscribeToNothing, open ? readRecent : noRecent, noRecent)
+  const recent = useSyncExternalStore(subscribeToRecent, open ? readRecent : noRecent, noRecent)
   const canFill = !hasUtmValues(value) && hasUtmValues(found)
 
   const followFoundTags = useEffectEvent(() => {
@@ -116,6 +128,12 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
   const setField = (key: UtmKey, next: string) => {
     if (key === "utm_medium") setChipMedium(null)
     onChange({ ...value, [key]: next })
+  }
+
+  const clearRemembered = () => {
+    clearRecentUtm()
+    recentListeners.forEach((listener) => listener())
+    document.getElementById(`${id}-utm_source`)?.focus()
   }
 
   const choose = (pick: QuickSource) => {
@@ -220,6 +238,19 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{OTHER_FIELDS.map((field) => renderField(field))}</div>
 
         <p className="text-xs text-muted-foreground">Use lowercase and dashes, for example autumn-sale.</p>
+
+        {recent && hasRecentUtm(recent) && (
+          <p className="text-xs text-muted-foreground">
+            Remembered on this device.{" "}
+            <button
+              type="button"
+              onClick={clearRemembered}
+              className="text-brand-link rounded-sm font-medium ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Clear
+            </button>
+          </p>
+        )}
 
         <div className="rounded-lg bg-muted/60 px-3 py-2 text-xs">
           {preview ? (

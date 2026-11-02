@@ -3,9 +3,11 @@ import {
   CANT_TAKE_UTM,
   MAX_DESTINATION_LENGTH,
   QUICK_SOURCES,
+  clearRecentUtm,
   UTM_KEYS,
   destinationToSend,
   followTags,
+  hasRecentUtm,
   hasUtm,
   pickQuickSource,
   readUtm,
@@ -416,6 +418,26 @@ check("recent values with storage blocked", () => {
     rememberUtm({ utm_source: "x" })
     assert.deepEqual(recentUtm(), noRecent)
   })
+})
+
+check("clearing recent values removes the key and tolerates blocked storage", () => {
+  clearRecentUtm()
+  const storage = memoryStorage()
+  withWindow({ localStorage: storage }, () => {
+    assert.equal(hasRecentUtm(recentUtm()), false)
+    rememberUtm({ utm_source: "x" })
+    assert.equal(hasRecentUtm(recentUtm()), true)
+    clearRecentUtm()
+    assert.equal(storage.getItem("hrva:utm-recent"), null)
+    assert.deepEqual(recentUtm(), noRecent)
+    assert.equal(hasRecentUtm(recentUtm()), false)
+  })
+  const blocked = {
+    get localStorage() {
+      throw new Error("SecurityError")
+    },
+  }
+  withWindow(blocked, () => clearRecentUtm())
 })
 
 if (failures > 0) {

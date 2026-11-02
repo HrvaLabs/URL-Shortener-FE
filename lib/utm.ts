@@ -173,3 +173,16 @@ export function rememberUtm(values: UtmValues): void {
     return
   }
 }
+
+export function clearRecentUtm(): void {
+  try {
+    if (typeof window === "undefined") return
+    window.localStorage.removeItem(RECENT_STORAGE_KEY)
+  } catch {
+    return
+  }
+}
+
+export function hasRecentUtm(recent: Record<UtmKey, string[]>): boolean {
+  return UTM_KEYS.some((key) => recent[key].length > 0)
+}

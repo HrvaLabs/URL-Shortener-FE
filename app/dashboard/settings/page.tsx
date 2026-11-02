@@ -140,7 +140,7 @@ export default function SettingsPage() {
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
+                <Input id="email" type="email" autoComplete="email" data-protonpass-ignore="true" data-1p-ignore data-lpignore="true" data-bwignore value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-1.5 h-10 max-w-sm" />
               </div>
               <Button type="submit" disabled={profileLoading} size="sm">
                 {profileLoading ? "Saving…" : "Save changes"}

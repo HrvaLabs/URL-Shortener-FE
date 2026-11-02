@@ -19,7 +19,7 @@ X-Hrva-Event: link.dead
 X-Hrva-Delivery: 5b0f8c2e-4d1a-4f7e-9a63-2c8e1d7b9f40
 X-Hrva-Signature: sha256=<64 lowercase hex characters>`
 
-const exampleBody = `{
+const linkDeadBody = `{
   "event": "link.dead",
   "deliveryId": "5b0f8c2e-4d1a-4f7e-9a63-2c8e1d7b9f40",
   "createdAt": "2026-10-27T01:14:00Z",
@@ -31,6 +31,83 @@ const exampleBody = `{
       "lastStatus": "404"
     }
   ]
+}`
+
+const linkBackBody = `{
+  "event": "link.back",
+  "deliveryId": "0c7d3a19-86be-4e52-b1f4-7a2d9e5c3b68",
+  "createdAt": "2026-10-29T01:14:00Z",
+  "links": [
+    {
+      "shortUrl": "https://hrva.cc/abc",
+      "destinationHost": "example.com",
+      "deadSince": "2026-10-27",
+      "backOn": "2026-10-29"
+    }
+  ]
+}`
+
+const dailyBody = `{
+  "event": "summary.daily",
+  "deliveryId": "e41b6f02-9d3c-4a87-8c15-3f0a7b2d6e94",
+  "createdAt": "2026-10-30T00:15:00Z",
+  "date": "2026-10-29",
+  "totals": { "clicks": 142, "uniqueVisitors": 97, "botClicks": 9 },
+  "links": [
+    {
+      "shortUrl": "https://hrva.cc/abc",
+      "destinationHost": "example.com",
+      "clicks": 88,
+      "uniqueVisitors": 61,
+      "botClicks": 4
+    }
+  ],
+  "moreLinks": 0
+}`
+
+const weeklyBody = `{
+  "event": "summary.weekly",
+  "deliveryId": "a83f1d70-2b6e-4c95-8e07-5d9c4a1f7b32",
+  "createdAt": "2026-11-02T06:00:00Z",
+  "from": "2026-10-26",
+  "to": "2026-11-01",
+  "totals": { "clicks": 910, "clicksWeekBefore": 760, "uniqueVisitors": 604 },
+  "topLinks": [
+    { "shortUrl": "https://hrva.cc/abc", "destinationHost": "example.com", "clicks": 412 }
+  ],
+  "deadLinks": [
+    {
+      "shortUrl": "https://hrva.cc/old",
+      "destinationHost": "example.org",
+      "deadSince": "2026-10-28",
+      "lastStatus": "nxdomain"
+    }
+  ],
+  "endingSoon": [
+    {
+      "shortUrl": "https://hrva.cc/sale",
+      "destinationHost": "example.com",
+      "reason": "EXPIRES",
+      "expiresOn": "2026-11-04",
+      "visitsLeft": null
+    },
+    {
+      "shortUrl": "https://hrva.cc/promo",
+      "destinationHost": null,
+      "reason": "VISIT_LIMIT",
+      "expiresOn": null,
+      "visitsLeft": 12
+    }
+  ],
+  "moreDeadLinks": 0,
+  "moreEndingSoon": 0
+}`
+
+const testBody = `{
+  "event": "test",
+  "deliveryId": "f2c9e8b4-1a75-4d03-b6e8-9c3a0d7f5e21",
+  "createdAt": "2026-10-27T12:00:00Z",
+  "message": "This is a test from hrva.cc. Your channel works."
 }`
 
 const pythonCheck = `import hashlib
@@ -385,11 +462,189 @@ export default function NotificationsHelpPage() {
                   body, keyed with your signing secret.
                 </li>
               </ul>
+              <h3 id="webhook-bodies">What each event sends</h3>
               <p>
-                This is the body when a link stops working (the other events carry their own fields, such as{" "}
-                <code>backOn</code> for <code>link.back</code> and <code>totals</code> for the summaries):
+                The body is one JSON object. Every event has these three fields, then its own:
               </p>
-              <pre className={codeBlockClass}>{exampleBody}</pre>
+              <ul>
+                <li>
+                  <code>event</code> (string): the event, the same as the <code>X-Hrva-Event</code> header.
+                </li>
+                <li>
+                  <code>deliveryId</code> (string): the delivery&apos;s ID, the same as the{" "}
+                  <code>X-Hrva-Delivery</code> header.
+                </li>
+                <li>
+                  <code>createdAt</code> (string): when the delivery was created, as a UTC instant to the second
+                  ending in <code>Z</code>.
+                </li>
+              </ul>
+              <p>These meanings hold for every event:</p>
+              <ul>
+                <li>
+                  <code>shortUrl</code> (string) is the full short link, starting with https. For a link on your
+                  own custom domain, it is on that domain.
+                </li>
+                <li>
+                  <code>destinationHost</code> (string or <code>null</code>) is the host of the link&apos;s
+                  destination, such as <code>example.com</code>. It is <code>null</code> when the destination
+                  can&apos;t be read.
+                </li>
+                <li>
+                  Dates other than <code>createdAt</code> are calendar days written as <code>YYYY-MM-DD</code>,
+                  counted in Europe/Zagreb time, not UTC. They are <code>deadSince</code>, <code>backOn</code>,{" "}
+                  <code>date</code>, <code>from</code>, <code>to</code> and <code>expiresOn</code>.
+                </li>
+              </ul>
+
+              <h3 id="body-link-dead">link.dead</h3>
+              <p>Sent when hrva.cc marks one or more of your links dead.</p>
+              <pre className={codeBlockClass}>{linkDeadBody}</pre>
+              <p>
+                <code>links</code> (list) holds the links marked dead. Each item has:
+              </p>
+              <ul>
+                <li>
+                  <code>shortUrl</code> (string) and <code>destinationHost</code> (string or <code>null</code>),
+                  as above.
+                </li>
+                <li>
+                  <code>deadSince</code> (string): the day the link was marked dead.
+                </li>
+                <li>
+                  <code>lastStatus</code> (string): why it was marked dead. It is one of the values below.
+                </li>
+              </ul>
+              <p id="last-status">
+                <code>lastStatus</code> is one of five values. It is on <code>link.dead</code> and on{" "}
+                <code>deadLinks</code> in <code>summary.weekly</code>:
+              </p>
+              <ul>
+                <li>
+                  <code>&quot;404&quot;</code>: the destination answered that the page wasn&apos;t found.
+                </li>
+                <li>
+                  <code>&quot;410&quot;</code>: the destination answered that the page was removed.
+                </li>
+                <li>
+                  <code>&quot;nxdomain&quot;</code>: the website&apos;s domain doesn&apos;t exist.
+                </li>
+                <li>
+                  <code>&quot;refused&quot;</code>: the website refused the connection.
+                </li>
+                <li>
+                  <code>&quot;tls&quot;</code>: the website&apos;s secure connection failed.
+                </li>
+              </ul>
+
+              <h3 id="body-link-back">link.back</h3>
+              <p>Sent when a dead link answers again.</p>
+              <pre className={codeBlockClass}>{linkBackBody}</pre>
+              <p>
+                <code>links</code> (list) holds the links that work again. Each item has:
+              </p>
+              <ul>
+                <li>
+                  <code>shortUrl</code> (string) and <code>destinationHost</code> (string or <code>null</code>),
+                  as above.
+                </li>
+                <li>
+                  <code>deadSince</code> (string): the day the link was marked dead.
+                </li>
+                <li>
+                  <code>backOn</code> (string): the day it answered again.
+                </li>
+              </ul>
+
+              <h3 id="body-summary-daily">summary.daily</h3>
+              <p>Sent after midnight, with yesterday&apos;s clicks. A day with no clicks sends nothing.</p>
+              <pre className={codeBlockClass}>{dailyBody}</pre>
+              <ul>
+                <li>
+                  <code>date</code> (string): the day the numbers are for.
+                </li>
+                <li>
+                  <code>totals</code> (object): <code>clicks</code>, <code>uniqueVisitors</code> and{" "}
+                  <code>botClicks</code>, all whole numbers for that day over all your links. Bot clicks are
+                  counted apart from <code>clicks</code>.
+                </li>
+                <li>
+                  <code>links</code> (list): at most 20 links, the most clicks first, then the most bot clicks.
+                  Each has <code>shortUrl</code>, <code>destinationHost</code>, <code>clicks</code>,{" "}
+                  <code>uniqueVisitors</code> and <code>botClicks</code> for that day. A link with only bot
+                  clicks is included.
+                </li>
+                <li>
+                  <code>moreLinks</code> (number): how many more links had clicks that day and are not in{" "}
+                  <code>links</code>. <code>0</code> when all are listed.
+                </li>
+              </ul>
+
+              <h3 id="body-summary-weekly">summary.weekly</h3>
+              <p>
+                Sent on Monday morning, with last week&apos;s clicks. A week with no clicks and nothing to report
+                sends nothing.
+              </p>
+              <pre className={codeBlockClass}>{weeklyBody}</pre>
+              <ul>
+                <li>
+                  <code>from</code> and <code>to</code> (string): the first and last day of the week, both
+                  included.
+                </li>
+                <li>
+                  <code>totals</code> (object): <code>clicks</code> for the week, <code>clicksWeekBefore</code>{" "}
+                  for the week before it, and <code>uniqueVisitors</code>. This is each link&apos;s daily unique
+                  visitors added up over the week, so someone who visits on two days counts twice. It is not the
+                  number of different visitors in the week.
+                </li>
+                <li>
+                  <code>topLinks</code> (list): at most 5 links, the most clicks first. Each has{" "}
+                  <code>shortUrl</code>, <code>destinationHost</code> and <code>clicks</code> for the week.
+                </li>
+                <li>
+                  <code>deadLinks</code> (list): at most 20 links marked dead that week. Each has the fields of a{" "}
+                  <code>link.dead</code> link: <code>shortUrl</code>, <code>destinationHost</code>,{" "}
+                  <code>deadSince</code> and <code>lastStatus</code>.
+                </li>
+                <li>
+                  <code>endingSoon</code> (list): at most 20 active links that expire within 7 days or have 10% or
+                  fewer of their visits left. Each has <code>shortUrl</code>, <code>destinationHost</code>,{" "}
+                  <code>reason</code>, <code>expiresOn</code> and <code>visitsLeft</code>.
+                </li>
+                <li>
+                  <code>moreDeadLinks</code> and <code>moreEndingSoon</code> (numbers): how many more links
+                  belong in <code>deadLinks</code> and <code>endingSoon</code> than are listed. <code>0</code>{" "}
+                  when all are listed.
+                </li>
+              </ul>
+              <p id="ending-soon-reason">
+                In <code>endingSoon</code>, <code>reason</code> is one of two values, in capitals. The other two
+                fields depend on it, and the one that doesn&apos;t apply is <code>null</code>:
+              </p>
+              <ul>
+                <li>
+                  <code>&quot;EXPIRES&quot;</code>: the link has an end date. <code>expiresOn</code> is that day
+                  and <code>visitsLeft</code> is <code>null</code>.
+                </li>
+                <li>
+                  <code>&quot;VISIT_LIMIT&quot;</code>: the link is nearly out of visits. <code>visitsLeft</code>{" "}
+                  is how many are left and <code>expiresOn</code> is <code>null</code>.
+                </li>
+              </ul>
+
+              <h3 id="body-test">test</h3>
+              <p>Sent by <strong>Send test</strong>.</p>
+              <pre className={codeBlockClass}>{testBody}</pre>
+              <ul>
+                <li>
+                  <code>message</code> (string): a fixed sentence saying the channel works.
+                </li>
+              </ul>
+              <p>
+                A list with nothing to show is <code>[]</code>. A field that doesn&apos;t apply is{" "}
+                <code>null</code>, not left out. A list with a cap holds the first items in the order given
+                above, and its <code>more</code> field counts the rest.
+              </p>
 
               <h3 id="check-signature">Check the signature</h3>
               <p>

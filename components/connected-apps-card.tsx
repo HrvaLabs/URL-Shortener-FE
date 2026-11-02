@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { useConnectedApps, useDisconnectApp } from "@/lib/hooks/useConnectedApps"
 import type { ConnectedApp } from "@/lib/types"
@@ -10,9 +11,22 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "sonner"
 import { formatDate, formatTimeAgo } from "@/lib/utils"
 
+const CARD_ID = "connected-apps"
+
 export function ConnectedAppsCard() {
   const { data: apps, isLoading, isFetching, error, refetch } = useConnectedApps()
   const disconnectApp = useDisconnectApp()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const scrolled = useRef(false)
+
+  useEffect(() => {
+    if (scrolled.current || isLoading) return
+    scrolled.current = true
+    if (window.location.hash !== `#${CARD_ID}`) return
+    cardRef.current?.scrollIntoView({ block: "start" })
+    if (document.activeElement === document.body || document.activeElement === null) titleRef.current?.focus({ preventScroll: true })
+  }, [isLoading])
 
   const handleDisconnect = async (app: ConnectedApp) => {
     try {
@@ -23,9 +37,9 @@ export function ConnectedAppsCard() {
   }
 
   return (
-    <Card>
+    <Card ref={cardRef} id={CARD_ID} className="scroll-mt-40 md:scroll-mt-24">
       <CardHeader>
-        <CardTitle className="text-base">Connected apps</CardTitle>
+        <CardTitle ref={titleRef} tabIndex={-1} className="text-base focus-visible:ring-0 focus-visible:ring-offset-0">Connected apps</CardTitle>
         <CardDescription>AI apps you have allowed to use your hrva.cc account.</CardDescription>
       </CardHeader>
       <CardContent>

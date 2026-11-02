@@ -738,6 +738,9 @@ export interface EmailLog {
 
 export interface ConnectRequestView {
   clientName: string
+  redirectHost: string
+  loopback: boolean
+  lookalike: boolean
 }
 
 export interface ConnectApproval {

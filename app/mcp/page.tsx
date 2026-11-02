@@ -106,7 +106,9 @@ export default function McpPage() {
               <Paragraph className="mt-5">
                 When you add the account URL, your app opens the hrva.cc sign-in page. Sign in as usual, with your
                 password and two-factor code or with Google or GitHub, then allow the app on the consent screen at{" "}
-                <InlineCode>app.hrva.cc/connect</InlineCode>.
+                <InlineCode>app.hrva.cc/connect</InlineCode>. The screen shows where the app will send you once you
+                allow it; the app chooses its own name, so check that address. When an app is connected for the first
+                time, hrva.cc emails you.
               </Paragraph>
               <Paragraph className="mt-4">
                 The server without an account is gone. If your AI app shows <InlineCode>hrva.cc/mcp/anon</InlineCode>{" "}

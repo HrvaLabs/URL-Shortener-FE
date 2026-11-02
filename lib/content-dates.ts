@@ -10,7 +10,7 @@ export const CONTENT_UPDATED = {
   "/help/notifications": "2026-10-29",
   "/help/install-app": "2026-10-29",
   "/help/custom-domains": "2026-10-30",
-  "/mcp": "2026-10-29",
+  "/mcp": "2026-11-01",
   "/report": "2026-10-27",
   "/validate": "2026-10-21",
   "/privacy": "2026-11-01",

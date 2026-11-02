@@ -8,12 +8,14 @@ import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ApiError, connectApi } from "@/lib/api-client"
+import { CLIENT_NAME_NOTE, connectDestinationText, lookalikeWarning } from "@/lib/connect"
+import type { ConnectRequestView } from "@/lib/types"
 import { useAuth } from "@/lib/auth-context"
 import { getBackendOrigin } from "@/lib/utils"
 
 type ConnectState =
   | { kind: "loading" }
-  | { kind: "ready"; clientName: string }
+  | { kind: "ready"; view: ConnectRequestView }
   | { kind: "expired" }
   | { kind: "error"; retry: () => void }
 
@@ -79,7 +81,7 @@ export function ConnectContent() {
     setState({ kind: "loading" })
     connectApi
       .getRequest(handle)
-      .then(({ clientName }) => setState({ kind: "ready", clientName }))
+      .then((view) => setState({ kind: "ready", view }))
       .catch((error) => fail(error, load))
   }, [handle, fail])
 
@@ -90,7 +92,7 @@ export function ConnectContent() {
     else load()
   }, [isLoading, signedIn, handle, goToLogin, load])
 
-  const act = (action: ConnectAction, clientName: string) => {
+  const act = (action: ConnectAction, view: ConnectRequestView) => {
     if (busy.current) return
     busy.current = true
     setPending(action)
@@ -104,8 +106,8 @@ export function ConnectContent() {
         busy.current = false
         setPending(null)
         fail(error, () => {
-          setState({ kind: "ready", clientName })
-          act(action, clientName)
+          setState({ kind: "ready", view })
+          act(action, view)
         })
       })
   }
@@ -147,14 +149,23 @@ export function ConnectContent() {
     )
   }
 
+  const warning = lookalikeWarning(state.view)
+
   return (
     <ConnectShell>
       <div className="text-center">
-        <h1 className="wrap-break-word font-display text-2xl">Allow {state.clientName} to use hrva.cc?</h1>
+        <h1 className="wrap-break-word font-display text-2xl">Allow {state.view.clientName} to use hrva.cc?</h1>
         <p className="mt-1.5 wrap-break-word text-sm text-muted-foreground">
           Signed in as <span className="font-medium text-foreground">{user?.email}</span>
         </p>
+        <p className="mt-4 text-sm text-foreground [overflow-wrap:anywhere]">{connectDestinationText(state.view)}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{CLIENT_NAME_NOTE}</p>
       </div>
+      {warning && (
+        <p role="alert" className="mt-6 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive [overflow-wrap:anywhere]">
+          {warning}
+        </p>
+      )}
       <ul className="mt-8 divide-y rounded-lg border text-sm">
         <li className="flex items-start gap-3 px-4 py-3">
           <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -173,12 +184,12 @@ export function ConnectContent() {
           variant="outline"
           className="gap-2"
           disabled={pending !== null}
-          onClick={() => act("deny", state.clientName)}
+          onClick={() => act("deny", state.view)}
         >
           {pending === "deny" && <LoaderCircle className="h-4 w-4 animate-spin" />}
           Cancel
         </Button>
-        <Button className="gap-2" disabled={pending !== null} onClick={() => act("approve", state.clientName)}>
+        <Button className="gap-2" disabled={pending !== null} onClick={() => act("approve", state.view)}>
           {pending === "approve" && <LoaderCircle className="h-4 w-4 animate-spin" />}
           Allow
         </Button>

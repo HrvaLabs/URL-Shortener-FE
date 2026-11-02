@@ -126,6 +126,10 @@ export default function SecurityPage() {
             AI apps connected through the <Link href="/mcp">MCP connector</Link> can be disconnected in Settings,
             under Connected apps, and stop working at once.
           </li>
+          <li>
+            The screen where you allow an app shows where it will send you, and warns when an app uses another
+            app&apos;s name. When an app is connected to your account for the first time, you get an email.
+          </li>
         </ul>
 
         <h2 id="site">The site itself</h2>

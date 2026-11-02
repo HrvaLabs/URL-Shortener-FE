@@ -404,7 +404,7 @@ check("removed domains are split from live ones and counted in the label", () =>
 check("use again copy", () => {
   assert.equal(USE_AGAIN_LABEL, "Use again")
   assert.deepEqual(USE_AGAIN_HINTS, {
-    SKIPS_REVIEW: "You removed this domain yourself, so it's set up again straight away.",
+    SKIPS_REVIEW: "You removed this domain yourself, so it's set up again without a review, unless a check flags it or there's no room for new domains right now.",
     NEEDS_REVIEW: "It's reviewed again before it's set up.",
   })
   assert.equal(USE_AGAIN_PENDING_LINE, "Still being removed from Cloudflare. Use again becomes available in a few minutes.")

@@ -11,19 +11,29 @@ import { cn } from "@/lib/utils"
 
 export type ReviewMode = "approve" | "reject"
 
-const copy: Record<ReviewMode, { title: (hostname: string) => string; description: string; submit: string; busy: string }> = {
-  approve: {
-    title: (hostname) => `Approve ${hostname}?`,
+export interface ReviewText {
+  title: string
+  description: string
+  submit: string
+  busy: string
+  destructive: boolean
+}
+
+const copy: Record<ReviewMode, (hostname: string) => ReviewText> = {
+  approve: (hostname) => ({
+    title: `Approve ${hostname}?`,
     description: "We add it to Cloudflare, which uses one of the slots, and email the owner the CNAME record to add.",
     submit: "Approve",
     busy: "Approving...",
-  },
-  reject: {
-    title: (hostname) => `Reject ${hostname}?`,
+    destructive: false,
+  }),
+  reject: (hostname) => ({
+    title: `Reject ${hostname}?`,
     description: "The owner gets an email, with your note if you add one, and can apply again.",
     submit: "Reject",
     busy: "Rejecting...",
-  },
+    destructive: true,
+  }),
 }
 
 export const errorText = (error: unknown) => (error instanceof Error && error.message ? error.message : REQUEST_FAILED)
@@ -37,7 +47,20 @@ interface ReviewDomainDialogProps {
   onCloseAutoFocus(event: Event): void
 }
 
-export function ReviewDomainDialog({ mode, hostname, open, onOpenChange, onConfirm, onCloseAutoFocus }: ReviewDomainDialogProps) {
+export function ReviewDomainDialog({ mode, hostname, ...props }: ReviewDomainDialogProps) {
+  return <NoteReviewDialog formKey={`${mode}-${hostname}`} text={hostname === null ? null : copy[mode](hostname)} {...props} />
+}
+
+interface NoteReviewDialogProps {
+  formKey: string
+  text: ReviewText | null
+  open: boolean
+  onOpenChange(open: boolean): void
+  onConfirm(note: string | null): Promise<void>
+  onCloseAutoFocus(event: Event): void
+}
+
+export function NoteReviewDialog({ formKey, text, open, onOpenChange, onConfirm, onCloseAutoFocus }: NoteReviewDialogProps) {
   const [busy, setBusy] = useState(false)
 
   return (
@@ -47,11 +70,10 @@ export function ReviewDomainDialog({ mode, hostname, open, onOpenChange, onConfi
         onInteractOutside={(event) => { if (busy) event.preventDefault() }}
         onCloseAutoFocus={onCloseAutoFocus}
       >
-        {hostname !== null && (
+        {text !== null && (
           <ReviewForm
-            key={`${mode}-${hostname}`}
-            mode={mode}
-            hostname={hostname}
+            key={formKey}
+            text={text}
             busy={busy}
             onBusyChange={setBusy}
             onCancel={() => onOpenChange(false)}
@@ -64,15 +86,14 @@ export function ReviewDomainDialog({ mode, hostname, open, onOpenChange, onConfi
 }
 
 interface ReviewFormProps {
-  mode: ReviewMode
-  hostname: string
+  text: ReviewText
   busy: boolean
   onBusyChange(busy: boolean): void
   onCancel(): void
   onConfirm(note: string | null): Promise<void>
 }
 
-function ReviewForm({ mode, hostname, busy, onBusyChange, onCancel, onConfirm }: ReviewFormProps) {
+function ReviewForm({ text, busy, onBusyChange, onCancel, onConfirm }: ReviewFormProps) {
   const id = useId()
   const [note, setNote] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -80,7 +101,6 @@ function ReviewForm({ mode, hostname, busy, onBusyChange, onCancel, onConfirm }:
   const fieldId = `${id}-note`
   const countId = `${id}-count`
   const errorId = `${id}-error`
-  const text = copy[mode]
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -101,7 +121,7 @@ function ReviewForm({ mode, hostname, busy, onBusyChange, onCancel, onConfirm }:
   return (
     <form onSubmit={submit} noValidate className="grid min-w-0 gap-4">
       <DialogHeader>
-        <DialogTitle className="leading-snug [overflow-wrap:anywhere]">{text.title(hostname)}</DialogTitle>
+        <DialogTitle className="leading-snug [overflow-wrap:anywhere]">{text.title}</DialogTitle>
         <DialogDescription className="[overflow-wrap:anywhere]">{text.description}</DialogDescription>
       </DialogHeader>
 
@@ -140,7 +160,7 @@ function ReviewForm({ mode, hostname, busy, onBusyChange, onCancel, onConfirm }:
         </Button>
         <Button
           type="submit"
-          variant={mode === "reject" ? "destructive" : "default"}
+          variant={text.destructive ? "destructive" : "default"}
           aria-disabled={busy}
           aria-busy={busy}
           className="aria-disabled:pointer-events-none aria-disabled:opacity-50"

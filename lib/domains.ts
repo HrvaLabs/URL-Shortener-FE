@@ -1,4 +1,4 @@
-import type { CloudflareCheck, CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainAllowance, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainSteps, MyDomains } from "./types"
+import type { CloudflareCheck, CloudflareTokenStatus, CustomDomain, CustomDomainStatus, DomainAllowance, DomainLinkMode, DomainProblem, DomainRef, DomainRemoval, DomainRequest, DomainRequestStatus, DomainSteps, MyDomains } from "./types"
 
 export const HOSTNAME_PLACEHOLDER = "go.example.com"
 
@@ -195,3 +195,43 @@ export const cloudflareTokenLine = ({ status, checkedAt, message }: CloudflareCh
   checkedAt == null && status !== "MISSING"
     ? { label: TOKEN_NOT_CHECKED, tone: "muted", message: null, checkedAt: null }
     : { label: TOKEN_STATUS_LABELS[status], tone: TOKEN_STATUS_TONES[status], message, checkedAt }
+
+export const DOMAIN_REQUEST_MIN = 2
+
+export const DOMAIN_REQUEST_RANGE_ERROR = `Choose ${DOMAIN_REQUEST_MIN} to ${DOMAIN_LIMIT_MAX}`
+
+export const DOMAIN_REQUEST_STATUS_LABELS: Record<DomainRequestStatus, string> = {
+  WAITING: "Waiting for review",
+  APPROVED: "Approved",
+  DECLINED: "Not approved",
+}
+
+export const DOMAIN_REQUEST_STATUSES = Object.keys(DOMAIN_REQUEST_STATUS_LABELS) as DomainRequestStatus[]
+
+export const isDomainRequestStatus = (value: string | null | undefined): value is DomainRequestStatus =>
+  typeof value === "string" && (DOMAIN_REQUEST_STATUSES as string[]).includes(value)
+
+export const domainRequestTitle = ({ requestedTotal }: Pick<DomainRequest, "requestedTotal">): string =>
+  `Request for ${countOf(requestedTotal, "custom domain")}`
+
+export const domainRequestHint = ({ status }: Pick<DomainRequest, "status">, limit: number): string => {
+  if (status === "WAITING") return "We'll email you when it's reviewed."
+  if (status === "APPROVED") return `Your account can now have ${countOf(limit, "custom domain")}.`
+  return `Your limit stays at ${countOf(limit, "custom domain")}. You can ask again.`
+}
+
+export const domainRequestTotalError = (value: string, limit: number): string | null => {
+  if (!/^\d+$/.test(value.trim())) return DOMAIN_REQUEST_RANGE_ERROR
+  const parsed = Number(value.trim())
+  if (parsed < DOMAIN_REQUEST_MIN || parsed > DOMAIN_LIMIT_MAX) return DOMAIN_REQUEST_RANGE_ERROR
+  return parsed <= limit ? `Choose more than your limit of ${limit}.` : null
+}
+
+export const domainRequestDefaultTotal = (limit: number): number => Math.min(DOMAIN_LIMIT_MAX, Math.max(DOMAIN_REQUEST_MIN, limit + 1))
+
+export const DOMAIN_LIMIT_HIGHEST_LINE = `You have the highest limit, ${DOMAIN_LIMIT_MAX} custom domains.`
+
+export const adminRequestLimitLine = ({ currentLimit, used, limitAtRequest, status }: { currentLimit: number; used: number; limitAtRequest: number; status: DomainRequestStatus }): string => {
+  const now = `Limit ${currentLimit}, ${used} in use`
+  return status === "WAITING" && limitAtRequest !== currentLimit ? `${now} (${limitAtRequest} when asked)` : now
+}

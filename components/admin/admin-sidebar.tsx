@@ -9,7 +9,7 @@ import { ReviewCountBadge } from "@/components/admin/review-count-badge"
 import { navItemClass, navItemState, revealInRow } from "@/components/dashboard/dashboard-nav"
 import { cn } from "@/lib/utils"
 
-export type AdminNavItem = { href: string; label: string; icon: LucideIcon; badge?: "review" }
+export type AdminNavItem = { href: string; label: string; icon: LucideIcon; badge?: "review"; sections?: string[] }
 
 export type AdminNavGroup = { title: string; items: AdminNavItem[] }
 
@@ -26,7 +26,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { href: "/admin/review", label: "Review queue", icon: ShieldAlert, badge: "review" },
       { href: "/admin/campaigns", label: "Campaigns", icon: Megaphone },
-      { href: "/admin/domains", label: "Domains", icon: Globe, badge: "review" },
+      { href: "/admin/domains", label: "Domains", icon: Globe, badge: "review", sections: ["/admin/domains/requests"] },
       { href: "/admin/blocklists", label: "Blocklists", icon: ListFilter },
       { href: "/admin/reserved", label: "Reserved aliases", icon: Bookmark },
     ],
@@ -52,6 +52,8 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [{ href: "/admin/settings", label: "Site settings", icon: SlidersHorizontal }],
   },
 ]
+
+const isActiveItem = (item: AdminNavItem, pathname: string) => pathname === item.href || (item.sections?.includes(pathname) ?? false)
 
 const fadePx = 32
 
@@ -109,7 +111,7 @@ export function AdminSidebar() {
               <ul aria-labelledby={`${headingId}-${groupIndex}`} className="space-y-0.5">
                 {group.items.map((item) => {
                   const Icon = item.icon
-                  const isActive = pathname === item.href
+                  const isActive = isActiveItem(item, pathname)
                   return (
                     <li key={item.href}>
                       <Link
@@ -141,7 +143,7 @@ export function AdminSidebar() {
           <Fragment key={group.title}>
             {groupIndex > 0 && <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-border" />}
             {group.items.map((item) => {
-              const isActive = pathname === item.href
+              const isActive = isActiveItem(item, pathname)
               return (
                 <Link
                   key={item.href}

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { ApplyDomainForm } from "@/components/domains/apply-domain-form"
 import { DnsRecord } from "@/components/domains/dns-record"
+import { DomainRequestSection } from "@/components/domains/domain-request-section"
 import { DomainStatusBadge, DomainStepList } from "@/components/domains/domain-status"
 import { RemoveDomainDialog, type RemovableDomain } from "@/components/domains/remove-domain-dialog"
 import { Button } from "@/components/ui/button"
@@ -191,6 +192,7 @@ export function CustomDomainsCard() {
             {applyState === "form" && <ApplyDomainForm ref={hostnameRef} onApplied={onApplied} />}
             {applyState === "limit" && <p className="text-sm text-muted-foreground">{domainLimitLine(data.limit)}</p>}
             {applyState === "off" && <p className="text-sm text-muted-foreground">Custom domains aren&apos;t available right now.</p>}
+            <DomainRequestSection data={data} />
           </>
         )}
       </CardContent>

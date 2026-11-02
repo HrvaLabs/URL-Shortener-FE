@@ -13,6 +13,7 @@ export function useReviewCount() {
         adminApi.getReviewQueue({ size: 1 }),
         adminBioApi.reviews(undefined, 0, 1),
         adminDomainApi.list({ status: "PENDING_REVIEW", page: 0, size: 1 }),
+        adminDomainApi.requests({ status: "WAITING", page: 0, size: 1 }),
       ])
       if (results.every((result) => result.status === "rejected")) throw (results[0] as PromiseRejectedResult).reason
       return results.reduce((total, result) => total + (result.status === "fulfilled" ? result.value.totalElements : 0), 0)

@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from "./utils"
 import { ADMIN_TWO_STEP_REQUIRED } from "./admin-two-step"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, DomainRequest, AdminDomainRequest, AdminDomainRequestFilters, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -613,6 +613,10 @@ export const domainApi = {
     request<DomainRemoval>("DELETE", `/users/me/domains/${id}?links=${links}`),
   retry: (id: number) =>
     request<CustomDomain>("POST", `/users/me/domains/${id}/retry`),
+  requestMore: (requestedTotal: number, reason: string) =>
+    request<DomainRequest>("POST", "/users/me/domains/requests", { requestedTotal, reason }),
+  withdrawRequest: (id: number) =>
+    request<void>("DELETE", `/users/me/domains/requests/${id}`),
 }
 
 export const adminDomainApi = {
@@ -642,6 +646,12 @@ export const adminDomainApi = {
     request<DomainAllowance>("PUT", `/admin/domains/allowances/${userId}`, { maxDomains, reason }),
   removeAllowance: (userId: number) =>
     request<void>("DELETE", `/admin/domains/allowances/${userId}`),
+  requests: ({ status, search, page, size, sort, order }: AdminDomainRequestFilters) =>
+    request<Page<AdminDomainRequest>>("GET", `/admin/domains/requests?${listParams(page, size, sort, order, { status, search })}`),
+  approveRequest: (id: number, note?: string | null) =>
+    request<AdminDomainRequest>("POST", `/admin/domains/requests/${id}/approve`, { note: note || null }),
+  declineRequest: (id: number, note?: string | null) =>
+    request<AdminDomainRequest>("POST", `/admin/domains/requests/${id}/decline`, { note: note || null }),
 }
 
 export const settingsApi = {

@@ -197,7 +197,8 @@ export default function PrivacyPage() {
                 We send transactional emails: address verification, password reset, security
                 notices (for example when a passkey is added to your account), and a notice when one of
                 your links is blocked or your account is deactivated, and notices about your custom domain when
-                it&apos;s approved, not approved, turned off or removed by an admin. We also send the notification emails
+                it&apos;s approved, not approved, turned off or removed by an admin, and when your request for more custom
+                domains is approved or not approved. We also send the notification emails
                 you turn on, as described under <a href="#notifications">Notifications</a>. We keep a log of
                 emails sent to operate and troubleshoot delivery; for a notification email, the log also
                 notes which notification it was. We do not send marketing email.
@@ -243,6 +244,12 @@ export default function PrivacyPage() {
                 its record stays, marked removed or not approved, until you delete your account. Visitors who open links
                 on your domain get exactly the same privacy as visitors to hrva.cc: see &ldquo;Link
                 statistics&rdquo;.
+              </p>
+              <p>
+                If you ask for more custom domains, we store how many you asked for, what you told us you need them
+                for, your limit when you asked, the admin&apos;s decision and note, and the dates you asked and it was
+                reviewed. We use it to review the request and to show you its status; an approval sets your new limit.
+                A request you withdraw is deleted at once. We keep the others until you delete your account.
               </p>
               <p>
                 Legal basis: performing the service you asked for (Art. 6(1)(b) GDPR).
@@ -432,7 +439,8 @@ export default function PrivacyPage() {
                   Nothing in a message is cut short: when more alerts come in at once than fit in
                   one message, the rest aren&apos;t posted and the message ends with how many were
                   left out (&ldquo;and N more&rdquo;). When someone applies for a custom domain, the alert names
-                  the domain, the account number and what the automatic checks found; when a custom domain is
+                  the domain, the account number and what the automatic checks found; when someone asks for more
+                  custom domains, it names the account number, how many it asked for and its limit, never the reason; when a custom domain is
                   turned off, needs the admin&apos;s attention or is missing from Cloudflare, it names the domain
                   and the reason. Discord Inc. is based in the United States; see its <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                   The messages stay in the channel until the admin deletes them.
@@ -538,6 +546,10 @@ export default function PrivacyPage() {
                   <strong>Custom domains</strong> &mdash; kept while the domain exists. When you remove it, or
                   it isn&apos;t approved, its record stays, marked removed or not approved, until you delete
                   your account. Everything about your custom domains is deleted when you delete your account.
+                </li>
+                <li>
+                  <strong>Requests for more custom domains</strong> &mdash; kept until you delete your account; a
+                  request you withdraw while it waits is deleted at once.
                 </li>
                 <li>
                   <strong>Audit log</strong> (admin actions and sign-in method changes) — kept for 12 months, then deleted automatically.

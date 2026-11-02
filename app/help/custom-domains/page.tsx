@@ -14,6 +14,8 @@ import {
   LINK_MODE_LABELS,
   PROVISIONING_FAILED_TEXT,
   PROVISIONING_GAVE_UP_TEXT,
+  DOMAIN_LIMIT_MAX,
+  DOMAIN_REQUEST_STATUS_LABELS,
   domainLimitLine,
 } from "@/lib/domains"
 import type { CustomDomainStatus, DomainProblem } from "@/lib/types"
@@ -99,9 +101,16 @@ export default function CustomDomainsHelpPage() {
                 <li>Anyone with a hrva.cc account, once signed in. Custom domains are free.</li>
                 <li>
                   One custom domain per account. At the limit, the card says{" "}
-                  <Quote>{domainLimitLine(1)}</Quote> To ask for more, email{" "}
-                  <a href="mailto:support@hrva.cc">support@hrva.cc</a> and say what they&apos;re for; an admin can
-                  allow more for your account.
+                  <Quote>{domainLimitLine(1)}</Quote>
+                </li>
+                <li id="more-domains">
+                  To ask for more, select <strong>Request more domains</strong> on the card, say how many you need in
+                  total (up to {DOMAIN_LIMIT_MAX}) and what they&apos;re for, and select <strong>Send request</strong>. An admin
+                  approves or declines it, and you get an email either way. The card shows the request as{" "}
+                  <Quote>{DOMAIN_REQUEST_STATUS_LABELS.WAITING}</Quote>, <Quote>{DOMAIN_REQUEST_STATUS_LABELS.APPROVED}</Quote>{" "}
+                  or <Quote>{DOMAIN_REQUEST_STATUS_LABELS.DECLINED}</Quote>, with the admin&apos;s note if there is one. One
+                  request can wait at a time, and <strong>Withdraw request</strong> takes it back while it waits. After a
+                  decline you can ask again.
                 </li>
                 <li>
                   A person reviews each application before anything is set up.
@@ -437,6 +446,10 @@ export default function CustomDomainsHelpPage() {
                 </li>
                 <li>
                   Cloudflare receives your domain&apos;s name, to issue and renew its certificate.
+                </li>
+                <li>
+                  A request for more domains keeps how many you asked for, your reason, the admin&apos;s decision and
+                  note, and its dates, until you delete your account.
                 </li>
                 <li>
                   Certificates are published in public Certificate Transparency logs, so your domain&apos;s name

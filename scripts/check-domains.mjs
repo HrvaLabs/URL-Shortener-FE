@@ -37,6 +37,15 @@ const {
   accountAgeLine,
   domainLimitText,
   domainLimitError,
+  DOMAIN_REQUEST_STATUS_LABELS,
+  DOMAIN_REQUEST_STATUSES,
+  DOMAIN_LIMIT_HIGHEST_LINE,
+  isDomainRequestStatus,
+  domainRequestTitle,
+  domainRequestHint,
+  domainRequestTotalError,
+  domainRequestDefaultTotal,
+  adminRequestLimitLine,
 } = domains
 
 const check = (name, run) => {
@@ -337,6 +346,39 @@ check("domainLimitText", () => {
 check("domainLimitError", () => {
   for (const bad of ["0", "21", "", " ", "1.5", "-1", "abc"]) assert.equal(domainLimitError(bad), "Choose 1 to 20", bad)
   for (const good of ["1", "20", " 3 "]) assert.equal(domainLimitError(good), null, good)
+})
+
+check("domain request labels match the backend statuses", () => {
+  assert.deepEqual(DOMAIN_REQUEST_STATUSES, ["WAITING", "APPROVED", "DECLINED"])
+  assert.equal(DOMAIN_REQUEST_STATUS_LABELS.WAITING, "Waiting for review")
+  assert.equal(DOMAIN_REQUEST_STATUS_LABELS.DECLINED, "Not approved")
+  assert.ok(isDomainRequestStatus("APPROVED"))
+  for (const bad of ["ALL", "PENDING", "", null, undefined]) assert.ok(!isDomainRequestStatus(bad), String(bad))
+})
+
+check("domainRequestTotalError matches the backend texts", () => {
+  for (const bad of ["1", "0", "21", "", " ", "2.5", "-3", "abc"]) assert.equal(domainRequestTotalError(bad, 1), "Choose 2 to 20", bad)
+  assert.equal(domainRequestTotalError("3", 3), "Choose more than your limit of 3.")
+  assert.equal(domainRequestTotalError("2", 3), "Choose more than your limit of 3.")
+  for (const good of ["2", " 5 ", "20"]) assert.equal(domainRequestTotalError(good, 1), null, good)
+})
+
+check("domainRequestDefaultTotal stays within 2 to 20", () => {
+  assert.equal(domainRequestDefaultTotal(1), 2)
+  assert.equal(domainRequestDefaultTotal(4), 5)
+  assert.equal(domainRequestDefaultTotal(19), 20)
+  assert.equal(domainRequestDefaultTotal(20), 20)
+})
+
+check("domain request lines", () => {
+  assert.equal(domainRequestTitle({ requestedTotal: 3 }), "Request for 3 custom domains")
+  assert.equal(domainRequestHint({ status: "WAITING" }, 1), "We'll email you when it's reviewed.")
+  assert.equal(domainRequestHint({ status: "APPROVED" }, 3), "Your account can now have 3 custom domains.")
+  assert.equal(domainRequestHint({ status: "DECLINED" }, 1), "Your limit stays at 1 custom domain. You can ask again.")
+  assert.equal(DOMAIN_LIMIT_HIGHEST_LINE, "You have the highest limit, 20 custom domains.")
+  assert.equal(adminRequestLimitLine({ currentLimit: 1, used: 1, limitAtRequest: 1, status: "WAITING" }), "Limit 1, 1 in use")
+  assert.equal(adminRequestLimitLine({ currentLimit: 2, used: 1, limitAtRequest: 1, status: "WAITING" }), "Limit 2, 1 in use (1 when asked)")
+  assert.equal(adminRequestLimitLine({ currentLimit: 3, used: 1, limitAtRequest: 1, status: "APPROVED" }), "Limit 3, 1 in use")
 })
 
 check("strings are ASCII", () => {

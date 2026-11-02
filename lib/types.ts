@@ -704,6 +704,8 @@ export type AuditAction =
   | "DELETE_DOMAIN"
   | "SET_DOMAIN_ALLOWANCE"
   | "REMOVE_DOMAIN_ALLOWANCE"
+  | "APPROVE_DOMAIN_REQUEST"
+  | "DECLINE_DOMAIN_REQUEST"
   | "CHANGE_SETTING"
   | "RESET_SETTING"
   | "TURN_OFF_SIGN_IN_METHOD"
@@ -1445,6 +1447,37 @@ export interface MyDomains {
   limit: number
   used: number
   canApply: boolean
+  request: DomainRequest | null
+  canRequest: boolean
+}
+
+export type DomainRequestStatus = "WAITING" | "APPROVED" | "DECLINED"
+
+export interface DomainRequest {
+  id: number
+  status: DomainRequestStatus
+  requestedTotal: number
+  reason: string
+  adminNote: string | null
+  createdAt: string
+  reviewedAt: string | null
+}
+
+export interface AdminDomainRequest extends DomainRequest {
+  limitAtRequest: number
+  currentLimit: number
+  used: number
+  reviewedBy: string | null
+  owner: DomainOwnerSummary | null
+}
+
+export interface AdminDomainRequestFilters {
+  status?: DomainRequestStatus
+  search?: string
+  page: number
+  size: number
+  sort?: string
+  order?: "asc" | "desc"
 }
 
 export interface DomainRename {

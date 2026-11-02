@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { adminDomainApi, domainApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
-import type { AdminDomainFilters, CustomDomainStatus, DomainLinkMode } from "@/lib/types"
+import type { AdminDomainFilters, AdminDomainRequestFilters, CustomDomainStatus, DomainLinkMode } from "@/lib/types"
 
 const DOMAINS_KEY = ["domains"]
 
@@ -64,6 +64,22 @@ export function useRetryMyDomain() {
   return useMutation({
     mutationFn: (id: number) => domainApi.retry(id),
     onSettled: () => queryClient.invalidateQueries({ queryKey: DOMAINS_KEY }),
+  })
+}
+
+export function useRequestMoreDomains() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ requestedTotal, reason }: { requestedTotal: number; reason: string }) => domainApi.requestMore(requestedTotal, reason),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: MY_DOMAINS_KEY }),
+  })
+}
+
+export function useWithdrawDomainRequest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => domainApi.withdrawRequest(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: MY_DOMAINS_KEY }),
   })
 }
 
@@ -173,6 +189,30 @@ export function useRemoveDomainAllowance() {
   const refresh = useRefreshAdminDomains()
   return useMutation({
     mutationFn: (userId: number) => adminDomainApi.removeAllowance(userId),
+    onSettled: refresh,
+  })
+}
+
+export function useAdminDomainRequests(filters: AdminDomainRequestFilters) {
+  return useQuery({
+    queryKey: [...ADMIN_DOMAINS_KEY, "requests", filters],
+    queryFn: () => adminDomainApi.requests(filters),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useApproveDomainRequest() {
+  const refresh = useRefreshAdminDomains()
+  return useMutation({
+    mutationFn: ({ id, note }: { id: number; note?: string | null }) => adminDomainApi.approveRequest(id, note),
+    onSettled: refresh,
+  })
+}
+
+export function useDeclineDomainRequest() {
+  const refresh = useRefreshAdminDomains()
+  return useMutation({
+    mutationFn: ({ id, note }: { id: number; note?: string | null }) => adminDomainApi.declineRequest(id, note),
     onSettled: refresh,
   })
 }

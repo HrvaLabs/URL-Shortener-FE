@@ -49,6 +49,7 @@ const {
   USE_AGAIN_HINTS,
   USE_AGAIN_PENDING_LINE,
   USE_AGAIN_LABEL,
+  hasRemovedDomainsParam,
   removedDomainsLabel,
   splitRemovedDomains,
   useAgainLines,
@@ -397,6 +398,7 @@ check("removed domains are split from live ones and counted in the label", () =>
   assert.deepEqual(splitRemovedDomains(removed), { live: [], removed })
   assert.equal(removedDomainsLabel(0), "Removed domains (0)")
   assert.equal(removedDomainsLabel(3), "Removed domains (3)")
+  assert.equal(removedDomainsLabel(), "Removed domains")
 })
 
 check("use again copy", () => {
@@ -422,6 +424,15 @@ check("use again refetches the domains after a refusal too", () => {
   const hook = source.slice(source.indexOf("export function useUseAgainDomain"), source.indexOf("export function useRequestMoreDomains"))
   assert.match(hook, /onSettled: \(\) => queryClient\.invalidateQueries\(\{ queryKey: DOMAINS_KEY \}\)/)
   assert.doesNotMatch(hook, /onSuccess/)
+})
+
+check("the removed domains section opens on load when the address holds one of its parameters", () => {
+  for (const name of ["removedPage", "removedSize", "removedSort", "removedOrder", "removedSearch"]) assert.equal(hasRemovedDomainsParam([name]), true, name)
+  assert.equal(hasRemovedDomainsParam(["page", "size", "sort", "order", "search", "status", "id"]), false)
+  assert.equal(hasRemovedDomainsParam(["removed"]), false)
+  assert.equal(hasRemovedDomainsParam(["removedomains"]), false)
+  assert.equal(hasRemovedDomainsParam(new URLSearchParams("page=1&removedPage=2").keys()), true)
+  assert.equal(hasRemovedDomainsParam([]), false)
 })
 
 check("strings are ASCII", () => {

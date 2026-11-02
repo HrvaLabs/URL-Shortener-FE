@@ -115,7 +115,12 @@ export const splitRemovedDomains = (domains: CustomDomain[]): { live: CustomDoma
   removed: domains.filter((domain) => domain.status === "DELETED"),
 })
 
-export const removedDomainsLabel = (count: number): string => `Removed domains (${count})`
+export const removedDomainsLabel = (count?: number): string => (count === undefined ? "Removed domains" : `Removed domains (${count})`)
+
+export const REMOVED_PARAM_PREFIX = "removed"
+
+export const hasRemovedDomainsParam = (names: Iterable<string>): boolean =>
+  Array.from(names).some((name) => name.startsWith(REMOVED_PARAM_PREFIX) && /^[A-Z]/.test(name.slice(REMOVED_PARAM_PREFIX.length)))
 
 export const USE_AGAIN_LABEL = "Use again"
 

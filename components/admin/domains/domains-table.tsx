@@ -21,6 +21,7 @@ import { parseServerDateTime } from "@/lib/analytics"
 import {
   ADMIN_FILTER_STATUSES,
   DOMAIN_STATUS_LABELS,
+  REMOVED_PARAM_PREFIX,
   adminRecheckHint,
   canAdminRetry,
   canRemoveDomain,
@@ -37,8 +38,6 @@ import { cn, formatDateTime, plural } from "@/lib/utils"
 const SEARCH_PARAM = "search"
 
 const REMOVED_SEARCH_PARAM = "removedSearch"
-
-const REMOVED_PREFIX = "removed"
 
 const STATUS_PARAM = "status"
 
@@ -110,7 +109,7 @@ export function DomainsTable({ highlightId, headingRef, removed = false }: Domai
     removed ? "deletedAt" : "createdAt",
     "desc",
     removed ? removedSortFields : sortFields,
-    removed ? REMOVED_PREFIX : "",
+    removed ? REMOVED_PARAM_PREFIX : "",
   )
   const [searchInput, setSearchInput] = useState(() => searchParams.get(searchParam) ?? "")
   const [search, setSearch] = useState(() => (searchParams.get(searchParam) ?? "").trim())

@@ -6,9 +6,8 @@ import { PageMeta } from "@/components/page-meta"
 import { StatusBadge } from "@/components/status-badge"
 import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
-import { BreakdownList } from "@/components/analytics/breakdown-list"
+import { BreakdownPanels } from "@/components/analytics/breakdown-panels"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
-import { QrScansList } from "@/components/analytics/qr-scans-list"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
 import { ANALYTICS_HISTORY_START, analyticsDay, analyticsHref, parseServerDateTime } from "@/lib/analytics"
@@ -113,19 +112,7 @@ function LinkAnalyticsBody({ data, days, onDaysChange, refreshing }: LinkAnalyti
         ) : (
           <>
             <ClicksChart daily={daily} days={days} />
-            <div className="grid gap-4 lg:grid-cols-2">
-              <QrScansList totals={totals} sources={breakdowns.sources} passwordProtected={link.passwordProtected} />
-              <BreakdownList
-                title="Referrers"
-                dimension="referrers"
-                entries={breakdowns.referrers}
-                note={link.passwordProtected ? "Referrers aren't available for password-protected links." : undefined}
-              />
-              <BreakdownList title="Countries" dimension="countries" entries={breakdowns.countries} />
-              <BreakdownList title="Devices" dimension="devices" entries={breakdowns.devices} />
-              <BreakdownList title="Browsers" dimension="browsers" entries={breakdowns.browsers} />
-              <BreakdownList title="Operating systems" dimension="operatingSystems" entries={breakdowns.operatingSystems} />
-            </div>
+            <BreakdownPanels totals={totals} breakdowns={breakdowns} passwordProtected={link.passwordProtected} />
           </>
         )}
       </div>

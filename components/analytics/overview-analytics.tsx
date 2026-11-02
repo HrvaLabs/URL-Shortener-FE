@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { PageMeta } from "@/components/page-meta"
 import { AnalyticsEmpty, AnalyticsError, AnalyticsSkeleton } from "@/components/analytics/analytics-states"
+import { BreakdownPanels } from "@/components/analytics/breakdown-panels"
 import { ClicksChart } from "@/components/analytics/clicks-chart"
 import { RangePicker } from "@/components/analytics/range-picker"
 import { StatTotals } from "@/components/analytics/stat-totals"
@@ -47,7 +48,7 @@ interface OverviewBodyProps {
 }
 
 function OverviewBody({ data, days, onDaysChange, refreshing }: OverviewBodyProps) {
-  const { totals, daily, topLinks } = data
+  const { totals, daily, topLinks, breakdowns } = data
   const empty = totals.clicks + totals.botClicks === 0
   const historyStart = formatDate(analyticsDay(ANALYTICS_HISTORY_START))
   const counters = [
@@ -91,6 +92,7 @@ function OverviewBody({ data, days, onDaysChange, refreshing }: OverviewBodyProp
           <>
             <ClicksChart daily={daily} days={days} />
             <TopLinks links={topLinks} days={days} />
+            {breakdowns && <BreakdownPanels totals={totals} breakdowns={breakdowns} />}
           </>
         )}
       </div>

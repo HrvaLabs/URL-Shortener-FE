@@ -69,7 +69,7 @@ export default function SecurityPage() {
           <li>The buttons on bio pages are short links, and get the same checks.</li>
           <li>
             A link&apos;s destination can change only after the same checks as a new link, and every change is
-            recorded. Turning an expired or used-up link back on gets those checks too.
+            recorded. An expired or used-up link is checked again before it turns back on.
           </li>
           <li>A link&apos;s password is stored as a hash, and wrong guesses are limited.</li>
           <li>

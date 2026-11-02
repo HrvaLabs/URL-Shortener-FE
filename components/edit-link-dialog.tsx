@@ -122,6 +122,7 @@ function EditLinkFormBody({ link, admin, busy, onBusyChange, onDone }: EditLinkF
   }
 
   const change = (patch: Partial<EditLinkForm>, clear: (EditErrorField | "turnOn")[]) => {
+    setVerdict(null)
     setForm((previous) => ({ ...previous, ...patch }))
     setErrors((previous) => {
       const next = { ...previous, form: undefined }

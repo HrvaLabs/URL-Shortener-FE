@@ -76,13 +76,6 @@ export default function PrivacyPage() {
                 you last used each, and any you turned off. Deleted with your account.
               </p>
               <p>
-                When one of your links was last blocked, and whether an admin set changing where your
-                links point to always allowed or never allowed for your account. Both decide whether
-                your links&apos; destinations can change (see{" "}
-                <a href="/help/links#destination">Changing where a link points</a>). Deleted with your
-                account.
-              </p>
-              <p>
                 Legal basis: performance of a contract (Art. 6(1)(b) GDPR) — this data is required to
                 provide your account.
               </p>
@@ -268,8 +261,14 @@ export default function PrivacyPage() {
                 destination, when it changed, the email address of the account that made the change,
                 whether it was made signed in or with an API key, and whether an admin saved it although
                 the link checks would have refused it. Admins can see this history, to look into a link
-                whose destination changed. It is kept while the link exists and deleted with it. Legal
-                basis: legitimate interest (Art. 6(1)(f) GDPR).
+                whose destination changed. It is kept while the link exists and deleted with it.
+              </p>
+              <p>
+                We also keep, with your account, when one of your links was last blocked and whether an
+                admin set changing where your links point to always allowed or never allowed for your
+                account. Both decide whether your links&apos; destinations can change (see{" "}
+                <a href="/help/links#destination">Changing where a link points</a>), and are deleted with
+                your account. Legal basis for this section: legitimate interest (Art. 6(1)(f) GDPR).
               </p>
 
               <h3 id="security-and-audit-logs">Security and audit logs</h3>

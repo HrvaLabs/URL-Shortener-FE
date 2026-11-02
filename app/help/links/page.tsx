@@ -42,8 +42,8 @@ export default function LinksHelpPage() {
               <h2 id="turn-back-on">Turning a link back on</h2>
               <p>
                 An expired link or one that used all its clicks opens in the same form. Give it a later expiry date or
-                none, or a higher visit limit or none, and tick <strong>Turn this link back on when I save</strong>. Turning
-                a link back on runs the same checks as making a new one, so a destination they would refuse today keeps
+                none, or a higher visit limit or none, and tick <strong>Turn this link back on when I save</strong>. The
+                destination is checked again before the link turns back on, so one that would be refused today keeps
                 the link off. A blocked link can&apos;t be turned back on.
               </p>
 

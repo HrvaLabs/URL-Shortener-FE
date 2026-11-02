@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
-import { SortHead, adminSelectClass } from "@/components/admin/sort-controls"
+import { SortHead, adminFieldClass, adminSelectClass } from "@/components/admin/sort-controls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { adminApi } from "@/lib/api-client"
@@ -160,7 +160,7 @@ const isCalendarDate = (value: string) => {
 
 const addressDate = (value: string | null) => (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && isCalendarDate(value) ? value : "")
 
-const dateInputClass = `${adminSelectClass} tabular-nums`
+const dateInputClass = `${adminFieldClass} tabular-nums`
 
 const detailsText = ({ action, details }: AuditLog): string | null =>
   action === "REVOKE_BIO_HANDLE" && details ? details.replace(/(^|, )expectedHandle: /, "$1Handle: ") : details

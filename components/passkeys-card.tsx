@@ -130,9 +130,9 @@ export function PasskeysCard() {
   }
 
   return (
-    <Card>
+    <Card id="passkeys" className="scroll-mt-20">
       <CardHeader>
-        <CardTitle ref={headingRef} tabIndex={-1} className="text-base focus-visible:ring-0 focus-visible:ring-offset-0">
+        <CardTitle ref={headingRef} id="passkeysHeading" tabIndex={-1} className="text-base focus-visible:ring-0 focus-visible:ring-offset-0">
           Passkeys and security keys
         </CardTitle>
         <CardDescription>

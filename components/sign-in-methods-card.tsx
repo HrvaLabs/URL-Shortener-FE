@@ -37,6 +37,11 @@ interface Change {
 
 const wrap = "[overflow-wrap:anywhere]"
 
+function showPasskeys() {
+  document.getElementById("passkeys")?.scrollIntoView({ block: "start" })
+  document.getElementById("passkeysHeading")?.focus({ preventScroll: true })
+}
+
 function dialogText(change: Change, askPassword: boolean): { title: string; description: string; confirm: string; busy: string; success: string } {
   const name = signInMethodLabels[change.method]
   if (change.kind === "turn-off") {
@@ -209,6 +214,11 @@ function MethodRow({
           onClick={() => onChange({ kind: off ? "turn-on" : "turn-off", method: use.method })}
         >
           {off ? "Turn back on" : "Turn off"}
+        </Button>
+      )}
+      {use.method === "PASSKEY" && (
+        <Button type="button" variant="outline" size="sm" className="shrink-0 self-start" onClick={showPasskeys}>
+          Manage passkeys
         </Button>
       )}
       {use.method === "PASSWORD" && passwordSet === true && (

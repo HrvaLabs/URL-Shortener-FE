@@ -2,14 +2,14 @@
 
 import { ThemeProvider } from "next-themes"
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ApiError, isRestartError, retryDelay, shouldRetry } from "@/lib/api-client"
+import { ApiError, retryDelay, shouldRetry } from "@/lib/api-client"
 import { AuthProvider } from "@/lib/auth-context"
 import { EM_DASH, SLOGAN } from "@/lib/seo"
 import { reloadIfStaleChunkError } from "@/lib/stale-chunk"
 import { useState, useEffect, type ReactNode } from "react"
 
 const reloadUnlessApiError = (error: Error) => {
-  if (!(error instanceof ApiError) && !isRestartError(error)) reloadIfStaleChunkError(error)
+  if (!(error instanceof ApiError)) reloadIfStaleChunkError(error)
 }
 
 export function Providers({ children }: { children: ReactNode }) {

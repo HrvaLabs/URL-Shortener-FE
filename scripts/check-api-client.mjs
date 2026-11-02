@@ -165,6 +165,9 @@ await check("a network failure, 502, 503 and 504 are restart errors; nothing els
   }
   for (const status of [400, 401, 403, 404, 409, 422, 429, 500, 501]) assert.equal(isRestartError(new ApiError("no", status)), false, String(status))
   assert.equal(isRestartError(new TypeError("undefined is not a function")), false)
+  assert.equal(isRestartError(new TypeError("Failed to fetch dynamically imported module: https://hrva.cc/_next/static/x.js")), false)
+  assert.equal(isRestartError(new TypeError("Cannot read properties of undefined (reading 'fetch')")), false)
+  assert.equal(shouldRetry(5, new TypeError("Failed to fetch dynamically imported module: https://hrva.cc/_next/static/x.js")), false)
   assert.equal(isRestartError(new Error("Failed to fetch")), false)
   assert.equal(isRestartError(undefined), false)
 })

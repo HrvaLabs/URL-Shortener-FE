@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ApiError, REQUEST_FAILED, authApi, onAdminTwoStepRequired, onSessionEnded, userApi } from "./api-client"
+import { ApiError, REQUEST_FAILED, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, shouldRetry, userApi } from "./api-client"
 import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
 import { ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "./admin-two-step"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
@@ -33,6 +33,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+const pause = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds))
+
+async function fetchMeThroughRestart(token: string): Promise<UserDto | null> {
+  for (let failureCount = 0; ; failureCount++) {
+    try {
+      return await userApi.getMe()
+    } catch (err) {
+      if (!isRestartError(err) || !shouldRetry(failureCount, err as Error)) throw err
+      await pause(retryDelay(failureCount))
+      if (localStorage.getItem("auth-token") !== token) return null
+    }
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -48,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     try {
-      const userData = await userApi.getMe()
-      setUser(userData)
+      const userData = await fetchMeThroughRestart(token)
+      if (userData) setUser(userData)
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         localStorage.removeItem("auth-token")

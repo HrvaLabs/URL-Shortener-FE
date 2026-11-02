@@ -56,7 +56,7 @@ export class ApiError extends Error {
 
 const RESTART_STATUSES = [0, 502, 503, 504]
 
-const NETWORK_FAILURE = /fetch|network|load failed/i
+const NETWORK_FAILURE = /^(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?)$/i
 
 export const RESTART_RETRY_WINDOW_MS = 120_000
 

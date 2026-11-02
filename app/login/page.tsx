@@ -11,7 +11,6 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { PageMeta } from "@/components/page-meta"
 import { safeNext } from "@/lib/utils"
 import { ArrowLeft } from "lucide-react"
 import { ProviderButtons } from "@/components/auth/provider-buttons"
@@ -96,7 +95,6 @@ function LoginForm({ next }: { next: string | null }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Sign in" description="Sign in to your hrva.cc account to manage your shortened URLs." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

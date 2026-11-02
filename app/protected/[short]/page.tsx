@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { PageMeta } from "@/components/page-meta"
 import { Lock } from "lucide-react"
 import { shortHostOf } from "@/lib/utils"
 import { isHostnameShaped } from "@/lib/domains"
@@ -86,7 +85,6 @@ function ProtectedLinkForm() {
 export default function ProtectedLinkPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Protected link" description="This link is password protected." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

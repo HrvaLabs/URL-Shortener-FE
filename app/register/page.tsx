@@ -13,7 +13,6 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { PageMeta } from "@/components/page-meta"
 import { NewPasswordInput } from "@/components/auth/new-password-input"
 import { ProviderButtons } from "@/components/auth/provider-buttons"
 import { ArrowLeft } from "lucide-react"
@@ -50,7 +49,6 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Create an account" description="Sign up for a free hrva.cc account to manage your shortened URLs with analytics and control." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

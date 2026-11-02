@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { PageMeta } from "@/components/page-meta"
 
 type State = "loading" | "success" | "error"
 
@@ -32,7 +31,6 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Verify email" description="Verify your hrva.cc email address." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

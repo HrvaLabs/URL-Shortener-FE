@@ -10,7 +10,6 @@ import { toast } from "sonner"
 import { useRouter, useParams } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { PageMeta } from "@/components/page-meta"
 
 export default function SetPasswordPage() {
   const [password, setPassword] = useState("")
@@ -43,7 +42,6 @@ export default function SetPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Set new password" description="Set a new password for your hrva.cc account." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

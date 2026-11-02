@@ -11,7 +11,6 @@ import { toast } from "sonner"
 import { ArrowLeft } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { PageMeta } from "@/components/page-meta"
 
 export default function ResendVerificationPage() {
   const [email, setEmail] = useState("")
@@ -34,7 +33,6 @@ export default function ResendVerificationPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Resend verification" description="Resend your hrva.cc email verification link." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

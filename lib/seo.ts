@@ -63,7 +63,8 @@ export function pageMetadata({ title, description, path, socialTitle, absolute =
   }
 }
 
-export const noIndex = (title: string): Metadata => ({
+export const noIndex = (title: string, description?: string): Metadata => ({
   title,
+  ...(description ? { description } : {}),
   robots: { index: false, follow: false },
 })

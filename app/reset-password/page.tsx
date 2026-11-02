@@ -10,7 +10,6 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Logo } from "@/components/logo"
-import { PageMeta } from "@/components/page-meta"
 import { ArrowLeft } from "lucide-react"
 
 export default function ResetPasswordPage() {
@@ -34,7 +33,6 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-      <PageMeta title="Reset password" description="Reset your hrva.cc account password." />
       <header className="container flex h-16 items-center justify-between">
         <Logo />
         <ThemeToggle />

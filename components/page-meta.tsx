@@ -24,28 +24,18 @@ const setMeta = (name: string, content: string, property = false) => {
  * Sets page-specific <title> and meta tags for client-rendered pages
  * that cannot use Next.js `export const metadata`.
  *
- * React rewrites the <title> from the layout's metadata right after hydration, and Next rewrites it on
- * query-string navigations, so a single write in an effect can be undone. The title is therefore put
- * back whenever something else changes it, until this page unmounts or the path changes.
- *
  * Usage:
  *   <PageMeta title="Dashboard — hrva.cc" description="Manage your URLs" />
  */
 export function PageMeta({ title, description, ogTitle, ogDescription }: PageMetaProps) {
+  // Runs after every render on purpose: Next rewrites <title> on query-string navigations.
   useEffect(() => {
     document.title = title
 
     if (description) setMeta("description", description)
     setMeta("og:title", ogTitle ?? title, true)
     setMeta("og:description", ogDescription ?? (description ?? title), true)
-
-    const path = window.location.pathname
-    const observer = new MutationObserver(() => {
-      if (window.location.pathname === path && document.title !== title) document.title = title
-    })
-    observer.observe(document.head, { childList: true, subtree: true, characterData: true })
-    return () => observer.disconnect()
-  }, [title, description, ogTitle, ogDescription])
+  })
 
   return null
 }

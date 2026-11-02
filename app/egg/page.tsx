@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { PageMeta } from "@/components/page-meta"
 import { Volume2, QrCode } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 
@@ -36,7 +35,6 @@ export default function EggPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <PageMeta title="🥚 — hrva.cc" description="You found it." />
       <SiteHeader />
 
       <main className="flex flex-1 items-center justify-center px-5 py-20">

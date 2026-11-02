@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { CLIENT_NAME_NOTE, connectDestinationText, lookalikeWarning } from "../lib/connect.ts"
+import { CLIENT_NAME_NOTE, connectDestinationText, connectWarning } from "../lib/connect.ts"
 
 let failures = 0
 
@@ -12,22 +12,37 @@ const check = (name, run) => {
   }
 }
 
-const view = (overrides) => ({ clientName: "Claude", redirectHost: "claude.ai", loopback: false, lookalike: false, ...overrides })
+const view = (overrides) => ({ clientName: "Claude", redirectHost: "claude.ai", loopback: false, lookalike: false, appScheme: null, unknownDestination: false, ...overrides })
 
 check("the screen says which site the app sends you to", () => {
   assert.equal(connectDestinationText(view()), "After you allow it, hrva.cc sends you to claude.ai.")
-  assert.equal(lookalikeWarning(view()), null)
+  assert.equal(connectWarning(view()), null)
 })
 
 check("a desktop app sends you back to this device and names no host", () => {
   assert.equal(connectDestinationText(view({ redirectHost: "localhost", loopback: true })), "After you allow it, hrva.cc sends you back to an app on this device.")
-  assert.equal(lookalikeWarning(view({ redirectHost: "localhost", loopback: true, lookalike: true })), null)
+  assert.equal(connectWarning(view({ redirectHost: "localhost", loopback: true, lookalike: true })), null)
 })
 
 check("a name that claims a known app while sending you elsewhere is warned about", () => {
   assert.equal(
-    lookalikeWarning(view({ redirectHost: "claude.ai.evil.example", lookalike: true })),
+    connectWarning(view({ redirectHost: "claude.ai.evil.example", lookalike: true })),
     "This app calls itself Claude, but it sends you to claude.ai.evil.example, which is not Claude's site. Don't allow it unless you started this connection yourself.",
+  )
+})
+
+check("an app opened by its own links is named by the scheme it opens", () => {
+  const cursor = view({ clientName: "Cursor", redirectHost: null, appScheme: "cursor" })
+  assert.equal(connectDestinationText(cursor), "After you allow it, hrva.cc sends you to an app on this device that opens cursor:// links.")
+  assert.equal(connectWarning(cursor), null)
+})
+
+check("a redirect hrva.cc can't read is not shown as this device, and is warned about", () => {
+  const unknown = view({ redirectHost: null, unknownDestination: true })
+  assert.equal(connectDestinationText(unknown), "hrva.cc can't show where this app will send you after you allow it.")
+  assert.equal(
+    connectWarning(unknown),
+    "hrva.cc can't tell where this app will send you. Don't allow it unless you started this connection yourself.",
   )
 })
 

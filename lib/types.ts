@@ -802,9 +802,11 @@ export interface EmailLog {
 
 export interface ConnectRequestView {
   clientName: string
-  redirectHost: string
+  redirectHost: string | null
   loopback: boolean
   lookalike: boolean
+  appScheme: string | null
+  unknownDestination: boolean
 }
 
 export interface ConnectApproval {

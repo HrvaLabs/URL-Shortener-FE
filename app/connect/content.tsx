@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ApiError, connectApi } from "@/lib/api-client"
-import { CLIENT_NAME_NOTE, connectDestinationText, lookalikeWarning } from "@/lib/connect"
+import { CLIENT_NAME_NOTE, connectDestinationText, connectWarning } from "@/lib/connect"
 import type { ConnectRequestView } from "@/lib/types"
 import { useAuth } from "@/lib/auth-context"
 import { getBackendOrigin } from "@/lib/utils"
@@ -149,7 +149,7 @@ export function ConnectContent() {
     )
   }
 
-  const warning = lookalikeWarning(state.view)
+  const warning = connectWarning(state.view)
 
   return (
     <ConnectShell>

@@ -71,7 +71,7 @@ export function useUseAgainDomain() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => domainApi.useAgain(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: DOMAINS_KEY }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: DOMAINS_KEY }),
   })
 }
 

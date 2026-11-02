@@ -417,6 +417,13 @@ check("useAgainLines by what the API allows", () => {
   assert.deepEqual(useAgainLines(domain()), { button: false, line: null })
 })
 
+check("use again refetches the domains after a refusal too", () => {
+  const source = readFileSync(new URL("../lib/hooks/useDomains.ts", import.meta.url), "utf8")
+  const hook = source.slice(source.indexOf("export function useUseAgainDomain"), source.indexOf("export function useRequestMoreDomains"))
+  assert.match(hook, /onSettled: \(\) => queryClient\.invalidateQueries\(\{ queryKey: DOMAINS_KEY \}\)/)
+  assert.doesNotMatch(hook, /onSuccess/)
+})
+
 check("strings are ASCII", () => {
   const source = readFileSync(new URL("../lib/domains.ts", import.meta.url), "utf8")
   const sourceLine = source.split("\n").findIndex((line) => NOT_ASCII.test(line))

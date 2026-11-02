@@ -226,11 +226,25 @@ function RemovedDomainRow({ domain, onUsedAgain }: { domain: CustomDomain; onUse
   const useAgain = useUseAgainDomain()
   const lines = useAgainLines(domain)
   const busy = useAgain.isPending
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  const hadButton = useRef(lines.button)
+
+  useLayoutEffect(() => {
+    const had = hadButton.current
+    hadButton.current = lines.button
+    if (had && !lines.button && focusIsLost()) headingRef.current?.focus({ preventScroll: true })
+  }, [lines.button])
 
   return (
     <li className="space-y-2 px-4 py-4">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <h4 className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{domain.hostname}</h4>
+        <h4
+          ref={headingRef}
+          tabIndex={-1}
+          className="min-w-0 text-sm font-semibold [overflow-wrap:anywhere] focus-visible:outline-hidden"
+        >
+          {domain.hostname}
+        </h4>
         <DomainStatusBadge status={domain.status} />
       </div>
       <p className="text-xs text-muted-foreground">Applied {serverDate(domain.createdAt)}</p>

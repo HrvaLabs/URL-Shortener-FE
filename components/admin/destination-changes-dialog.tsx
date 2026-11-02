@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDestinationStanding, useSetDestinationOverride } from "@/lib/hooks/useUsers"
-import { OVERRIDES, OVERRIDE_HINTS, OVERRIDE_LABELS, goodStandingText, requirementText, standingText } from "@/lib/link-edit"
+import { OVERRIDES, OVERRIDE_HINTS, OVERRIDE_LABELS, goodStandingText, requirementText } from "@/lib/link-edit"
 import { ApiError } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import type { DestinationChangeOverride, DestinationChangeStanding } from "@/lib/types"
@@ -123,7 +123,7 @@ function StandingForm({ user, standing, busy, onBusyChange, onDone }: StandingFo
   return (
     <form onSubmit={save} noValidate className="grid min-w-0 gap-4">
       <div className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-sm">
-        <p className="font-medium [overflow-wrap:anywhere]">{standingText(standing)} on hrva.cc links now</p>
+        <p className="font-medium [overflow-wrap:anywhere]">{standing.allowed ? "Can change destinations" : "Can't change destinations"} on hrva.cc links now</p>
         <p className="text-muted-foreground">{goodStandingText(standing)}{standing.missing.length > 0 ? ":" : "."}</p>
         {standing.missing.length > 0 && (
           <ul className="list-disc space-y-1 pl-5 text-muted-foreground [overflow-wrap:anywhere]">

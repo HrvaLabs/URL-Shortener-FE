@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { UtmFields } from "@/components/utm-fields"
 import { useDestinationChange, useUpdateUrl } from "@/lib/hooks/useUrls"
 import { shortHost } from "@/lib/domains"
@@ -160,6 +161,7 @@ function EditLinkFormBody({ link, admin, busy, onBusyChange, onDone }: EditLinkF
         flushSync(() => {
           setErrors({})
           setRefusedMissing(refused)
+          setForm((previous) => ({ ...previous, destination: link.longUrl }))
         })
         document.getElementById(ids.locked)?.focus()
         return
@@ -198,17 +200,23 @@ function EditLinkFormBody({ link, admin, busy, onBusyChange, onDone }: EditLinkF
 
       <div>
         <Label htmlFor={ids.destination}>Destination</Label>
-        <Input
+        <Textarea
           id={ids.destination}
-          type="url"
+          rows={2}
           inputMode="url"
           spellCheck={false}
+          autoCapitalize="off"
           placeholder="https://example.com/page"
           value={form.destination}
           readOnly={locked || busy}
           onChange={(event) => {
             setVerdict(null)
-            change({ destination: event.target.value }, ["destination"])
+            change({ destination: event.target.value.replace(/[\r\n]+/g, "") }, ["destination"])
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") return
+            event.preventDefault()
+            event.currentTarget.form?.requestSubmit()
           }}
           aria-invalid={errors.destination || lengthError ? true : undefined}
           aria-describedby={describedBy(
@@ -216,7 +224,7 @@ function EditLinkFormBody({ link, admin, busy, onBusyChange, onDone }: EditLinkF
             locked && missing.length > 0 && ids.locked,
             ids.destinationHint,
           )}
-          className={cn("mt-2", locked && "bg-muted/60 text-muted-foreground")}
+          className={cn("mt-2 min-h-0 resize-y [overflow-wrap:anywhere]", locked && "bg-muted/60 text-muted-foreground")}
         />
         {(errors.destination || lengthError) && (
           <p id={`${ids.destination}-error`} role="alert" className="mt-2 text-sm text-destructive [overflow-wrap:anywhere]">{errors.destination ?? lengthError}</p>

@@ -105,14 +105,14 @@ function HistoryList({ linkId }: { linkId: number }) {
           <ol className="divide-y">
             {rows.map((change) => (
               <li key={change.id} className="space-y-1.5 p-3 text-sm">
-                <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <span className="tabular-nums">{formatDateTime(change.changedAt)}</span>
                   <span aria-hidden="true">·</span>
                   <span className="text-foreground [overflow-wrap:anywhere]">{change.changedBy}</span>
                   <span aria-hidden="true">·</span>
                   <span>{VIA_LABELS[change.via] ?? change.via}</span>
                   {change.forced && <Badge variant="warning" className="whitespace-nowrap">Saved anyway</Badge>}
-                </p>
+                </div>
                 <p className="[overflow-wrap:anywhere]"><span className="text-muted-foreground">From </span>{change.oldLongUrl}</p>
                 <p className="[overflow-wrap:anywhere]"><span className="text-muted-foreground">To </span>{change.newLongUrl}</p>
               </li>

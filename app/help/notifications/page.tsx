@@ -68,7 +68,7 @@ const dailyBody = `{
 const weeklyBody = `{
   "event": "summary.weekly",
   "deliveryId": "a83f1d70-2b6e-4c95-8e07-5d9c4a1f7b32",
-  "createdAt": "2026-11-02T06:00:00Z",
+  "createdAt": "2026-11-02T08:00:00Z",
   "from": "2026-10-26",
   "to": "2026-11-01",
   "totals": { "clicks": 910, "clicksWeekBefore": 760, "uniqueVisitors": 604 },
@@ -105,7 +105,7 @@ const weeklyBody = `{
 
 const testBody = `{
   "event": "test",
-  "deliveryId": "f2c9e8b4-1a75-4d03-b6e8-9c3a0d7f5e21",
+  "deliveryId": "test-f2c9e8b4-1a75-4d03-b6e8-9c3a0d7f5e21",
   "createdAt": "2026-10-27T12:00:00Z",
   "message": "This is a test from hrva.cc. Your channel works."
 }`
@@ -557,7 +557,7 @@ export default function NotificationsHelpPage() {
               </ul>
 
               <h3 id="body-summary-daily">summary.daily</h3>
-              <p>Sent after midnight, with yesterday&apos;s clicks. A day with no clicks sends nothing.</p>
+              <p>Sent after midnight, with yesterday&apos;s clicks. A day with no clicks and no bot clicks sends nothing.</p>
               <pre className={codeBlockClass}>{dailyBody}</pre>
               <ul>
                 <li>
@@ -602,13 +602,14 @@ export default function NotificationsHelpPage() {
                   <code>shortUrl</code>, <code>destinationHost</code> and <code>clicks</code> for the week.
                 </li>
                 <li>
-                  <code>deadLinks</code> (list): at most 20 links marked dead that week. Each has the fields of a{" "}
+                  <code>deadLinks</code> (list): at most 20 links marked dead that week, the earliest first. A dead link
+                  you have since turned off isn&apos;t listed. Each has the fields of a{" "}
                   <code>link.dead</code> link: <code>shortUrl</code>, <code>destinationHost</code>,{" "}
                   <code>deadSince</code> and <code>lastStatus</code>.
                 </li>
                 <li>
                   <code>endingSoon</code> (list): at most 20 active links that expire within 7 days or have 10% or
-                  fewer of their visits left. Each has <code>shortUrl</code>, <code>destinationHost</code>,{" "}
+                  fewer of their visits left, the soonest end date first and the visit-limit links after them. Each has <code>shortUrl</code>, <code>destinationHost</code>,{" "}
                   <code>reason</code>, <code>expiresOn</code> and <code>visitsLeft</code>.
                 </li>
                 <li>
@@ -623,7 +624,7 @@ export default function NotificationsHelpPage() {
               </p>
               <ul>
                 <li>
-                  <code>&quot;EXPIRES&quot;</code>: the link has an end date. <code>expiresOn</code> is that day
+                  <code>&quot;EXPIRES&quot;</code>: the link ends within 7 days. <code>expiresOn</code> is that day
                   and <code>visitsLeft</code> is <code>null</code>.
                 </li>
                 <li>
@@ -638,6 +639,10 @@ export default function NotificationsHelpPage() {
               <ul>
                 <li>
                   <code>message</code> (string): a fixed sentence saying the channel works.
+                </li>
+                <li>
+                  The <code>deliveryId</code> of a test starts with <code>test-</code>, and so does its{" "}
+                  <code>X-Hrva-Delivery</code> header.
                 </li>
               </ul>
               <p>

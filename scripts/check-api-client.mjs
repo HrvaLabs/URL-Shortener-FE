@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { SESSION_ENDED, adminApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
+const { SESSION_ENDED, adminApi, authApi, onAdminTwoStepRequired, onSessionEnded, urlApi, userApi } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -19,7 +19,7 @@ let failures = 0
 let answer = () => new Response("")
 const sent = []
 globalThis.fetch = async (url, init) => {
-  sent.push({ url, authorization: init?.headers?.Authorization })
+  sent.push({ url, authorization: init?.headers?.Authorization, body: init?.body })
   return answer()
 }
 
@@ -129,6 +129,15 @@ await check("a visit limit counts clicks, not unique visitors", () => {
   assert.equal(opensText({ opens: 3, visitLimit: 5 }), "3 of 5 clicks used")
   assert.equal(opensText({ opens: 1, visitLimit: 1 }), "1 of 1 click used")
   assert.equal(opensText({ visitLimit: 1200 }), "0 of 1,200 clicks used")
+})
+
+await check("the OAuth code is exchanged with the verifier of the browser that started the sign-in", async () => {
+  sent.length = 0
+  answer = () => new Response(JSON.stringify({ token: "Bearer jwt" }), { status: 200, headers: { "Content-Type": "application/json" } })
+  await authApi.exchangeOAuthCode("one-time-code", "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")
+  assert.equal(sent.length, 1)
+  assert.match(sent[0].url, /\/auth\/oauth\/exchange$/)
+  assert.deepEqual(JSON.parse(sent[0].body), { code: "one-time-code", verifier: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk" })
 })
 
 if (failures > 0) {

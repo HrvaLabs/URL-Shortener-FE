@@ -148,7 +148,8 @@ export default function PrivacyPage() {
               <p>
                 We keep a few small items in your browser, only so the site works the way you asked,
                 and none of them leaves your browser except the sign-in token, which is sent to
-                hrva.cc with your requests. The last item is Cloudflare&apos;s, not ours:
+                hrva.cc with your requests, and the sign-in check value below, which is sent to hrva.cc
+                once to finish a Google or GitHub sign-in. The last item is Cloudflare&apos;s, not ours:
               </p>
               <ul>
                 <li>
@@ -162,6 +163,10 @@ export default function PrivacyPage() {
                 <li>
                   the page to return to after you sign in with Google or GitHub, in{" "}
                   <em>sessionStorage</em>, removed once you are back
+                </li>
+                <li>
+                  when you start a Google or GitHub sign-in, a random check value, in{" "}
+                  <em>sessionStorage</em>, so only this tab can finish that sign-in; removed once you are back
                 </li>
                 <li>
                   after <em>Try again</em> on a bio page that couldn&apos;t load, that page&apos;s

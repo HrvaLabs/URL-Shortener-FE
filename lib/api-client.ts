@@ -190,8 +190,8 @@ async function download(path: string): Promise<Response> {
 export const authApi = {
   login: (data: { email: string; password: string; rememberMe?: boolean }) =>
     request<LoginResponse>("POST", "/auth/login", data),
-  exchangeOAuthCode: (code: string) =>
-    request<LoginResponse>("POST", "/auth/oauth/exchange", { code }),
+  exchangeOAuthCode: (code: string, verifier: string) =>
+    request<LoginResponse>("POST", "/auth/oauth/exchange", { code, verifier }),
   secondStepTotp: (pendingToken: string, code: string) =>
     request<SignedIn>("POST", "/auth/2fa/totp", { pendingToken, code }),
   secondStepPasskeyOptions: (pendingToken: string) =>

@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { ApiError, authApi } from "@/lib/api-client"
 import { useAuth } from "@/lib/auth-context"
 import { FORGOT_PASSWORD_LABEL, SIGNUPS_PAUSED, providerDisabledHeading, providerDisabledText } from "@/lib/moderation"
+import { takeSignInVerifier } from "@/lib/oauth-challenge"
 import { forgetOAuthProvider, providerFromParam, providerTurnedOffText, readOAuthProvider, type SwitchableMethod } from "@/lib/sign-in-methods"
 import type { SignedIn, TwoStepMethod } from "@/lib/types"
 import { safeNext } from "@/lib/utils"
@@ -107,11 +108,16 @@ export function AuthCallbackContent() {
 
   useEffect(() => {
     forgetOAuthProvider()
+    const verifier = takeSignInVerifier()
     if (callback.kind === "code") {
       if (exchanged.current) return
       exchanged.current = true
-      localStorage.removeItem("auth-token")
-      authApi.exchangeOAuthCode(callback.code)
+      const exchange = () => {
+        if (!verifier) return Promise.reject(new Error(messages.provider_error))
+        localStorage.removeItem("auth-token")
+        return authApi.exchangeOAuthCode(callback.code, verifier)
+      }
+      exchange()
         .then((response) => {
           if (response.twoStepRequired && response.pendingToken) {
             setSecondStep({ pendingToken: response.pendingToken, methods: response.methods ?? [] })

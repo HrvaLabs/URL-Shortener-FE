@@ -1,9 +1,11 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { providerButtonsLayout, providersOff, providersOffText } from "@/lib/moderation"
+import { startSignInChallenge } from "@/lib/oauth-challenge"
 import { rememberOAuthProvider, signInMethodLabels, type SwitchableMethod } from "@/lib/sign-in-methods"
 import { cn, getBackendOrigin } from "@/lib/utils"
 
@@ -34,6 +36,30 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
   const { data: publicSettings } = usePublicSettings()
   const { shown, columns, divider } = providerButtonsLayout(publicSettings)
   const offText = explainOff ? providersOffText(providersOff(publicSettings)) : null
+  const starting = useRef(false)
+
+  useEffect(() => {
+    const allowAnotherStart = () => {
+      starting.current = false
+    }
+    window.addEventListener("pageshow", allowAnotherStart)
+    return () => window.removeEventListener("pageshow", allowAnotherStart)
+  }, [])
+
+  const startSignIn = (event: React.MouseEvent<HTMLAnchorElement>, provider: SwitchableMethod) => {
+    event.preventDefault()
+    if (starting.current) return
+    starting.current = true
+    rememberOAuthProvider(provider)
+    if (next) sessionStorage.setItem("post-login-next", next)
+    else sessionStorage.removeItem("post-login-next")
+    const start = new URL(`/oauth2/authorization/${PATHS[provider]}`, getBackendOrigin() || window.location.origin)
+    startSignInChallenge()
+      .then((challenge) => start.searchParams.set("challenge", challenge))
+      .catch(() => start.searchParams.delete("challenge"))
+      .finally(() => window.location.assign(start))
+  }
+
   return (
     <>
       {divider && (
@@ -53,11 +79,7 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
                 <Button key={provider} asChild variant="outline" className="w-full gap-2">
                   <a
                     href={`${getBackendOrigin()}/oauth2/authorization/${PATHS[provider]}`}
-                    onClick={() => {
-                      rememberOAuthProvider(provider)
-                      if (next) sessionStorage.setItem("post-login-next", next)
-                      else sessionStorage.removeItem("post-login-next")
-                    }}
+                    onClick={(event) => startSignIn(event, provider)}
                   >
                     <Mark />
                     {signInMethodLabels[provider]}

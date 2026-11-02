@@ -247,7 +247,7 @@ export function UtmFields({ destination, value, onChange, open, onOpenChange, va
               onClick={clearRemembered}
               className="text-brand-link rounded-sm font-medium ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Clear
+              Clear<span className="sr-only"> remembered tags</span>
             </button>
           </p>
         )}

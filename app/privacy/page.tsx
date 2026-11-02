@@ -166,7 +166,8 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   when you start a Google or GitHub sign-in, a random check value, in{" "}
-                  <em>sessionStorage</em>, so only this tab can finish that sign-in; removed once you are back
+                  <em>localStorage</em>, so only this browser can finish that sign-in; removed once you are back,
+                  and no longer accepted after 10 minutes
                 </li>
                 <li>
                   after <em>Try again</em> on a bio page that couldn&apos;t load, that page&apos;s

@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { usePublicSettings } from "@/lib/hooks/useSettings"
 import { providerButtonsLayout, providersOff, providersOffText } from "@/lib/moderation"
-import { startSignInChallenge } from "@/lib/oauth-challenge"
+import { keepSignInVerifier, prepareSignInChallenge, type PreparedChallenge } from "@/lib/oauth-challenge"
 import { rememberOAuthProvider, signInMethodLabels, type SwitchableMethod } from "@/lib/sign-in-methods"
 import { cn, getBackendOrigin } from "@/lib/utils"
 
@@ -36,28 +36,30 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
   const { data: publicSettings } = usePublicSettings()
   const { shown, columns, divider } = providerButtonsLayout(publicSettings)
   const offText = explainOff ? providersOffText(providersOff(publicSettings)) : null
-  const starting = useRef(false)
+  const [prepared, setPrepared] = useState<PreparedChallenge | null>(null)
 
   useEffect(() => {
-    const allowAnotherStart = () => {
-      starting.current = false
+    let current = true
+    prepareSignInChallenge()
+      .then((challenge) => {
+        if (current) setPrepared(challenge)
+      })
+      .catch(() => {
+        // No Web Crypto (an insecure origin): the start goes without a challenge and the callback says it didn't work.
+      })
+    return () => {
+      current = false
     }
-    window.addEventListener("pageshow", allowAnotherStart)
-    return () => window.removeEventListener("pageshow", allowAnotherStart)
   }, [])
 
-  const startSignIn = (event: React.MouseEvent<HTMLAnchorElement>, provider: SwitchableMethod) => {
-    event.preventDefault()
-    if (starting.current) return
-    starting.current = true
+  const startOf = (provider: SwitchableMethod) =>
+    `${getBackendOrigin()}/oauth2/authorization/${PATHS[provider]}${prepared ? `?challenge=${prepared.challenge}` : ""}`
+
+  const keepForCallback = (provider: SwitchableMethod) => {
+    if (prepared) keepSignInVerifier(prepared.verifier)
     rememberOAuthProvider(provider)
     if (next) sessionStorage.setItem("post-login-next", next)
     else sessionStorage.removeItem("post-login-next")
-    const start = new URL(`/oauth2/authorization/${PATHS[provider]}`, getBackendOrigin() || window.location.origin)
-    startSignInChallenge()
-      .then((challenge) => start.searchParams.set("challenge", challenge))
-      .catch(() => start.searchParams.delete("challenge"))
-      .finally(() => window.location.assign(start))
   }
 
   return (
@@ -78,8 +80,10 @@ export function ProviderButtons({ next, explainOff = false }: { next: string | n
               return (
                 <Button key={provider} asChild variant="outline" className="w-full gap-2">
                   <a
-                    href={`${getBackendOrigin()}/oauth2/authorization/${PATHS[provider]}`}
-                    onClick={(event) => startSignIn(event, provider)}
+                    href={startOf(provider)}
+                    onClick={() => keepForCallback(provider)}
+                    onAuxClick={() => keepForCallback(provider)}
+                    onContextMenu={() => keepForCallback(provider)}
                   >
                     <Mark />
                     {signInMethodLabels[provider]}

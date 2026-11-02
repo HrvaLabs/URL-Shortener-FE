@@ -88,7 +88,7 @@ export default function SecurityPage() {
           <li>Passwords are stored as bcrypt hashes, never as text.</li>
           <li>
             You can sign in with Google or GitHub instead of a password, or with a passkey. A Google or GitHub sign-in
-            can only be finished in the browser tab that started it.
+            can only be finished in the browser that started it.
           </li>
           <li>
             Two-step sign-in works with an authenticator app, a passkey or security key, and one-time recovery codes,

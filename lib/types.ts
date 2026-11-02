@@ -17,6 +17,60 @@ export interface User {
   authProvider?: string
   signInMethods?: SignInMethodUse[]
   possibleScammer?: boolean
+  destinationChanges?: DestinationChangeStanding
+}
+
+/** The admin's choice for an account's destination changes on hrva.cc links. */
+export type DestinationChangeOverride = "AUTOMATIC" | "ALWAYS" | "NEVER"
+
+export type RequirementCode =
+  | "LINK_WITH_ACCOUNT"
+  | "CHANGES_TURNED_ON"
+  | "ACCOUNT_TURNED_OFF"
+  | "TWO_STEP_SIGN_IN"
+  | "ACCOUNT_AGE"
+  | "VERIFIED_EMAIL"
+  | "NO_BLOCKED_LINKS"
+  | "NO_LINKS_BEING_CHECKED"
+  | "NO_RECENT_BLOCKS"
+  | "DOMAIN_ACTIVE"
+  | "LINK_NOT_BLOCKED"
+  | "LINK_NOT_BEING_CHECKED"
+  | "DAILY_CHANGES_LEFT"
+
+/** One thing that stops a destination change, with the backend's final text. `availableFrom` is when it is met by itself. */
+export interface MissingRequirement {
+  code: RequirementCode | string
+  text: string
+  availableFrom: string | null
+}
+
+/** `GET /urls/{id}/destination-change`: whether the caller can change where the link points now. */
+export interface DestinationChangeInfo {
+  allowed: boolean
+  missing: MissingRequirement[]
+  changesLeft: number | null
+}
+
+/** An account's destination change standing, for admins: the override, the result and the live good standing. */
+export interface DestinationChangeStanding {
+  override: DestinationChangeOverride
+  allowed: boolean
+  inGoodStanding: boolean
+  missing: MissingRequirement[]
+}
+
+export type DestinationChangeChannel = "WEB" | "API_KEY"
+
+/** One row of a link's destination history (admin only). */
+export interface LinkDestinationChange {
+  id: number
+  oldLongUrl: string
+  newLongUrl: string
+  changedBy: string
+  via: DestinationChangeChannel
+  changedAt: string
+  forced?: boolean
 }
 
 export type SignInMethod = "PASSWORD" | "PASSKEY" | "GOOGLE" | "GITHUB"
@@ -521,13 +575,19 @@ export interface CreateUrlDto {
   password?: string
 }
 
+/**
+ * `PUT /urls/{id}`. `visitLimit` and `expirationDate` are replaced by what is sent (null removes them), so always send both.
+ * `longUrl`, `tags`, `password` and `active` left out (or null) are left as they are; `password: ""` removes the password.
+ */
 export interface UrlUpdateDto {
   id: number
   longUrl?: string
-  visitLimit?: number
-  expirationDate?: string
+  visitLimit: number | null
+  expirationDate: string | null
   tags?: string[]
   password?: string
+  active?: boolean
+  force?: boolean
 }
 
 /** How long a key lasts: a number of days from now (1 to 3,650) or no end date. Send one of the two, never both. */
@@ -713,6 +773,8 @@ export type AuditAction =
   | "REMOVE_PASSWORD"
   | "ALLOW_CAMPAIGN_SHAPE"
   | "REPORT_DOMAINS"
+  | "CHANGE_LINK_DESTINATION"
+  | "SET_DESTINATION_CHANGE_OVERRIDE"
   | "UNKNOWN"
 
 export interface AuditLog {
@@ -1085,6 +1147,7 @@ export type SettingKey =
   | "GOOGLE_SIGN_IN"
   | "GITHUB_SIGN_IN"
   | "API_KEY_REQUESTS_PER_HOUR"
+  | "DESTINATION_CHANGES"
 
 export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
 

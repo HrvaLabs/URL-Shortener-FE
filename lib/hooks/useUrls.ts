@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { adminApi, urlApi } from "@/lib/api-client"
 import { refreshPublicSettingsAfterRefusal } from "@/lib/hooks/useSettings"
 import type { CreateUrlDto, UrlUpdateDto, UrlFilters } from "@/lib/types"
@@ -48,7 +48,31 @@ export function useUpdateUrl() {
     mutationFn: ({ id, data }: { id: number; data: UrlUpdateDto }) => urlApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["urls"] })
+      queryClient.invalidateQueries({ queryKey: ["admin", "destination-changes"] })
+      queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] })
     },
+  })
+}
+
+/** Whether the signed-in owner can change where a link points, and what is missing. Counts nothing; asked once per opened edit form. */
+export function useDestinationChange(id: number | null) {
+  return useQuery({
+    queryKey: ["urls", "destination-change", id],
+    queryFn: () => urlApi.destinationChange(id as number),
+    enabled: id !== null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+}
+
+/** A link's destination history for admins, paged, sorted and searched on the server. */
+export function useDestinationHistory(id: number | null, page: number, size: number, sort: string, order: string, search: string) {
+  return useQuery({
+    queryKey: ["admin", "destination-changes", id, page, size, sort, order, search],
+    queryFn: () => adminApi.getDestinationChanges(id as number, page, size, sort, order, search || undefined),
+    enabled: id !== null,
+    placeholderData: keepPreviousData,
   })
 }
 

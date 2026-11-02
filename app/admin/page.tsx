@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Trash2, ToggleLeft, ToggleRight, Search, UserX, UserCheck, Globe } from "lucide-react"
+import { Edit, Trash2, ToggleLeft, ToggleRight, Search, UserX, UserCheck, Globe, Route } from "lucide-react"
 import { toast } from "sonner"
 import { parseServerDateTime } from "@/lib/analytics"
 import { formatDateTime, plural } from "@/lib/utils"
@@ -27,6 +27,8 @@ import { providerLabels, type SignInProvider } from "@/lib/admin-stats"
 import { SIGN_IN_METHODS, signInMethodLabels } from "@/lib/sign-in-methods"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 import { DomainLimitDialog } from "@/components/admin/domain-limit-dialog"
+import { DestinationChangesDialog } from "@/components/admin/destination-changes-dialog"
+import { standingText } from "@/lib/link-edit"
 
 const sortFields = ["createDate", "email", "lastLogin", "active"]
 
@@ -76,6 +78,8 @@ function AdminUsers() {
   const [editUser, setEditUser] = useState<User | null>(null)
   const [domainLimitUser, setDomainLimitUser] = useState<User | null>(null)
   const domainLimitTrigger = useRef<HTMLElement | null>(null)
+  const [standingUser, setStandingUser] = useState<User | null>(null)
+  const standingTrigger = useRef<HTMLElement | null>(null)
   const [editEmail, setEditEmail] = useState("")
   const [editSlots, setEditSlots] = useState("")
   const editId = useId()
@@ -220,6 +224,7 @@ function AdminUsers() {
       </Dialog>
 
       <DomainLimitDialog user={domainLimitUser} returnFocusRef={domainLimitTrigger} onOpenChange={(open) => { if (!open) setDomainLimitUser(null) }} />
+      <DestinationChangesDialog user={standingUser} returnFocusRef={standingTrigger} onOpenChange={(open) => { if (!open) setStandingUser(null) }} />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-xs flex-1">
@@ -306,6 +311,9 @@ function AdminUsers() {
                       <span className="min-w-0 [overflow-wrap:anywhere]">{user.email}</span>
                       {user.possibleScammer && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
                     </div>
+                    {user.destinationChanges && (
+                      <p className="mt-1 min-w-40 text-xs text-muted-foreground [overflow-wrap:anywhere]">{standingText(user.destinationChanges)}</p>
+                    )}
                     <div className="mt-1 min-w-40 space-y-1 text-xs tabular-nums text-muted-foreground @min-[61.5rem]:hidden">
                       <div className="flex flex-wrap items-center gap-1.5 @min-[47rem]:hidden">
                         <SignInMethodBadges user={user} />
@@ -339,6 +347,12 @@ function AdminUsers() {
                           setDomainLimitUser(user)
                         }} aria-label="Domain limit" title="Domain limit">
                         <Globe className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(event) => {
+                          standingTrigger.current = event.currentTarget
+                          setStandingUser(user)
+                        }} aria-label="Destination changes" title="Destination changes">
+                        <Route className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

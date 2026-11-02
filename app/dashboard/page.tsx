@@ -20,12 +20,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { QrCustomizer } from "@/components/qr-customizer"
-import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock } from "lucide-react"
+import { Copy, ExternalLink, QrCode, Search, Trash2, ToggleLeft, ToggleRight, BarChart3, Plus, Download, ArrowUpDown, ArrowUp, ArrowDown, Lock, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { cn, formatDateTime, formatRelativeDate, formatShortUrl, opensText, shortHostOf } from "@/lib/utils"
 import { urlApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { CreateUrlDialog } from "@/components/dashboard/create-url-dialog"
+import { EditLinkDialog } from "@/components/edit-link-dialog"
 import { PageMeta } from "@/components/page-meta"
 import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 import { shortHost } from "@/lib/domains"
@@ -79,6 +80,21 @@ function Dashboard() {
   const newUrlButtonRef = useRef<HTMLButtonElement>(null)
   const createOpenerRef = useRef<HTMLElement | null>(null)
   const [copyPulseId, setCopyPulseId] = useState<number | null>(null)
+  const [editUrl, setEditUrl] = useState<UrlResponse | null>(null)
+  const editOpenerRef = useRef<HTMLElement | null>(null)
+
+  const openEditDialog = (event: React.MouseEvent<HTMLElement>, url: UrlResponse) => {
+    editOpenerRef.current = event.currentTarget
+    setEditUrl(url)
+  }
+
+  const focusEditOpener = (event: Event) => {
+    const opener = editOpenerRef.current
+    editOpenerRef.current = null
+    if (!opener?.isConnected) return
+    event.preventDefault()
+    opener.focus()
+  }
 
   const openCreateDialog = (event: React.MouseEvent<HTMLElement>) => {
     createOpenerRef.current = event.currentTarget
@@ -150,6 +166,7 @@ function Dashboard() {
       </div>
 
       <CreateUrlDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onCloseAutoFocus={focusCreateOpener} />
+      <EditLinkDialog link={editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }} onCloseAutoFocus={focusEditOpener} />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
@@ -318,6 +335,21 @@ function Dashboard() {
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent side="top">Copy short URL</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Edit link"
+                            onClick={(event) => openEditDialog(event, url)}
+                            className={rowActionClass}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Edit link</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>

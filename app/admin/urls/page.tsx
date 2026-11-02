@@ -1,9 +1,9 @@
 "use client"
 
-import { Suspense, useEffect, useId, useRef, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useAllUrls, useClearWarningPage, useDeactivateUrl, useActivateUrl, useDeleteUrl, useUpdateUrl } from "@/lib/hooks/useUrls"
+import { useAllUrls, useClearWarningPage, useDeactivateUrl, useActivateUrl, useDeleteUrl } from "@/lib/hooks/useUrls"
 import { useClampedPage, usePagination } from "@/lib/hooks/usePagination"
 import { SEARCH_DELAY_MS } from "@/lib/hooks/useListSearch"
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue"
@@ -15,19 +15,18 @@ import { StatusBadge } from "@/components/status-badge"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { BlockDomainsDialog } from "@/components/admin/block-domains-dialog"
 import { ReportDomainsDialog } from "@/components/admin/report-domains-dialog"
-import { UtmFields } from "@/components/utm-fields"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { EditLinkDialog } from "@/components/edit-link-dialog"
+import { DestinationHistoryDialog } from "@/components/admin/destination-history-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff, History } from "lucide-react"
 import { toast } from "sonner"
-import { cn, destinationLengthError, formatDateTime, opensText, plural, shortHostOf, toDateTimeLocalValue, VISIT_LIMIT_HINT } from "@/lib/utils"
-import { ApiError, adminApi } from "@/lib/api-client"
+import { cn, formatDateTime, opensText, plural, shortHostOf } from "@/lib/utils"
+import { adminApi } from "@/lib/api-client"
 import { analyticsHref, parseServerDateTime } from "@/lib/analytics"
 import { blockReasonLabels } from "@/lib/labels"
-import { CANT_TAKE_UTM, destinationToSend, hasUtm, readUtm, rememberUtm, tooLongMessage, tooLongWithUtm, withScheme, type UtmValues } from "@/lib/utm"
 import { PageMeta } from "@/components/page-meta"
 import { DestinationHealthBadge } from "@/components/notifications/destination-health-badge"
 import { DateTimeLines } from "@/components/admin/date-time-lines"
@@ -37,7 +36,6 @@ import type { UrlResponse, UrlFilters } from "@/lib/types"
 import { shortHost } from "@/lib/domains"
 
 const primaryHost = shortHostOf()
-const emDash = String.fromCodePoint(0x2014)
 const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 const shortLinkPrefix = new RegExp(`^(https?://)?(www\\.)?${escapeRegExp(primaryHost)}/`, "i")
 
@@ -64,6 +62,13 @@ const endUrl = ({ longUrl, finalUrl }: UrlResponse) => {
 }
 
 const SEARCH_PARAM = "search"
+
+const focusRowButton = (event: Event, id: string) => {
+  const button = id ? document.getElementById(id) : null
+  if (!button) return
+  event.preventDefault()
+  button.focus()
+}
 
 function useAddressSearch() {
   const address = useSearchParams().get(SEARCH_PARAM) ?? ""
@@ -156,19 +161,9 @@ function AdminUrls() {
   const activateUrl = useActivateUrl()
   const clearWarningPage = useClearWarningPage()
   const deleteUrl = useDeleteUrl()
-  const updateUrl = useUpdateUrl()
   const [editUrl, setEditUrl] = useState<UrlResponse | null>(null)
-  const [editLongUrl, setEditLongUrl] = useState("")
-  const [editVisitLimit, setEditVisitLimit] = useState("")
-  const [editExpiration, setEditExpiration] = useState("")
-  const [editTags, setEditTags] = useState("")
-  const [editPassword, setEditPassword] = useState("")
-  const [editPasswordError, setEditPasswordError] = useState<string | null>(null)
-  const [removePassword, setRemovePassword] = useState(false)
-  const [editUtm, setEditUtm] = useState<UtmValues>({})
-  const [editUtmOpen, setEditUtmOpen] = useState(false)
-  const editLongUrlError = destinationLengthError(editLongUrl.trim())
-  const editId = useId()
+  const [historyUrl, setHistoryUrl] = useState<UrlResponse | null>(null)
+  const dialogOpener = useRef("")
   const searchRef = useRef<HTMLInputElement>(null)
   const removeTriggerRef = useRef<HTMLElement | null>(null)
   const removalFocus = useRowRemovalFocus(searchRef)
@@ -270,63 +265,6 @@ function AdminUrls() {
   const openReportDomains = () => {
     setReportIds([...selectedIds])
     setReportOpen(true)
-  }
-
-  const handleEditOpen = (url: UrlResponse) => {
-    setEditUrl(url)
-    setEditLongUrl(url.longUrl)
-    setEditVisitLimit(url.visitLimit?.toString() || "")
-    setEditExpiration(url.expirationDate ? toDateTimeLocalValue(parseServerDateTime(url.expirationDate)) : "")
-    setEditTags(url.tags?.join(", ") || "")
-    setEditPassword("")
-    setEditPasswordError(null)
-    setRemovePassword(false)
-    setEditUtm(readUtm(withScheme(url.longUrl)))
-    setEditUtmOpen(hasUtm(withScheme(url.longUrl)))
-  }
-
-  const handleEditSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editUrl) return
-    const typed = editLongUrl.trim()
-    if (!typed) {
-      toast.error("Destination URL is required")
-      return
-    }
-    if (editLongUrlError) return
-    const longUrl = destinationToSend(typed, editUtmOpen, editUtm)
-    if (longUrl === null) {
-      toast.error(`${CANT_TAKE_UTM} Collapse Campaign tracking (UTM) to save it as typed.`)
-      return
-    }
-    if (tooLongWithUtm(typed, longUrl)) {
-      toast.error(tooLongMessage("destination"))
-      return
-    }
-    const destinationChanged = longUrl !== editUrl.longUrl
-    try {
-      await updateUrl.mutateAsync({
-        id: editUrl.id,
-        data: {
-          id: editUrl.id,
-          longUrl: destinationChanged ? longUrl : undefined,
-          visitLimit: editVisitLimit ? parseInt(editVisitLimit) : 0,
-          expirationDate: editExpiration ? new Date(editExpiration).toISOString() : undefined,
-          tags: editTags.split(",").map((t) => t.trim()).filter(Boolean),
-          password: removePassword ? "" : (editPassword || undefined),
-        },
-      })
-      if (editUtmOpen && destinationChanged) rememberUtm(editUtm)
-      toast.success("URL updated")
-      setEditUrl(null)
-    } catch (err) {
-      if (err instanceof ApiError && err.fields.password) {
-        setEditPasswordError(err.fields.password)
-        document.getElementById(`${editId}-password`)?.focus()
-        return
-      }
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to update URL")
-    }
   }
 
   return (
@@ -576,7 +514,10 @@ function AdminUrls() {
                         <TooltipTrigger asChild>
                           <button
                             id={`edit-url-${url.id}`}
-                            onClick={() => handleEditOpen(url)}
+                            onClick={(event) => {
+                              dialogOpener.current = event.currentTarget.id
+                              setEditUrl(url)
+                            }}
                             aria-label="Edit URL"
                             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                           >
@@ -584,6 +525,22 @@ function AdminUrls() {
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="top">Edit URL</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            id={`destination-history-${url.id}`}
+                            onClick={(event) => {
+                              dialogOpener.current = event.currentTarget.id
+                              setHistoryUrl(url)
+                            }}
+                            aria-label="Destination history"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <History className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Destination history</TooltipContent>
                       </Tooltip>
                       {url.warningPage && (
                         <Tooltip>
@@ -685,96 +642,18 @@ function AdminUrls() {
         }}
       />
 
-      <Dialog open={!!editUrl} onOpenChange={(open) => { if (!open) setEditUrl(null) }}>
-        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="[overflow-wrap:anywhere]">Edit URL {emDash} {shortHost(editUrl?.domain, primaryHost)}/{editUrl?.shortUrl}</DialogTitle>
-          </DialogHeader>
-          {editUrl && (
-            <form onSubmit={handleEditSave} noValidate className="space-y-4">
-              <div>
-                <label htmlFor={`${editId}-long-url`} className="text-sm font-medium">Destination URL</label>
-                <Input
-                  id={`${editId}-long-url`}
-                  type="url"
-                  inputMode="url"
-                  spellCheck={false}
-                  placeholder="https://example.com/page"
-                  value={editLongUrl}
-                  onChange={(e) => setEditLongUrl(e.target.value)}
-                  aria-invalid={!!editLongUrlError}
-                  aria-describedby={editLongUrlError ? `${editId}-long-url-error` : undefined}
-                  className="mt-2"
-                />
-                {editLongUrlError && <p id={`${editId}-long-url-error`} className="mt-2 text-sm text-destructive">{editLongUrlError}</p>}
-              </div>
-              <UtmFields destination={editLongUrl} value={editUtm} onChange={setEditUtm} open={editUtmOpen} onOpenChange={setEditUtmOpen} variant="admin" />
-              <div>
-                <label htmlFor={`${editId}-visit-limit`} className="text-sm font-medium">Visit limit</label>
-                <Input
-                  id={`${editId}-visit-limit`}
-                  type="number"
-                  placeholder="e.g. 100 (0 = unlimited)"
-                  value={editVisitLimit}
-                  onChange={(e) => setEditVisitLimit(e.target.value)}
-                  aria-describedby={`${editId}-visit-limit-hint`}
-                  className="mt-2"
-                />
-                <p id={`${editId}-visit-limit-hint`} className="mt-1.5 text-xs text-muted-foreground">{VISIT_LIMIT_HINT}</p>
-              </div>
-              <div>
-                <label htmlFor={`${editId}-expiration`} className="text-sm font-medium">Expiry date</label>
-                <Input
-                  id={`${editId}-expiration`}
-                  type="datetime-local"
-                  value={editExpiration}
-                  onChange={(e) => setEditExpiration(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <label htmlFor={`${editId}-tags`} className="text-sm font-medium">Tags (comma-separated)</label>
-                <Input
-                  id={`${editId}-tags`}
-                  placeholder="work, personal"
-                  value={editTags}
-                  onChange={(e) => setEditTags(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <label htmlFor={`${editId}-password`} className="text-sm font-medium">
-                  Password {editUrl?.passwordProtected && <span className="font-normal text-muted-foreground">(currently set)</span>}
-                </label>
-                <Input
-                  id={`${editId}-password`}
-                  type="password"
-                  placeholder={editUrl?.passwordProtected ? "Enter new password to replace" : "Set a password"}
-                  value={editPassword}
-                  onChange={(e) => { setEditPassword(e.target.value); setEditPasswordError(null) }}
-                  disabled={removePassword}
-                  autoComplete="new-password"
-                  aria-invalid={editPasswordError ? true : undefined}
-                  aria-describedby={editPasswordError ? `${editId}-password-error` : undefined}
-                  className="mt-2"
-                />
-                {editPasswordError && (
-                  <p id={`${editId}-password-error`} role="alert" className="mt-2 text-sm text-destructive [overflow-wrap:anywhere]">{editPasswordError}</p>
-                )}
-                {editUrl?.passwordProtected && (
-                  <label className="mt-2 flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                    <input type="checkbox" checked={removePassword} onChange={(e) => setRemovePassword(e.target.checked)} className="h-4 w-4 accent-brand" />
-                    Remove password protection
-                  </label>
-                )}
-              </div>
-              <Button type="submit" disabled={updateUrl.isPending} className="w-full">
-                {updateUrl.isPending ? "Saving..." : "Save changes"}
-              </Button>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      <EditLinkDialog
+        link={editUrl}
+        admin
+        onOpenChange={(open) => { if (!open) setEditUrl(null) }}
+        onCloseAutoFocus={(event) => focusRowButton(event, dialogOpener.current)}
+      />
+
+      <DestinationHistoryDialog
+        link={historyUrl}
+        onOpenChange={(open) => { if (!open) setHistoryUrl(null) }}
+        onCloseAutoFocus={(event) => focusRowButton(event, dialogOpener.current)}
+      />
     </div>
   )
 }

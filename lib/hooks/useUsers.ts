@@ -1,8 +1,8 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { userApi } from "@/lib/api-client"
-import type { UserUpdateDto, UserFilters } from "@/lib/types"
+import { adminApi, userApi } from "@/lib/api-client"
+import type { DestinationChangeOverride, UserUpdateDto, UserFilters } from "@/lib/types"
 
 export function useAllUsers(filters: UserFilters = {}, page = 0, size = 20, sort = "id", order = "asc") {
   return useQuery({
@@ -35,6 +35,30 @@ export function useDeleteUser() {
     mutationFn: (id: number) => userApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] })
+    },
+  })
+}
+
+/** An account's destination change override and live standing, for the admin users page. */
+export function useDestinationStanding(userId: number | null) {
+  return useQuery({
+    queryKey: ["users", "destination-changes", userId],
+    queryFn: () => adminApi.getDestinationStanding(userId as number),
+    enabled: userId !== null,
+    staleTime: 0,
+  })
+}
+
+export function useSetDestinationOverride() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ userId, override }: { userId: number; override: DestinationChangeOverride }) => adminApi.setDestinationOverride(userId, override),
+    onSuccess: (standing, { userId }) => {
+      queryClient.setQueryData(["users", "destination-changes", userId], standing)
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["users", "all"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "audit-log"] }),
+      ])
     },
   })
 }

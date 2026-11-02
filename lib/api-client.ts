@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from "./utils"
 import { ADMIN_TWO_STEP_REQUIRED } from "./admin-two-step"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, DomainRequest, AdminDomainRequest, AdminDomainRequestFilters, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, DomainRequest, AdminDomainRequest, AdminDomainRequestFilters, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings, DestinationChangeInfo, DestinationChangeStanding, DestinationChangeOverride, LinkDestinationChange } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -44,10 +44,12 @@ function endedSession(sentToken: string | null, status: number, message: string)
 export class ApiError extends Error {
   status: number
   fields: Record<string, string>
-  constructor(message: string, status: number, fields: Record<string, string> = {}) {
+  problem: Record<string, unknown>
+  constructor(message: string, status: number, fields: Record<string, string> = {}, problem: Record<string, unknown> = {}) {
     super(message)
     this.status = status
     this.fields = fields
+    this.problem = problem
     this.name = "ApiError"
   }
 }
@@ -94,6 +96,9 @@ interface ProblemBody {
 
 const asProblem = (body: unknown): ProblemBody | null =>
   typeof body === "object" && body !== null && !Array.isArray(body) ? (body as ProblemBody) : null
+
+/** Every member of an RFC 9457 problem, extension members such as `missing` and `verdict` included. */
+const problemMembers = (body: unknown): Record<string, unknown> => ({ ...asProblem(body) })
 
 /** The message of an RFC 9457 problem: its `detail`, else its `title`. */
 export function errorMessage(body: unknown, status: number): string {
@@ -143,7 +148,7 @@ async function request<T>(
     const message = errorMessage(errorBody, response.status)
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
-    throw new ApiError(message, response.status, validationFields(errorBody))
+    throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
   keepRenewedToken(token, response)
@@ -180,7 +185,7 @@ async function download(path: string): Promise<Response> {
     const message = errorMessage(errorBody, response.status)
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
-    throw new ApiError(message, response.status, validationFields(errorBody))
+    throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
   keepRenewedToken(token, response)
@@ -309,6 +314,8 @@ export const urlApi = {
     request<UrlResponse>("PATCH", `/urls/${id}/deactivate`),
   activate: (id: number) =>
     request<UrlResponse>("PATCH", `/urls/${id}/activate`),
+  destinationChange: (id: number) =>
+    request<DestinationChangeInfo>("GET", `/urls/${id}/destination-change`),
   delete: (id: number) =>
     request<void>("DELETE", `/urls/${id}`),
   exportCsv: async () => {
@@ -503,6 +510,12 @@ export const adminApi = {
     request<ReviewBulkResolveResult>("POST", "/admin/review-queue/resolve", { urlIds, action }),
   clearWarningPage: (id: number) =>
     request<UrlResponse>("DELETE", `/admin/urls/${id}/warning-page`),
+  getDestinationChanges: (id: number, page = 0, size = 10, sort = "changedAt", order = "desc", search?: string) =>
+    request<Page<LinkDestinationChange>>("GET", `/admin/urls/${id}/destination-changes?${listParams(page, size, sort, order, { search })}`),
+  getDestinationStanding: (userId: number) =>
+    request<DestinationChangeStanding>("GET", `/admin/users/${userId}/destination-changes`),
+  setDestinationOverride: (userId: number, override: DestinationChangeOverride) =>
+    request<DestinationChangeStanding>("PUT", `/admin/users/${userId}/destination-changes`, { override }),
   blockUser: (id: number) =>
     request<LinksAffected>("POST", `/admin/users/${id}/block`),
   unblockUser: (id: number) =>

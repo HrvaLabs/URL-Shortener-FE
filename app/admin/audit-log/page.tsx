@@ -66,6 +66,8 @@ const actionLabels: Record<AuditAction, string> = {
   REMOVE_PASSWORD: "Removed password",
   ALLOW_CAMPAIGN_SHAPE: "Allowed campaign shape",
   REPORT_DOMAINS: "Reported domains",
+  CHANGE_LINK_DESTINATION: "Changed link destination",
+  SET_DESTINATION_CHANGE_OVERRIDE: "Set destination changes",
   UNKNOWN: "Unknown action",
 }
 
@@ -115,6 +117,8 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   REMOVE_PASSWORD: "destructive",
   ALLOW_CAMPAIGN_SHAPE: "success",
   REPORT_DOMAINS: "secondary",
+  CHANGE_LINK_DESTINATION: "secondary",
+  SET_DESTINATION_CHANGE_OVERRIDE: "secondary",
   UNKNOWN: "outline",
 }
 

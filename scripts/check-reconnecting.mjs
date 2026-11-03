@@ -217,6 +217,8 @@ check("theNoticeIsAPoliteStatusThatOverlaysAndDoesNotSpinWhenMotionIsReduced", (
   assert.match(notice, /role="status"/)
   assert.match(notice, /aria-live="polite"/)
   assert.match(notice, /fixed/)
+  assert.match(notice, /inset-x-0 bottom-4/)
+  assert.doesNotMatch(notice, /\btop-\d/)
   assert.match(notice, /motion-safe:animate-spin/)
   assert.doesNotMatch(notice, /(?<!motion-safe:)animate-spin/)
   assert.match(notice, /RECONNECTING_TEXT/)

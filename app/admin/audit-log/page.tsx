@@ -68,6 +68,8 @@ const actionLabels: Record<AuditAction, string> = {
   REPORT_DOMAINS: "Reported domains",
   CHANGE_LINK_DESTINATION: "Changed link destination",
   SET_DESTINATION_CHANGE_OVERRIDE: "Set destination changes",
+  TAKE_SCREENSHOT: "Took a screenshot",
+  SUBMIT_TO_VIRUSTOTAL: "Sent to VirusTotal",
   UNKNOWN: "Unknown action",
 }
 
@@ -119,6 +121,8 @@ const actionColors: Record<AuditAction, BadgeVariant> = {
   REPORT_DOMAINS: "secondary",
   CHANGE_LINK_DESTINATION: "secondary",
   SET_DESTINATION_CHANGE_OVERRIDE: "secondary",
+  TAKE_SCREENSHOT: "secondary",
+  SUBMIT_TO_VIRUSTOTAL: "secondary",
   UNKNOWN: "outline",
 }
 

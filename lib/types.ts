@@ -777,6 +777,8 @@ export type AuditAction =
   | "REPORT_DOMAINS"
   | "CHANGE_LINK_DESTINATION"
   | "SET_DESTINATION_CHANGE_OVERRIDE"
+  | "TAKE_SCREENSHOT"
+  | "SUBMIT_TO_VIRUSTOTAL"
   | "UNKNOWN"
 
 export interface AuditLog {

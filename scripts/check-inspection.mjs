@@ -11,6 +11,7 @@ const {
   SCREENSHOT_EXPIRED,
   SCREENSHOTS_NOT_SET_UP,
   SCREENSHOT_FAILED,
+  SCREENSHOT_FAILED_ROW,
   SCREENSHOT_DIDNT_LOAD,
   NO_PAGE_TITLE,
   TAKE_AGAIN,
@@ -29,6 +30,7 @@ const {
   NOT_CHECKED_YET,
   screenshotShown,
   screenshotStateLines,
+  screenshotRowText,
   screenshotCaption,
   screenshotTakenText,
   screenshotAlt,
@@ -102,6 +104,7 @@ check("the copy is exact", () => {
   assert.equal(SCREENSHOT_EXPIRED, "Screenshot removed after 7 days. Take it again to see the page now.")
   assert.equal(SCREENSHOTS_NOT_SET_UP, "Screenshots aren't set up.")
   assert.equal(SCREENSHOT_FAILED, "Taking the screenshot failed. Take it again to retry.")
+  assert.equal(SCREENSHOT_FAILED_ROW, "Taking the screenshot failed.")
   assert.equal(SCREENSHOT_DIDNT_LOAD, "The screenshot didn't load.")
   assert.equal(NO_PAGE_TITLE, "No page title")
   assert.equal(TAKE_AGAIN, "Take again")
@@ -110,7 +113,7 @@ check("the copy is exact", () => {
   assert.equal(VIRUSTOTAL_NO_REPORT, "VirusTotal has no report for this link.")
   assert.equal(VIRUSTOTAL_LOOKING, "Looking it up on VirusTotal.")
   assert.equal(VIRUSTOTAL_NOT_SET_UP, "VirusTotal isn't set up.")
-  assert.equal(VIRUSTOTAL_FAILED, "Looking up the link on VirusTotal failed. Send it to VirusTotal to try again.")
+  assert.equal(VIRUSTOTAL_FAILED, "VirusTotal couldn't look this link up.")
   assert.equal(OPEN_VIRUSTOTAL_REPORT, "Open the report on VirusTotal")
   assert.equal(SEND_TO_VIRUSTOTAL, "Send to VirusTotal")
   assert.equal(SEND_TO_VIRUSTOTAL_TITLE, "Send this link to VirusTotal?")
@@ -134,6 +137,19 @@ check("a queued screenshot shows its failure text under the queued line", () => 
   const dailyLimit = "Today's screenshot time is used up. It's taken after midnight UTC."
   assert.deepEqual(screenshotStateLines(screenshot({ state: "PENDING", takenAt: null, failure: dailyLimit })), [SCREENSHOT_QUEUED, dailyLimit])
   assert.deepEqual(screenshotStateLines(screenshot({ state: "PENDING", failure: "Cloudflare refused the API token." })), [SCREENSHOT_QUEUED, "Cloudflare refused the API token."])
+})
+
+check("queue rows show only the state's first sentence, never the failure text", () => {
+  const dailyLimit = "Today's screenshot time is used up. It's taken after midnight UTC."
+  assert.equal(screenshotRowText(null), NO_SCREENSHOT)
+  assert.equal(screenshotRowText(noScreenshot()), NO_SCREENSHOT)
+  assert.equal(screenshotRowText(screenshot({ state: "PENDING", takenAt: null, failure: dailyLimit })), SCREENSHOT_QUEUED)
+  assert.equal(screenshotRowText(screenshot({ state: "PENDING", failure: "Cloudflare refused the API token." })), SCREENSHOT_QUEUED)
+  assert.equal(screenshotRowText(screenshot({ state: "EXPIRED" })), SCREENSHOT_EXPIRED)
+  assert.equal(screenshotRowText(noScreenshot(false)), SCREENSHOTS_NOT_SET_UP)
+  assert.equal(screenshotRowText(screenshot({ state: "FAILED", takenAt: null, failure: "The page didn't load in 30 seconds." })), SCREENSHOT_FAILED_ROW)
+  assert.equal(screenshotRowText(screenshot({ state: "FAILED", configured: false })), SCREENSHOTS_NOT_SET_UP)
+  assert.equal(screenshotRowText(screenshot()), null)
 })
 
 check("screenshots that aren't set up say so unless an image is already done", () => {
@@ -170,6 +186,9 @@ check("Take screenshot when there is none, Take again otherwise; offered only wh
   assert.equal(takeScreenshotLabel(screenshot()), TAKE_AGAIN)
   assert.equal(takeScreenshotLabel(screenshot({ state: "FAILED" })), TAKE_AGAIN)
   assert.equal(takeScreenshotLabel(screenshot({ state: "EXPIRED" })), TAKE_AGAIN)
+  assert.equal(takeScreenshotLabel(screenshot({ state: "PENDING", takenAt: null })), TAKE_SCREENSHOT)
+  assert.equal(takeScreenshotLabel(screenshot({ state: "FAILED", takenAt: null })), TAKE_SCREENSHOT)
+  assert.equal(takeScreenshotLabel(screenshot({ state: "PENDING" })), TAKE_AGAIN)
   assert.equal(takeScreenshotOffered(null), false)
   assert.equal(takeScreenshotOffered(noScreenshot(false)), false)
   assert.equal(takeScreenshotOffered(noScreenshot()), true)

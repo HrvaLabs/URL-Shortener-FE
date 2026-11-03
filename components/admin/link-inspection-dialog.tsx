@@ -50,13 +50,14 @@ const failureText = (error: unknown, fallback: string) => (error instanceof ApiE
 interface LinkInspectionDialogProps {
   urlId: number | null
   label: string
+  longUrl: string
   open: boolean
   onOpenChange(open: boolean): void
   onCloseAutoFocus?(event: Event): void
 }
 
 /** A link's screenshot, VirusTotal verdict and redirect chain for admins, with Take again and Send to VirusTotal. */
-export function LinkInspectionDialog({ urlId, label, open, onOpenChange, onCloseAutoFocus }: LinkInspectionDialogProps) {
+export function LinkInspectionDialog({ urlId, label, longUrl, open, onOpenChange, onCloseAutoFocus }: LinkInspectionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl" onCloseAutoFocus={onCloseAutoFocus}>
@@ -64,7 +65,7 @@ export function LinkInspectionDialog({ urlId, label, open, onOpenChange, onClose
           <DialogTitle className="pr-6 leading-snug [overflow-wrap:anywhere]">
             Inspection {emDash} <span className="font-mono">{label}</span>
           </DialogTitle>
-          <DialogDescription>The page this link opens, what VirusTotal reports about it and every redirect on the way.</DialogDescription>
+          <DialogDescription className="[overflow-wrap:anywhere]">{longUrl}</DialogDescription>
         </DialogHeader>
         {urlId != null && <InspectionBody key={urlId} urlId={urlId} open={open} />}
       </DialogContent>
@@ -107,14 +108,11 @@ function InspectionBody({ urlId, open }: { urlId: number; open: boolean }) {
   }
 
   return (
-    <div className="min-w-0 space-y-6">
-      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{data.longUrl}</p>
-      <div className="grid gap-6 sm:grid-cols-[minmax(0,22.5rem)_minmax(0,1fr)]">
-        <ScreenshotSection inspection={data} />
-        <div className="min-w-0 space-y-6">
-          <VirusTotalSection inspection={data} />
-          <ChainSection chain={data.redirectChain} />
-        </div>
+    <div className="grid min-w-0 gap-6 sm:grid-cols-[minmax(0,22.5rem)_minmax(0,1fr)]">
+      <ScreenshotSection inspection={data} />
+      <div className="min-w-0 space-y-6">
+        <VirusTotalSection inspection={data} />
+        <ChainSection chain={data.redirectChain} />
       </div>
     </div>
   )

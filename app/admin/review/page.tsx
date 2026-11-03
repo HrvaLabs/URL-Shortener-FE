@@ -539,6 +539,7 @@ function ReviewQueue() {
       <LinkInspectionDialog
         urlId={inspectTarget?.urlId ?? null}
         label={inspectTarget ? `${shortHostOf(inspectTarget.domain)}/${inspectTarget.shortUrl}` : ""}
+        longUrl={inspectTarget?.longUrl ?? ""}
         open={inspectOpen}
         onOpenChange={setInspectOpen}
         onCloseAutoFocus={(event) => removalFocus.onCloseAutoFocus(event, inspectReturnRef.current)}

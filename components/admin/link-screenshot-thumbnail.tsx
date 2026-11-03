@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLinkScreenshotUrl } from "@/lib/hooks/useLinkInspection"
-import { SCREENSHOT_DIDNT_LOAD, screenshotAlt, screenshotShown, screenshotStateLines } from "@/lib/inspection"
+import { SCREENSHOT_DIDNT_LOAD, screenshotAlt, screenshotRowText, screenshotShown } from "@/lib/inspection"
 import { cn } from "@/lib/utils"
 import type { ScreenshotView } from "@/lib/types"
 
@@ -17,10 +17,10 @@ interface LinkScreenshotThumbnailProps {
   className?: string
 }
 
-/** A row's screenshot at 56 by 100 px, fetched once the row comes near the screen; clicking it opens the inspection. Without an image, its state text. */
+/** A row's screenshot at 56 by 100 px, fetched once the row comes near the screen; clicking it opens the inspection. Without an image, the state's one sentence. */
 export function LinkScreenshotThumbnail({ urlId, screenshot, host, onOpen, className }: LinkScreenshotThumbnailProps) {
   const shown = screenshotShown(screenshot)
-  const lines = screenshotStateLines(screenshot)
+  const rowText = screenshotRowText(screenshot)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [nearScreen, setNearScreen] = useState(false)
   const { url, failed } = useLinkScreenshotUrl(urlId, shown ? screenshot?.takenAt ?? null : null, nearScreen)
@@ -60,9 +60,7 @@ export function LinkScreenshotThumbnail({ urlId, screenshot, host, onOpen, class
           )}
         </button>
       )}
-      {lines.length > 0 && (
-        <p className="text-[11px] leading-tight text-muted-foreground [overflow-wrap:anywhere]">{lines.join(" ")}</p>
-      )}
+      {rowText && <p className="text-[11px] leading-tight text-muted-foreground break-words">{rowText}</p>}
     </div>
   )
 }

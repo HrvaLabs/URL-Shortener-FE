@@ -9,7 +9,9 @@ export const SCREENSHOT_EXPIRED = "Screenshot removed after 7 days. Take it agai
 
 export const SCREENSHOTS_NOT_SET_UP = "Screenshots aren't set up."
 
-export const SCREENSHOT_FAILED = "Taking the screenshot failed. Take it again to retry."
+export const SCREENSHOT_FAILED_ROW = "Taking the screenshot failed."
+
+export const SCREENSHOT_FAILED = `${SCREENSHOT_FAILED_ROW} Take it again to retry.`
 
 export const SCREENSHOT_DIDNT_LOAD = "The screenshot didn't load."
 
@@ -27,7 +29,7 @@ export const VIRUSTOTAL_LOOKING = "Looking it up on VirusTotal."
 
 export const VIRUSTOTAL_NOT_SET_UP = "VirusTotal isn't set up."
 
-export const VIRUSTOTAL_FAILED = "Looking up the link on VirusTotal failed. Send it to VirusTotal to try again."
+export const VIRUSTOTAL_FAILED = "VirusTotal couldn't look this link up."
 
 export const OPEN_VIRUSTOTAL_REPORT = "Open the report on VirusTotal"
 
@@ -74,6 +76,12 @@ export function screenshotStateLines(view: ScreenshotView | null): string[] {
   }
 }
 
+/** A queue row's one sentence for the screenshot state; the failure text stays in the dialog. Null when the image shows. */
+export function screenshotRowText(view: ScreenshotView | null): string | null {
+  if (view?.configured && view.state === "FAILED") return SCREENSHOT_FAILED_ROW
+  return screenshotStateLines(view)[0] ?? null
+}
+
 export function screenshotCaption(view: ScreenshotView): string {
   const title = view.pageTitle?.trim() || NO_PAGE_TITLE
   return view.pageStatus == null ? title : `${title} ${MIDDLE_DOT} ${view.pageStatus}`
@@ -83,7 +91,7 @@ export const screenshotTakenText = (takenAt: string): string => `Taken ${formatD
 
 export const screenshotAlt = (host: string | null): string => `Screenshot of ${host ?? "the page"}`
 
-export const takeScreenshotLabel = (view: ScreenshotView | null): string => (view?.state == null ? TAKE_SCREENSHOT : TAKE_AGAIN)
+export const takeScreenshotLabel = (view: ScreenshotView | null): string => (view?.takenAt == null ? TAKE_SCREENSHOT : TAKE_AGAIN)
 
 export const takeScreenshotOffered = (view: ScreenshotView | null): boolean => view?.configured === true
 

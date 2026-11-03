@@ -678,6 +678,7 @@ function AdminUrls() {
       <LinkInspectionDialog
         urlId={inspectUrl?.id ?? null}
         label={inspectUrl ? `${shortHost(inspectUrl.domain, primaryHost)}/${inspectUrl.shortUrl}` : ""}
+        longUrl={inspectUrl?.longUrl ?? ""}
         open={inspectOpen}
         onOpenChange={setInspectOpen}
         onCloseAutoFocus={(event) => focusRowButton(event, dialogOpener.current)}

@@ -33,13 +33,14 @@ export function useLinkInspection(urlId: number | null, enabled: boolean) {
  * an open dialog). The URL is revoked when the image changes and on unmount.
  */
 export function useLinkScreenshotUrl(urlId: number, takenAt: string | null, enabled = true) {
-  const { data: blob, isError } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ["admin", "link-screenshot", urlId, takenAt],
     queryFn: () => adminApi.getLinkScreenshot(urlId),
     enabled: enabled && takenAt != null,
     staleTime: Infinity,
     retry: retryUnlessRefused,
   })
+  const blob = enabled ? data : undefined
   const [shown, setShown] = useState<{ blob: Blob; url: string } | null>(null)
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function useLinkScreenshotUrl(urlId: number, takenAt: string | null, enab
     return () => URL.revokeObjectURL(url)
   }, [blob])
 
-  return { url: blob && shown?.blob === blob ? shown.url : null, failed: isError }
+  return { url: blob && shown?.blob === blob ? shown.url : null, failed: enabled && isError }
 }
 
 export function useTakeLinkScreenshot(urlId: number) {

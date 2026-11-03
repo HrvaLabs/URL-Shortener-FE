@@ -241,7 +241,7 @@ export interface AnalyticsOverview {
   totals: AnalyticsTotals
   daily: AnalyticsDay[]
   topLinks: AnalyticsTopLink[]
-  breakdowns?: AnalyticsBreakdowns
+  breakdowns: AnalyticsBreakdowns
   totalUrls: number
   activeUrls: number
   expiredUrls: number

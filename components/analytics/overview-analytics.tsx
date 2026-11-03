@@ -92,7 +92,7 @@ function OverviewBody({ data, days, onDaysChange, refreshing }: OverviewBodyProp
           <>
             <ClicksChart daily={daily} days={days} />
             <TopLinks links={topLinks} days={days} />
-            {breakdowns && <BreakdownPanels totals={totals} breakdowns={breakdowns} />}
+            <BreakdownPanels totals={totals} breakdowns={breakdowns} />
           </>
         )}
       </div>

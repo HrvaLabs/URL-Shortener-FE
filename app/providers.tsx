@@ -18,7 +18,7 @@ const createQueryClient = () => {
   const queryCache = new QueryCache({ onError: reloadUnlessApiError })
   const mutationCache = new MutationCache({ onError: reloadUnlessApiError })
   queryCache.subscribe(trackQuery)
-  mutationCache.subscribe(trackMutation)
+  mutationCache.subscribe(trackMutation(mutationCache))
   return new QueryClient({
     queryCache,
     mutationCache,

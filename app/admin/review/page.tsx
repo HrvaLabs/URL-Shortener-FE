@@ -410,7 +410,7 @@ function ReviewQueue() {
                 <TableHead className="hidden @min-[57rem]:table-cell">Destination</TableHead>
                 <TableHead className="hidden @min-[72rem]:table-cell">Owner</TableHead>
                 <TableHead className="hidden @min-[72rem]:table-cell">Created</TableHead>
-                <TableHead className="hidden @min-[43rem]:table-cell">Reasons</TableHead>
+                <TableHead className="hidden @min-[44rem]:table-cell">Reasons</TableHead>
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -451,27 +451,27 @@ function ReviewQueue() {
                         screenshot={entry.screenshot}
                         host={hostOf(entry.screenshot?.screenshotUrl ?? entry.longUrl)}
                         onOpen={(opener) => openInspection(entry, opener)}
-                        className="mb-2 w-32 @min-[25rem]:hidden"
+                        className="mb-2 w-28 @min-[25rem]:hidden"
                       />
                       <div className="flex items-center gap-1">
-                        <span className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
-                          <span className="font-normal text-muted-foreground">{shortHostOf(entry.domain)}/</span>{entry.shortUrl}
+                        <span className="block min-w-20 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere] @min-[72rem]:min-w-[13ch]">
+                          <span className="font-normal text-muted-foreground">{shortHostOf(entry.domain)}/</span><wbr />{entry.shortUrl}
                         </span>
                         <CopyShortLinkButton shortUrl={entry.shortUrl} hostname={entry.domain} />
                       </div>
-                      <p className="mt-1 min-w-32 text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-56 @min-[57rem]:hidden">{entry.longUrl}</p>
-                      <div className="mt-1 flex min-w-32 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
+                      <p className="mt-1 min-w-28 text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-56 @min-[57rem]:hidden">{entry.longUrl}</p>
+                      <div className="mt-1 flex min-w-28 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
                         <span className="min-w-0 [overflow-wrap:anywhere]">{ownerLabel(entry)}</span>
                         {!anonymous && age && <span className="tabular-nums">Account {age}</span>}
                         {entry.possibleScammer && <Badge variant="warning">Possible scammer</Badge>}
                       </div>
-                      <p className="mt-1 min-w-32 text-xs tabular-nums text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
+                      <p className="mt-1 min-w-28 text-xs tabular-nums text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
                         Created {timeAgo(entry.createDate, dataUpdatedAt)} ({formatDateTime(parseServerDateTime(entry.createDate))}) · Flagged {formatDateTime(parseServerDateTime(entry.flaggedAt))}
                       </p>
-                      <ReasonList reasons={entry.reasons} className="mt-1.5 min-w-32 @lg:min-w-56 @min-[43rem]:hidden" />
+                      <ReasonList reasons={entry.reasons} className="mt-1.5 min-w-28 @lg:min-w-56 @min-[44rem]:hidden" />
                     </TableCell>
                     <TableCell className="hidden @min-[57rem]:table-cell">
-                      <span className="block min-w-48 text-muted-foreground [overflow-wrap:anywhere]">{entry.longUrl}</span>
+                      <span className="block min-w-40 text-muted-foreground [overflow-wrap:anywhere]">{entry.longUrl}</span>
                     </TableCell>
                     <TableCell className="hidden @min-[72rem]:table-cell">
                       <span className={cn("block min-w-36 [overflow-wrap:anywhere]", anonymous && "text-muted-foreground")}>
@@ -489,7 +489,7 @@ function ReviewQueue() {
                       <span className="block whitespace-nowrap text-xs">{formatDateTime(parseServerDateTime(entry.createDate))}</span>
                       <span className="block text-xs">Flagged {formatDateTime(parseServerDateTime(entry.flaggedAt))}</span>
                     </TableCell>
-                    <TableCell className="hidden @min-[43rem]:table-cell">
+                    <TableCell className="hidden @min-[44rem]:table-cell">
                       {entry.reasons.length > 0 ? (
                         <ReasonList reasons={entry.reasons} className="min-w-40 max-w-64" />
                       ) : (
@@ -749,7 +749,7 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain, onInspect, onCon
   const confirm = (action: RowAction) => onResolve(entry, action, anchorRef.current)
 
   return (
-    <div className="ml-auto flex w-max flex-col items-stretch gap-1 @min-[77rem]:flex-row @min-[77rem]:items-center">
+    <div className="ml-auto flex w-max flex-col items-stretch gap-1">
       <Button
         type="button"
         size="sm"

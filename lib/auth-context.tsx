@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ApiError, REQUEST_FAILED, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, shouldRetry, userApi } from "./api-client"
+import { startRetrying, stopRetrying } from "./reconnecting"
 import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
 import { ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "./admin-two-step"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
@@ -35,15 +36,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const pause = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds))
 
+const ME_RETRY_KEY = "auth:me"
+
 async function fetchMeThroughRestart(token: string): Promise<UserDto | null> {
-  for (let failureCount = 0; ; failureCount++) {
-    try {
-      return await userApi.getMe()
-    } catch (err) {
-      if (!isRestartError(err) || !shouldRetry(failureCount, err as Error)) throw err
-      await pause(retryDelay(failureCount))
-      if (localStorage.getItem("auth-token") !== token) return null
+  try {
+    for (let failureCount = 0; ; failureCount++) {
+      try {
+        return await userApi.getMe()
+      } catch (err) {
+        if (!isRestartError(err) || !shouldRetry(failureCount, err as Error)) throw err
+        startRetrying(ME_RETRY_KEY)
+        await pause(retryDelay(failureCount))
+        if (localStorage.getItem("auth-token") !== token) return null
+      }
     }
+  } finally {
+    stopRetrying(ME_RETRY_KEY)
   }
 }
 

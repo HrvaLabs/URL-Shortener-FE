@@ -21,6 +21,7 @@
     "check:moderation": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-moderation.mjs",
     "check:worker": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-worker.mjs",
     "check:stale-chunk": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-stale-chunk.mjs",
+    "check:reconnecting": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-reconnecting.mjs",
     "check:connect": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-connect.mjs",
     "check:oauth-challenge": "node scripts/check-invisible.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-oauth-challenge.mjs",
     "check:link-edit": "node scripts/check-invisible.mjs && TZ=UTC node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-link-edit.mjs && TZ=America/Los_Angeles node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-link-edit.mjs && TZ=Pacific/Auckland node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-link-edit.mjs",

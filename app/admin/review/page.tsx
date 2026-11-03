@@ -18,6 +18,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BlockDomainDialog } from "@/components/admin/block-domain-dialog"
 import { BioPageReviewSection } from "@/components/admin/bio-page-review-section"
+import { LinkInspectionDialog } from "@/components/admin/link-inspection-dialog"
+import { LinkScreenshotThumbnail } from "@/components/admin/link-screenshot-thumbnail"
 import { PageMeta } from "@/components/page-meta"
 import { SortSelect, adminSelectClass, type SortOption } from "@/components/admin/sort-controls"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
@@ -174,6 +176,8 @@ function ReviewQueue() {
   const [busyIds, setBusyIds] = useState<Set<number>>(new Set())
   const [blockTarget, setBlockTarget] = useState<ReviewEntry | null>(null)
   const [blockOpen, setBlockOpen] = useState(false)
+  const [inspectTarget, setInspectTarget] = useState<ReviewEntry | null>(null)
+  const [inspectOpen, setInspectOpen] = useState(false)
   const entries = data?.content ?? []
   const selectionKey = `${page}-${size}-${reason}-${olderThanDays}-${search}-${sort}-${order}`
   const [selection, setSelection] = useState<{ key: string; ids: Set<number> }>({ key: selectionKey, ids: new Set() })
@@ -198,6 +202,7 @@ function ReviewQueue() {
   const restoreAfterRefetch = useRef(false)
   const queueSettled = !isFetching && !(data && data.totalPages > 0 && page >= data.totalPages)
   const blockReturnRef = useRef<HTMLElement | null>(null)
+  const inspectReturnRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     if (!restoreAfterRefetch.current || !queueSettled) return
@@ -283,6 +288,12 @@ function ReviewQueue() {
     blockReturnRef.current = returnTo
     setBlockTarget(entry)
     setBlockOpen(true)
+  }
+
+  const openInspection = (entry: ReviewEntry, returnTo: HTMLElement | null) => {
+    inspectReturnRef.current = returnTo
+    setInspectTarget(entry)
+    setInspectOpen(true)
   }
 
   const filtered = !!reason || !!olderThanDays || !!search
@@ -394,11 +405,12 @@ function ReviewQueue() {
                     className="h-4 w-4 rounded border-input accent-brand"
                   />
                 </TableHead>
+                <TableHead className="hidden w-[4.5rem] px-1.5 @min-[25rem]:table-cell"><span className="sr-only">Screenshot</span></TableHead>
                 <TableHead>Short link</TableHead>
-                <TableHead className="hidden @4xl:table-cell">Destination</TableHead>
-                <TableHead className="hidden @min-[67rem]:table-cell">Owner</TableHead>
-                <TableHead className="hidden @min-[67rem]:table-cell">Created</TableHead>
-                <TableHead className="hidden @2xl:table-cell">Reasons</TableHead>
+                <TableHead className="hidden @min-[57rem]:table-cell">Destination</TableHead>
+                <TableHead className="hidden @min-[72rem]:table-cell">Owner</TableHead>
+                <TableHead className="hidden @min-[72rem]:table-cell">Created</TableHead>
+                <TableHead className="hidden @min-[43rem]:table-cell">Reasons</TableHead>
                 <TableHead className="sticky right-0 bg-card bg-[linear-gradient(hsl(var(--muted)/0.5),hsl(var(--muted)/0.5))] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -425,28 +437,43 @@ function ReviewQueue() {
                         className="h-4 w-4 rounded border-input accent-brand"
                       />
                     </TableCell>
+                    <TableCell className="hidden w-[4.5rem] px-1.5 @min-[25rem]:table-cell">
+                      <LinkScreenshotThumbnail
+                        urlId={entry.urlId}
+                        screenshot={entry.screenshot}
+                        host={hostOf(entry.screenshot?.screenshotUrl ?? entry.longUrl)}
+                        onOpen={(opener) => openInspection(entry, opener)}
+                      />
+                    </TableCell>
                     <TableCell>
+                      <LinkScreenshotThumbnail
+                        urlId={entry.urlId}
+                        screenshot={entry.screenshot}
+                        host={hostOf(entry.screenshot?.screenshotUrl ?? entry.longUrl)}
+                        onOpen={(opener) => openInspection(entry, opener)}
+                        className="mb-2 w-32 @min-[25rem]:hidden"
+                      />
                       <div className="flex items-center gap-1">
                         <span className="block min-w-24 font-mono text-[13px] font-medium text-brand [overflow-wrap:anywhere]">
                           <span className="font-normal text-muted-foreground">{shortHostOf(entry.domain)}/</span>{entry.shortUrl}
                         </span>
                         <CopyShortLinkButton shortUrl={entry.shortUrl} hostname={entry.domain} />
                       </div>
-                      <p className="mt-1 min-w-32 text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-56 @4xl:hidden">{entry.longUrl}</p>
-                      <div className="mt-1 flex min-w-32 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[67rem]:hidden">
+                      <p className="mt-1 min-w-32 text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-56 @min-[57rem]:hidden">{entry.longUrl}</p>
+                      <div className="mt-1 flex min-w-32 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
                         <span className="min-w-0 [overflow-wrap:anywhere]">{ownerLabel(entry)}</span>
                         {!anonymous && age && <span className="tabular-nums">Account {age}</span>}
                         {entry.possibleScammer && <Badge variant="warning">Possible scammer</Badge>}
                       </div>
-                      <p className="mt-1 min-w-32 text-xs tabular-nums text-muted-foreground @lg:min-w-56 @min-[67rem]:hidden">
+                      <p className="mt-1 min-w-32 text-xs tabular-nums text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
                         Created {timeAgo(entry.createDate, dataUpdatedAt)} ({formatDateTime(parseServerDateTime(entry.createDate))}) · Flagged {formatDateTime(parseServerDateTime(entry.flaggedAt))}
                       </p>
-                      <ReasonList reasons={entry.reasons} className="mt-1.5 min-w-32 @lg:min-w-56 @2xl:hidden" />
+                      <ReasonList reasons={entry.reasons} className="mt-1.5 min-w-32 @lg:min-w-56 @min-[43rem]:hidden" />
                     </TableCell>
-                    <TableCell className="hidden @4xl:table-cell">
+                    <TableCell className="hidden @min-[57rem]:table-cell">
                       <span className="block min-w-48 text-muted-foreground [overflow-wrap:anywhere]">{entry.longUrl}</span>
                     </TableCell>
-                    <TableCell className="hidden @min-[67rem]:table-cell">
+                    <TableCell className="hidden @min-[72rem]:table-cell">
                       <span className={cn("block min-w-36 [overflow-wrap:anywhere]", anonymous && "text-muted-foreground")}>
                         {ownerLabel(entry)}
                       </span>
@@ -457,12 +484,12 @@ function ReviewQueue() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="hidden tabular-nums text-muted-foreground @min-[67rem]:table-cell">
+                    <TableCell className="hidden tabular-nums text-muted-foreground @min-[72rem]:table-cell">
                       <span className="block whitespace-nowrap">{timeAgo(entry.createDate, dataUpdatedAt)}</span>
                       <span className="block whitespace-nowrap text-xs">{formatDateTime(parseServerDateTime(entry.createDate))}</span>
                       <span className="block text-xs">Flagged {formatDateTime(parseServerDateTime(entry.flaggedAt))}</span>
                     </TableCell>
-                    <TableCell className="hidden @2xl:table-cell">
+                    <TableCell className="hidden @min-[43rem]:table-cell">
                       {entry.reasons.length > 0 ? (
                         <ReasonList reasons={entry.reasons} className="min-w-40 max-w-64" />
                       ) : (
@@ -480,6 +507,7 @@ function ReviewQueue() {
                         busy={busyIds.has(entry.urlId)}
                         onResolve={resolve}
                         onBlockDomain={openBlockDomain}
+                        onInspect={openInspection}
                         onConfirmClose={removalFocus.onCloseAutoFocus}
                       />
                     </TableCell>
@@ -506,6 +534,14 @@ function ReviewQueue() {
         onOpenChange={setBlockOpen}
         onBlocked={() => removalFocus.setTarget(null)}
         onCloseAutoFocus={(event) => removalFocus.onCloseAutoFocus(event, blockReturnRef.current)}
+      />
+
+      <LinkInspectionDialog
+        urlId={inspectTarget?.urlId ?? null}
+        label={inspectTarget ? `${shortHostOf(inspectTarget.domain)}/${inspectTarget.shortUrl}` : ""}
+        open={inspectOpen}
+        onOpenChange={setInspectOpen}
+        onCloseAutoFocus={(event) => removalFocus.onCloseAutoFocus(event, inspectReturnRef.current)}
       />
     </div>
   )
@@ -687,6 +723,7 @@ interface ReviewActionsProps {
   busy: boolean
   onResolve(entry: ReviewEntry, action: RowAction, anchor: HTMLElement | null): void
   onBlockDomain(entry: ReviewEntry, returnTo: HTMLElement | null): void
+  onInspect(entry: ReviewEntry, returnTo: HTMLElement | null): void
   onConfirmClose(event: Event, returnTo?: HTMLElement | null): void
 }
 
@@ -694,7 +731,7 @@ type MenuDialog = "TRUST_DOMAIN" | "BLOCK_USER"
 
 const menuOpenKeys = new Set(["Enter", " ", "ArrowDown"])
 
-function ReviewActions({ entry, busy, onResolve, onBlockDomain, onConfirmClose }: ReviewActionsProps) {
+function ReviewActions({ entry, busy, onResolve, onBlockDomain, onInspect, onConfirmClose }: ReviewActionsProps) {
   const host = hostOf(entry.longUrl)
   const owner = ownerLabel(entry)
   const anonymous = entry.ownerId == null
@@ -712,6 +749,15 @@ function ReviewActions({ entry, busy, onResolve, onBlockDomain, onConfirmClose }
 
   return (
     <div className="ml-auto flex w-max flex-col items-stretch gap-1 @min-[77rem]:flex-row @min-[77rem]:items-center">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={(event) => onInspect(entry, event.currentTarget)}
+        className={rowButton}
+      >
+        Inspect
+      </Button>
       <Button
         ref={anchorRef}
         type="button"

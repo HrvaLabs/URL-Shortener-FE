@@ -1046,6 +1046,45 @@ export interface ReviewEntry {
   createDate: string
   reasons: string[]
   flaggedAt: string
+  redirectChain: string[]
+  screenshot: ScreenshotView | null
+  virusTotal: VirusTotalView | null
+}
+
+export type InspectionState = "PENDING" | "DONE" | "FAILED" | "EXPIRED" | "NOT_FOUND"
+
+export interface ScreenshotView {
+  state: InspectionState | null
+  requestedAt: string | null
+  takenAt: string | null
+  screenshotUrl: string | null
+  pageTitle: string | null
+  pageStatus: number | null
+  failure: string | null
+  configured: boolean
+}
+
+export interface VirusTotalView {
+  state: InspectionState | null
+  checkedUrl: string | null
+  malicious: number | null
+  suspicious: number | null
+  harmless: number | null
+  undetected: number | null
+  analysedAt: string | null
+  checkedAt: string | null
+  submittedAt: string | null
+  reportUrl: string | null
+  failure: string | null
+  configured: boolean
+}
+
+export interface LinkInspection {
+  urlId: number
+  longUrl: string
+  redirectChain: string[]
+  screenshot: ScreenshotView | null
+  virusTotal: VirusTotalView | null
 }
 
 export interface ReviewQueueFilters {

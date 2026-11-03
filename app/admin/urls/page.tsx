@@ -17,11 +17,12 @@ import { BlockDomainsDialog } from "@/components/admin/block-domains-dialog"
 import { ReportDomainsDialog } from "@/components/admin/report-domains-dialog"
 import { EditLinkDialog } from "@/components/edit-link-dialog"
 import { DestinationHistoryDialog } from "@/components/admin/destination-history-dialog"
+import { LinkInspectionDialog } from "@/components/admin/link-inspection-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff, History } from "lucide-react"
+import { Download, Search, Trash2, ToggleRight, ToggleLeft, Edit, TriangleAlert, GlobeLock, Flag, BarChart3, ShieldOff, History, ScanSearch } from "lucide-react"
 import { toast } from "sonner"
 import { cn, formatDateTime, opensText, plural, shortHostOf } from "@/lib/utils"
 import { adminApi } from "@/lib/api-client"
@@ -163,6 +164,8 @@ function AdminUrls() {
   const deleteUrl = useDeleteUrl()
   const [editUrl, setEditUrl] = useState<UrlResponse | null>(null)
   const [historyUrl, setHistoryUrl] = useState<UrlResponse | null>(null)
+  const [inspectUrl, setInspectUrl] = useState<UrlResponse | null>(null)
+  const [inspectOpen, setInspectOpen] = useState(false)
   const dialogOpener = useRef("")
   const searchRef = useRef<HTMLInputElement>(null)
   const removeTriggerRef = useRef<HTMLElement | null>(null)
@@ -542,6 +545,23 @@ function AdminUrls() {
                         </TooltipTrigger>
                         <TooltipContent side="top">Destination history</TooltipContent>
                       </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            id={`inspect-url-${url.id}`}
+                            onClick={(event) => {
+                              dialogOpener.current = event.currentTarget.id
+                              setInspectUrl(url)
+                              setInspectOpen(true)
+                            }}
+                            aria-label="Inspect"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          >
+                            <ScanSearch className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">Inspect</TooltipContent>
+                      </Tooltip>
                       {url.warningPage && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -652,6 +672,14 @@ function AdminUrls() {
       <DestinationHistoryDialog
         link={historyUrl}
         onOpenChange={(open) => { if (!open) setHistoryUrl(null) }}
+        onCloseAutoFocus={(event) => focusRowButton(event, dialogOpener.current)}
+      />
+
+      <LinkInspectionDialog
+        urlId={inspectUrl?.id ?? null}
+        label={inspectUrl ? `${shortHost(inspectUrl.domain, primaryHost)}/${inspectUrl.shortUrl}` : ""}
+        open={inspectOpen}
+        onOpenChange={setInspectOpen}
         onCloseAutoFocus={(event) => focusRowButton(event, dialogOpener.current)}
       />
     </div>

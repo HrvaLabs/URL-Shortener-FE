@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from "./utils"
 import { ADMIN_TWO_STEP_REQUIRED } from "./admin-two-step"
-import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, DomainRequest, AdminDomainRequest, AdminDomainRequestFilters, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings, DestinationChangeInfo, DestinationChangeStanding, DestinationChangeOverride, LinkDestinationChange } from "./types"
+import type { UrlResponse, ApiKeyResponse, UserDto, User, PeekUrl, CreateUrlDto, UrlUpdateDto, ApiKeyUpdateDto, ApiKeyExpiry, ApiKeyCreated, UserUpdateDto, UpdatePasswordDto, LinkPreviewResponse, Page, AdminStatsResponse, UrlFilters, UserFilters, AuditLog, EmailLog, AnalyticsOverview, AnalyticsRange, UrlAnalytics, ConnectRequestView, ConnectApproval, ConnectDenial, ConnectedApp, BlocklistSource, BlocklistSourceInput, DomainRule, DomainRuleType, DomainRuleInput, DomainRuleCreated, DomainBlockPreview, DomainBulkBlockResult, LinksAffected, ReviewEntry, ReviewQueueFilters, ReviewAction, ReviewBulkResolveResult, UrlCheckResult, LinkReport, TrafficStats, LinksStats, UsersStats, SafetyStats, SystemStats, ReservedAlias, ReservedAliasInput, LoginResponse, SignedIn, PasskeyOptions, CreationOptionsJSON, RequestOptionsJSON, RegistrationCredentialJSON, AssertionCredentialJSON, Passkey, SignInMethod, SignInMethodsResponse, TwoStepStatus, PublicStatsResponse, BioPage, BioPageUpdate, BioHandleAvailability, BioPageAnalytics, AdminBioPage, BioPageReviewEntry, BioPageReviewAction, ApiKeysDeleted, EmailNotificationType, NotificationConsent, NotificationChannel, NotificationChannelInput, ChannelTestResult, UnsubscribeResult, CustomDomain, MyDomains, DomainRemoval, DomainLinkMode, AdminDomain, AdminDomainFilters, DomainSummary, CloudflareCheck, DomainReconcile, DomainAllowance, DomainRequest, AdminDomainRequest, AdminDomainRequestFilters, ApiKeyFilters, AuditLogFilters, EmailLogFilters, LoginAttempt, Campaign, CampaignAllowed, CampaignDetail, CampaignLink, AbuseReportSource, AbuseReportResponse, SettingKey, SettingResponse, SettingValue, PublicSettings, DestinationChangeInfo, DestinationChangeStanding, DestinationChangeOverride, LinkDestinationChange, LinkInspection, VirusTotalView } from "./types"
 
 export const REQUEST_FAILED = "Request failed"
 
@@ -542,6 +542,16 @@ export const adminApi = {
     request<ReviewBulkResolveResult>("POST", "/admin/review-queue/resolve", { urlIds, action }),
   clearWarningPage: (id: number) =>
     request<UrlResponse>("DELETE", `/admin/urls/${id}/warning-page`),
+  getLinkInspection: (urlId: number) =>
+    request<LinkInspection>("GET", `/admin/urls/${urlId}/inspection`),
+  getLinkScreenshot: async (urlId: number): Promise<Blob> => {
+    const response = await download(`/admin/urls/${urlId}/inspection/screenshot`)
+    return response.blob()
+  },
+  takeLinkScreenshot: (urlId: number) =>
+    request<void>("POST", `/admin/urls/${urlId}/inspection/screenshot`),
+  sendToVirusTotal: (urlId: number) =>
+    request<VirusTotalView>("POST", `/admin/urls/${urlId}/inspection/virustotal`),
   getDestinationChanges: (id: number, page = 0, size = 10, sort = "changedAt", order = "desc", search?: string) =>
     request<Page<LinkDestinationChange>>("GET", `/admin/urls/${id}/destination-changes?${listParams(page, size, sort, order, { search })}`),
   getDestinationStanding: (userId: number) =>

@@ -424,7 +424,7 @@ export default function PrivacyPage() {
                   of the link&apos;s destination address, so hrva.cc can find a report VirusTotal already has;
                   the address itself isn&apos;t sent. If an admin chooses to send a link to VirusTotal to be
                   scanned, VirusTotal receives its destination address and shows it to its paying users. No
-                  visitor data is sent. See VirusTotal&apos;s <a href="https://cloud.google.com/terms/secops" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="https://cloud.google.com/terms/secops/privacy-notice" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+                  visitor data is sent. See VirusTotal&apos;s <a href="https://docs.virustotal.com/docs/terms-of-service" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="https://docs.virustotal.com/docs/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
                 </li>
                 <li>
                   <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a

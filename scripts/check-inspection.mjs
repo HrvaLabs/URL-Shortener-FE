@@ -9,6 +9,7 @@ const {
   NO_SCREENSHOT,
   SCREENSHOT_QUEUED,
   SCREENSHOT_EXPIRED,
+  SCREENSHOT_EXPIRED_ROW,
   SCREENSHOTS_NOT_SET_UP,
   SCREENSHOT_FAILED,
   SCREENSHOT_FAILED_ROW,
@@ -22,6 +23,7 @@ const {
   VIRUSTOTAL_NOT_SET_UP,
   VIRUSTOTAL_FAILED,
   OPEN_VIRUSTOTAL_REPORT,
+  LOOK_UP_ON_VIRUSTOTAL,
   SEND_TO_VIRUSTOTAL,
   SEND_TO_VIRUSTOTAL_TITLE,
   SEND_TO_VIRUSTOTAL_BODY,
@@ -41,6 +43,7 @@ const {
   virusTotalVerdict,
   reportDate,
   sendToVirusTotalOffered,
+  lookUpOnVirusTotalOffered,
   inspectionPending,
   inspectionStateKey,
 } = inspection
@@ -102,6 +105,7 @@ check("the copy is exact", () => {
   assert.equal(NO_SCREENSHOT, "No screenshot yet.")
   assert.equal(SCREENSHOT_QUEUED, "Screenshot queued.")
   assert.equal(SCREENSHOT_EXPIRED, "Screenshot removed after 7 days. Take it again to see the page now.")
+  assert.equal(SCREENSHOT_EXPIRED_ROW, "Screenshot removed after 7 days.")
   assert.equal(SCREENSHOTS_NOT_SET_UP, "Screenshots aren't set up.")
   assert.equal(SCREENSHOT_FAILED, "Taking the screenshot failed. Take it again to retry.")
   assert.equal(SCREENSHOT_FAILED_ROW, "Taking the screenshot failed.")
@@ -115,6 +119,7 @@ check("the copy is exact", () => {
   assert.equal(VIRUSTOTAL_NOT_SET_UP, "VirusTotal isn't set up.")
   assert.equal(VIRUSTOTAL_FAILED, "VirusTotal couldn't look this link up.")
   assert.equal(OPEN_VIRUSTOTAL_REPORT, "Open the report on VirusTotal")
+  assert.equal(LOOK_UP_ON_VIRUSTOTAL, "Look up on VirusTotal")
   assert.equal(SEND_TO_VIRUSTOTAL, "Send to VirusTotal")
   assert.equal(SEND_TO_VIRUSTOTAL_TITLE, "Send this link to VirusTotal?")
   assert.equal(SEND_TO_VIRUSTOTAL_BODY, "VirusTotal scans it and shows the link to its paying users. Send it only if it isn't someone's private link.")
@@ -145,7 +150,8 @@ check("queue rows show only the state's first sentence, never the failure text",
   assert.equal(screenshotRowText(noScreenshot()), NO_SCREENSHOT)
   assert.equal(screenshotRowText(screenshot({ state: "PENDING", takenAt: null, failure: dailyLimit })), SCREENSHOT_QUEUED)
   assert.equal(screenshotRowText(screenshot({ state: "PENDING", failure: "Cloudflare refused the API token." })), SCREENSHOT_QUEUED)
-  assert.equal(screenshotRowText(screenshot({ state: "EXPIRED" })), SCREENSHOT_EXPIRED)
+  assert.equal(screenshotRowText(screenshot({ state: "EXPIRED" })), SCREENSHOT_EXPIRED_ROW)
+  assert.equal(screenshotRowText(screenshot({ state: "EXPIRED", configured: false })), SCREENSHOTS_NOT_SET_UP)
   assert.equal(screenshotRowText(noScreenshot(false)), SCREENSHOTS_NOT_SET_UP)
   assert.equal(screenshotRowText(screenshot({ state: "FAILED", takenAt: null, failure: "The page didn't load in 30 seconds." })), SCREENSHOT_FAILED_ROW)
   assert.equal(screenshotRowText(screenshot({ state: "FAILED", configured: false })), SCREENSHOTS_NOT_SET_UP)
@@ -209,6 +215,8 @@ check("VirusTotal counts: total is the sum of the four, suspicious only when abo
 check("VirusTotal verdicts add the report date as 7 December 2025", () => {
   assert.equal(reportDate("2025-12-07T12:00:00Z"), "7 December 2025")
   assert.equal(reportDate("2025-12-07T12:00:00"), "7 December 2025")
+  assert.equal(reportDate("2025-12-07T23:30:00Z"), "7 December 2025")
+  assert.equal(reportDate("2025-12-07T00:30:00"), "7 December 2025")
   assert.equal(virusTotalVerdict(virusTotal()), "No scanner flags it (report from 7 December 2025)")
   assert.equal(virusTotalVerdict(virusTotal({ malicious: 5, suspicious: 1, harmless: 50, undetected: 14 })), "5 of 70 scanners flag it as malicious, 1 as suspicious (report from 7 December 2025)")
   assert.deepEqual(virusTotalLines(virusTotal({ malicious: 5 })), ["5 of 75 scanners flag it as malicious (report from 7 December 2025)"])
@@ -237,6 +245,17 @@ check("Send to VirusTotal is offered only for NOT_FOUND when it is set up", () =
   assert.equal(sendToVirusTotalOffered(virusTotal({ state: "NOT_FOUND", configured: false })), false)
   for (const state of [null, "PENDING", "DONE", "FAILED"]) assert.equal(sendToVirusTotalOffered(virusTotal({ state })), false, String(state))
   assert.equal(sendToVirusTotalOffered(null), false)
+})
+
+check("Look up on VirusTotal is offered when set up and the state is none, FAILED or NOT_FOUND", () => {
+  for (const state of [null, "FAILED", "NOT_FOUND"]) assert.equal(lookUpOnVirusTotalOffered(virusTotal({ state })), true, String(state))
+  for (const state of ["PENDING", "DONE"]) assert.equal(lookUpOnVirusTotalOffered(virusTotal({ state })), false, state)
+  for (const state of [null, "FAILED", "NOT_FOUND", "DONE"]) assert.equal(lookUpOnVirusTotalOffered(virusTotal({ state, configured: false })), false, `${state} not set up`)
+  assert.equal(lookUpOnVirusTotalOffered(noVirusTotal()), true)
+  assert.equal(lookUpOnVirusTotalOffered(noVirusTotal(false)), false)
+  assert.equal(lookUpOnVirusTotalOffered(null), false)
+  const notFound = virusTotal({ state: "NOT_FOUND" })
+  assert.ok(lookUpOnVirusTotalOffered(notFound) && sendToVirusTotalOffered(notFound), "NOT_FOUND offers both")
 })
 
 check("the inspection refreshes while either state is PENDING", () => {

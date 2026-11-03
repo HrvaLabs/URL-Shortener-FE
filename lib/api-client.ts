@@ -120,6 +120,10 @@ const listParams = (page: number, size: number, sort?: string, order?: string, e
   return params
 }
 
+/** The stored screenshot's path, versioned by `takenAt` so a retake never comes from the browser's cache of the last one. */
+export const linkScreenshotPath = (urlId: number, takenAt: string): string =>
+  `/admin/urls/${urlId}/inspection/screenshot?v=${encodeURIComponent(takenAt)}`
+
 interface ProblemBody {
   title?: unknown
   detail?: unknown
@@ -203,11 +207,11 @@ async function request<T>(
 }
 
 // Auth
-async function download(path: string): Promise<Response> {
+async function download(path: string, cache?: RequestCache): Promise<Response> {
   const token = localStorage.getItem(TOKEN_KEY)
   let response: Response
   try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, { headers: token ? { Authorization: token } : {} })
+    response = await fetch(`${getApiBaseUrl()}${path}`, { headers: token ? { Authorization: token } : {}, cache })
   } catch {
     throw new ApiError(CANT_REACH, 0)
   }
@@ -544,14 +548,16 @@ export const adminApi = {
     request<UrlResponse>("DELETE", `/admin/urls/${id}/warning-page`),
   getLinkInspection: (urlId: number) =>
     request<LinkInspection>("GET", `/admin/urls/${urlId}/inspection`),
-  getLinkScreenshot: async (urlId: number): Promise<Blob> => {
-    const response = await download(`/admin/urls/${urlId}/inspection/screenshot`)
+  getLinkScreenshot: async (urlId: number, takenAt: string): Promise<Blob> => {
+    const response = await download(linkScreenshotPath(urlId, takenAt), "no-store")
     return response.blob()
   },
   takeLinkScreenshot: (urlId: number) =>
     request<void>("POST", `/admin/urls/${urlId}/inspection/screenshot`),
   sendToVirusTotal: (urlId: number) =>
     request<VirusTotalView>("POST", `/admin/urls/${urlId}/inspection/virustotal`),
+  lookUpOnVirusTotal: (urlId: number) =>
+    request<void>("POST", `/admin/urls/${urlId}/inspection/virustotal/lookup`),
   getDestinationChanges: (id: number, page = 0, size = 10, sort = "changedAt", order = "desc", search?: string) =>
     request<Page<LinkDestinationChange>>("GET", `/admin/urls/${id}/destination-changes?${listParams(page, size, sort, order, { search })}`),
   getDestinationStanding: (userId: number) =>

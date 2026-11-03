@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/lib/api-client"
-import { REVIEW_QUEUE_KEY, useLinkInspection, useLinkScreenshotUrl, useSendToVirusTotal, useTakeLinkScreenshot } from "@/lib/hooks/useLinkInspection"
+import { REVIEW_QUEUE_KEY, useLinkInspection, useLinkScreenshotUrl, useLookUpOnVirusTotal, useSendToVirusTotal, useTakeLinkScreenshot } from "@/lib/hooks/useLinkInspection"
 import {
+  LOOK_UP_ON_VIRUSTOTAL,
   NOT_CHECKED_YET,
   OPEN_VIRUSTOTAL_REPORT,
   SCREENSHOT_DIDNT_LOAD,
@@ -20,6 +21,7 @@ import {
   SEND_TO_VIRUSTOTAL_TITLE,
   WHERE_IT_GOES,
   inspectionStateKey,
+  lookUpOnVirusTotalOffered,
   screenshotAlt,
   screenshotCaption,
   screenshotShown,
@@ -56,7 +58,7 @@ interface LinkInspectionDialogProps {
   onCloseAutoFocus?(event: Event): void
 }
 
-/** A link's screenshot, VirusTotal verdict and redirect chain for admins, with Take again and Send to VirusTotal. */
+/** A link's screenshot, VirusTotal verdict and redirect chain for admins, with Take again, Look up on VirusTotal and Send to VirusTotal. */
 export function LinkInspectionDialog({ urlId, label, longUrl, open, onOpenChange, onCloseAutoFocus }: LinkInspectionDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +100,7 @@ function InspectionBody({ urlId, open }: { urlId: number; open: boolean }) {
     )
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
       <div className="rounded-lg border px-4 py-8 text-center">
         <p className="text-sm font-medium text-destructive">{failureText(error, "Failed to load the inspection")}</p>
@@ -143,9 +145,11 @@ function ScreenshotSection({ inspection }: { inspection: LinkInspection }) {
           </div>
         </>
       )}
-      {lines.map((line) => (
-        <p key={line} className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{line}</p>
-      ))}
+      <div role="status" className="space-y-2 empty:mb-0">
+        {lines.map((line) => (
+          <p key={line} className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{line}</p>
+        ))}
+      </div>
       {takeScreenshotOffered(screenshot) && (
         <Button type="button" size="sm" variant="outline" className={actionButton} aria-disabled={waiting} onClick={takeScreenshot}>
           {takeScreenshotLabel(screenshot)}
@@ -182,18 +186,31 @@ function VirusTotalSection({ inspection }: { inspection: LinkInspection }) {
   const focusHeadingOnClose = useRef(false)
   const { urlId, virusTotal } = inspection
   const send = useSendToVirusTotal(urlId)
+  const lookUp = useLookUpOnVirusTotal(urlId)
+  const sendOffered = sendToVirusTotalOffered(virusTotal)
+  const lookUpOffered = lookUpOnVirusTotalOffered(virusTotal)
 
   const confirmSend = () => {
     focusHeadingOnClose.current = true
     send.mutate(undefined, { onError: (error) => toast.error(failureText(error, "Failed to send the link to VirusTotal")) })
   }
 
+  const lookUpOnVirusTotal = () => {
+    if (lookUp.isPending) return
+    lookUp.mutate(undefined, {
+      onSuccess: () => headingRef.current?.focus(),
+      onError: (error) => toast.error(failureText(error, "Failed to look the link up on VirusTotal")),
+    })
+  }
+
   return (
     <section aria-labelledby={headingId} className="min-w-0 space-y-2">
       <h3 ref={headingRef} id={headingId} tabIndex={-1} className="rounded-sm text-sm font-semibold">VirusTotal</h3>
-      {virusTotalLines(virusTotal).map((line) => (
-        <p key={line} className="text-sm [overflow-wrap:anywhere]">{line}</p>
-      ))}
+      <div role="status" className="space-y-2">
+        {virusTotalLines(virusTotal).map((line) => (
+          <p key={line} className="text-sm [overflow-wrap:anywhere]">{line}</p>
+        ))}
+      </div>
       {virusTotal?.reportUrl && (
         <a
           href={virusTotal.reportUrl}
@@ -205,39 +222,46 @@ function VirusTotalSection({ inspection }: { inspection: LinkInspection }) {
           <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
         </a>
       )}
-      {sendToVirusTotalOffered(virusTotal) && (
-        <div>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className={actionButton}
-                aria-disabled={send.isPending}
-                onClick={(event) => { if (send.isPending) event.preventDefault() }}
+      {(lookUpOffered || sendOffered) && (
+        <div className="flex flex-wrap gap-2">
+          {lookUpOffered && (
+            <Button type="button" size="sm" variant="outline" className={actionButton} aria-disabled={lookUp.isPending} onClick={lookUpOnVirusTotal}>
+              {LOOK_UP_ON_VIRUSTOTAL}
+            </Button>
+          )}
+          {sendOffered && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className={actionButton}
+                  aria-disabled={send.isPending}
+                  onClick={(event) => { if (send.isPending) event.preventDefault() }}
+                >
+                  {SEND_TO_VIRUSTOTAL}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent
+                onCloseAutoFocus={(event) => {
+                  if (!focusHeadingOnClose.current) return
+                  focusHeadingOnClose.current = false
+                  event.preventDefault()
+                  headingRef.current?.focus()
+                }}
               >
-                {SEND_TO_VIRUSTOTAL}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent
-              onCloseAutoFocus={(event) => {
-                if (!focusHeadingOnClose.current) return
-                focusHeadingOnClose.current = false
-                event.preventDefault()
-                headingRef.current?.focus()
-              }}
-            >
-              <AlertDialogHeader>
-                <AlertDialogTitle>{SEND_TO_VIRUSTOTAL_TITLE}</AlertDialogTitle>
-                <AlertDialogDescription>{SEND_TO_VIRUSTOTAL_BODY}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmSend}>{SEND}</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{SEND_TO_VIRUSTOTAL_TITLE}</AlertDialogTitle>
+                  <AlertDialogDescription>{SEND_TO_VIRUSTOTAL_BODY}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={confirmSend}>{SEND}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       )}
     </section>

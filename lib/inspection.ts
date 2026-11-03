@@ -5,7 +5,9 @@ export const NO_SCREENSHOT = "No screenshot yet."
 
 export const SCREENSHOT_QUEUED = "Screenshot queued."
 
-export const SCREENSHOT_EXPIRED = "Screenshot removed after 7 days. Take it again to see the page now."
+export const SCREENSHOT_EXPIRED_ROW = "Screenshot removed after 7 days."
+
+export const SCREENSHOT_EXPIRED = `${SCREENSHOT_EXPIRED_ROW} Take it again to see the page now.`
 
 export const SCREENSHOTS_NOT_SET_UP = "Screenshots aren't set up."
 
@@ -33,6 +35,8 @@ export const VIRUSTOTAL_FAILED = "VirusTotal couldn't look this link up."
 
 export const OPEN_VIRUSTOTAL_REPORT = "Open the report on VirusTotal"
 
+export const LOOK_UP_ON_VIRUSTOTAL = "Look up on VirusTotal"
+
 export const SEND_TO_VIRUSTOTAL = "Send to VirusTotal"
 
 export const SEND_TO_VIRUSTOTAL_TITLE = "Send this link to VirusTotal?"
@@ -49,7 +53,7 @@ export const INSPECTION_REFRESH_MS = 10_000
 
 const MIDDLE_DOT = String.fromCodePoint(0xb7)
 
-const reportDayFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" })
+const reportDayFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
 
 const withFailure = (line: string, failure: string | null) => (failure ? [line, failure] : [line])
 
@@ -79,6 +83,7 @@ export function screenshotStateLines(view: ScreenshotView | null): string[] {
 /** A queue row's one sentence for the screenshot state; the failure text stays in the dialog. Null when the image shows. */
 export function screenshotRowText(view: ScreenshotView | null): string | null {
   if (view?.configured && view.state === "FAILED") return SCREENSHOT_FAILED_ROW
+  if (view?.configured && view.state === "EXPIRED") return SCREENSHOT_EXPIRED_ROW
   return screenshotStateLines(view)[0] ?? null
 }
 
@@ -129,6 +134,10 @@ export function virusTotalLines(view: VirusTotalView | null): string[] {
 }
 
 export const sendToVirusTotalOffered = (view: VirusTotalView | null): boolean => view?.configured === true && view.state === "NOT_FOUND"
+
+/** A fingerprint-only lookup, which reveals nothing: offered when set up and nothing is found or waiting. */
+export const lookUpOnVirusTotalOffered = (view: VirusTotalView | null): boolean =>
+  view?.configured === true && (view.state === null || view.state === "FAILED" || view.state === "NOT_FOUND")
 
 export const inspectionPending = (inspection: LinkInspection | undefined): boolean =>
   inspection?.screenshot?.state === "PENDING" || inspection?.virusTotal?.state === "PENDING"

@@ -35,7 +35,7 @@ export function useLinkInspection(urlId: number | null, enabled: boolean) {
 export function useLinkScreenshotUrl(urlId: number, takenAt: string | null, enabled = true) {
   const { data, isError } = useQuery({
     queryKey: ["admin", "link-screenshot", urlId, takenAt],
-    queryFn: () => adminApi.getLinkScreenshot(urlId),
+    queryFn: () => adminApi.getLinkScreenshot(urlId, takenAt as string),
     enabled: enabled && takenAt != null,
     staleTime: Infinity,
     retry: retryUnlessRefused,
@@ -70,5 +70,13 @@ export function useSendToVirusTotal(urlId: number) {
       queryClient.setQueryData<LinkInspection>(linkInspectionKey(urlId), (inspection) => (inspection ? { ...inspection, virusTotal } : inspection))
       return refreshAfterInspecting(queryClient, urlId)
     },
+  })
+}
+
+export function useLookUpOnVirusTotal(urlId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => adminApi.lookUpOnVirusTotal(urlId),
+    onSuccess: () => refreshAfterInspecting(queryClient, urlId),
   })
 }

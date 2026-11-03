@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { ApiError, SESSION_ENDED, adminApi, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi } = await import("../lib/api-client.ts")
+const { ApiError, SESSION_ENDED, adminApi, authApi, isRestartError, linkScreenshotPath, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -19,7 +19,7 @@ let failures = 0
 let answer = () => new Response("")
 const sent = []
 globalThis.fetch = async (url, init) => {
-  sent.push({ url, authorization: init?.headers?.Authorization, body: init?.body })
+  sent.push({ url, method: init?.method, authorization: init?.headers?.Authorization, body: init?.body, cache: init?.cache })
   return answer()
 }
 
@@ -116,6 +116,33 @@ await check("urlApi.create reads a 201 answer with its shortLink", async () => {
   const link = await urlApi.create({ longUrl: "https://example.com" })
   assert.equal(link.shortLink, "https://hrva.cc/Ab3")
   assert.equal(shortLinkOf(link), "https://hrva.cc/Ab3")
+})
+
+await check("a screenshot is fetched by its takenAt and never from the browser's cache", async () => {
+  stored.set("auth-token", "Bearer kept")
+  assert.equal(linkScreenshotPath(5, "2026-11-03T09:01:00Z"), "/admin/urls/5/inspection/screenshot?v=2026-11-03T09%3A01%3A00Z")
+  assert.equal(linkScreenshotPath(5, "2026-11-03T09:01:00.123+01:00"), "/admin/urls/5/inspection/screenshot?v=2026-11-03T09%3A01%3A00.123%2B01%3A00")
+  sent.length = 0
+  answer = () => new Response(new Uint8Array([0xff, 0xd8]), { status: 200, headers: { "Content-Type": "image/jpeg" } })
+  const first = await adminApi.getLinkScreenshot(5, "2026-11-03T09:01:00Z")
+  await adminApi.getLinkScreenshot(5, "2026-11-03T10:15:00Z")
+  assert.equal(first.size, 2)
+  assert.equal(sent.length, 2)
+  assert.match(sent[0].url, /\/admin\/urls\/5\/inspection\/screenshot\?v=2026-11-03T09%3A01%3A00Z$/)
+  assert.match(sent[1].url, /\/admin\/urls\/5\/inspection\/screenshot\?v=2026-11-03T10%3A15%3A00Z$/)
+  assert.deepEqual(sent.map((request) => request.cache), ["no-store", "no-store"])
+  assert.equal(sent[0].authorization, "Bearer kept")
+})
+
+await check("a VirusTotal lookup posts to the lookup path and accepts the 202", async () => {
+  sent.length = 0
+  answer = () => new Response(null, { status: 202 })
+  await adminApi.lookUpOnVirusTotal(9)
+  assert.equal(sent.length, 1)
+  assert.equal(sent[0].method, "POST")
+  assert.match(sent[0].url, /\/admin\/urls\/9\/inspection\/virustotal\/lookup$/)
+  answer = () => problem(409, "VirusTotal isn't set up.")
+  await assert.rejects(adminApi.lookUpOnVirusTotal(9), (error) => error.message === "VirusTotal isn't set up." && error.status === 409)
 })
 
 await check("shortLinkOf prefers the answer's shortLink and builds one for older answers", () => {

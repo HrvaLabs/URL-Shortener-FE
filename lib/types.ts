@@ -139,6 +139,7 @@ export interface UrlResponse {
   ownerPossibleScammer?: boolean
   finalUrl?: string | null
   warningPage?: boolean
+  warningPageForReview?: boolean | null
   shortLink?: string
 }
 

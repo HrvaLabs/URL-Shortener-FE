@@ -115,6 +115,11 @@ export function linkEndsText(expirationDate: string | undefined, visitLimit: num
 
 export const WARNING_PAGE_NOTE = "People who open this link see its address first, because the site is new or its name looks machine-made."
 
+export const WARNING_PAGE_REVIEW_NOTE = "This link is being checked. People who open it see its address first until the check is done."
+
+export const warningPageNote = (warningPageForReview: boolean | null | undefined): string =>
+  warningPageForReview === true ? WARNING_PAGE_REVIEW_NOTE : WARNING_PAGE_NOTE
+
 export function anonymousLimitLineShown(settings: PublicSettings | undefined, signedIn: boolean, authLoading: boolean): string | null {
   if (authLoading || signedIn || settings === undefined || settings.anonymousLinks === false) return null
   return anonymousLimitLine(settings.anonymousExpiryDays ?? null, settings.anonymousVisitLimit ?? null)

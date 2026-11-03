@@ -4,7 +4,7 @@ import "./resolve-ts-imports.mjs"
 
 const moderation = await import("../lib/moderation.ts")
 
-const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_UNCONFIRMED, humanCheckRefusal, NOT_AVAILABLE, switchUnavailable, switchChecked, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, linkEndsText, WARNING_PAGE_NOTE, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerDisabledHeading, FORGOT_PASSWORD_LABEL, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText, reviewBadgeCounts } = moderation
+const { ANONYMOUS_PAUSED, SIGNUPS_PAUSED, ALIASES_PAUSED, ANONYMOUS_REFUSED, refusedSwitch, HUMAN_CHECK_REQUIRED, HUMAN_CHECK_UNCONFIRMED, humanCheckRefusal, NOT_AVAILABLE, switchUnavailable, switchChecked, HUMAN_CHECK_WAIT_MS, TURNSTILE_SCRIPT_URL, NO_TURNSTILE_TOKEN, nextTurnstileState, TURNSTILE_TOKEN_MAX_AGE_MS, freshTurnstileToken, turnstileNeedsReload, TICK_THE_BOX, humanCheckEnabled, noEffectText, SETTING_GROUP_LABELS, safetyOffLines, settingValueText, groupSettings, anonymousLinksPaused, anonymousLimitLine, anonymousLimitLineShown, linkEndsText, WARNING_PAGE_NOTE, WARNING_PAGE_REVIEW_NOTE, warningPageNote, providerShown, providersOff, providerButtonsLayout, providersOffText, providerDisabledText, providerDisabledHeading, FORGOT_PASSWORD_LABEL, providerOffSiteWide, SITE_OFF_TEXT, signupsPaused, aliasFieldShown, reportStatusText, BULK_BLOCK_BATCH, inBatches, NO_BULK_BLOCKS, addBulkBlock, blockSummaryText, RETRYABLE_BLOCK_STATUSES, campaignStatusLabel, campaignCountsText, campaignReportsText, MAILTO_MAX_LENGTH, mailtoHref, markedStatus, markedText, LOOKUP_FAILED, campaignHoldState, heldLinksStayOffText, HELD_LINKS_STAY_OFF, holdOffReason, campaignRuleText, copyMarksReported, reportAsText, noContactText, blockTotalsText, reviewBadgeCounts } = moderation
 
 const check = (name, run) => {
   try {
@@ -427,6 +427,14 @@ check("linkEndsText: only the parts that are set", () => {
   assert.equal(linkEndsText(undefined, 1000), "This link stops working after 1,000 visits.")
   assert.equal(linkEndsText(undefined, 0), null)
   assert.equal(WARNING_PAGE_NOTE, "People who open this link see its address first, because the site is new or its name looks machine-made.")
+})
+
+check("warningPageNote: the review reason only when the backend says the link is being checked", () => {
+  assert.equal(WARNING_PAGE_REVIEW_NOTE, "This link is being checked. People who open it see its address first until the check is done.")
+  assert.equal(warningPageNote(true), WARNING_PAGE_REVIEW_NOTE)
+  assert.equal(warningPageNote(false), WARNING_PAGE_NOTE)
+  assert.equal(warningPageNote(null), WARNING_PAGE_NOTE)
+  assert.equal(warningPageNote(undefined), WARNING_PAGE_NOTE)
 })
 
 check("providerOffSiteWide: only a provider whose public field is false", () => {

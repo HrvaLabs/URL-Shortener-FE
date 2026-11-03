@@ -90,6 +90,10 @@ export default function LinksWithoutAnAccountHelpPage() {
                 warning page stays as it is. The destination&apos;s server sees a request from hrva.cc, not from you
                 or your visitors.
               </p>
+              <p>
+                While a link made without an account is being checked, visitors see the warning page first. It goes
+                away once the check is done.
+              </p>
 
               <h2 id="paused">When it&apos;s paused</h2>
               <p>

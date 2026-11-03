@@ -339,6 +339,19 @@ export default function PrivacyPage() {
                   sees a request from hrva.cc, not from the visitor, and no visitor data is sent. hrva.cc keeps
                   only which kind of field it found, not the page.
                 </li>
+                <li>
+                  <strong>Screenshot</strong> — when a link is flagged for review, Cloudflare receives its
+                  destination URL and opens it to take one screenshot, as described under{" "}
+                  <em>Who else receives data</em>. No visitor data is sent. hrva.cc keeps the screenshot for
+                  7 days.
+                </li>
+                <li>
+                  <strong>VirusTotal</strong> — when a link is flagged for review, hrva.cc sends VirusTotal a
+                  fingerprint (a SHA-256 hash) of its destination address, to find a report VirusTotal already
+                  has. The address itself isn&apos;t sent. An admin may choose to send a link&apos;s address to
+                  VirusTotal to be scanned; VirusTotal then shows it to its paying users. See{" "}
+                  <em>Who else receives data</em>.
+                </li>
               </ul>
               <p>
                 Links that lead to known or very likely harmful sites are refused or disabled
@@ -407,6 +420,13 @@ export default function PrivacyPage() {
                   about you or your visitors. See Google&apos;s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
                 <li>
+                  <strong>VirusTotal</strong> — when a link is flagged for review, it receives a SHA-256 hash
+                  of the link&apos;s destination address, so hrva.cc can find a report VirusTotal already has;
+                  the address itself isn&apos;t sent. If an admin chooses to send a link to VirusTotal to be
+                  scanned, VirusTotal receives its destination address and shows it to its paying users. No
+                  visitor data is sent. See VirusTotal&apos;s <a href="https://cloud.google.com/terms/secops" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="https://cloud.google.com/terms/secops/privacy-notice" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+                </li>
+                <li>
                   <strong>Domain registries and Spamhaus</strong> — receive only the domain name of a
                   destination, or of a custom domain you apply for, as described under{" "}
                   <em>Keeping links safe</em>. For
@@ -423,6 +443,9 @@ export default function PrivacyPage() {
                   certificates. For hosting and certificates, see Cloudflare&apos;s <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                   Making a link without an account runs a Cloudflare Turnstile check; how
                   Cloudflare handles that data is in its <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noopener noreferrer">Turnstile Privacy Addendum</a>. hrva.cc stores nothing from it.
+                  When a link is flagged for review, Cloudflare Browser Run receives its destination URL and opens it
+                  to take one screenshot, which hrva.cc keeps for 7 days. No visitor data is sent. See
+                  Cloudflare&apos;s <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
                 </li>
                 <li>
                   <strong>Discord</strong> — so the admin sees moderation events quickly, hrva.cc

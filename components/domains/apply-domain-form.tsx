@@ -104,6 +104,10 @@ export const ApplyDomainForm = forwardRef<HTMLInputElement, ApplyDomainFormProps
           autoCapitalize="none"
           autoCorrect="off"
           autoComplete="off"
+          data-protonpass-ignore="true"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
           spellCheck={false}
           aria-invalid={fieldErrors.hostname ? true : undefined}
           aria-describedby={describedBy("hostname")}

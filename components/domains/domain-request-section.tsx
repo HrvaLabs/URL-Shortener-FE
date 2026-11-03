@@ -265,6 +265,10 @@ function RequestForm({ limit, onCancel, onSent }: RequestFormProps) {
           onChange={(event) => { setTotal(event.target.value); clearError("requestedTotal") }}
           type="number"
           inputMode="numeric"
+          data-protonpass-ignore="true"
+          data-1p-ignore
+          data-lpignore="true"
+          data-bwignore
           min={Math.max(DOMAIN_REQUEST_MIN, limit + 1)}
           max={DOMAIN_LIMIT_MAX}
           aria-invalid={fieldErrors.requestedTotal ? true : undefined}

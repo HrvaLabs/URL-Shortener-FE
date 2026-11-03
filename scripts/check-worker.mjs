@@ -155,7 +155,7 @@ await check("the policy allows only this site, hrva.cc for the API and Turnstile
     "default-src": "'self'",
     "script-src": "'self' 'unsafe-inline' https://challenges.cloudflare.com",
     "style-src": "'self' 'unsafe-inline'",
-    "img-src": "'self' data: https:",
+    "img-src": "'self' data: blob: https:",
     "connect-src": "'self' https://hrva.cc",
     "frame-src": "https://challenges.cloudflare.com",
     "frame-ancestors": "'none'",

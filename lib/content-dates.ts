@@ -1,5 +1,5 @@
 export const CONTENT_UPDATED = {
-  "/": "2026-11-01",
+  "/": "2026-11-03",
   "/help": "2026-11-01",
   "/help/links": "2026-11-01",
   "/help/links-without-an-account": "2026-11-01",
@@ -13,7 +13,7 @@ export const CONTENT_UPDATED = {
   "/mcp": "2026-11-01",
   "/report": "2026-10-27",
   "/validate": "2026-10-21",
-  "/privacy": "2026-11-01",
+  "/privacy": "2026-11-03",
   "/terms": "2026-10-30",
   "/security": "2026-11-01",
   "/about": "2026-10-29",

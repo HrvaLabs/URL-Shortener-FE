@@ -18,7 +18,7 @@ const check = (name, run) => {
 }
 
 const reset = () => {
-  for (const key of ["a", "b", "c"]) stopRetrying(key)
+  for (const key of ["a", "b", "c", "auth:me:0", "auth:me:1"]) stopRetrying(key)
 }
 
 const restart = () => new ApiError("Can't reach hrva.cc right now.", 502)
@@ -228,9 +228,21 @@ check("providersFeedTheStoreFromBothCachesAndRenderTheNoticeOnce", () => {
   assert.equal(providers.match(/<ReconnectingNotice \/>/g)?.length, 1)
 })
 
-check("theSignInRetryLoopReportsToTheStoreAndAlwaysStops", () => {
-  assert.match(authContext, /startRetrying\(ME_RETRY_KEY\)/)
-  assert.match(authContext, /finally\s*\{\s*stopRetrying\(ME_RETRY_KEY\)/)
+check("theSignInRetryLoopReportsUnderItsOwnKeyPerRunAndAlwaysStops", () => {
+  assert.match(authContext, /const retryKey = `auth:me:\$\{meRuns\+\+\}`/)
+  assert.match(authContext, /startRetrying\(retryKey\)/)
+  assert.match(authContext, /finally\s*\{\s*stopRetrying\(retryKey\)/)
+  assert.doesNotMatch(authContext, /"auth:me"/)
+})
+
+check("overlappingRunsKeepItOnUntilTheLastOneStops", () => {
+  reset()
+  startRetrying("auth:me:0")
+  startRetrying("auth:me:1")
+  stopRetrying("auth:me:0")
+  assert.equal(isReconnecting(), true)
+  stopRetrying("auth:me:1")
+  assert.equal(isReconnecting(), false)
 })
 
 if (failures > 0) process.exit(1)

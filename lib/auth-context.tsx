@@ -36,22 +36,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const pause = (milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds))
 
-const ME_RETRY_KEY = "auth:me"
+let meRuns = 0
 
 async function fetchMeThroughRestart(token: string): Promise<UserDto | null> {
+  const retryKey = `auth:me:${meRuns++}`
   try {
     for (let failureCount = 0; ; failureCount++) {
       try {
         return await userApi.getMe()
       } catch (err) {
         if (!isRestartError(err) || !shouldRetry(failureCount, err as Error)) throw err
-        startRetrying(ME_RETRY_KEY)
+        startRetrying(retryKey)
         await pause(retryDelay(failureCount))
         if (localStorage.getItem("auth-token") !== token) return null
       }
     }
   } finally {
-    stopRetrying(ME_RETRY_KEY)
+    stopRetrying(retryKey)
   }
 }
 

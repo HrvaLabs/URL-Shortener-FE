@@ -1,110 +1,93 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { adminApi } from "@/lib/api-client"
+import { Camera, CircleCheck, Database, Mail, ScanSearch, ShieldAlert, TriangleAlert, Zap, type LucideIcon } from "lucide-react"
+import { ApiError, adminApi, retryUnlessRefused } from "@/lib/api-client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageMeta } from "@/components/page-meta"
-import { Database, Zap, Mail, ShieldAlert } from "lucide-react"
-import { parseServerDateTime } from "@/lib/analytics"
-import type { BlocklistStatus } from "@/lib/types"
-import { cn, formatDateTime, formatTimeAgo, plural } from "@/lib/utils"
+import { StatGrid } from "@/components/admin/stats/stat-grid"
+import { LegacyHealth } from "@/components/admin/health/legacy-health"
+import {
+  ALL_SYSTEMS_WORKING,
+  NEEDS_V230_BACKEND,
+  garbageCollectionText,
+  jobErrorText,
+  jobLastRunLines,
+  jobOutcome,
+  memoryText,
+  responseTimeText,
+  serverErrorsHint,
+  serviceRows,
+  sortedJobs,
+  startupText,
+  trafficTitle,
+  uptimeText,
+  type ServiceKey,
+  type ServiceState,
+} from "@/lib/system-status"
+import type { SystemStatus, SystemStatusJob } from "@/lib/types"
+import { cn, formatDateTime, plural } from "@/lib/utils"
 
-type ServiceState = "ok" | "down" | "unknown"
+const REFRESH_MS = 30_000
 
-const badgeVariant: Record<ServiceState, "success" | "destructive" | "secondary"> = {
+const PAGE_DESCRIPTION = "Live status of hrva.cc: traffic, services, the server and background jobs."
+
+const badgeVariant: Record<ServiceState, "success" | "warning" | "destructive" | "secondary"> = {
   ok: "success",
+  warning: "warning",
   down: "destructive",
-  unknown: "secondary",
+  off: "secondary",
 }
 
 const dotClass: Record<ServiceState, string> = {
   ok: "bg-success",
+  warning: "bg-warning",
   down: "bg-destructive",
-  unknown: "bg-muted-foreground",
+  off: "bg-muted-foreground",
 }
 
-function summary(database: boolean, redis: boolean): { text: string; ok: boolean } {
-  if (database && redis) return { text: "All core services are operational.", ok: true }
-  if (database) return { text: "Redis isn't connected. The database is.", ok: false }
-  if (redis) return { text: "The database isn't connected. Redis is.", ok: false }
-  return { text: "Neither the database nor Redis is connected.", ok: false }
+const serviceIcons: Record<ServiceKey, LucideIcon> = {
+  database: Database,
+  redis: Zap,
+  email: Mail,
+  screenshots: Camera,
+  virusTotal: ScanSearch,
+  blocklists: ShieldAlert,
 }
+
+const isMissingEndpoint = (error: unknown) => error instanceof ApiError && error.status === 404
 
 export default function AdminHealthPage() {
-  const { data: stats, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ["admin", "stats"],
-    queryFn: () => adminApi.getStats(),
-    refetchInterval: 30_000,
+  const { data, error, isPending, isError, refetch, isFetching } = useQuery({
+    queryKey: ["admin", "system-status"],
+    queryFn: () => adminApi.getSystemStatus(),
+    refetchInterval: (query) => (isMissingEndpoint(query.state.error) && !query.state.data ? false : REFRESH_MS),
+    retry: retryUnlessRefused,
   })
-  const { data: latestEmails, isPending: emailsPending, isError: emailsFailed } = useQuery({
-    queryKey: ["admin", "email-log", 0, 1],
-    queryFn: () => adminApi.getEmailLog({}, 0, 1),
-    refetchInterval: 30_000,
-  })
-  const lastEmail = latestEmails?.content?.[0]
-
-  const services: { name: string; icon: typeof Database; description: string; state: ServiceState; label: string; extra?: string }[] = [
-    {
-      name: "Database",
-      icon: Database,
-      description: "PostgreSQL connection",
-      state: stats?.databaseActive ? "ok" : "down",
-      label: stats?.databaseActive ? "Connected" : "Disconnected",
-    },
-    {
-      name: "Cache (Redis)",
-      icon: Zap,
-      description: "In-memory data store",
-      state: stats?.cacheActive ? "ok" : "down",
-      label: stats?.cacheActive ? "Connected" : "Disconnected",
-      extra: stats?.cacheActive ? `Hit ratio: ${stats.cacheHitRatio}` : undefined,
-    },
-    {
-      name: "SMTP",
-      icon: Mail,
-      description: "Email delivery service",
-      state: emailsPending || emailsFailed ? "unknown" : lastEmail?.status === "FAILED" ? "down" : "ok",
-      label: emailsPending
-        ? "Checking"
-        : emailsFailed
-          ? "Couldn't check"
-          : !lastEmail
-            ? "No emails yet"
-            : lastEmail.status === "FAILED"
-              ? "Last email failed"
-              : "Last email delivered",
-      extra: lastEmail ? `Last email: ${formatDateTime(parseServerDateTime(lastEmail.createdAt))}` : undefined,
-    },
-  ]
-
-  const status = stats ? summary(stats.databaseActive, stats.cacheActive) : null
 
   return (
-    <div className="space-y-6">
-      <PageMeta title="Admin — Health" description="Live status of the database, Redis, email delivery and blocklists." />
+    <div className="space-y-8">
+      <PageMeta title="Admin — Health" description={PAGE_DESCRIPTION} />
       <div>
         <h1 className="font-display text-2xl">Health</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Live status of the database, Redis, email delivery and blocklists. Refreshes every 30 seconds.</p>
+        <p className="mt-1 text-sm text-muted-foreground">{PAGE_DESCRIPTION} Refreshes every 30 seconds.</p>
       </div>
 
-      {isLoading ? (
-        <ul className="divide-y rounded-xl border bg-card">
-          {[...Array(3)].map((_, i) => (
-            <li key={i} className="flex items-center gap-4 px-5 py-4">
-              <Skeleton className="h-4 w-4" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3.5 w-48" />
-              </div>
-              <Skeleton className="h-6 w-24" />
-            </li>
-          ))}
-        </ul>
-      ) : isError && !stats ? (
+      {isPending ? (
+        <HealthSkeleton />
+      ) : !data && isMissingEndpoint(error) ? (
+        <div className="space-y-6">
+          <p role="status" className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm font-medium">
+            {NEEDS_V230_BACKEND}
+          </p>
+          <LegacyHealth />
+        </div>
+      ) : !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm text-destructive">Couldn&apos;t load the health status, so it&apos;s unknown right now. Try again.</p>
+          <p className="text-sm text-destructive">Couldn&apos;t load the system status, so it&apos;s unknown right now. Try again.</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
             Retry
           </Button>
@@ -119,89 +102,202 @@ export default function AdminHealthPage() {
               </button>
             </p>
           )}
-          <ul className="divide-y rounded-xl border bg-card">
-            {services.map((svc) => {
-              const Icon = svc.icon
-              return (
-                <li key={svc.name} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
-                  <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-sm font-medium">{svc.name}</h2>
-                    <p className="text-sm text-muted-foreground">{svc.description}</p>
-                    {svc.extra && <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{svc.extra}</p>}
-                  </div>
-                  <Badge variant={badgeVariant[svc.state]} className="shrink-0 gap-1.5">
-                    <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", dotClass[svc.state])} />
-                    {svc.label}
-                  </Badge>
-                </li>
-              )
-            })}
-          </ul>
+          <StatusLine problems={data.summary.problems} />
+          <Traffic traffic={data.traffic} />
+          <Services status={data} />
+          <Server server={data.server} />
+          <Jobs jobs={data.jobs} />
         </>
       )}
-
-      {stats && status && (
-        <p className="text-sm text-muted-foreground">
-          <span className={cn("font-medium", status.ok ? "text-success" : "text-destructive")}>{status.text}</span>
-          {" "}&middot; Java {stats.javaVersion}
-        </p>
-      )}
-
-      {stats?.blocklists && <Blocklists lists={stats.blocklists} />}
     </div>
   )
 }
 
-function Blocklists({ lists }: { lists: BlocklistStatus[] }) {
-  const stale = lists.filter((list) => list.stale).length
+function StatePill({ state, label }: { state: ServiceState; label: string }) {
+  return (
+    <Badge variant={badgeVariant[state]} className="shrink-0 gap-1.5 whitespace-nowrap">
+      <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", dotClass[state])} />
+      {label}
+    </Badge>
+  )
+}
+
+function StatusLine({ problems }: { problems: string[] }) {
+  if (problems.length === 0) {
+    return (
+      <div role="status" className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 p-4 text-sm font-medium">
+        <CircleCheck aria-hidden="true" className="h-4 w-4 shrink-0 text-success" />
+        {ALL_SYSTEMS_WORKING}
+      </div>
+    )
+  }
+  return (
+    <div role="status" className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
+      <p className="flex items-center gap-2 font-medium">
+        <TriangleAlert aria-hidden="true" className="h-4 w-4 shrink-0 text-warning" />
+        {plural(problems.length, "problem")}
+      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-10">
+        {problems.map((problem, index) => (
+          <li key={index} className="[overflow-wrap:anywhere]">
+            {problem}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function Traffic({ traffic }: { traffic: SystemStatus["traffic"] }) {
+  return (
+    <StatGrid
+      title={trafficTitle(traffic.windowMinutes)}
+      items={[
+        { label: "Requests", value: traffic.requests.toLocaleString("en-US") },
+        { label: "Redirects", value: traffic.redirects.toLocaleString("en-US") },
+        { label: "Response time", value: <span className="text-lg">{responseTimeText(traffic.p50Ms, traffic.p95Ms)}</span> },
+        { label: "Server errors (5xx)", value: traffic.serverErrors.toLocaleString("en-US"), hint: serverErrorsHint(traffic.serverErrors, traffic.requests) },
+      ]}
+    />
+  )
+}
+
+function Services({ status }: { status: SystemStatus }) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold">Services</h2>
+      <ul className="divide-y rounded-xl border bg-card">
+        {serviceRows(status).map((service) => {
+          const Icon = serviceIcons[service.key]
+          return (
+            <li key={service.key} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
+              <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-48 flex-1">
+                <h3 className="text-sm font-medium">{service.name}</h3>
+                <p className="text-sm text-muted-foreground">{service.description}</p>
+                {service.details.map((detail) => (
+                  <p key={detail} className="mt-0.5 text-xs tabular-nums text-muted-foreground [overflow-wrap:anywhere]">
+                    {detail}
+                  </p>
+                ))}
+              </div>
+              <StatePill state={service.state} label={service.label} />
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+function Server({ server }: { server: SystemStatus["server"] }) {
+  return (
+    <StatGrid
+      title="Server"
+      items={[
+        { label: "Version", value: server.version ?? "Unknown" },
+        { label: "Uptime", value: uptimeText(server.uptimeSeconds) },
+        { label: "Last start", value: <span className="text-lg">{formatDateTime(server.startedAt)}</span>, hint: startupText(server.startupSeconds) },
+        { label: "Java memory", value: <span className="text-lg">{memoryText(server.heapUsedBytes, server.heapMaxBytes)}</span>, hint: "Heap in use" },
+        { label: "Garbage collection", value: <span className="text-lg">{garbageCollectionText(server.gcPauseMsTotal)}</span>, hint: "Since the server started" },
+      ]}
+    />
+  )
+}
+
+function Jobs({ jobs }: { jobs: SystemStatusJob[] }) {
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="text-lg font-semibold">Blocklists</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A list is stale when it missed two refreshes in a row. Links are still checked against the copy it loaded last.
-        </p>
+        <h2 className="text-sm font-semibold">Background jobs</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">Since the server started. Failed jobs come first.</p>
       </div>
-      {lists.length === 0 ? (
-        <p className="rounded-xl border bg-card px-5 py-8 text-center text-sm text-muted-foreground">No blocklists yet.</p>
+      {jobs.length === 0 ? (
+        <p className="rounded-xl border bg-card px-5 py-8 text-center text-sm text-muted-foreground">No background jobs reported.</p>
       ) : (
-        <>
-          <p role="status" className={cn("text-sm font-medium", stale > 0 ? "text-destructive" : "text-success")}>
-            {stale > 0 ? `${plural(stale, "list")} stale.` : "Every list is up to date."}
-          </p>
-          <ul className="divide-y rounded-xl border bg-card">
-            {lists.map((list) => {
-              const refreshed = list.lastRefreshedAt ? parseServerDateTime(list.lastRefreshedAt) : null
-              return (
-                <li key={list.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-4">
-                  <ShieldAlert className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-medium [overflow-wrap:anywhere]">{list.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Last refresh:{" "}
-                      {refreshed ? (
-                        <span className="tabular-nums">
-                          {formatTimeAgo(refreshed)} · {formatDateTime(refreshed)}
-                        </span>
-                      ) : (
-                        "never"
-                      )}
-                    </p>
-                    <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                      Refreshes every {plural(list.refreshIntervalHours, "hour")} · {plural(list.consecutiveErrors, "error")} in a row
-                    </p>
-                  </div>
-                  <Badge variant={list.stale ? "destructive" : "success"} className="shrink-0 gap-1.5">
-                    <span aria-hidden="true" className={cn("h-2 w-2 rounded-full", list.stale ? "bg-destructive" : "bg-success")} />
-                    {list.stale ? "Stale" : "Up to date"}
-                  </Badge>
-                </li>
-              )
-            })}
-          </ul>
-        </>
+        <div className="rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Job</TableHead>
+                <TableHead className="hidden @2xl:table-cell">Last run</TableHead>
+                <TableHead>Outcome</TableHead>
+                <TableHead className="hidden @4xl:table-cell">Error</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedJobs(jobs).map((job) => (
+                <JobRow key={job.name} job={job} />
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </section>
+  )
+}
+
+function JobRow({ job }: { job: SystemStatusJob }) {
+  const outcome = jobOutcome(job)
+  const lastRun = jobLastRunLines(job)
+  const failed = job.lastOutcome === "FAILED"
+  const error = jobErrorText(job)
+  return (
+    <TableRow className="align-top">
+      <TableCell className="align-top">
+        <div className="min-w-36">
+          <p className="font-medium [overflow-wrap:anywhere]">{job.label}</p>
+          <div className="mt-1 space-y-0.5 text-xs tabular-nums text-muted-foreground @2xl:hidden">
+            {lastRun.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+          {failed && (
+            <p className="mt-1.5 whitespace-pre-wrap text-xs text-destructive [overflow-wrap:anywhere] @4xl:hidden">
+              <span className="font-medium">Error: </span>
+              {error}
+            </p>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="hidden align-top @2xl:table-cell">
+        <div className="min-w-44 space-y-0.5 text-xs tabular-nums text-muted-foreground">
+          {lastRun.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      </TableCell>
+      <TableCell className="align-top">
+        <StatePill state={outcome.state} label={outcome.label} />
+      </TableCell>
+      <TableCell className="hidden align-top @4xl:table-cell">
+        <p className={cn("min-w-56 whitespace-pre-wrap text-xs [overflow-wrap:anywhere]", failed ? "text-destructive" : "text-muted-foreground")}>{error}</p>
+      </TableCell>
+    </TableRow>
+  )
+}
+
+function HealthSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-14 w-full rounded-xl" />
+      <div className="grid gap-4 @md:grid-cols-2 @4xl:grid-cols-4">
+        {[...Array(4)].map((_, index) => (
+          <Skeleton key={index} className="h-24 rounded-xl" />
+        ))}
+      </div>
+      <ul className="divide-y rounded-xl border bg-card">
+        {[...Array(6)].map((_, index) => (
+          <li key={index} className="flex items-center gap-4 px-5 py-4">
+            <Skeleton className="h-4 w-4" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3.5 w-48" />
+            </div>
+            <Skeleton className="h-6 w-24" />
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

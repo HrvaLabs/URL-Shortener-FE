@@ -681,6 +681,95 @@ export interface BlocklistStatus {
   stale: boolean
 }
 
+export interface SystemStatusSummary {
+  ok: boolean
+  problems: string[]
+}
+
+export interface SystemStatusTraffic {
+  windowMinutes: number
+  requests: number
+  redirects: number
+  p50Ms: number | null
+  p95Ms: number | null
+  serverErrors: number
+}
+
+export interface SystemStatusDatabase {
+  up: boolean
+  latencyMs: number | null
+  poolActive: number | null
+  poolMax: number | null
+}
+
+export interface SystemStatusRedis {
+  up: boolean
+  latencyMs: number | null
+  hitRatio: number | null
+}
+
+export interface SystemStatusEmail {
+  lastSentAt: string | null
+  failures24h: number
+}
+
+export interface SystemStatusScreenshots {
+  configured: boolean
+  enabled: boolean
+  browserSecondsToday: number | null
+  browserSecondsLimit: number | null
+  queued: number | null
+  pausedUntil: string | null
+}
+
+export interface SystemStatusVirusTotal {
+  configured: boolean
+  enabled: boolean
+  lookupsToday: number | null
+  dailyLimit: number | null
+  queued: number | null
+  pausedUntil: string | null
+}
+
+export interface SystemStatusBlocklists {
+  lastRefreshAt: string | null
+  stale: string[]
+}
+
+export interface SystemStatusServer {
+  version: string | null
+  startedAt: string | null
+  uptimeSeconds: number | null
+  startupSeconds: number | null
+  heapUsedBytes: number | null
+  heapMaxBytes: number | null
+  gcPauseMsTotal: number | null
+}
+
+export type JobOutcome = "OK" | "FAILED"
+
+export interface SystemStatusJob {
+  name: string
+  label: string
+  lastStartedAt: string | null
+  lastFinishedAt: string | null
+  lastOutcome: JobOutcome | null
+  lastError: string | null
+}
+
+export interface SystemStatus {
+  summary: SystemStatusSummary
+  traffic: SystemStatusTraffic
+  database: SystemStatusDatabase
+  redis: SystemStatusRedis
+  email: SystemStatusEmail
+  screenshots: SystemStatusScreenshots
+  virusTotal: SystemStatusVirusTotal
+  blocklists: SystemStatusBlocklists
+  server: SystemStatusServer
+  jobs: SystemStatusJob[]
+}
+
 export interface RecentUrlItem {
   id: number
   shortUrl: string

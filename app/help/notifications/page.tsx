@@ -178,8 +178,8 @@ export default function NotificationsHelpPage() {
                   <strong>A link works again</strong>: sent when a dead link answers again.
                 </li>
                 <li>
-                  <strong>Daily click summary</strong>: yesterday&apos;s clicks on your links, sent after
-                  midnight, and skipped when there were none. A channel message lists up to 20 links, the ones
+                  <strong>Daily click summary</strong>: yesterday&apos;s clicks on your links, sent at 08:00
+                  Croatian time, and skipped when there were none. A channel message lists up to 20 links, the ones
                   with the most clicks first, then says <strong>and N more</strong>, with N the number left out.
                 </li>
                 <li>

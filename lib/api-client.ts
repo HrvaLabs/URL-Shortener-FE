@@ -58,6 +58,11 @@ const RESTART_STATUSES = [0, 502, 503, 504]
 
 const NETWORK_FAILURE = /^(Failed to fetch|Load failed|NetworkError when attempting to fetch resource\.?)$/i
 
+/** The backend's 503 detail while it can't reach its database (`DatabaseOutages.UNREACHABLE`). */
+export const DATABASE_UNREACHABLE = "hrva.cc can't reach its database right now. Try again in a minute."
+
+const DATABASE_OUTAGE = "database"
+
 export const RESTART_RETRY_WINDOW_MS = 120_000
 
 const FIRST_RETRY_DELAY_MS = 1_000
@@ -66,25 +71,51 @@ const LONGEST_RETRY_DELAY_MS = 8_000
 
 const RETRIES_OTHER_ERRORS = 1
 
+/** A 503 that says the server is up but its database isn't: an outage, not a restart. */
+export const isDatabaseOutage = (error: unknown): boolean =>
+  error instanceof ApiError &&
+  error.status === 503 &&
+  (error.problem.outage === DATABASE_OUTAGE || error.problem.detail === DATABASE_UNREACHABLE)
+
 export const isRestartError = (error: unknown): boolean =>
   error instanceof ApiError
-    ? RESTART_STATUSES.includes(error.status)
+    ? RESTART_STATUSES.includes(error.status) && !isDatabaseOutage(error)
     : error instanceof TypeError && NETWORK_FAILURE.test(error.message)
 
 export const retryDelay = (attempt: number): number =>
   Math.min(FIRST_RETRY_DELAY_MS * 2 ** attempt, LONGEST_RETRY_DELAY_MS)
 
-const waitedIncludingRetry = (attempt: number): number => {
-  let total = 0
-  for (let index = 0; index <= attempt; index++) total += retryDelay(index)
-  return total
+let restartingSince: number | null = null
+
+/** When the backend first failed to answer (a network failure, 502, or a 503/504 that isn't a database outage); null once it answers again. */
+export const backendRestartingSince = (): number | null => restartingSince
+
+export const noteBackendFailed = (at: number): void => {
+  restartingSince ??= at
 }
 
-export const shouldRetry = (failureCount: number, error: Error): boolean =>
-  isRestartError(error) ? waitedIncludingRetry(failureCount) <= RESTART_RETRY_WINDOW_MS : failureCount < RETRIES_OTHER_ERRORS
+export const noteBackendAnswered = (): void => {
+  restartingSince = null
+}
+
+/** True while less than `RESTART_RETRY_WINDOW_MS` of wall-clock time, requests included, has passed since the backend stopped answering. */
+export const withinRestartWindow = (since: number, now: number): boolean => now - since <= RESTART_RETRY_WINDOW_MS
+
+export const shouldRetry = (failureCount: number, error: Error): boolean => {
+  if (isDatabaseOutage(error)) return false
+  if (!isRestartError(error)) return failureCount < RETRIES_OTHER_ERRORS
+  const now = Date.now()
+  noteBackendFailed(now)
+  return withinRestartWindow(restartingSince ?? now, now)
+}
 
 export const retryUnlessRefused = (failureCount: number, error: Error): boolean =>
   !(error instanceof ApiError && error.status >= 400 && error.status < 500) && shouldRetry(failureCount, error)
+
+const noteAnswer = (startedAt: number, status: number, problem: Record<string, unknown>) => {
+  if (isRestartError(new ApiError("", status, {}, problem))) noteBackendFailed(startedAt)
+  else noteBackendAnswered()
+}
 
 interface PageWrapper {
   page: { totalPages: number; totalElements: number; number?: number; size?: number }
@@ -167,6 +198,7 @@ async function request<T>(
     Object.assign(reqHeaders, headers)
   }
 
+  const startedAt = Date.now()
   let response: Response
   try {
     response = await fetch(`${baseUrl}${path}`, {
@@ -176,17 +208,20 @@ async function request<T>(
       cache,
     })
   } catch {
+    noteBackendFailed(startedAt)
     throw new ApiError(CANT_REACH, 0)
   }
 
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
+    noteAnswer(startedAt, response.status, problemMembers(errorBody))
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
+  noteBackendAnswered()
   keepRenewedToken(token, response)
 
   if (response.status === 204 || response.status === 202) return {} as T
@@ -209,21 +244,25 @@ async function request<T>(
 // Auth
 async function download(path: string, cache?: RequestCache): Promise<Response> {
   const token = localStorage.getItem(TOKEN_KEY)
+  const startedAt = Date.now()
   let response: Response
   try {
     response = await fetch(`${getApiBaseUrl()}${path}`, { headers: token ? { Authorization: token } : {}, cache })
   } catch {
+    noteBackendFailed(startedAt)
     throw new ApiError(CANT_REACH, 0)
   }
 
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
+    noteAnswer(startedAt, response.status, problemMembers(errorBody))
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
+  noteBackendAnswered()
   keepRenewedToken(token, response)
   return response
 }

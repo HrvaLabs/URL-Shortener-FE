@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { ApiError, SESSION_ENDED, adminApi, authApi, isRestartError, linkScreenshotPath, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi } = await import("../lib/api-client.ts")
+const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, SESSION_ENDED, adminApi, authApi, backendRestartingSince, isDatabaseOutage, isRestartError, linkScreenshotPath, noteBackendAnswered, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi, withinRestartWindow } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -171,18 +171,106 @@ await check("retries wait 1 s, 2 s, 4 s, then 8 s each", () => {
   assert.deepEqual([0, 1, 2, 3, 4, 5, 20].map(retryDelay), [1000, 2000, 4000, 8000, 8000, 8000, 8000])
 })
 
-await check("a restart is retried for 120 s of waiting in total, then given up", () => {
-  const restart = new ApiError("Can't reach hrva.cc right now.", 502)
-  let waited = 0
-  let attempt = 0
-  while (shouldRetry(attempt, restart)) waited += retryDelay(attempt++)
-  assert.equal(attempt, 17)
-  assert.equal(waited, 119_000)
-  assert.ok(waited + retryDelay(attempt) > 120_000)
-  assert.equal(shouldRetry(5, restart), true)
-  assert.equal(shouldRetry(16, restart), true)
-  assert.equal(shouldRetry(17, restart), false)
-  assert.equal(shouldRetry(40, new TypeError("Failed to fetch")), false)
+const realNow = Date.now
+let fakeNow = 0
+const withClock = async (run) => {
+  noteBackendAnswered()
+  Date.now = () => fakeNow
+  try {
+    await run()
+  } finally {
+    Date.now = realNow
+    noteBackendAnswered()
+  }
+}
+
+await check("a restart is retried for 120 s of wall-clock time since the backend stopped answering, then given up", () =>
+  withClock(() => {
+    const restart = new ApiError("Can't reach hrva.cc right now.", 502)
+    fakeNow = 1_000_000
+    assert.equal(shouldRetry(0, restart), true)
+    assert.equal(backendRestartingSince(), 1_000_000)
+    fakeNow += 119_000
+    assert.equal(shouldRetry(1, restart), true, "the failure count doesn't matter, only the time")
+    fakeNow += 1_000
+    assert.equal(shouldRetry(2, restart), true)
+    fakeNow += 1
+    assert.equal(shouldRetry(3, restart), false)
+    assert.equal(shouldRetry(3, new TypeError("Failed to fetch")), false)
+    assert.equal(retryUnlessRefused(3, new ApiError("down", 503)), false)
+    noteBackendAnswered()
+    assert.equal(shouldRetry(40, restart), true, "an answer from the backend starts a new window")
+    assert.equal(RESTART_RETRY_WINDOW_MS, 120_000)
+    assert.equal(withinRestartWindow(0, 120_000), true)
+    assert.equal(withinRestartWindow(0, 120_001), false)
+  }))
+
+await check("the window counts the time a failing request took, from when it was sent", () =>
+  withClock(async () => {
+    fakeNow = 5_000_000
+    answer = () => {
+      fakeNow += 3_000
+      return problem(502, undefined)
+    }
+    await assert.rejects(userApi.getMe(), (error) => error.status === 502 && isRestartError(error))
+    assert.equal(backendRestartingSince(), 5_000_000)
+    fakeNow = 5_000_000 + RESTART_RETRY_WINDOW_MS + 1
+    assert.equal(shouldRetry(0, new ApiError("down", 502)), false)
+  }))
+
+await check("a network failure starts the window when the request was sent", () =>
+  withClock(async () => {
+    fakeNow = 7_000_000
+    const realFetch = globalThis.fetch
+    globalThis.fetch = async () => {
+      fakeNow += 2_000
+      throw new TypeError("Failed to fetch")
+    }
+    try {
+      await assert.rejects(userApi.getMe(), (error) => error.status === 0 && isRestartError(error))
+    } finally {
+      globalThis.fetch = realFetch
+    }
+    assert.equal(backendRestartingSince(), 7_000_000)
+  }))
+
+await check("any answer from the backend closes the window: a success, a refusal, a 500 or a database outage", () =>
+  withClock(async () => {
+    const answers = [
+      () => new Response(JSON.stringify({ id: 1 }), { status: 200, headers: { "Content-Type": "application/json" } }),
+      () => problem(404, "Not found"),
+      () => problem(500, "Internal server error"),
+      () => problem(503, DATABASE_UNREACHABLE),
+    ]
+    for (const next of answers) {
+      fakeNow = 9_000_000
+      assert.equal(shouldRetry(0, new ApiError("down", 502)), true)
+      assert.equal(backendRestartingSince(), 9_000_000)
+      answer = next
+      await userApi.getMe().catch(() => undefined)
+      assert.equal(backendRestartingSince(), null)
+    }
+  }))
+
+await check("a database outage 503 is an outage: never retried, no Reconnecting, not a restart", async () => {
+  noteBackendAnswered()
+  answer = () => problem(503, DATABASE_UNREACHABLE)
+  const error = await userApi.getMe().catch((caught) => caught)
+  assert.equal(error.status, 503)
+  assert.equal(error.message, DATABASE_UNREACHABLE)
+  assert.equal(isDatabaseOutage(error), true)
+  assert.equal(isRestartError(error), false)
+  assert.equal(shouldRetry(0, error), false)
+  assert.equal(retryUnlessRefused(0, error), false)
+  assert.equal(DATABASE_UNREACHABLE, "hrva.cc can't reach its database right now. Try again in a minute.")
+  const marked = new ApiError("Something else", 503, {}, { outage: "database", detail: "Something else" })
+  assert.equal(isDatabaseOutage(marked), true, "the backend's outage member is enough")
+  assert.equal(shouldRetry(0, marked), false)
+  for (const other of [new ApiError(DATABASE_UNREACHABLE, 502, {}, { detail: DATABASE_UNREACHABLE }), new ApiError("busy", 503, {}, { detail: "Too busy right now." })]) {
+    assert.equal(isDatabaseOutage(other), false, `${other.status} ${other.message}`)
+    assert.equal(isRestartError(other), true)
+  }
+  noteBackendAnswered()
 })
 
 await check("a network failure, 502, 503 and 504 are restart errors; nothing else is", () => {
@@ -200,6 +288,7 @@ await check("a network failure, 502, 503 and 504 are restart errors; nothing els
 })
 
 await check("restart errors keep retrying and other errors retry once", () => {
+  noteBackendAnswered()
   assert.equal(shouldRetry(5, new ApiError("down", 502)), true)
   assert.equal(shouldRetry(5, new ApiError("down", 503)), true)
   assert.equal(shouldRetry(5, new ApiError("down", 504)), true)
@@ -212,8 +301,9 @@ await check("restart errors keep retrying and other errors retry once", () => {
 })
 
 await check("analytics queries ride out a restart and still give up on refusals at once", () => {
+  noteBackendAnswered()
   assert.equal(retryUnlessRefused(5, new ApiError("down", 503)), true)
-  assert.equal(retryUnlessRefused(17, new ApiError("down", 503)), false)
+  noteBackendAnswered()
   for (const status of [400, 401, 403, 404, 429]) assert.equal(retryUnlessRefused(0, new ApiError("no", status)), false, String(status))
   assert.equal(retryUnlessRefused(0, new ApiError("down", 500)), true)
   assert.equal(retryUnlessRefused(1, new ApiError("down", 500)), false)
@@ -224,12 +314,29 @@ await check("refreshUser applies its result only while the token it asked with i
   const source = readFileSync(new URL("../lib/auth-context.tsx", import.meta.url), "utf8")
   const body = source.slice(source.indexOf("const refreshUser"), source.indexOf("useEffect(() => {"))
   const guard = 'if (localStorage.getItem("auth-token") !== token) return'
-  const apply = body.indexOf("if (userData) setUser(userData)")
+  const apply = body.indexOf("setUser(userData)")
   const failure = body.indexOf("} catch (err) {")
   const removal = body.indexOf('localStorage.removeItem("auth-token")')
   assert.ok(apply > 0 && failure > 0 && removal > 0)
   assert.ok(body.lastIndexOf(guard, apply) > body.indexOf("await fetchMeThroughRestart(token)"), "no guard before setUser")
   assert.ok(body.lastIndexOf(guard, removal) > failure, "no guard in the error branch")
+  const outage = body.indexOf("setUnavailable(err instanceof ApiError ? err.message : CANT_REACH)")
+  assert.ok(outage > removal, "any other failure keeps the token and says the service is unavailable")
+  assert.equal(body.slice(removal + 1).includes('localStorage.removeItem("auth-token")'), false, "only a 401 or 403 removes the token")
+})
+
+await check("the signed-in pages show an outage instead of the sign-in form", async () => {
+  const { readFileSync } = await import("node:fs")
+  for (const file of ["../app/admin/layout.tsx", "../app/dashboard/layout.tsx", "../components/protected-route.tsx"]) {
+    const source = readFileSync(new URL(file, import.meta.url), "utf8")
+    assert.match(source, /unavailable/, file)
+    assert.match(source, /<ServiceUnavailable message=/, file)
+  }
+  const admin = readFileSync(new URL("../app/admin/layout.tsx", import.meta.url), "utf8")
+  assert.match(admin, /if \(!isLoading && !\(unavailable && !user\)\)/)
+  assert.match(admin, /pathname !== HEALTH_PAGE \? <ServiceUnavailable message=\{outage\} \/> : children/)
+  const auth = readFileSync(new URL("../lib/auth-context.tsx", import.meta.url), "utf8")
+  assert.match(auth, /if \(!unavailable \|\| user\) return\s+const recheck = setInterval\(\(\) => void refreshUser\(\), UNAVAILABLE_RECHECK_MS\)/)
 })
 
 if (failures > 0) {

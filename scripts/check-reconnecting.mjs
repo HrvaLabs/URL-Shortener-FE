@@ -4,7 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryObserver } from "@tanstack
 import "./resolve-ts-imports.mjs"
 
 const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, subscribeReconnecting, RECONNECTING_TEXT } = await import("../lib/reconnecting.ts")
-const { ApiError } = await import("../lib/api-client.ts")
+const { ApiError, DATABASE_UNREACHABLE } = await import("../lib/api-client.ts")
 
 let failures = 0
 
@@ -61,6 +61,16 @@ check("aNonRestartErrorNeverStartsIt", () => {
   trackRequest("a", true, new Error("boom"))
   assert.equal(isReconnecting(), false)
   trackRequest("a", true, null)
+  assert.equal(isReconnecting(), false)
+})
+
+check("aDatabaseOutageNeverStartsIt", () => {
+  reset()
+  trackRequest("a", true, new ApiError(DATABASE_UNREACHABLE, 503, {}, { detail: DATABASE_UNREACHABLE }))
+  assert.equal(isReconnecting(), false)
+  trackRequest("a", true, new ApiError("Too busy right now.", 503, {}, { detail: "Too busy right now." }))
+  assert.equal(isReconnecting(), true, "another 503 is still a restart")
+  trackRequest("a", true, new ApiError(DATABASE_UNREACHABLE, 503, {}, { detail: DATABASE_UNREACHABLE }))
   assert.equal(isReconnecting(), false)
 })
 

@@ -9,14 +9,17 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { ADMIN_TWO_STEP_REQUIRED, ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "@/lib/admin-two-step"
 import { toast } from "sonner"
+import { ServiceUnavailable } from "@/components/service-unavailable"
+
+const HEALTH_PAGE = "/admin/health"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAdmin, adminNeedsTwoStep, logoutDestination } = useAuth()
+  const { user, isLoading, isAdmin, adminNeedsTwoStep, logoutDestination, unavailable } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !(unavailable && !user)) {
       if (!user) router.replace(logoutDestination ?? `/login?next=${encodeURIComponent(pathname + window.location.search + window.location.hash)}`)
       else if (!isAdmin) router.push("/dashboard")
       else if (adminNeedsTwoStep) {
@@ -24,7 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.replace(ADMIN_TWO_STEP_SETTINGS)
       }
     }
-  }, [user, isLoading, isAdmin, adminNeedsTwoStep, router, pathname, logoutDestination])
+  }, [user, isLoading, isAdmin, adminNeedsTwoStep, router, pathname, logoutDestination, unavailable])
 
   if (isLoading) {
     return (
@@ -37,7 +40,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if (!user || !isAdmin || adminNeedsTwoStep) return null
+  const outage = !user && unavailable
+
+  if (!outage && (!user || !isAdmin || adminNeedsTwoStep)) return null
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className={cn(wideContainerClass, "py-8 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:gap-8")}>
           <AdminSidebar />
           <main className="@container min-w-0">
-            {children}
+            {outage && pathname !== HEALTH_PAGE ? <ServiceUnavailable message={outage} /> : children}
           </main>
         </div>
       </TooltipProvider>

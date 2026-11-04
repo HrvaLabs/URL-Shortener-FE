@@ -21,6 +21,7 @@ import {
   jobOutcome,
   jobScheduleText,
   memoryText,
+  outOfDate,
   responseTimeText,
   serverErrorsHint,
   problemLines,
@@ -68,7 +69,7 @@ const retryUnlessUnavailable = (failureCount: number, error: Error) =>
   !(error instanceof ApiError && error.status === 503) && retryUnlessRefused(failureCount, error)
 
 export default function AdminHealthPage() {
-  const { data, error, isPending, isError, refetch, isFetching } = useQuery({
+  const { data, error, isPending, isError, refetch, isFetching, dataUpdatedAt, errorUpdatedAt } = useQuery({
     queryKey: ["admin", "system-status"],
     queryFn: () => adminApi.getSystemStatus(),
     refetchInterval: (query) => (isMissingEndpoint(query.state.error) && !query.state.data ? false : REFRESH_MS),
@@ -76,6 +77,8 @@ export default function AdminHealthPage() {
   })
 
   const reason = unavailableReason(error)
+  const stale = outOfDate(dataUpdatedAt, errorUpdatedAt, isError)
+  const failure = reason ?? (stale && error instanceof ApiError ? error.message : undefined)
 
   return (
     <div className="space-y-8">
@@ -94,10 +97,10 @@ export default function AdminHealthPage() {
           </p>
           <LegacyHealth />
         </div>
-      ) : !data || reason ? (
+      ) : !data || failure ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
           <p role="status" className="text-sm font-medium text-destructive">
-            {reason ?? "Couldn't load the system status, so it's unknown right now. Try again."}
+            {failure ?? "Couldn't load the system status, so it's unknown right now. Try again."}
           </p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
             Retry

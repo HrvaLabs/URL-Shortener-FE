@@ -1,4 +1,4 @@
-import { ApiError } from "./api-client"
+import { ApiError, RESTART_RETRY_WINDOW_MS } from "./api-client"
 import { formatDateTime, formatTimeAgo, parseServerDateTime, plural } from "./utils"
 import type { SystemStatus, SystemStatusJob, SystemStatusSummary } from "./types"
 
@@ -45,6 +45,11 @@ const oneDecimal = (value: number) => value.toFixed(1).replace(/\.0$/, "")
 const count = (value: number) => value.toLocaleString("en-US")
 
 const present = (lines: (string | undefined)[]): string[] => lines.filter((line): line is string => line !== undefined)
+
+/** True when refreshing still fails more than the restart window after the last good answer, so the page shouldn't show that answer as current. */
+export function outOfDate(dataUpdatedAt: number, errorUpdatedAt: number, failing: boolean): boolean {
+  return failing && dataUpdatedAt > 0 && errorUpdatedAt - dataUpdatedAt > RESTART_RETRY_WINDOW_MS
+}
 
 export function unavailableReason(error: unknown): string | undefined {
   if (!(error instanceof ApiError) || error.status !== 503) return undefined

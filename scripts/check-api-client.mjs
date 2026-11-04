@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, SESSION_ENDED, adminApi, authApi, backendRestartingSince, isOutage, isRestartError, linkScreenshotPath, noteBackendAnswered, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi, withinRestartWindow } = await import("../lib/api-client.ts")
+const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, SESSION_ENDED, adminApi, authApi, backendRestartingSince, isOutage, isRestartError, linkScreenshotPath, noteBackendAnswered, noteBackendFailed, onBackendRecovered, perQueryRetry, restartTooLong, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi, withinRestartWindow } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -171,6 +171,7 @@ await check("retries wait 1 s, 2 s, 4 s, then 8 s each", () => {
   assert.deepEqual([0, 1, 2, 3, 4, 5, 20].map(retryDelay), [1000, 2000, 4000, 8000, 8000, 8000, 8000])
 })
 
+const publicCall = () => fetch("/public").then(() => noteBackendAnswered(false))
 const realNow = Date.now
 let fakeNow = 0
 const withClock = async (run) => {
@@ -198,8 +199,7 @@ await check("a restart is retried for 120 s of wall-clock time since the backend
     assert.equal(shouldRetry(3, restart), false)
     assert.equal(shouldRetry(3, new TypeError("Failed to fetch")), false)
     assert.equal(retryUnlessRefused(3, new ApiError("down", 503)), false)
-    noteBackendAnswered()
-    assert.equal(shouldRetry(40, restart), true, "an answer from the backend starts a new window")
+    assert.equal(shouldRetry(0, restart), true, "a new request starts its own window")
     assert.equal(RESTART_RETRY_WINDOW_MS, 120_000)
     assert.equal(withinRestartWindow(0, 120_000), true)
     assert.equal(withinRestartWindow(0, 120_001), false)
@@ -214,8 +214,8 @@ await check("the window counts the time a failing request took, from when it was
     }
     await assert.rejects(userApi.getMe(), (error) => error.status === 502 && isRestartError(error))
     assert.equal(backendRestartingSince(), 5_000_000)
-    fakeNow = 5_000_000 + RESTART_RETRY_WINDOW_MS + 1
-    assert.equal(shouldRetry(1, new ApiError("down", 502)), false)
+    assert.equal(restartTooLong(5_000_000 + RESTART_RETRY_WINDOW_MS), false)
+    assert.equal(restartTooLong(5_000_000 + RESTART_RETRY_WINDOW_MS + 1), true, "the outage is timed from when the failing request was sent")
   }))
 
 await check("a network failure starts the window when the request was sent", () =>
@@ -275,9 +275,59 @@ await check("a request made after a long restart gets a new window; the one stil
     assert.equal(backendRestartingSince(), 2_000_000)
     fakeNow += 60_000
     assert.equal(shouldRetry(0, restart), true, "a new request starts a new window")
-    assert.equal(backendRestartingSince(), fakeNow)
+    assert.equal(backendRestartingSince(), 2_000_000, "the outage itself still dates from its first failure")
+    assert.equal(restartTooLong(fakeNow), true)
     fakeNow += 30_000
     assert.equal(shouldRetry(3, restart), true)
+  }))
+
+await check("each query times its retries from its own first failure, however long the outage has lasted", () =>
+  withClock(() => {
+    const restart = new ApiError("Can't reach hrva.cc right now.", 502)
+    const badges = perQueryRetry("badges", shouldRetry)
+    const analytics = perQueryRetry("analytics", retryUnlessRefused)
+    fakeNow = 3_000_000
+    assert.equal(badges(0, restart), true)
+    fakeNow += 105_000
+    assert.equal(analytics(0, restart), true, "a query that starts failing late opens its own window")
+    fakeNow += 20_000
+    assert.equal(badges(6, restart), false, "the early query gives up after its 2 minutes")
+    assert.equal(analytics(4, restart), true, "the late query keeps going")
+    fakeNow += 100_001
+    assert.equal(analytics(9, restart), false, "and its chain is bounded too")
+    assert.equal(perQueryRetry("badges", badges), badges, "wrapping twice keeps one wrapper")
+    assert.equal(shouldRetry(0, restart), true, "a call outside a query starts its own chain")
+  }))
+
+await check("the backend coming back is announced once, so pages that failed load again", () =>
+  withClock(async () => {
+    let heard = 0
+    const stop = onBackendRecovered(() => {
+      heard += 1
+    })
+    fakeNow = realNow() + 86_400_000
+    noteBackendFailed(fakeNow)
+    noteBackendAnswered(false)
+    assert.equal(heard, 1, "any answer after a restart")
+    noteBackendAnswered(true)
+    assert.equal(heard, 1, "only once")
+    fakeNow += 6_000
+    stored.set("auth-token", "Bearer kept")
+    answer = () => problem(503, DATABASE_UNREACHABLE)
+    await userApi.getMe().catch(() => undefined)
+    answer = () => new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "Content-Type": "application/json" } })
+    stored.delete("auth-token")
+    await publicCall()
+    assert.equal(heard, 1, "an anonymous answer during an outage proves nothing")
+    stored.set("auth-token", "Bearer kept")
+    await userApi.getMe()
+    assert.equal(heard, 2, "a signed-in answer after an outage")
+    fakeNow += 6_000
+    noteBackendFailed(fakeNow)
+    answer = () => problem(503, DATABASE_UNREACHABLE)
+    await userApi.getMe().catch(() => undefined)
+    assert.equal(heard, 3, "a restart that ends in an outage answer counts too")
+    stop()
   }))
 
 await check("a database outage 503 is an outage: never retried, no Reconnecting, not a restart", async () => {
@@ -354,6 +404,37 @@ await check("refreshUser applies its result only while the token it asked with i
   assert.ok(body.indexOf("answerToRefusal(") > failure && body.indexOf("answerToRefusal(") < removal, "a 401 or 403 asks answerToRefusal before removing the token")
 })
 
+await check("the auth context guards its rechecks, resets refusals, renews on activity and recovers on its own", async () => {
+  const { readFileSync } = await import("node:fs")
+  const auth = readFileSync(new URL("../lib/auth-context.tsx", import.meta.url), "utf8")
+  assert.match(auth, /if \(checking\.current\) return\s+checking\.current = true/, "a recheck is skipped while one runs")
+  assert.match(auth, /setInterval\(recheck, UNAVAILABLE_RECHECK_MS\)/)
+  assert.match(auth, /onBackendRecovered\(recheck\)/)
+  assert.match(auth, /setUnavailable\(COULDNT_CHECK_SIGN_IN\)/)
+  const signIn = auth.slice(auth.indexOf("const completeSignIn"), auth.indexOf("const login"))
+  const endSession = auth.slice(auth.indexOf("const endSession"), auth.indexOf("const logout"))
+  assert.match(signIn, /refusals\.current = 0/)
+  assert.match(endSession, /refusals\.current = 0/)
+  assert.match(auth, /dueForRenewal\(lastRenewedAt\.current, now\)/)
+  assert.match(auth, /userApi\.renewSession\(\)/)
+  assert.match(auth, /addEventListener\("pointerdown", renewOnActivity\)/)
+  assert.match(auth, /addEventListener\("keydown", renewOnActivity\)/)
+  const providers = readFileSync(new URL("../app/providers.tsx", import.meta.url), "utf8")
+  assert.match(providers, /timeRetriesPerQuery\(client\)/)
+  assert.match(providers, /refetchFailedQueriesOnRecovery\(client\)/)
+})
+
+await check("renewing a session posts to the renew endpoint and keeps the new token", async () => {
+  noteBackendAnswered()
+  sent.length = 0
+  stored.set("auth-token", "Bearer old")
+  answer = () => new Response(null, { status: 204, headers: { Authorization: "Bearer renewed" } })
+  await userApi.renewSession()
+  assert.equal(sent[0].method, "POST")
+  assert.match(sent[0].url, /\/users\/me\/sessions\/renew$/)
+  assert.equal(localStorage.getItem("auth-token"), "Bearer renewed")
+})
+
 await check("the signed-in pages show an outage instead of the sign-in form", async () => {
   const { readFileSync } = await import("node:fs")
   for (const file of ["../app/admin/layout.tsx", "../app/dashboard/layout.tsx", "../components/protected-route.tsx"]) {
@@ -365,7 +446,7 @@ await check("the signed-in pages show an outage instead of the sign-in form", as
   assert.match(admin, /if \(!isLoading && !\(unavailable && !user\)\)/)
   assert.match(admin, /pathname !== HEALTH_PAGE \? <ServiceUnavailable message=\{outage\} \/> : children/)
   const auth = readFileSync(new URL("../lib/auth-context.tsx", import.meta.url), "utf8")
-  assert.match(auth, /if \(!unavailable \|\| user\) return\s+const recheck = setInterval\(\(\) => void refreshUser\(\), UNAVAILABLE_RECHECK_MS\)/)
+  assert.match(auth, /if \(!unavailable \|\| user\) return\s+const timer = setInterval\(recheck, UNAVAILABLE_RECHECK_MS\)/)
 })
 
 if (failures > 0) {

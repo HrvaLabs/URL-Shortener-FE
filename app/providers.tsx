@@ -3,6 +3,7 @@
 import { ThemeProvider } from "next-themes"
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ApiError, retryDelay, shouldRetry } from "@/lib/api-client"
+import { refetchFailedQueriesOnRecovery, timeRetriesPerQuery } from "@/lib/query-client"
 import { AuthProvider } from "@/lib/auth-context"
 import { ReconnectingNotice } from "@/components/reconnecting-notice"
 import { trackMutation, trackQuery } from "@/lib/reconnecting"
@@ -19,7 +20,7 @@ const createQueryClient = () => {
   const mutationCache = new MutationCache({ onError: reloadUnlessApiError })
   queryCache.subscribe(trackQuery)
   mutationCache.subscribe(trackMutation(mutationCache))
-  return new QueryClient({
+  const client = new QueryClient({
     queryCache,
     mutationCache,
     defaultOptions: {
@@ -33,6 +34,9 @@ const createQueryClient = () => {
       },
     },
   })
+  timeRetriesPerQuery(client)
+  refetchFailedQueriesOnRecovery(client)
+  return client
 }
 
 export function Providers({ children }: { children: ReactNode }) {

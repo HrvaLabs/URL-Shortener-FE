@@ -4,9 +4,9 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ApiError, CANT_REACH, REQUEST_FAILED, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, shouldRetry, userApi } from "./api-client"
+import { ApiError, CANT_REACH, REQUEST_FAILED, authApi, isRestartError, onAdminTwoStepRequired, onBackendRecovered, onSessionEnded, retryDelay, shouldRetryFrom, userApi } from "./api-client"
 import { startRetrying, stopRetrying } from "./reconnecting"
-import { answerToRefusal } from "./session-check"
+import { COULDNT_CHECK_SIGN_IN, answerToRefusal, dueForRenewal } from "./session-check"
 import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
 import { ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "./admin-two-step"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
@@ -44,12 +44,13 @@ let meRuns = 0
 
 async function fetchMeThroughRestart(token: string): Promise<UserDto | null> {
   const retryKey = `auth:me:${meRuns++}`
+  const startedAt = Date.now()
   try {
     for (let failureCount = 0; ; failureCount++) {
       try {
         return await userApi.getMe()
       } catch (err) {
-        if (!isRestartError(err) || !shouldRetry(failureCount, err as Error)) throw err
+        if (!isRestartError(err) || !shouldRetryFrom(startedAt, failureCount, err as Error)) throw err
         startRetrying(retryKey)
         await pause(retryDelay(failureCount))
         if (localStorage.getItem("auth-token") !== token) return null
@@ -68,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [logoutDestination, setLogoutDestination] = useState<string | null>(null)
   const [unavailable, setUnavailable] = useState<string | null>(null)
   const refusals = useRef(0)
+  const checking = useRef(false)
+  const lastRenewedAt = useRef<number | null>(null)
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem("auth-token")
@@ -90,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         if (answerToRefusal(token, Date.now(), refusals.current, err.message) === "wait") {
           refusals.current += 1
-          setUnavailable(err.message)
+          setUnavailable(COULDNT_CHECK_SIGN_IN)
           return
         }
         refusals.current = 0
@@ -111,15 +114,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser()
   }, [refreshUser])
 
+  const recheck = useCallback(() => {
+    if (checking.current) return
+    checking.current = true
+    void refreshUser().finally(() => {
+      checking.current = false
+    })
+  }, [refreshUser])
+
   useEffect(() => {
     if (!unavailable || user) return
-    const recheck = setInterval(() => void refreshUser(), UNAVAILABLE_RECHECK_MS)
-    return () => clearInterval(recheck)
-  }, [unavailable, user, refreshUser])
+    const timer = setInterval(recheck, UNAVAILABLE_RECHECK_MS)
+    const stopListening = onBackendRecovered(recheck)
+    return () => {
+      clearInterval(timer)
+      stopListening()
+    }
+  }, [unavailable, user, recheck])
+
+  useEffect(() => {
+    if (!user) return
+    const renewOnActivity = () => {
+      const now = Date.now()
+      if (!dueForRenewal(lastRenewedAt.current, now)) return
+      lastRenewedAt.current = now
+      userApi.renewSession().catch(() => undefined)
+    }
+    window.addEventListener("pointerdown", renewOnActivity)
+    window.addEventListener("keydown", renewOnActivity)
+    return () => {
+      window.removeEventListener("pointerdown", renewOnActivity)
+      window.removeEventListener("keydown", renewOnActivity)
+    }
+  }, [user])
 
   const completeSignIn = useCallback((signedIn: SignedIn) => {
     queryClient.clear()
     localStorage.setItem("auth-token", signedIn.token)
+    refusals.current = 0
+    lastRenewedAt.current = Date.now()
     setLogoutDestination(null)
     setUnavailable(null)
     setUser(signedIn.user)
@@ -143,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     toast.dismiss(REAUTH_TOAST_ID)
     localStorage.removeItem("auth-token")
     queryClient.clear()
+    refusals.current = 0
     setLogoutDestination(destination)
     setUnavailable(null)
     setUser(null)

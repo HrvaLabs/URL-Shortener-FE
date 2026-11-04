@@ -33,6 +33,7 @@ const {
   jobGroups,
   jobScheduleText,
   problemLines,
+  outOfDate,
   SCREENSHOTS_SET_UP,
   VIRUSTOTAL_SET_UP,
 } = systemStatus
@@ -425,6 +426,14 @@ check("a failed job gives its plain reason, and the raw error stays whole", () =
   assert.equal(jobErrorText(failed), "org.springframework.transaction.CannotCreateTransactionException: Could not open JPA EntityManager")
   assert.equal(jobErrorReason(job({ lastOutcome: "FAILED", lastError: "x", lastReason: null })), undefined)
   assert.equal(jobErrorReason(job({ lastOutcome: "OK", lastReason: "The database wasn't reachable." })), undefined)
+})
+
+check("a page that can't refresh for longer than the restart window stops looking current", () => {
+  const good = 1_000_000
+  assert.equal(outOfDate(good, good + 30_000, true), false, "a short restart keeps the last answer with a note")
+  assert.equal(outOfDate(good, good + 120_001, true), true)
+  assert.equal(outOfDate(good, good + 120_001, false), false, "not while refreshes work")
+  assert.equal(outOfDate(0, 500_000, true), false, "nothing loaded yet is the first-load error")
 })
 
 console.log("ok")

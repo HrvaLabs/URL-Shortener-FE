@@ -85,35 +85,105 @@ export const retryDelay = (attempt: number): number =>
 
 let restartingSince: number | null = null
 
-/** When the backend first failed to answer (a network failure, 502, or a 503/504 that isn't a database outage); null once it answers again. */
+let outageSeen = false
+
+let lastRecoveryAt = Number.NEGATIVE_INFINITY
+
+const RECOVERY_NOTICE_GAP_MS = 5_000
+
+const recoveryListeners = new Set<() => void>()
+
+/** When the backend first stopped answering (a network failure, 502, or a 503/504 that isn't an outage); null once it answers again. The UI times "Reconnecting…" and "Can't reach hrva.cc" from this. */
 export const backendRestartingSince = (): number | null => restartingSince
+
+/** True once the backend has been silent for longer than `RESTART_RETRY_WINDOW_MS`. */
+export const restartTooLong = (now: number): boolean => restartingSince !== null && !withinRestartWindow(restartingSince, now)
+
+/** Called when the backend answers again after a restart, or a signed-in request gets a real answer after an outage; at most once every 5 seconds. */
+export const onBackendRecovered = (listener: () => void): (() => void) => {
+  recoveryListeners.add(listener)
+  return () => {
+    recoveryListeners.delete(listener)
+  }
+}
 
 export const noteBackendFailed = (at: number): void => {
   restartingSince ??= at
 }
 
-export const noteBackendAnswered = (): void => {
-  restartingSince = null
+const announceRecovery = (now: number): void => {
+  if (now - lastRecoveryAt < RECOVERY_NOTICE_GAP_MS) return
+  lastRecoveryAt = now
+  for (const listener of recoveryListeners) listener()
 }
 
-/** True while less than `RESTART_RETRY_WINDOW_MS` of wall-clock time, requests included, has passed since the backend stopped answering. A request's first failure after the window has run out starts a new one. */
+const noteOutage = (now = Date.now()): void => {
+  const wasRestarting = restartingSince !== null
+  outageSeen = true
+  restartingSince = null
+  if (wasRestarting) announceRecovery(now)
+}
+
+export const noteBackendAnswered = (signedIn = false, now = Date.now()): void => {
+  const recovered = restartingSince !== null || (outageSeen && signedIn)
+  restartingSince = null
+  if (signedIn) outageSeen = false
+  if (recovered) announceRecovery(now)
+}
+
+/** True while less than `RESTART_RETRY_WINDOW_MS` of wall-clock time, requests included, has passed since `since`. */
 export const withinRestartWindow = (since: number, now: number): boolean => now - since <= RESTART_RETRY_WINDOW_MS
 
-export const shouldRetry = (failureCount: number, error: Error): boolean => {
+/** Whether a retry chain that started at `chainStartedAt` should try again: never for an outage, through a restart for 2 minutes, once for anything else. */
+export const shouldRetryFrom = (chainStartedAt: number, failureCount: number, error: Error, now = Date.now()): boolean => {
   if (isOutage(error)) return false
   if (!isRestartError(error)) return failureCount < RETRIES_OTHER_ERRORS
-  const now = Date.now()
-  if (failureCount === 0 && restartingSince !== null && !withinRestartWindow(restartingSince, now)) restartingSince = null
   noteBackendFailed(now)
-  return withinRestartWindow(restartingSince ?? now, now)
+  return withinRestartWindow(chainStartedAt, now)
+}
+
+let activeChainStart: number | null = null
+
+let looseChainStart: number | null = null
+
+/** A retry decision; inside `perQueryRetry` the window is the query's own, otherwise a chain starts at each first failure. */
+export const shouldRetry = (failureCount: number, error: Error): boolean => {
+  const now = Date.now()
+  if (activeChainStart === null && (failureCount === 0 || looseChainStart === null)) looseChainStart = now
+  return shouldRetryFrom(activeChainStart ?? looseChainStart ?? now, failureCount, error, now)
 }
 
 export const retryUnlessRefused = (failureCount: number, error: Error): boolean =>
   !(error instanceof ApiError && error.status >= 400 && error.status < 500) && shouldRetry(failureCount, error)
 
-const noteAnswer = (startedAt: number, status: number, problem: Record<string, unknown>) => {
-  if (isRestartError(new ApiError("", status, {}, problem))) noteBackendFailed(startedAt)
-  else noteBackendAnswered()
+type RetryDecision<E> = (failureCount: number, error: E) => boolean
+
+const chainStarts = new Map<string, number>()
+
+const perQueryRetries = new WeakSet<object>()
+
+/** Times `retry`'s restart window from this query's own first failure, so a query that starts failing late in a long outage still gets its 2 minutes. */
+export const perQueryRetry = <E>(queryHash: string, retry: RetryDecision<E>): RetryDecision<E> => {
+  if (perQueryRetries.has(retry)) return retry
+  const wrapped: RetryDecision<E> = (failureCount, error) => {
+    const now = Date.now()
+    if (failureCount === 0 || !chainStarts.has(queryHash)) chainStarts.set(queryHash, now)
+    activeChainStart = chainStarts.get(queryHash) ?? now
+    try {
+      return retry(failureCount, error)
+    } finally {
+      activeChainStart = null
+    }
+  }
+  perQueryRetries.add(wrapped)
+  return wrapped
+}
+
+const noteAnswer = (startedAt: number, status: number, problem: Record<string, unknown>, signedIn: boolean) => {
+  const error = new ApiError("", status, {}, problem)
+  if (isRestartError(error)) noteBackendFailed(startedAt)
+  else if (isOutage(error)) noteOutage()
+  else noteBackendAnswered(signedIn)
 }
 
 interface PageWrapper {
@@ -214,13 +284,13 @@ async function request<T>(
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
-    noteAnswer(startedAt, response.status, problemMembers(errorBody))
+    noteAnswer(startedAt, response.status, problemMembers(errorBody), token !== null)
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
-  noteBackendAnswered()
+  noteBackendAnswered(token !== null)
   keepRenewedToken(token, response)
 
   if (response.status === 204 || response.status === 202) return {} as T
@@ -255,13 +325,13 @@ async function download(path: string, cache?: RequestCache): Promise<Response> {
   if (!response.ok) {
     const errorBody = await readBody(response).catch(() => undefined)
     const message = errorMessage(errorBody, response.status)
-    noteAnswer(startedAt, response.status, problemMembers(errorBody))
+    noteAnswer(startedAt, response.status, problemMembers(errorBody), token !== null)
     endedSession(token, response.status, message)
     adminTwoStepRequired(response.status, message)
     throw new ApiError(message, response.status, validationFields(errorBody), problemMembers(errorBody))
   }
 
-  noteBackendAnswered()
+  noteBackendAnswered(token !== null)
   keepRenewedToken(token, response)
   return response
 }
@@ -428,6 +498,8 @@ export const apiKeyApi = {
 export const userApi = {
   getMe: () =>
     request<UserDto>("GET", "/users/me"),
+  renewSession: () =>
+    request<Record<string, never>>("POST", "/users/me/sessions/renew"),
   getAll: (filters: UserFilters = {}, page = 0, size = 20, sort?: string, order?: string) => {
     const params = new URLSearchParams()
     params.set("page", String(page))

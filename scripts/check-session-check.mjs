@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import "./resolve-ts-imports.mjs"
 
-const { tokenExpired, answerToRefusal } = await import("../lib/session-check.ts")
+const { tokenExpired, answerToRefusal, COULDNT_CHECK_SIGN_IN, RENEW_EVERY_MS, dueForRenewal } = await import("../lib/session-check.ts")
 const { SESSION_ENDED } = await import("../lib/api-client.ts")
 
 let failures = 0
@@ -42,6 +42,17 @@ check("the first refusal of an unexpired token waits; the second in a row signs 
   assert.equal(answerToRefusal(live, NOW, 0, "Sign in to continue."), "wait")
   assert.equal(answerToRefusal(live, NOW, 0, "Access denied"), "wait")
   assert.equal(answerToRefusal(live, NOW, 1, "Sign in to continue."), "sign-out")
+})
+
+check("a waiting refusal says the sign-in couldn't be checked, not the refusal", () => {
+  assert.equal(COULDNT_CHECK_SIGN_IN, "hrva.cc couldn't check your sign-in.")
+})
+
+check("activity renews the sign-in at once in a new tab, then at most every 5 minutes", () => {
+  assert.equal(RENEW_EVERY_MS, 300_000)
+  assert.equal(dueForRenewal(null, NOW), true)
+  assert.equal(dueForRenewal(NOW - 299_999, NOW), false)
+  assert.equal(dueForRenewal(NOW - 300_000, NOW), true)
 })
 
 if (failures > 0) process.exit(1)

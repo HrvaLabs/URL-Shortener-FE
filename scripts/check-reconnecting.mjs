@@ -4,7 +4,8 @@ import { MutationCache, QueryCache, QueryClient, QueryObserver } from "@tanstack
 import "./resolve-ts-imports.mjs"
 
 const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, subscribeReconnecting, RECONNECTING_TEXT } = await import("../lib/reconnecting.ts")
-const { ApiError, DATABASE_UNREACHABLE } = await import("../lib/api-client.ts")
+const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, noteBackendAnswered, noteBackendFailed } = await import("../lib/api-client.ts")
+const { refetchFailedQueries, timeRetriesPerQuery } = await import("../lib/query-client.ts")
 
 let failures = 0
 
@@ -72,6 +73,19 @@ check("aDatabaseOutageNeverStartsIt", () => {
   assert.equal(isReconnecting(), true, "another 503 is still a restart")
   trackRequest("a", true, new ApiError(DATABASE_UNREACHABLE, 503, {}, { detail: DATABASE_UNREACHABLE }))
   assert.equal(isReconnecting(), false)
+})
+
+check("itGoesOffOnceTheBackendHasBeenSilentLongerThanTheWindowEvenWhilePollsRetry", () => {
+  reset()
+  noteBackendAnswered()
+  noteBackendFailed(Date.now() - RESTART_RETRY_WINDOW_MS + 10_000)
+  trackRequest("a", true, restart())
+  assert.equal(isReconnecting(), true, "within the window")
+  assert.equal(isReconnecting(Date.now() + 10_001), false, "past the window, measured from the outage's start")
+  noteBackendAnswered()
+  assert.equal(isReconnecting(Date.now() + 10_001), true, "a new outage starts a new window")
+  reset()
+  noteBackendAnswered()
 })
 
 check("aRestartErrorStartsItWhileFetchingAndStopsWhenFetchingEnds", () => {
@@ -217,6 +231,30 @@ await checkAsync("aMutationRetriedThroughARestartTurnsItOnAndOffWhenCleared", as
   assert.equal(isReconnecting(), false)
   await settle()
   assert.equal(isReconnecting(), false)
+})
+
+await checkAsync("failedQueriesOnScreenLoadAgainWhenAsked", async () => {
+  reset()
+  const client = realClient(false)
+  let calls = 0
+  const unsubscribe = observe(client, () => (++calls === 1 ? Promise.reject(restart()) : Promise.resolve("rows")), ["bio"])
+  await waitUntil(() => client.getQueryState(["bio"])?.status === "error", "the query to fail")
+  await refetchFailedQueries(client)
+  assert.equal(client.getQueryData(["bio"]), "rows")
+  assert.equal(calls, 2)
+  unsubscribe()
+  await settle()
+})
+
+await checkAsync("everyQueryGetsItsOwnRetryWindow", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: (count) => count < 1 } } })
+  timeRetriesPerQuery(client)
+  const one = client.defaultQueryOptions({ queryKey: ["one"] })
+  const two = client.defaultQueryOptions({ queryKey: ["two"] })
+  assert.equal(typeof one.retry, "function")
+  assert.notEqual(one.retry, two.retry, "each query has its own wrapper")
+  assert.equal(client.defaultQueryOptions(one), one, "defaulted options stay as they are")
+  assert.equal(client.defaultQueryOptions({ queryKey: ["off"], retry: false }).retry, false)
 })
 
 const notice = readFileSync(new URL("../components/reconnecting-notice.tsx", import.meta.url), "utf8")

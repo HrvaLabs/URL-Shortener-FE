@@ -72,6 +72,8 @@ export default function AdminHealthPage() {
     retry: retryUnlessUnavailable,
   })
 
+  const reason = unavailableReason(error)
+
   return (
     <div className="space-y-8">
       <PageMeta title="Admin — Health" description={PAGE_DESCRIPTION} />
@@ -89,10 +91,10 @@ export default function AdminHealthPage() {
           </p>
           <LegacyHealth />
         </div>
-      ) : !data ? (
+      ) : !data || reason ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm text-destructive">
-            {unavailableReason(error) ?? "Couldn't load the system status, so it's unknown right now. Try again."}
+          <p role="status" className="text-sm font-medium text-destructive">
+            {reason ?? "Couldn't load the system status, so it's unknown right now. Try again."}
           </p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
             Retry
@@ -102,7 +104,7 @@ export default function AdminHealthPage() {
         <>
           {isError && (
             <p role="status" className="text-sm text-warning">
-              {unavailableReason(error) ? `${unavailableReason(error)} What you see may be out of date.` : "The last refresh failed, so this may be out of date."}{" "}
+              The last refresh failed, so this may be out of date.{" "}
               <button type="button" onClick={() => refetch()} disabled={isFetching} className="font-medium underline underline-offset-2">
                 Retry
               </button>

@@ -99,11 +99,11 @@ check("milliseconds", () => {
 })
 
 check("response time is typical and slowest 5%", () => {
-  assert.equal(responseTimeText(62, 240), `Typical 62 ms ${DOT} slowest 5% 240 ms`)
-  assert.equal(responseTimeText(1.2, 9.6), `Typical 1.2 ms ${DOT} slowest 5% 9.6 ms`)
+  assert.equal(responseTimeText(62, 240), `Typical\u00A062 ms ${DOT} slowest\u00A05%\u00A0240 ms`)
+  assert.equal(responseTimeText(1.2, 9.6), `Typical\u00A01.2 ms ${DOT} slowest\u00A05%\u00A09.6 ms`)
   assert.equal(responseTimeText(null, null), "No requests timed")
   assert.equal(responseTimeText(62, null), "Typical 62 ms")
-  assert.equal(responseTimeText(null, 240), "Slowest 5% 240 ms")
+  assert.equal(responseTimeText(null, 240), "Slowest\u00A05%\u00A0240 ms")
 })
 
 check("server errors carry their share of requests", () => {
@@ -142,8 +142,8 @@ check("bytes", () => {
 })
 
 check("the server lines", () => {
-  assert.equal(uptimeText(11520), "up 3 h 12 min")
-  assert.equal(uptimeText(45), "up 45 s")
+  assert.equal(uptimeText(11520), "3 h 12 min")
+  assert.equal(uptimeText(45), "45 s")
   assert.equal(uptimeText(null), "Unknown")
   assert.equal(startupText(25.5), "started in 25.5 s")
   assert.equal(startupText(null), undefined)

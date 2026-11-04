@@ -88,9 +88,9 @@ export function formatByteSize(bytes: number): string {
 }
 
 export function responseTimeText(p50Ms: number | null, p95Ms: number | null): string {
-  if (p50Ms !== null && p95Ms !== null) return `Typical ${formatMilliseconds(p50Ms)} ${DOT} slowest 5% ${formatMilliseconds(p95Ms)}`
+  if (p50Ms !== null && p95Ms !== null) return `Typical\u00A0${formatMilliseconds(p50Ms)} ${DOT} slowest\u00A05%\u00A0${formatMilliseconds(p95Ms)}`
   if (p50Ms !== null) return `Typical ${formatMilliseconds(p50Ms)}`
-  if (p95Ms !== null) return `Slowest 5% ${formatMilliseconds(p95Ms)}`
+  if (p95Ms !== null) return `Slowest\u00A05%\u00A0${formatMilliseconds(p95Ms)}`
   return "No requests timed"
 }
 
@@ -100,7 +100,7 @@ export function serverErrorsHint(serverErrors: number, requests: number): string
 }
 
 export function uptimeText(uptimeSeconds: number | null): string {
-  return uptimeSeconds === null ? UNKNOWN : `up ${formatSeconds(uptimeSeconds)}`
+  return uptimeSeconds === null ? UNKNOWN : formatSeconds(uptimeSeconds)
 }
 
 export function startupText(startupSeconds: number | null): string | undefined {

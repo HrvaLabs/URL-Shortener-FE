@@ -14,14 +14,17 @@ import {
   ALL_SYSTEMS_WORKING,
   NEEDS_V230_BACKEND,
   garbageCollectionText,
+  jobErrorReason,
   jobErrorText,
+  jobGroups,
   jobLastRunLines,
   jobOutcome,
+  jobScheduleText,
   memoryText,
   responseTimeText,
   serverErrorsHint,
+  problemLines,
   serviceRows,
-  sortedJobs,
   startupText,
   trafficTitle,
   unavailableReason,
@@ -29,7 +32,7 @@ import {
   type ServiceKey,
   type ServiceState,
 } from "@/lib/system-status"
-import type { SystemStatus, SystemStatusJob } from "@/lib/types"
+import type { SystemStatus, SystemStatusJob, SystemStatusSummary } from "@/lib/types"
 import { cn, formatDateTime, plural } from "@/lib/utils"
 
 const REFRESH_MS = 30_000
@@ -110,7 +113,7 @@ export default function AdminHealthPage() {
               </button>
             </p>
           )}
-          <StatusLine problems={data.summary.problems} />
+          <StatusLine summary={data.summary} />
           <Traffic traffic={data.traffic} />
           <Services status={data} />
           <Server server={data.server} />
@@ -130,7 +133,8 @@ function StatePill({ state, label }: { state: ServiceState; label: string }) {
   )
 }
 
-function StatusLine({ problems }: { problems: string[] }) {
+function StatusLine({ summary }: { summary: SystemStatusSummary }) {
+  const problems = problemLines(summary)
   if (problems.length === 0) {
     return (
       <div role="status" className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/10 p-4 text-sm font-medium">
@@ -148,7 +152,8 @@ function StatusLine({ problems }: { problems: string[] }) {
       <ul className="mt-2 list-disc space-y-1 pl-10">
         {problems.map((problem, index) => (
           <li key={index} className="[overflow-wrap:anywhere]">
-            {problem}
+            {problem.text}
+            {problem.detail && <span className="text-muted-foreground"> {problem.detail}</span>}
           </li>
         ))}
       </ul>
@@ -164,7 +169,11 @@ function Traffic({ traffic }: { traffic: SystemStatus["traffic"] }) {
         { label: "Requests", value: traffic.requests.toLocaleString("en-US") },
         { label: "Redirects", value: traffic.redirects.toLocaleString("en-US") },
         { label: "Response time", value: <span className="text-lg">{responseTimeText(traffic.p50Ms, traffic.p95Ms)}</span> },
-        { label: "Server errors (5xx)", value: traffic.serverErrors.toLocaleString("en-US"), hint: serverErrorsHint(traffic.serverErrors, traffic.requests) },
+        {
+          label: "Server errors (5xx)",
+          value: traffic.serverErrors.toLocaleString("en-US"),
+          hint: serverErrorsHint(traffic.serverErrors, traffic.requests, traffic.recentServerErrors, traffic.recentMinutes),
+        },
       ]}
     />
   )
@@ -202,6 +211,7 @@ function Server({ server }: { server: SystemStatus["server"] }) {
   return (
     <StatGrid
       title="Server"
+      gridClassName="grid gap-4 @md:grid-cols-2 @3xl:grid-cols-3 @6xl:grid-cols-5"
       items={[
         { label: "Version", value: server.version ?? "Unknown" },
         { label: "Uptime", value: uptimeText(server.uptimeSeconds) },
@@ -214,6 +224,7 @@ function Server({ server }: { server: SystemStatus["server"] }) {
 }
 
 function Jobs({ jobs }: { jobs: SystemStatusJob[] }) {
+  const groups = jobGroups(jobs)
   return (
     <section className="space-y-3">
       <div>
@@ -223,25 +234,52 @@ function Jobs({ jobs }: { jobs: SystemStatusJob[] }) {
       {jobs.length === 0 ? (
         <p className="rounded-xl border bg-card px-5 py-8 text-center text-sm text-muted-foreground">No background jobs reported.</p>
       ) : (
-        <div className="rounded-xl border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job</TableHead>
-                <TableHead className="hidden @2xl:table-cell">Last run</TableHead>
-                <TableHead>Outcome</TableHead>
-                <TableHead className="hidden @4xl:table-cell">Error</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedJobs(jobs).map((job) => (
-                <JobRow key={job.name} job={job} />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <>
+          <JobTable jobs={groups.main} />
+          {groups.internal.length > 0 && (
+            <div className="space-y-3 pt-3">
+              <div>
+                <h3 className="text-sm font-semibold">Internal jobs</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Keep the server&apos;s copies of settings and lists, and its metrics, up to date.</p>
+              </div>
+              <JobTable jobs={groups.internal} />
+            </div>
+          )}
+        </>
       )}
     </section>
+  )
+}
+
+function JobTable({ jobs }: { jobs: SystemStatusJob[] }) {
+  return (
+    <div className="rounded-xl border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Job</TableHead>
+            <TableHead className="hidden @2xl:table-cell">Last run</TableHead>
+            <TableHead>Outcome</TableHead>
+            <TableHead className="hidden @4xl:table-cell">Error</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {jobs.map((job) => (
+            <JobRow key={job.name} job={job} />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}
+
+function JobError({ reason, error, failed }: { reason: string | undefined; error: string; failed: boolean }) {
+  if (!reason) return <>{error}</>
+  return (
+    <>
+      <span className={cn("block", failed && "font-medium")}>{reason}</span>
+      <span className="mt-0.5 block text-muted-foreground">{error}</span>
+    </>
   )
 }
 
@@ -250,11 +288,14 @@ function JobRow({ job }: { job: SystemStatusJob }) {
   const lastRun = jobLastRunLines(job)
   const failed = outcome.state === "down"
   const error = jobErrorText(job)
+  const reason = jobErrorReason(job)
+  const schedule = jobScheduleText(job)
   return (
     <TableRow className="align-top">
       <TableCell className="align-top">
         <div className="min-w-36">
           <p className="font-medium [overflow-wrap:anywhere]">{job.label}</p>
+          {schedule && <p className="mt-0.5 text-xs tabular-nums text-muted-foreground [overflow-wrap:anywhere]">{schedule}</p>}
           <div className="mt-1 space-y-0.5 text-xs tabular-nums text-muted-foreground @2xl:hidden">
             {lastRun.map((line) => (
               <p key={line}>{line}</p>
@@ -263,7 +304,7 @@ function JobRow({ job }: { job: SystemStatusJob }) {
           {failed && (
             <p className="mt-1.5 whitespace-pre-wrap text-xs text-destructive [overflow-wrap:anywhere] @4xl:hidden">
               <span className="font-medium">Error: </span>
-              {error}
+              <JobError reason={reason} error={error} failed={failed} />
             </p>
           )}
         </div>
@@ -279,7 +320,9 @@ function JobRow({ job }: { job: SystemStatusJob }) {
         <StatePill state={outcome.state} label={outcome.label} />
       </TableCell>
       <TableCell className="hidden align-top @4xl:table-cell">
-        <p className={cn("min-w-56 whitespace-pre-wrap text-xs [overflow-wrap:anywhere]", failed ? "text-destructive" : "text-muted-foreground")}>{error}</p>
+        <p className={cn("min-w-56 whitespace-pre-wrap text-xs [overflow-wrap:anywhere]", failed ? "text-destructive" : "text-muted-foreground")}>
+          <JobError reason={reason} error={error} failed={failed} />
+        </p>
       </TableCell>
     </TableRow>
   )

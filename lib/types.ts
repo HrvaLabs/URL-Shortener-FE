@@ -681,9 +681,20 @@ export interface BlocklistStatus {
   stale: boolean
 }
 
+export interface SystemStatusProblem {
+  /** Contains `{at}` exactly when `at` is set. */
+  text: string
+  at: string | null
+  /** What stops working, or why it failed. */
+  detail: string | null
+}
+
 export interface SystemStatusSummary {
   ok: boolean
+  /** Whole sentences with any time in UTC; the v2.30 backend sends only these. */
   problems: string[]
+  /** v2.31: the same problems, with the time for the page to format. */
+  items?: SystemStatusProblem[]
 }
 
 export interface SystemStatusTraffic {
@@ -693,6 +704,8 @@ export interface SystemStatusTraffic {
   p50Ms: number | null
   p95Ms: number | null
   serverErrors: number
+  recentMinutes?: number
+  recentServerErrors?: number
 }
 
 export interface SystemStatusDatabase {
@@ -755,6 +768,13 @@ export interface SystemStatusJob {
   lastFinishedAt: string | null
   lastOutcome: JobOutcome | null
   lastError: string | null
+  /** v2.31: the last failure in plain words. */
+  lastReason?: string | null
+  /** v2.31: plumbing that keeps in-memory copies and metrics in step. */
+  internal?: boolean
+  /** v2.31: how often it runs, such as `Every 5 minutes` or `Daily`. */
+  schedule?: string | null
+  nextRunAt?: string | null
 }
 
 export interface SystemStatus {

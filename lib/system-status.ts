@@ -1,6 +1,6 @@
 import { ApiError } from "./api-client"
 import { formatDateTime, formatTimeAgo, parseServerDateTime, plural } from "./utils"
-import type { SystemStatus, SystemStatusJob } from "./types"
+import type { SystemStatus, SystemStatusJob, SystemStatusSummary } from "./types"
 
 export const ALL_SYSTEMS_WORKING = "All systems working"
 
@@ -13,6 +13,14 @@ const UNKNOWN = "Unknown"
 const DOT = String.fromCodePoint(0xb7)
 
 const NEAR_LIMIT_SHARE = 0.9
+
+const AT = "{at}"
+
+export const SCREENSHOTS_SET_UP = "Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_BROWSER_API_TOKEN."
+
+export const VIRUSTOTAL_SET_UP = "Set VIRUSTOTAL_API_KEY."
+
+const SHORT_SCHEDULE = /^Every (minute|\d+ (seconds|minutes))$/
 
 export type ServiceState = "ok" | "warning" | "down" | "off"
 
@@ -94,9 +102,26 @@ export function responseTimeText(p50Ms: number | null, p95Ms: number | null): st
   return "No requests timed"
 }
 
-export function serverErrorsHint(serverErrors: number, requests: number): string | undefined {
+export function serverErrorsHint(serverErrors: number, requests: number, recentServerErrors?: number, recentMinutes?: number): string | undefined {
   if (serverErrors === 0 || requests === 0) return undefined
-  return `${oneDecimal((serverErrors / requests) * 100)}% of requests`
+  const share = `${oneDecimal((serverErrors / requests) * 100)}% of requests`
+  if (recentServerErrors === undefined || recentMinutes === undefined) return share
+  const recent = recentServerErrors === 0 ? "none" : count(recentServerErrors)
+  return `${share}, ${recent} in the last ${plural(recentMinutes, "minute")}`
+}
+
+export interface ProblemLine {
+  text: string
+  detail?: string
+}
+
+/** The problem sentences, with each time in the browser's zone and form; the v2.30 backend's UTC sentences as they are. */
+export function problemLines(summary: SystemStatusSummary): ProblemLine[] {
+  if (!summary.items) return summary.problems.map((text) => ({ text }))
+  return summary.items.map((item) => ({
+    text: item.at === null ? item.text : item.text.replace(AT, formatDateTime(item.at)),
+    ...(item.detail ? { detail: item.detail } : {}),
+  }))
 }
 
 export function uptimeText(uptimeSeconds: number | null): string {
@@ -226,7 +251,7 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
             queuedText(screenshots.queued),
             pausedUntilText(screenshots.pausedUntil),
           ])
-        : [],
+        : [SCREENSHOTS_SET_UP],
     },
     {
       key: "virusTotal",
@@ -235,7 +260,7 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
       ...virusTotalState,
       details: virusTotal.configured
         ? present([lookupsText(virusTotal.lookupsToday, virusTotal.dailyLimit), queuedText(virusTotal.queued), pausedUntilText(virusTotal.pausedUntil)])
-        : [],
+        : [VIRUSTOTAL_SET_UP],
     },
     {
       key: "blocklists",
@@ -255,6 +280,25 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
 
 export function sortedJobs(jobs: SystemStatusJob[]): SystemStatusJob[] {
   return [...jobs.filter((job) => job.lastOutcome === "FAILED"), ...jobs.filter((job) => job.lastOutcome !== "FAILED")]
+}
+
+export interface JobGroups {
+  main: SystemStatusJob[]
+  internal: SystemStatusJob[]
+}
+
+/** The jobs people care about first, then the internal plumbing; failed jobs first in each. */
+export function jobGroups(jobs: SystemStatusJob[]): JobGroups {
+  return { main: sortedJobs(jobs.filter((job) => !job.internal)), internal: sortedJobs(jobs.filter((job) => job.internal === true)) }
+}
+
+/** How often a job runs and, unless it runs every few minutes or more often, when it runs next. */
+export function jobScheduleText(job: SystemStatusJob): string | undefined {
+  const schedule = job.schedule ?? null
+  const next = job.nextRunAt ?? null
+  if (schedule === null) return next === null ? undefined : `Next run ${formatDateTime(next)}`
+  if (next === null || SHORT_SCHEDULE.test(schedule)) return schedule
+  return `${schedule}, next run ${formatDateTime(next)}`
 }
 
 const time = (value: string) => parseServerDateTime(value).getTime()
@@ -282,4 +326,10 @@ export function jobLastRunLines(job: SystemStatusJob): string[] {
 export function jobErrorText(job: SystemStatusJob): string {
   if (jobOutcome(job).state !== "down") return "None"
   return job.lastError ?? "No error message"
+}
+
+/** The last failure in plain words, when the backend knows it. */
+export function jobErrorReason(job: SystemStatusJob): string | undefined {
+  if (jobOutcome(job).state !== "down") return undefined
+  return job.lastReason ?? undefined
 }

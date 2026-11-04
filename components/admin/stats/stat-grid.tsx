@@ -11,11 +11,12 @@ interface StatGridProps {
   title?: string
   hint?: string
   items: StatItem[]
+  gridClassName?: string
 }
 
-export function StatGrid({ title, hint, items }: StatGridProps) {
+export function StatGrid({ title, hint, items, gridClassName = "grid gap-4 @md:grid-cols-2 @4xl:grid-cols-4" }: StatGridProps) {
   const grid = (
-    <dl className="grid gap-4 @md:grid-cols-2 @4xl:grid-cols-4">
+    <dl className={gridClassName}>
       {items.map((item) => (
         <div key={item.label} className="min-w-0 rounded-xl border bg-card p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
           <dt className="text-sm text-muted-foreground">{item.label}</dt>

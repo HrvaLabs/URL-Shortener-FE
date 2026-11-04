@@ -29,6 +29,12 @@ const {
   jobOutcome,
   jobLastRunLines,
   jobErrorText,
+  jobErrorReason,
+  jobGroups,
+  jobScheduleText,
+  problemLines,
+  SCREENSHOTS_SET_UP,
+  VIRUSTOTAL_SET_UP,
 } = systemStatus
 
 const check = (name, run) => {
@@ -111,6 +117,32 @@ check("server errors carry their share of requests", () => {
   assert.equal(serverErrorsHint(3, 200), "1.5% of requests")
   assert.equal(serverErrorsHint(1, 3), "33.3% of requests")
   assert.equal(serverErrorsHint(2, 0), undefined)
+  assert.equal(serverErrorsHint(3, 200, 0, 5), "1.5% of requests, none in the last 5 minutes")
+  assert.equal(serverErrorsHint(3, 200, 2, 5), "1.5% of requests, 2 in the last 5 minutes")
+  assert.equal(serverErrorsHint(0, 200, 0, 5), undefined)
+})
+
+check("problem sentences show their time in the browser's zone and form, like the tables", () => {
+  const at = "2026-11-04T02:19:00Z"
+  const lines = problemLines({
+    ok: false,
+    problems: ["Background jobs: Turn off expired links failed at 4 November 2026 at 02:19 UTC. The database wasn't reachable."],
+    items: [
+      { text: "Background jobs: Turn off expired links failed at {at}.", at, detail: "The database wasn't reachable." },
+      { text: "Cache (Redis): not reachable.", at: null, detail: "Links still open from the database." },
+      { text: "Server errors: 82 of 290 requests in the last 60 minutes, none in the last 5 minutes.", at: null, detail: null },
+    ],
+  })
+  assert.deepEqual(lines, [
+    { text: `Background jobs: Turn off expired links failed at ${formatDateTime(at)}.`, detail: "The database wasn't reachable." },
+    { text: "Cache (Redis): not reachable.", detail: "Links still open from the database." },
+    { text: "Server errors: 82 of 290 requests in the last 60 minutes, none in the last 5 minutes." },
+  ])
+  assert.doesNotMatch(lines[0].text, /UTC/)
+})
+
+check("a v2.30 backend's sentences are shown as they are", () => {
+  assert.deepEqual(problemLines({ ok: false, problems: ["Redis: not reachable."] }), [{ text: "Redis: not reachable." }])
 })
 
 check("seconds as a duration", () => {
@@ -265,7 +297,7 @@ check("email failures and no email yet", () => {
   assert.deepEqual(none.details, ["No email sent yet", "No failures in the last 24 h"])
 })
 
-check("screenshots and VirusTotal not set up show only the pill", () => {
+check("screenshots and VirusTotal not set up name the settings to set", () => {
   const rows = serviceRows(
     status({
       screenshots: { configured: false, enabled: true, browserSecondsToday: null, browserSecondsLimit: null, queued: null, pausedUntil: null },
@@ -275,8 +307,11 @@ check("screenshots and VirusTotal not set up show only the pill", () => {
   for (const key of ["screenshots", "virusTotal"]) {
     assert.equal(row(rows, key).state, "off")
     assert.equal(row(rows, key).label, NOT_SET_UP)
-    assert.deepEqual(row(rows, key).details, [])
   }
+  assert.deepEqual(row(rows, "screenshots").details, [SCREENSHOTS_SET_UP])
+  assert.deepEqual(row(rows, "virusTotal").details, [VIRUSTOTAL_SET_UP])
+  assert.equal(SCREENSHOTS_SET_UP, "Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_BROWSER_API_TOKEN.")
+  assert.equal(VIRUSTOTAL_SET_UP, "Set VIRUSTOTAL_API_KEY.")
 })
 
 check("screenshots and VirusTotal turned off in the settings", () => {
@@ -357,6 +392,39 @@ check("job errors are shown whole", () => {
   assert.equal(jobErrorText(job()), "None")
   assert.equal(jobErrorText(job({ lastOutcome: "FAILED", lastError: null })), "No error message")
   assert.equal(jobErrorText(job({ lastStartedAt: "2026-11-03T22:00:00", lastFinishedAt: "2026-11-03T21:00:01", lastOutcome: "FAILED", lastError: "boom" })), "None")
+})
+
+check("internal jobs come after the others, failed jobs first in each group", () => {
+  const groups = jobGroups([
+    job({ name: "a" }),
+    job({ name: "gauges", internal: true }),
+    job({ name: "b", lastOutcome: "FAILED", lastError: "x" }),
+    job({ name: "settings", internal: true, lastOutcome: "FAILED", lastError: "y" }),
+    job({ name: "c", internal: false }),
+  ])
+  assert.deepEqual(groups.main.map((entry) => entry.name), ["b", "a", "c"])
+  assert.deepEqual(groups.internal.map((entry) => entry.name), ["settings", "gauges"])
+  assert.deepEqual(jobGroups([job({ name: "old" })]).internal, [], "a v2.30 backend has no internal flag")
+})
+
+check("each job says how often it runs, and when next unless it runs every few minutes", () => {
+  const next = "2026-11-05T03:30:00Z"
+  assert.equal(jobScheduleText(job({ schedule: "Daily", nextRunAt: next })), `Daily, next run ${formatDateTime(next)}`)
+  assert.equal(jobScheduleText(job({ schedule: "Weekly", nextRunAt: next })), `Weekly, next run ${formatDateTime(next)}`)
+  assert.equal(jobScheduleText(job({ schedule: "Every hour", nextRunAt: next })), `Every hour, next run ${formatDateTime(next)}`)
+  assert.equal(jobScheduleText(job({ schedule: "Every 5 minutes", nextRunAt: next })), "Every 5 minutes")
+  assert.equal(jobScheduleText(job({ schedule: "Every minute", nextRunAt: next })), "Every minute")
+  assert.equal(jobScheduleText(job({ schedule: "Every 15 seconds", nextRunAt: null })), "Every 15 seconds")
+  assert.equal(jobScheduleText(job({ schedule: null, nextRunAt: next })), `Next run ${formatDateTime(next)}`)
+  assert.equal(jobScheduleText(job()), undefined, "a v2.30 backend has no schedule")
+})
+
+check("a failed job gives its plain reason, and the raw error stays whole", () => {
+  const failed = job({ lastOutcome: "FAILED", lastError: "org.springframework.transaction.CannotCreateTransactionException: Could not open JPA EntityManager", lastReason: "The database wasn't reachable." })
+  assert.equal(jobErrorReason(failed), "The database wasn't reachable.")
+  assert.equal(jobErrorText(failed), "org.springframework.transaction.CannotCreateTransactionException: Could not open JPA EntityManager")
+  assert.equal(jobErrorReason(job({ lastOutcome: "FAILED", lastError: "x", lastReason: null })), undefined)
+  assert.equal(jobErrorReason(job({ lastOutcome: "OK", lastReason: "The database wasn't reachable." })), undefined)
 })
 
 console.log("ok")

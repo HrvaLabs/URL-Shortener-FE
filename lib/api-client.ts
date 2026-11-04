@@ -61,8 +61,6 @@ const NETWORK_FAILURE = /^(Failed to fetch|Load failed|NetworkError when attempt
 /** The backend's 503 detail while it can't reach its database (`DatabaseOutages.UNREACHABLE`). */
 export const DATABASE_UNREACHABLE = "hrva.cc can't reach its database right now. Try again in a minute."
 
-const DATABASE_OUTAGE = "database"
-
 export const RESTART_RETRY_WINDOW_MS = 120_000
 
 const FIRST_RETRY_DELAY_MS = 1_000
@@ -71,15 +69,15 @@ const LONGEST_RETRY_DELAY_MS = 8_000
 
 const RETRIES_OTHER_ERRORS = 1
 
-/** A 503 that says the server is up but its database isn't: an outage, not a restart. */
-export const isDatabaseOutage = (error: unknown): boolean =>
+/** A 503 that says the server is up but its database or cache isn't (`outage` member, or a v2.30 backend's database text): an outage, not a restart. */
+export const isOutage = (error: unknown): boolean =>
   error instanceof ApiError &&
   error.status === 503 &&
-  (error.problem.outage === DATABASE_OUTAGE || error.problem.detail === DATABASE_UNREACHABLE)
+  (typeof error.problem.outage === "string" || error.problem.detail === DATABASE_UNREACHABLE)
 
 export const isRestartError = (error: unknown): boolean =>
   error instanceof ApiError
-    ? RESTART_STATUSES.includes(error.status) && !isDatabaseOutage(error)
+    ? RESTART_STATUSES.includes(error.status) && !isOutage(error)
     : error instanceof TypeError && NETWORK_FAILURE.test(error.message)
 
 export const retryDelay = (attempt: number): number =>
@@ -98,13 +96,14 @@ export const noteBackendAnswered = (): void => {
   restartingSince = null
 }
 
-/** True while less than `RESTART_RETRY_WINDOW_MS` of wall-clock time, requests included, has passed since the backend stopped answering. */
+/** True while less than `RESTART_RETRY_WINDOW_MS` of wall-clock time, requests included, has passed since the backend stopped answering. A request's first failure after the window has run out starts a new one. */
 export const withinRestartWindow = (since: number, now: number): boolean => now - since <= RESTART_RETRY_WINDOW_MS
 
 export const shouldRetry = (failureCount: number, error: Error): boolean => {
-  if (isDatabaseOutage(error)) return false
+  if (isOutage(error)) return false
   if (!isRestartError(error)) return failureCount < RETRIES_OTHER_ERRORS
   const now = Date.now()
+  if (failureCount === 0 && restartingSince !== null && !withinRestartWindow(restartingSince, now)) restartingSince = null
   noteBackendFailed(now)
   return withinRestartWindow(restartingSince ?? now, now)
 }

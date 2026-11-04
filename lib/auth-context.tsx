@@ -1,11 +1,12 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { ApiError, CANT_REACH, REQUEST_FAILED, authApi, isRestartError, onAdminTwoStepRequired, onSessionEnded, retryDelay, shouldRetry, userApi } from "./api-client"
 import { startRetrying, stopRetrying } from "./reconnecting"
+import { answerToRefusal } from "./session-check"
 import { SESSION_ENDED_TOAST_ID, showSessionEndedOnce } from "./session-ended-toast"
 import { ADMIN_TWO_STEP_SETTINGS, ADMIN_TWO_STEP_TOAST_ID } from "./admin-two-step"
 import type { SignedIn, TwoStepMethod, UserDto } from "./types"
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [logoutDestination, setLogoutDestination] = useState<string | null>(null)
   const [unavailable, setUnavailable] = useState<string | null>(null)
+  const refusals = useRef(0)
 
   const refreshUser = useCallback(async () => {
     const token = localStorage.getItem("auth-token")
@@ -79,16 +81,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userData = await fetchMeThroughRestart(token)
       if (localStorage.getItem("auth-token") !== token) return
       if (userData) {
+        refusals.current = 0
         setUser(userData)
         setUnavailable(null)
       }
     } catch (err) {
       if (localStorage.getItem("auth-token") !== token) return
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        if (answerToRefusal(token, Date.now(), refusals.current, err.message) === "wait") {
+          refusals.current += 1
+          setUnavailable(err.message)
+          return
+        }
+        refusals.current = 0
         localStorage.removeItem("auth-token")
         setUser(null)
         setUnavailable(null)
       } else {
+        refusals.current = 0
         setUnavailable(err instanceof ApiError ? err.message : CANT_REACH)
       }
     } finally {

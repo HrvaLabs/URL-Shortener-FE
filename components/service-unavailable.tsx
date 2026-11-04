@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 
-export const STILL_SIGNED_IN = "You're still signed in. This page tries again every 30 seconds."
+export const NOT_SIGNED_OUT = "You haven't been signed out. This page tries again every 30 seconds."
 
 export function ServiceUnavailable({ message }: { message: string }) {
   const { refreshUser } = useAuth()
@@ -24,7 +24,7 @@ export function ServiceUnavailable({ message }: { message: string }) {
       <p role="status" className="text-sm font-medium text-destructive [overflow-wrap:anywhere]">
         {message}
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">{STILL_SIGNED_IN}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{NOT_SIGNED_OUT}</p>
       <Button variant="outline" size="sm" className="mt-4" onClick={retry} disabled={checking}>
         Retry
       </Button>

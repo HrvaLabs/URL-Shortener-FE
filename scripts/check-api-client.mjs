@@ -11,7 +11,7 @@ globalThis.document = { createElement: () => ({ click() {}, appendChild() {} }),
 URL.createObjectURL = () => "blob:check"
 URL.revokeObjectURL = () => {}
 
-const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, SESSION_ENDED, adminApi, authApi, backendRestartingSince, isDatabaseOutage, isRestartError, linkScreenshotPath, noteBackendAnswered, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi, withinRestartWindow } = await import("../lib/api-client.ts")
+const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, SESSION_ENDED, adminApi, authApi, backendRestartingSince, isOutage, isRestartError, linkScreenshotPath, noteBackendAnswered, onAdminTwoStepRequired, onSessionEnded, retryDelay, retryUnlessRefused, shouldRetry, urlApi, userApi, withinRestartWindow } = await import("../lib/api-client.ts")
 const { ADMIN_TWO_STEP_REQUIRED } = await import("../lib/admin-two-step.ts")
 const { VISIT_LIMIT_HINT, opensText, shortLinkOf } = await import("../lib/utils.ts")
 
@@ -215,7 +215,7 @@ await check("the window counts the time a failing request took, from when it was
     await assert.rejects(userApi.getMe(), (error) => error.status === 502 && isRestartError(error))
     assert.equal(backendRestartingSince(), 5_000_000)
     fakeNow = 5_000_000 + RESTART_RETRY_WINDOW_MS + 1
-    assert.equal(shouldRetry(0, new ApiError("down", 502)), false)
+    assert.equal(shouldRetry(1, new ApiError("down", 502)), false)
   }))
 
 await check("a network failure starts the window when the request was sent", () =>
@@ -252,22 +252,50 @@ await check("any answer from the backend closes the window: a success, a refusal
     }
   }))
 
+await check("a cache outage 503 is an outage too, shown with the backend's text", async () => {
+  noteBackendAnswered()
+  const cache = "hrva.cc can't reach its cache right now. Try again in a minute."
+  answer = () => new Response(JSON.stringify({ type: "about:blank", title: "Service Unavailable", status: 503, detail: cache, outage: "cache" }), { status: 503, headers: { "Content-Type": "application/problem+json" } })
+  const error = await userApi.getMe().catch((caught) => caught)
+  assert.equal(error.message, cache)
+  assert.equal(isOutage(error), true)
+  assert.equal(isRestartError(error), false)
+  assert.equal(shouldRetry(0, error), false)
+  assert.equal(backendRestartingSince(), null)
+  assert.equal(isOutage(new ApiError("x", 503, {}, { outage: 1 })), false, "only a string outage member counts")
+})
+
+await check("a request made after a long restart gets a new window; the one still retrying gives up", () =>
+  withClock(() => {
+    const restart = new ApiError("Can't reach hrva.cc right now.", 502)
+    fakeNow = 2_000_000
+    assert.equal(shouldRetry(0, restart), true)
+    fakeNow += RESTART_RETRY_WINDOW_MS + 1
+    assert.equal(shouldRetry(5, restart), false, "the retrying request stops at the end of its window")
+    assert.equal(backendRestartingSince(), 2_000_000)
+    fakeNow += 60_000
+    assert.equal(shouldRetry(0, restart), true, "a new request starts a new window")
+    assert.equal(backendRestartingSince(), fakeNow)
+    fakeNow += 30_000
+    assert.equal(shouldRetry(3, restart), true)
+  }))
+
 await check("a database outage 503 is an outage: never retried, no Reconnecting, not a restart", async () => {
   noteBackendAnswered()
   answer = () => problem(503, DATABASE_UNREACHABLE)
   const error = await userApi.getMe().catch((caught) => caught)
   assert.equal(error.status, 503)
   assert.equal(error.message, DATABASE_UNREACHABLE)
-  assert.equal(isDatabaseOutage(error), true)
+  assert.equal(isOutage(error), true)
   assert.equal(isRestartError(error), false)
   assert.equal(shouldRetry(0, error), false)
   assert.equal(retryUnlessRefused(0, error), false)
   assert.equal(DATABASE_UNREACHABLE, "hrva.cc can't reach its database right now. Try again in a minute.")
   const marked = new ApiError("Something else", 503, {}, { outage: "database", detail: "Something else" })
-  assert.equal(isDatabaseOutage(marked), true, "the backend's outage member is enough")
+  assert.equal(isOutage(marked), true, "the backend's outage member is enough")
   assert.equal(shouldRetry(0, marked), false)
   for (const other of [new ApiError(DATABASE_UNREACHABLE, 502, {}, { detail: DATABASE_UNREACHABLE }), new ApiError("busy", 503, {}, { detail: "Too busy right now." })]) {
-    assert.equal(isDatabaseOutage(other), false, `${other.status} ${other.message}`)
+    assert.equal(isOutage(other), false, `${other.status} ${other.message}`)
     assert.equal(isRestartError(other), true)
   }
   noteBackendAnswered()
@@ -323,6 +351,7 @@ await check("refreshUser applies its result only while the token it asked with i
   const outage = body.indexOf("setUnavailable(err instanceof ApiError ? err.message : CANT_REACH)")
   assert.ok(outage > removal, "any other failure keeps the token and says the service is unavailable")
   assert.equal(body.slice(removal + 1).includes('localStorage.removeItem("auth-token")'), false, "only a 401 or 403 removes the token")
+  assert.ok(body.indexOf("answerToRefusal(") > failure && body.indexOf("answerToRefusal(") < removal, "a 401 or 403 asks answerToRefusal before removing the token")
 })
 
 await check("the signed-in pages show an outage instead of the sign-in form", async () => {

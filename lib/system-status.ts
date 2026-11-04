@@ -51,6 +51,16 @@ export function outOfDate(dataUpdatedAt: number, errorUpdatedAt: number, failing
   return failing && dataUpdatedAt > 0 && errorUpdatedAt - dataUpdatedAt > RESTART_RETRY_WINDOW_MS
 }
 
+/** The failure to show: the current error, or while a page without data refetches after an error (TanStack clears `error` then), the last one. */
+export function shownError<E>(error: E | null, lastError: E | null, hasData: boolean): E | null {
+  return error ?? (hasData ? null : lastError)
+}
+
+/** The loading skeleton is only for the very first load; a refetch after a failure keeps showing that failure. */
+export function showsSkeleton(isPending: boolean, lastError: unknown): boolean {
+  return isPending && lastError === null
+}
+
 export function unavailableReason(error: unknown): string | undefined {
   if (!(error instanceof ApiError) || error.status !== 503) return undefined
   const { detail } = error.problem

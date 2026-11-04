@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs"
 import { MutationCache, QueryCache, QueryClient, QueryObserver } from "@tanstack/query-core"
 import "./resolve-ts-imports.mjs"
 
-const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, subscribeReconnecting, RECONNECTING_TEXT } = await import("../lib/reconnecting.ts")
-const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, noteBackendAnswered, noteBackendFailed } = await import("../lib/api-client.ts")
+const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, reconnectingState, subscribeReconnecting, notifyWhenTheWindowEnds, windowEndScheduledFor, RECONNECTING_TEXT, STILL_TRYING_TEXT } = await import("../lib/reconnecting.ts")
+const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, noteBackendAnswered, noteBackendFailed, perQueryRetry, retryChainCount, shouldRetry } = await import("../lib/api-client.ts")
 const { refetchFailedQueries, timeRetriesPerQuery } = await import("../lib/query-client.ts")
 
 let failures = 0
@@ -75,17 +75,54 @@ check("aDatabaseOutageNeverStartsIt", () => {
   assert.equal(isReconnecting(), false)
 })
 
-check("itGoesOffOnceTheBackendHasBeenSilentLongerThanTheWindowEvenWhilePollsRetry", () => {
+check("pastTheWindowItSaysStillTryingWhilePagesRetryAndGoesWhenTheyStop", () => {
   reset()
   noteBackendAnswered()
   noteBackendFailed(Date.now() - RESTART_RETRY_WINDOW_MS + 10_000)
   trackRequest("a", true, restart())
-  assert.equal(isReconnecting(), true, "within the window")
-  assert.equal(isReconnecting(Date.now() + 10_001), false, "past the window, measured from the outage's start")
+  assert.equal(reconnectingState(), "reconnecting", "within the window")
+  assert.equal(reconnectingState(Date.now() + 10_001), "still-trying", "past the window, measured from the outage's start")
+  trackRequest("late-analytics", true, restart())
+  assert.equal(reconnectingState(Date.now() + 10_001), "still-trying", "a query that starts failing late keeps the notice up")
+  trackRequest("a", false, null)
+  trackRequest("late-analytics", true, null)
+  assert.equal(reconnectingState(Date.now() + 10_001), "off", "gone once the pages stop retrying, as when the backend answers")
   noteBackendAnswered()
-  assert.equal(isReconnecting(Date.now() + 10_001), true, "a new outage starts a new window")
+  trackRequest("a", true, restart())
+  assert.equal(reconnectingState(Date.now() + 10_001), "reconnecting", "no outage on record yet, so not past its window")
   reset()
   noteBackendAnswered()
+})
+
+check("theStillTryingTextSaysTheBackendCantBeReached", () => {
+  assert.equal(STILL_TRYING_TEXT, "Can't reach hrva.cc right now. Still trying" + String.fromCodePoint(0x2026))
+})
+
+check("eachOutageStartGetsItsOwnWindowEndTimerWhileTheSameKeysRetry", () => {
+  reset()
+  noteBackendAnswered()
+  const first = Date.now() - 1_000
+  noteBackendFailed(first)
+  trackRequest("a", true, restart())
+  assert.equal(windowEndScheduledFor(), first)
+  noteBackendAnswered()
+  const second = Date.now()
+  noteBackendFailed(second)
+  trackRequest("a", true, restart())
+  assert.equal(windowEndScheduledFor(), second, "the second outage gets its timer though key a never stopped")
+  noteBackendAnswered()
+  notifyWhenTheWindowEnds()
+  assert.equal(windowEndScheduledFor(), null)
+  reset()
+})
+
+check("aQueryChainIsForgottenWhenItEnds", () => {
+  const before = retryChainCount()
+  const retry = perQueryRetry("ends", shouldRetry)
+  retry(0, new ApiError("no", 400))
+  assert.equal(retryChainCount(), before + 1)
+  retry(1, new ApiError("no", 400))
+  assert.equal(retryChainCount(), before, "a chain that won't retry again is forgotten")
 })
 
 check("aRestartErrorStartsItWhileFetchingAndStopsWhenFetchingEnds", () => {
@@ -246,6 +283,29 @@ await checkAsync("failedQueriesOnScreenLoadAgainWhenAsked", async () => {
   await settle()
 })
 
+await checkAsync("aRemovedQueryForgetsItsRetryChain", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: shouldRetry, retryDelay: () => 5, gcTime: Infinity } } })
+  timeRetriesPerQuery(client)
+  const before = retryChainCount()
+  client.prefetchQuery({ queryKey: ["gone"], queryFn: alwaysRestarting, retry: shouldRetry, retryDelay: () => 5 })
+  await waitUntil(() => retryChainCount() === before + 1, "the chain to start")
+  client.removeQueries({ queryKey: ["gone"] })
+  assert.equal(retryChainCount(), before)
+  reset()
+  noteBackendAnswered()
+})
+
+await checkAsync("theRecoveryRefetchLeavesARunningRetryChainAlone", async () => {
+  const seen = []
+  const client = { refetchQueries: async (filters, options) => seen.push({ filters, options }) }
+  await refetchFailedQueries(client)
+  assert.equal(seen.length, 1)
+  assert.equal(seen[0].filters.type, "active")
+  assert.deepEqual(seen[0].options, { cancelRefetch: false })
+  assert.equal(seen[0].filters.predicate({ state: { status: "error" } }), true)
+  assert.equal(seen[0].filters.predicate({ state: { status: "success" } }), false)
+})
+
 await checkAsync("everyQueryGetsItsOwnRetryWindow", async () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: (count) => count < 1 } } })
   timeRetriesPerQuery(client)
@@ -270,6 +330,7 @@ check("theNoticeIsAPoliteStatusThatOverlaysAndDoesNotSpinWhenMotionIsReduced", (
   assert.match(notice, /motion-safe:animate-spin/)
   assert.doesNotMatch(notice, /(?<!motion-safe:)animate-spin/)
   assert.match(notice, /RECONNECTING_TEXT/)
+  assert.match(notice, /state === "still-trying" \? STILL_TRYING_TEXT : RECONNECTING_TEXT/)
 })
 
 check("providersFeedTheStoreFromBothCachesAndRenderTheNoticeOnce", () => {

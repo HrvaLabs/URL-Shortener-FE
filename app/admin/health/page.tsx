@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Camera, CircleCheck, Database, Mail, ScanSearch, ShieldAlert, TriangleAlert, Zap, type LucideIcon } from "lucide-react"
 import { ApiError, adminApi, retryUnlessRefused } from "@/lib/api-client"
@@ -22,6 +23,8 @@ import {
   jobScheduleText,
   memoryText,
   outOfDate,
+  shownError,
+  showsSkeleton,
   responseTimeText,
   serverErrorsHint,
   problemLines,
@@ -76,7 +79,10 @@ export default function AdminHealthPage() {
     retry: retryUnlessUnavailable,
   })
 
-  const reason = unavailableReason(error)
+  const [lastError, setLastError] = useState<Error | null>(null)
+  if (error && error !== lastError) setLastError(error)
+  const shown = shownError(error, lastError, data !== undefined)
+  const reason = unavailableReason(shown)
   const stale = outOfDate(dataUpdatedAt, errorUpdatedAt, isError)
   const failure = reason ?? (stale && error instanceof ApiError ? error.message : undefined)
 
@@ -88,9 +94,9 @@ export default function AdminHealthPage() {
         <p className="mt-1 text-sm text-muted-foreground">{PAGE_DESCRIPTION} Refreshes every 30 seconds.</p>
       </div>
 
-      {isPending ? (
+      {showsSkeleton(isPending, lastError) ? (
         <HealthSkeleton />
-      ) : !data && isMissingEndpoint(error) ? (
+      ) : !data && isMissingEndpoint(shown) ? (
         <div className="space-y-6">
           <p role="status" className="rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm font-medium">
             {NEEDS_V230_BACKEND}

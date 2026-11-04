@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import "./resolve-ts-imports.mjs"
 
 const systemStatus = await import("../lib/system-status.ts")
@@ -34,6 +35,8 @@ const {
   jobScheduleText,
   problemLines,
   outOfDate,
+  shownError,
+  showsSkeleton,
   SCREENSHOTS_SET_UP,
   VIRUSTOTAL_SET_UP,
 } = systemStatus
@@ -434,6 +437,18 @@ check("a page that can't refresh for longer than the restart window stops lookin
   assert.equal(outOfDate(good, good + 120_001, true), true)
   assert.equal(outOfDate(good, good + 120_001, false), false, "not while refreshes work")
   assert.equal(outOfDate(0, 500_000, true), false, "nothing loaded yet is the first-load error")
+})
+
+check("a refresh after a failure keeps showing that failure instead of the loading skeleton", () => {
+  const outage = new ApiError("hrva.cc can't reach its database right now. Try again in a minute.", 503, {}, { outage: "database" })
+  assert.equal(showsSkeleton(true, null), true, "the very first load")
+  assert.equal(showsSkeleton(true, outage), false, "a refetch after the outage answer")
+  assert.equal(shownError(null, outage, false), outage, "TanStack clears error while it refetches a page without data")
+  assert.equal(shownError(null, outage, true), null, "with data the page shows the data")
+  const fresh = new ApiError("x", 500)
+  assert.equal(shownError(fresh, outage, false), fresh)
+  const health = readFileSync(new URL("../app/admin/health/page.tsx", import.meta.url), "utf8")
+  assert.match(health, /showsSkeleton\(isPending, lastError\)/)
 })
 
 console.log("ok")

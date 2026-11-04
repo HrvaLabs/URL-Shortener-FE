@@ -4,6 +4,10 @@ import { RESTART_RETRY_WINDOW_MS, backendRestartingSince, isRestartError, restar
 
 export const RECONNECTING_TEXT = `Reconnecting${String.fromCodePoint(0x2026)}`
 
+export const STILL_TRYING_TEXT = `Can't reach hrva.cc right now. Still trying${String.fromCodePoint(0x2026)}`
+
+export type ReconnectingState = "off" | "reconnecting" | "still-trying"
+
 const retrying = new Set<string>()
 
 const listeners = new Set<() => void>()
@@ -14,19 +18,29 @@ const notify = () => {
 
 let windowEnd: ReturnType<typeof setTimeout> | null = null
 
-const notifyWhenTheWindowEnds = () => {
+let windowEndFor: number | null = null
+
+/** One timer per outage start, so the text switches at the end of every outage's window, a second one while the same keys retry included. */
+export const notifyWhenTheWindowEnds = (): void => {
   const since = backendRestartingSince()
-  if (since === null || windowEnd !== null) return
+  if (since === windowEndFor) return
+  if (windowEnd !== null) clearTimeout(windowEnd)
+  windowEnd = null
+  windowEndFor = since
+  if (since === null) return
   windowEnd = setTimeout(() => {
     windowEnd = null
     notify()
   }, Math.max(0, since + RESTART_RETRY_WINDOW_MS - Date.now()) + 50)
 }
 
+/** The outage start the window-end timer is set for; null when none is. */
+export const windowEndScheduledFor = (): number | null => (windowEnd === null ? null : windowEndFor)
+
 export const startRetrying = (key: string): void => {
+  notifyWhenTheWindowEnds()
   if (retrying.has(key)) return
   retrying.add(key)
-  notifyWhenTheWindowEnds()
   notify()
 }
 
@@ -34,8 +48,14 @@ export const stopRetrying = (key: string): void => {
   if (retrying.delete(key)) notify()
 }
 
-/** True while something retries through a restart and the backend hasn't been silent for longer than the restart window; after that the pages say "Can't reach hrva.cc". */
-export const isReconnecting = (now = Date.now()): boolean => retrying.size > 0 && !restartTooLong(now)
+/** True while something retries through a restart. */
+export const isReconnecting = (): boolean => retrying.size > 0
+
+/** "reconnecting" while something retries and the backend has been silent for less than the restart window, "still-trying" after that while pages still retry, else "off". */
+export const reconnectingState = (now = Date.now()): ReconnectingState => {
+  if (retrying.size === 0) return "off"
+  return restartTooLong(now) ? "still-trying" : "reconnecting"
+}
 
 export const subscribeReconnecting = (listener: () => void): (() => void) => {
   listeners.add(listener)
@@ -66,4 +86,4 @@ export const trackMutation =
     else if (event.type === "updated") trackRequest(key, cache.getAll().includes(mutation) && mutation.state.status === "pending", mutation.state.failureReason)
   }
 
-export const useReconnecting = (): boolean => useSyncExternalStore(subscribeReconnecting, () => isReconnecting(), () => false)
+export const useReconnecting = (): ReconnectingState => useSyncExternalStore(subscribeReconnecting, () => reconnectingState(), () => "off")

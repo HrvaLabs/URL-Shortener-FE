@@ -162,6 +162,14 @@ const chainStarts = new Map<string, number>()
 
 const perQueryRetries = new WeakSet<object>()
 
+/** Forgets a query's retry chain, when the query leaves the cache. */
+export const forgetRetryChain = (queryHash: string): void => {
+  chainStarts.delete(queryHash)
+}
+
+/** How many queries have a retry chain going. */
+export const retryChainCount = (): number => chainStarts.size
+
 /** Times `retry`'s restart window from this query's own first failure, so a query that starts failing late in a long outage still gets its 2 minutes. */
 export const perQueryRetry = <E>(queryHash: string, retry: RetryDecision<E>): RetryDecision<E> => {
   if (perQueryRetries.has(retry)) return retry
@@ -170,7 +178,9 @@ export const perQueryRetry = <E>(queryHash: string, retry: RetryDecision<E>): Re
     if (failureCount === 0 || !chainStarts.has(queryHash)) chainStarts.set(queryHash, now)
     activeChainStart = chainStarts.get(queryHash) ?? now
     try {
-      return retry(failureCount, error)
+      const again = retry(failureCount, error)
+      if (!again) chainStarts.delete(queryHash)
+      return again
     } finally {
       activeChainStart = null
     }

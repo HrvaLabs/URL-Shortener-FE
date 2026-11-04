@@ -3,12 +3,12 @@ import "./resolve-ts-imports.mjs"
 
 const systemStatus = await import("../lib/system-status.ts")
 const { formatDateTime, formatTimeAgo } = await import("../lib/utils.ts")
+const { ApiError } = await import("../lib/api-client.ts")
 
 const {
   ALL_SYSTEMS_WORKING,
   NOT_SET_UP,
   NEEDS_V230_BACKEND,
-  statusLines,
   trafficTitle,
   responseTimeText,
   serverErrorsHint,
@@ -24,6 +24,7 @@ const {
   queuedText,
   pausedUntilText,
   serviceRows,
+  unavailableReason,
   sortedJobs,
   jobOutcome,
   jobLastRunLines,
@@ -75,15 +76,6 @@ check("the fixed copy is exact", () => {
   assert.equal(ALL_SYSTEMS_WORKING, "All systems working")
   assert.equal(NOT_SET_UP, "Not set up")
   assert.equal(NEEDS_V230_BACKEND, "System status needs the v2.30 backend.")
-})
-
-check("the status line is the problems, or all working when there are none", () => {
-  assert.deepEqual(statusLines({ ok: true, problems: [] }), [ALL_SYSTEMS_WORKING])
-  assert.deepEqual(statusLines({ ok: false, problems: ["Screenshots: today's limit is used up.", "Redis is down."] }), [
-    "Screenshots: today's limit is used up.",
-    "Redis is down.",
-  ])
-  assert.deepEqual(statusLines({ ok: true, problems: ["Redis is down."] }), ["Redis is down."])
 })
 
 check("the traffic title names the window", () => {
@@ -233,6 +225,29 @@ check("database and redis down", () => {
   assert.deepEqual(row(rows, "redis").details, [])
 })
 
+check("email and blocklists are unknown while the database is down", () => {
+  const rows = serviceRows(
+    status({
+      database: { up: false, latencyMs: null, poolActive: null, poolMax: null },
+      email: { lastSentAt: "2026-11-02T15:25:00", failures24h: 0 },
+      blocklists: { lastRefreshAt: "2026-11-03T21:00:00", stale: [] },
+    }),
+  )
+  for (const key of ["email", "blocklists"]) {
+    assert.equal(row(rows, key).state, "off")
+    assert.equal(row(rows, key).label, "Unknown")
+    assert.deepEqual(row(rows, key).details, ["Not checked while the database is down."])
+  }
+})
+
+check("a 503 reason is only the problem detail", () => {
+  assert.equal(unavailableReason(new ApiError("Database is down.", 503, {}, { detail: "Database is down." })), "Database is down.")
+  assert.equal(unavailableReason(new ApiError("Service Unavailable", 503)), undefined)
+  assert.equal(unavailableReason(new ApiError("Service Unavailable", 503, {}, { title: "Service Unavailable", detail: "" })), undefined)
+  assert.equal(unavailableReason(new ApiError("Bad gateway", 502, {}, { detail: "Upstream failed." })), undefined)
+  assert.equal(unavailableReason(new Error("Database is down.")), undefined)
+})
+
 check("redis with no cache reads yet", () => {
   assert.deepEqual(row(serviceRows(status({ redis: { up: true, latencyMs: 0.5, hitRatio: null } })), "redis").details, ["Ping 0.5 ms", "No cache reads yet"])
   assert.deepEqual(row(serviceRows(status({ redis: { up: true, latencyMs: 0.5, hitRatio: 100 } })), "redis").details, ["Ping 0.5 ms", "Hit ratio 100%"])
@@ -341,6 +356,7 @@ check("job errors are shown whole", () => {
   assert.equal(jobErrorText(job({ lastOutcome: "FAILED", lastError: long })), long)
   assert.equal(jobErrorText(job()), "None")
   assert.equal(jobErrorText(job({ lastOutcome: "FAILED", lastError: null })), "No error message")
+  assert.equal(jobErrorText(job({ lastStartedAt: "2026-11-03T22:00:00", lastFinishedAt: "2026-11-03T21:00:01", lastOutcome: "FAILED", lastError: "boom" })), "None")
 })
 
 console.log("ok")

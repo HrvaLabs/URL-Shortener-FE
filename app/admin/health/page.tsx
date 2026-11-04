@@ -24,6 +24,7 @@ import {
   sortedJobs,
   startupText,
   trafficTitle,
+  unavailableReason,
   uptimeText,
   type ServiceKey,
   type ServiceState,
@@ -60,14 +61,15 @@ const serviceIcons: Record<ServiceKey, LucideIcon> = {
 
 const isMissingEndpoint = (error: unknown) => error instanceof ApiError && error.status === 404
 
-const unavailableReason = (error: unknown) => (error instanceof ApiError && error.status === 503 && error.message ? error.message : undefined)
+const retryUnlessUnavailable = (failureCount: number, error: Error) =>
+  !(error instanceof ApiError && error.status === 503) && retryUnlessRefused(failureCount, error)
 
 export default function AdminHealthPage() {
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ["admin", "system-status"],
     queryFn: () => adminApi.getSystemStatus(),
     refetchInterval: (query) => (isMissingEndpoint(query.state.error) && !query.state.data ? false : REFRESH_MS),
-    retry: retryUnlessRefused,
+    retry: retryUnlessUnavailable,
   })
 
   return (
@@ -244,7 +246,7 @@ function Jobs({ jobs }: { jobs: SystemStatusJob[] }) {
 function JobRow({ job }: { job: SystemStatusJob }) {
   const outcome = jobOutcome(job)
   const lastRun = jobLastRunLines(job)
-  const failed = job.lastOutcome === "FAILED"
+  const failed = outcome.state === "down"
   const error = jobErrorText(job)
   return (
     <TableRow className="align-top">

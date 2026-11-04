@@ -1,5 +1,6 @@
+import { ApiError } from "./api-client"
 import { formatDateTime, formatTimeAgo, parseServerDateTime, plural } from "./utils"
-import type { SystemStatus, SystemStatusJob, SystemStatusSummary } from "./types"
+import type { SystemStatus, SystemStatusJob } from "./types"
 
 export const ALL_SYSTEMS_WORKING = "All systems working"
 
@@ -37,8 +38,10 @@ const count = (value: number) => value.toLocaleString("en-US")
 
 const present = (lines: (string | undefined)[]): string[] => lines.filter((line): line is string => line !== undefined)
 
-export function statusLines(summary: SystemStatusSummary): string[] {
-  return summary.problems.length > 0 ? summary.problems : [ALL_SYSTEMS_WORKING]
+export function unavailableReason(error: unknown): string | undefined {
+  if (!(error instanceof ApiError) || error.status !== 503) return undefined
+  const { detail } = error.problem
+  return typeof detail === "string" && detail ? detail : undefined
 }
 
 export function trafficTitle(windowMinutes: number): string {
@@ -163,8 +166,11 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
   const { database, redis, email, screenshots, virusTotal, blocklists } = status
   const screenshotsState = limitedServiceState(screenshots, limitState(screenshots.browserSecondsToday, screenshots.browserSecondsLimit, true))
   const virusTotalState = limitedServiceState(virusTotal, limitState(virusTotal.lookupsToday, virusTotal.dailyLimit, false))
-  const emailState: StateView =
-    email.failures24h > 0
+  const databaseDown = !database.up
+  const notChecked = ["Not checked while the database is down."]
+  const emailState: StateView = databaseDown
+    ? { state: "off", label: UNKNOWN }
+    : email.failures24h > 0
       ? { state: "warning", label: "Failures" }
       : email.lastSentAt === null
         ? { state: "off", label: "No emails yet" }
@@ -202,10 +208,12 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
       name: "Email",
       description: "Email delivery over SMTP",
       ...emailState,
-      details: [
-        email.lastSentAt === null ? "No email sent yet" : `Last sent ${when(email.lastSentAt)}`,
-        email.failures24h === 0 ? "No failures in the last 24 h" : `${plural(email.failures24h, "failure")} in the last 24 h`,
-      ],
+      details: databaseDown
+        ? notChecked
+        : [
+            email.lastSentAt === null ? "No email sent yet" : `Last sent ${when(email.lastSentAt)}`,
+            email.failures24h === 0 ? "No failures in the last 24 h" : `${plural(email.failures24h, "failure")} in the last 24 h`,
+          ],
     },
     {
       key: "screenshots",
@@ -233,12 +241,14 @@ export function serviceRows(status: SystemStatus): ServiceRow[] {
       key: "blocklists",
       name: "Blocklists",
       description: "Lists of harmful domains that links are checked against",
-      state: blocklists.stale.length > 0 ? "down" : "ok",
-      label: blocklists.stale.length > 0 ? `${count(blocklists.stale.length)} stale` : "Up to date",
-      details: [
-        blocklists.lastRefreshAt === null ? "Never refreshed" : `Last refresh ${when(blocklists.lastRefreshAt)}`,
-        blocklists.stale.length > 0 ? `Stale: ${blocklists.stale.join(", ")}` : "None stale",
-      ],
+      state: databaseDown ? "off" : blocklists.stale.length > 0 ? "down" : "ok",
+      label: databaseDown ? UNKNOWN : blocklists.stale.length > 0 ? `${count(blocklists.stale.length)} stale` : "Up to date",
+      details: databaseDown
+        ? notChecked
+        : [
+            blocklists.lastRefreshAt === null ? "Never refreshed" : `Last refresh ${when(blocklists.lastRefreshAt)}`,
+            blocklists.stale.length > 0 ? `Stale: ${blocklists.stale.join(", ")}` : "None stale",
+          ],
     },
   ]
 }
@@ -270,6 +280,6 @@ export function jobLastRunLines(job: SystemStatusJob): string[] {
 }
 
 export function jobErrorText(job: SystemStatusJob): string {
-  if (job.lastOutcome !== "FAILED") return "None"
+  if (jobOutcome(job).state !== "down") return "None"
   return job.lastError ?? "No error message"
 }

@@ -60,6 +60,8 @@ const serviceIcons: Record<ServiceKey, LucideIcon> = {
 
 const isMissingEndpoint = (error: unknown) => error instanceof ApiError && error.status === 404
 
+const unavailableReason = (error: unknown) => (error instanceof ApiError && error.status === 503 && error.message ? error.message : undefined)
+
 export default function AdminHealthPage() {
   const { data, error, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ["admin", "system-status"],
@@ -87,7 +89,9 @@ export default function AdminHealthPage() {
         </div>
       ) : !data ? (
         <div className="rounded-xl border bg-card px-6 py-12 text-center">
-          <p className="text-sm text-destructive">Couldn&apos;t load the system status, so it&apos;s unknown right now. Try again.</p>
+          <p className="text-sm text-destructive">
+            {unavailableReason(error) ?? "Couldn't load the system status, so it's unknown right now. Try again."}
+          </p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
             Retry
           </Button>
@@ -96,7 +100,7 @@ export default function AdminHealthPage() {
         <>
           {isError && (
             <p role="status" className="text-sm text-warning">
-              The last refresh failed, so this may be out of date.{" "}
+              {unavailableReason(error) ? `${unavailableReason(error)} What you see may be out of date.` : "The last refresh failed, so this may be out of date."}{" "}
               <button type="button" onClick={() => refetch()} disabled={isFetching} className="font-medium underline underline-offset-2">
                 Retry
               </button>

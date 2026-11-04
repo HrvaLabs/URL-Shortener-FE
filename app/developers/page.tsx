@@ -93,6 +93,7 @@ const errors = [
   { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds are left until the limit resets." },
   { status: "429", text: "The API key made too many requests in the hour. The Retry-After header says how many seconds are left in the hour, and detail says how many minutes." },
   { status: "503", text: "hrva.cc can't check its limits for a moment, so it pauses what they protect: links made with or without an account or an API key, every request with an API key, link password checks and destination changes. Try again after the seconds in Retry-After. Short links keep working." },
+  { status: "503", text: "hrva.cc can't reach its database or its cache for a moment. The outage member of the problem details says which: \"database\" or \"cache\". Try again after the seconds in Retry-After." },
 ]
 
 const editFields = [
@@ -150,7 +151,7 @@ const shortLinkAnswers = [
   { status: "200", text: "A warning page that shows the destination first, for some links made without an account." },
   { status: "404", text: "There's no link with this name." },
   { status: "410", text: "The link is gone: hrva.cc blocked it, it expired, it reached its visit limit, or its owner turned it off." },
-  { status: "503", text: "hrva.cc can't reach its database for a moment. The Retry-After header says how many seconds to wait before trying again." },
+  { status: "503", text: "hrva.cc can't reach its database or its cache for a moment. The Retry-After header says how many seconds to wait before trying again." },
 ]
 
 export default function DevelopersPage() {

@@ -3,12 +3,14 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import { useFullPageNotice } from "@/lib/reconnecting"
 
 export const NOT_SIGNED_OUT = "You haven't been signed out. This page tries again every 30 seconds."
 
 export function ServiceUnavailable({ message }: { message: string }) {
   const { refreshUser } = useAuth()
   const [checking, setChecking] = useState(false)
+  useFullPageNotice()
 
   const retry = async () => {
     setChecking(true)

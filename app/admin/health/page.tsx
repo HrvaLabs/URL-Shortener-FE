@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useFullPageNotice } from "@/lib/reconnecting"
 import { useQuery } from "@tanstack/react-query"
 import { Camera, CircleCheck, Database, Mail, ScanSearch, ShieldAlert, TriangleAlert, Zap, type LucideIcon } from "lucide-react"
 import { ApiError, adminApi, retryUnlessRefused } from "@/lib/api-client"
@@ -85,6 +86,8 @@ export default function AdminHealthPage() {
   const reason = unavailableReason(shown)
   const stale = outOfDate(dataUpdatedAt, errorUpdatedAt, isError)
   const failure = reason ?? (stale && error instanceof ApiError ? error.message : undefined)
+  const firstLoad = showsSkeleton(isPending, lastError)
+  useFullPageNotice(!firstLoad && !(data === undefined && isMissingEndpoint(shown)) && (data === undefined || failure !== undefined))
 
   return (
     <div className="space-y-8">
@@ -94,7 +97,7 @@ export default function AdminHealthPage() {
         <p className="mt-1 text-sm text-muted-foreground">{PAGE_DESCRIPTION} Refreshes every 30 seconds.</p>
       </div>
 
-      {showsSkeleton(isPending, lastError) ? (
+      {firstLoad ? (
         <HealthSkeleton />
       ) : !data && isMissingEndpoint(shown) ? (
         <div className="space-y-6">

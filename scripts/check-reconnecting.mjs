@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import { MutationCache, QueryCache, QueryClient, QueryObserver } from "@tanstack/query-core"
 import "./resolve-ts-imports.mjs"
 
-const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, reconnectingState, subscribeReconnecting, notifyWhenTheWindowEnds, windowEndScheduledFor, RECONNECTING_TEXT, STILL_TRYING_TEXT } = await import("../lib/reconnecting.ts")
+const { startRetrying, stopRetrying, trackRequest, trackQuery, trackMutation, isReconnecting, reconnectingState, showFullPageNotice, subscribeReconnecting, notifyWhenTheWindowEnds, windowEndScheduledFor, RECONNECTING_TEXT, STILL_TRYING_TEXT } = await import("../lib/reconnecting.ts")
 const { ApiError, DATABASE_UNREACHABLE, RESTART_RETRY_WINDOW_MS, noteBackendAnswered, noteBackendFailed, perQueryRetry, retryChainCount, shouldRetry } = await import("../lib/api-client.ts")
 const { refetchFailedQueries, timeRetriesPerQuery } = await import("../lib/query-client.ts")
 
@@ -92,6 +92,36 @@ check("pastTheWindowItSaysStillTryingWhilePagesRetryAndGoesWhenTheyStop", () => 
   assert.equal(reconnectingState(Date.now() + 10_001), "reconnecting", "no outage on record yet, so not past its window")
   reset()
   noteBackendAnswered()
+})
+
+check("aFullPageNoticeHidesTheBottomNoticeWhileItIsMounted", () => {
+  reset()
+  noteBackendAnswered()
+  trackRequest("a", true, restart())
+  assert.equal(reconnectingState(), "reconnecting")
+  let heard = 0
+  const unsubscribe = subscribeReconnecting(() => {
+    heard += 1
+  })
+  const release = showFullPageNotice()
+  assert.equal(reconnectingState(), "off", "one message per screen")
+  const second = showFullPageNotice()
+  release()
+  assert.equal(reconnectingState(), "off", "still hidden while another full-page notice is mounted")
+  second()
+  assert.equal(reconnectingState(), "reconnecting", "back once none is mounted")
+  release()
+  assert.equal(reconnectingState(), "reconnecting", "releasing twice is harmless")
+  assert.equal(heard, 4, "the notice hears every change")
+  unsubscribe()
+  reset()
+})
+
+check("theFullPageNoticesRegisterThemselves", () => {
+  const unavailable = readFileSync(new URL("../components/service-unavailable.tsx", import.meta.url), "utf8")
+  assert.match(unavailable, /useFullPageNotice\(\)/)
+  const health = readFileSync(new URL("../app/admin/health/page.tsx", import.meta.url), "utf8")
+  assert.match(health, /useFullPageNotice\(!firstLoad && /)
 })
 
 check("theStillTryingTextSaysTheBackendCantBeReached", () => {

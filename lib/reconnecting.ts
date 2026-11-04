@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 import type { Mutation, MutationCache, MutationCacheNotifyEvent, Query, QueryCacheNotifyEvent } from "@tanstack/react-query"
 import { RESTART_RETRY_WINDOW_MS, backendRestartingSince, isRestartError, restartTooLong } from "./api-client"
 
@@ -11,6 +11,8 @@ export type ReconnectingState = "off" | "reconnecting" | "still-trying"
 const retrying = new Set<string>()
 
 const listeners = new Set<() => void>()
+
+let fullPageNotices = 0
 
 const notify = () => {
   for (const listener of listeners) listener()
@@ -53,8 +55,26 @@ export const isReconnecting = (): boolean => retrying.size > 0
 
 /** "reconnecting" while something retries and the backend has been silent for less than the restart window, "still-trying" after that while pages still retry, else "off". */
 export const reconnectingState = (now = Date.now()): ReconnectingState => {
-  if (retrying.size === 0) return "off"
+  if (retrying.size === 0 || fullPageNotices > 0) return "off"
   return restartTooLong(now) ? "still-trying" : "reconnecting"
+}
+
+/** Registers a full-page notice that already says hrva.cc can't be reached, so the bottom notice stays hidden while it is on screen; call the answer to release it. */
+export const showFullPageNotice = (): (() => void) => {
+  fullPageNotices += 1
+  notify()
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    fullPageNotices -= 1
+    notify()
+  }
+}
+
+/** Keeps the bottom notice hidden while this component shows a full-page notice (`active`). */
+export const useFullPageNotice = (active = true): void => {
+  useEffect(() => (active ? showFullPageNotice() : undefined), [active])
 }
 
 export const subscribeReconnecting = (listener: () => void): (() => void) => {

@@ -207,8 +207,8 @@ export default function DevelopersPage() {
           A <code>201 Created</code> with the new link. <code>shortLink</code> is the full short link, and the{" "}
           <code>Location</code> header points to the link&apos;s peek URL,{" "}
           <code className="[overflow-wrap:anywhere]">https://hrva.cc/api/v1/urls/&#123;short&#125;/peek</code>.{" "}
-          <code>status</code> is <code>ACTIVE</code>, <code>LIMIT_REACHED</code>, <code>EXPIRED</code>, <code>BLOCKED</code> or{" "}
-          <code>DEACTIVATED</code>.
+          <code>status</code> is <code>ACTIVE</code>, <code>LIMIT_REACHED</code>, <code>EXPIRED</code>, <code>BLOCKED</code>,{" "}
+          <code>CHECKING</code> (held for review) or <code>DEACTIVATED</code>.
         </p>
       </div>
       <CodeBlock label="Response" code={responseExample} copyLabel="response example" mono />

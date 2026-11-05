@@ -464,6 +464,7 @@ function ReviewQueue() {
                         <span className="min-w-0 [overflow-wrap:anywhere]">{ownerLabel(entry)}</span>
                         {!anonymous && age && <span className="tabular-nums">Account {age}</span>}
                         {entry.possibleScammer && <Badge variant="warning">Possible scammer</Badge>}
+                        {entry.notice && <Badge variant="secondary">Notice: the link stays live</Badge>}
                       </div>
                       <p className="mt-1 min-w-28 text-xs tabular-nums text-muted-foreground @lg:min-w-56 @min-[72rem]:hidden">
                         Created {timeAgo(entry.createDate, dataUpdatedAt)} ({formatDateTime(parseServerDateTime(entry.createDate))}) · Flagged {formatDateTime(parseServerDateTime(entry.flaggedAt))}
@@ -477,10 +478,11 @@ function ReviewQueue() {
                       <span className={cn("block min-w-36 [overflow-wrap:anywhere]", anonymous && "text-muted-foreground")}>
                         {ownerLabel(entry)}
                       </span>
-                      {!anonymous && (
+                      {(!anonymous || entry.notice) && (
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          {age && <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">Account {age}</span>}
-                          {entry.possibleScammer && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
+                          {!anonymous && age && <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">Account {age}</span>}
+                          {!anonymous && entry.possibleScammer && <Badge variant="warning" className="whitespace-nowrap">Possible scammer</Badge>}
+                          {entry.notice && <Badge variant="secondary" className="whitespace-nowrap">Notice: the link stays live</Badge>}
                         </div>
                       )}
                     </TableCell>

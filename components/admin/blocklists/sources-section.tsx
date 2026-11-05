@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { adminApi } from "@/lib/api-client"
 import { parseServerDateTime } from "@/lib/analytics"
 import type { BlocklistSource, BlocklistSourceInput } from "@/lib/types"
+import { servedFromFallback } from "@/lib/status"
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils"
 import { formatMegabytes } from "./format"
 import { actionLabels, actionVariants, kindLabels } from "./labels"
@@ -255,7 +256,7 @@ function SourceRow({ source, onEdit, fallbackFocusRef }: { source: BlocklistSour
 }
 
 function LastSuccess({ source, errorClassName, labelled = false }: { source: BlocklistSource; errorClassName?: string; labelled?: boolean }) {
-  const fromFallback = source.lastSuccessUrl != null && source.lastSuccessUrl !== source.url
+  const fromFallback = servedFromFallback(source)
   const lastSuccess = source.lastSuccessAt ? parseServerDateTime(source.lastSuccessAt) : null
   return (
     <div className="flex flex-col items-start gap-1">

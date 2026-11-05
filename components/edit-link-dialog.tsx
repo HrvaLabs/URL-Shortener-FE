@@ -18,6 +18,7 @@ import { CANT_TAKE_UTM, destinationToSend, hasUtm, readUtm, rememberUtm, tooLong
 import {
   BLOCKED_ADMIN_LINE,
   BLOCKED_OWNER_LINE,
+  CHECKING_OWNER_LINE,
   INFO_FAILED,
   LOCKED_HEADING,
   SAVE_ANYWAY,
@@ -398,6 +399,7 @@ function OffState({ link, admin, form, error, inputId, busy, onChange }: OffStat
     link.status === "EXPIRED" ? `This link expired on ${formatDate(link.expirationDate)}. Set a later expiry date or remove it.`
     : link.status === "LIMIT_REACHED" ? `This link used all its clicks (${opensText(link)}). Raise or remove its visit limit.`
     : link.status === "BLOCKED" ? (admin ? BLOCKED_ADMIN_LINE : BLOCKED_OWNER_LINE)
+    : link.status === "CHECKING" ? CHECKING_OWNER_LINE
     : "This link is turned off."
 
   return (

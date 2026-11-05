@@ -14,6 +14,8 @@ export const BLOCKED_OWNER_LINE = "This link is blocked, so it can't be turned b
 
 export const BLOCKED_ADMIN_LINE = "This link is blocked, so saving can't turn it back on. Use Activate to unblock it."
 
+export const CHECKING_OWNER_LINE = "This link is being checked. It comes back on its own if it looks fine."
+
 export const TURN_ON_LABEL = "Turn this link back on when I save"
 
 export const SAVE_ANYWAY = "Save anyway"
@@ -45,7 +47,7 @@ export const editLinkPrefill = (link: EditableLink): EditLinkForm => ({
   turnOn: link.status === "EXPIRED" || link.status === "LIMIT_REACHED",
 })
 
-export const canTurnBackOn = (link: Pick<UrlResponse, "active" | "status">): boolean => !link.active && link.status !== "BLOCKED"
+export const canTurnBackOn = (link: Pick<UrlResponse, "active" | "status">): boolean => !link.active && link.status !== "BLOCKED" && link.status !== "CHECKING"
 
 /** The destination to send: undefined while it is the stored one once the scheme is added, so an unchanged field never counts as a change. */
 export const changedDestination = (link: Pick<UrlResponse, "longUrl">, destination: string): string | undefined => {

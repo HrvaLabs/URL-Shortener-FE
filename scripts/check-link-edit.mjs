@@ -6,6 +6,7 @@ globalThis.localStorage = { getItem: () => "Bearer owner", setItem: () => {}, re
 const {
   EXPIRY_IN_PAST,
   TURN_ON_LABEL,
+  CHECKING_OWNER_LINE,
   canTurnBackOn,
   changedDestination,
   changesLeftText,
@@ -26,6 +27,7 @@ const {
   HISTORY_SORTS,
   VIA_LABELS,
 } = await import("../lib/link-edit.ts")
+const { resolveStatus, servedFromFallback } = await import("../lib/status.ts")
 const { urlApi } = await import("../lib/api-client.ts")
 
 const zone = process.env.TZ ?? "UTC"
@@ -112,6 +114,23 @@ check("expired and used-up links start with Turn back on ticked, turned-off ones
   const blocked = link({ active: false, status: "BLOCKED" })
   assert.equal(editLinkBody(blocked, { ...editLinkPrefill(blocked), turnOn: true }).active, undefined)
   assert.equal(TURN_ON_LABEL, "Turn this link back on when I save")
+})
+
+check("a link held for checking can't be turned back on and shows as Being checked", () => {
+  const held = link({ active: false, status: "CHECKING" })
+  assert.equal(canTurnBackOn(held), false)
+  assert.equal(editLinkPrefill(held).turnOn, false)
+  assert.equal(editLinkBody(held, { ...editLinkPrefill(held), turnOn: true }).active, undefined)
+  assert.deepEqual(resolveStatus("CHECKING", false), { label: "Being checked", variant: "warning" })
+  assert.equal(CHECKING_OWNER_LINE, "This link is being checked. It comes back on its own if it looks fine.")
+})
+
+check("a source is from a fallback only when its last success is one of the fallback URLs", () => {
+  const fallbacks = ["https://mirror.example/list.txt"]
+  assert.equal(servedFromFallback({ lastSuccessUrl: "https://mirror.example/list.txt", fallbackUrls: fallbacks }), true)
+  assert.equal(servedFromFallback({ lastSuccessUrl: "https://tranco-list.eu/download/746WX/1000000", fallbackUrls: fallbacks }), false)
+  assert.equal(servedFromFallback({ lastSuccessUrl: null, fallbackUrls: fallbacks }), false)
+  assert.equal(servedFromFallback({ lastSuccessUrl: "https://a.example/x", fallbackUrls: [] }), false)
 })
 
 check("Turn back on sends active: true, and force only when asked", () => {

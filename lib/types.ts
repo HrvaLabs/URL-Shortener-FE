@@ -939,9 +939,9 @@ export interface ConnectedApp {
 
 export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS" | "CAMPAIGN" | "SIGN_IN_FORM"
 
-export type SourceKind = "DOMAINS" | "LINKS"
+export type SourceKind = "DOMAINS" | "LINKS" | "TOP_SITES"
 
-export type SourceAction = "BLOCK" | "FLAG"
+export type SourceAction = "BLOCK" | "FLAG" | "TRUST"
 
 export interface BlocklistSource {
   id: number
@@ -1157,6 +1157,7 @@ export interface ReviewEntry {
   possibleScammer: boolean
   createDate: string
   reasons: string[]
+  notice: boolean
   flaggedAt: string
   redirectChain: string[]
   screenshot: ScreenshotView | null
@@ -1302,6 +1303,9 @@ export type SettingKey =
   | "GITHUB_SIGN_IN"
   | "API_KEY_REQUESTS_PER_HOUR"
   | "DESTINATION_CHANGES"
+  | "SIGN_IN_FORM_TOP_SITES"
+  | "SIGN_IN_FORM_ACCOUNT_LINKS"
+  | "SIGN_IN_FORM_NEW_ACCOUNT_DAYS"
 
 export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
 

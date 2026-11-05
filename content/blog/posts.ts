@@ -243,7 +243,7 @@ export const blogPosts: BlogPost[] = [
         A short link hides where it goes until someone opens it, so hrva.cc checks the destination before it sends
         anyone there. Every destination is checked against Google Safe Browsing and public blocklists when the link
         is made and again while the link is active, and every click is checked against blocklists. Links to other URL
-        shorteners are refused, so a short link can't hide another one. The <a href="/security">security page</a>
+        shorteners are followed to where they end, and that address gets the same checks. The <a href="/security">security page</a>
         lists every check.
       </p>
 
@@ -483,7 +483,7 @@ export const blogPosts: BlogPost[] = [
       <p>
         A shortener that doesn't check where links go can be used to hide phishing and malware. hrva.cc checks every
         destination when the link is made and again while it is active, checks every click against blocklists, and
-        refuses links to other shorteners. The <a href="/security">security page</a> lists the checks. When you get a
+        follows links to other shorteners to where they end and checks that address. The <a href="/security">security page</a> lists the checks. When you get a
         hrva.cc link and aren't sure about it, <a href="/validate">Check a link</a> shows where it goes without
         opening it.
       </p>

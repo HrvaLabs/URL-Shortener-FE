@@ -17,7 +17,7 @@ import type { BlocklistSource, BlocklistSourceInput } from "@/lib/types"
 import { servedFromFallback } from "@/lib/status"
 import { cn, formatDateTime, formatTimeAgo } from "@/lib/utils"
 import { formatMegabytes } from "./format"
-import { actionLabels, actionVariants, kindLabels } from "./labels"
+import { actionVariants, kindLabels, sourceActionLabel } from "./labels"
 import { SourceDialog } from "./source-dialog"
 import { useRowRemovalFocus } from "@/lib/hooks/useRowRemovalFocus"
 
@@ -159,7 +159,7 @@ function SourceRow({ source, onEdit, fallbackFocusRef }: { source: BlocklistSour
         <span className="block min-w-32 font-medium [overflow-wrap:anywhere] @lg:min-w-40">{source.name}</span>
         <span className="mt-0.5 block min-w-32 font-mono text-xs text-muted-foreground [overflow-wrap:anywhere] @lg:min-w-40">{source.url}</span>
         <div className="mt-1.5 min-w-32 space-y-1 text-xs text-muted-foreground @lg:min-w-40 @min-[78rem]:hidden">
-          <Badge variant={actionVariants[source.action] ?? "secondary"} className="@min-[45rem]:hidden">{actionLabels[source.action] ?? source.action}</Badge>
+          <Badge variant={actionVariants[source.action] ?? "secondary"} className="@min-[45rem]:hidden">{sourceActionLabel(source.kind, source.action) ?? source.action}</Badge>
           <p>
             {kindLabels[source.kind] ?? source.kind} · every {source.refreshIntervalHours} h
           </p>
@@ -174,7 +174,7 @@ function SourceRow({ source, onEdit, fallbackFocusRef }: { source: BlocklistSour
       </TableCell>
       <TableCell className="hidden text-muted-foreground @min-[78rem]:table-cell">{kindLabels[source.kind] ?? source.kind}</TableCell>
       <TableCell className="hidden @min-[45rem]:table-cell">
-        <Badge variant={actionVariants[source.action] ?? "secondary"}>{actionLabels[source.action] ?? source.action}</Badge>
+        <Badge variant={actionVariants[source.action] ?? "secondary"}>{sourceActionLabel(source.kind, source.action) ?? source.action}</Badge>
       </TableCell>
       <TableCell>
         <Switch

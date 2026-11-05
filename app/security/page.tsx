@@ -57,7 +57,7 @@ export default function SecurityPage() {
             A web address passed on in a short link&apos;s query is checked on each click too, and isn&apos;t passed
             on if it would be blocked. Links made without an account pass nothing on.
           </li>
-          <li>Links to other URL shorteners are refused, so a short link can&apos;t hide another one.</li>
+          <li>Links to other URL shorteners are followed to where they end, and that address gets the same checks. Links to hrva.cc itself are refused.</li>
           <li>
             Some links made without an account open a warning page first. It shows the full destination, a Continue
             button and a way to report the link.

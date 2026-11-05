@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useState, type ChangeEvent, type FormEvent } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { adminApi } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import type { BlocklistSource, BlocklistSourceInput, SourceAction, SourceKind } from "@/lib/types"
-import { actionLabels, kindLabels } from "./labels"
+import { allowedActions, kindLabels, sourceActionLabel } from "./labels"
 
 const MAX_FALLBACK_URLS = 3
 const MIN_INTERVAL_HOURS = 1
@@ -55,6 +55,14 @@ export function SourceDialog({ open, source, onOpenChange }: SourceDialogProps) 
     onError: (err: Error) => toast.error(err.message || "Failed to save source"),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["admin", "blocklists"] }),
   })
+
+  const handleKindChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextKind = event.target.value as SourceKind
+    setKind(nextKind)
+    if (!allowedActions[nextKind].includes(action)) {
+      setAction(allowedActions[nextKind][0])
+    }
+  }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -113,7 +121,7 @@ export function SourceDialog({ open, source, onOpenChange }: SourceDialogProps) 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="source-kind">Kind</Label>
-              <select id="source-kind" value={kind} onChange={(e) => setKind(e.target.value as SourceKind)} className={selectClassName}>
+              <select id="source-kind" value={kind} onChange={handleKindChange} className={selectClassName}>
                 {(Object.keys(kindLabels) as SourceKind[]).map((value) => (
                   <option key={value} value={value}>{kindLabels[value]}</option>
                 ))}
@@ -122,8 +130,8 @@ export function SourceDialog({ open, source, onOpenChange }: SourceDialogProps) 
             <div>
               <Label htmlFor="source-action">Action</Label>
               <select id="source-action" value={action} onChange={(e) => setAction(e.target.value as SourceAction)} className={selectClassName}>
-                {(Object.keys(actionLabels) as SourceAction[]).map((value) => (
-                  <option key={value} value={value}>{actionLabels[value]}</option>
+                {allowedActions[kind].map((value) => (
+                  <option key={value} value={value}>{sourceActionLabel(kind, value)}</option>
                 ))}
               </select>
             </div>

@@ -939,9 +939,9 @@ export interface ConnectedApp {
 
 export type BlockReason = "SAFE_BROWSING" | "BLOCKLIST" | "DOMAIN_RULE" | "ADMIN" | "USER_BLOCKED" | "SCAM_SIGNALS" | "CAMPAIGN" | "SIGN_IN_FORM"
 
-export type SourceKind = "DOMAINS" | "LINKS" | "TOP_SITES"
+export type SourceKind = "DOMAINS" | "LINKS" | "TOP_SITES" | "SHORTENERS" | "ENDINGS" | "BRAND_SITES"
 
-export type SourceAction = "BLOCK" | "FLAG" | "TRUST"
+export type SourceAction = "BLOCK" | "FLAG" | "TRUST" | "NOTE"
 
 export interface BlocklistSource {
   id: number
@@ -1306,6 +1306,7 @@ export type SettingKey =
   | "SIGN_IN_FORM_TOP_SITES"
   | "SIGN_IN_FORM_ACCOUNT_LINKS"
   | "SIGN_IN_FORM_NEW_ACCOUNT_DAYS"
+  | "BRAND_SITES_TOP_SITES"
 
 export type SettingGroup = "ACCESS" | "LINKS" | "SAFETY" | "ALERTS" | "DIGEST" | "EMAILS" | "ABUSE_REPORTS"
 

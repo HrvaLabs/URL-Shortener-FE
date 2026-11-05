@@ -74,11 +74,12 @@ export default function LinksHelpPage() {
               <h2 id="being-checked">Links that are being checked</h2>
               <p>
                 When you make a link, change where it points or turn it back on, hrva.cc&apos;s server opens the
-                destination page once. If the page asks for a password, a username or ID number, or a card number, an
-                admin checks the link, and the link can be put on hold until then. A sign-in page on one of the
-                most-visited sites, such as Google&apos;s or Microsoft&apos;s own sign-in after a link to a private
-                document, doesn&apos;t count. If the page can&apos;t be read, the link stays as it is. The
-                destination&apos;s server sees a request from hrva.cc, not from you or your visitors.
+                destination page once, unless hrva.cc already trusts the destination&apos;s domain. If the page asks
+                for a password, a username or ID number, or a card number, an admin checks the link, and the link can
+                be put on hold until then. A sign-in page on one of the most-visited sites, such as Google&apos;s or
+                Microsoft&apos;s own sign-in after a link to a private document, doesn&apos;t count. If the page
+                can&apos;t be read, the link stays as it is. The destination&apos;s server sees a request from
+                hrva.cc, not from you or your visitors.
               </p>
               <p>
                 A link on hold shows <strong>Being checked</strong> in <Link href="/dashboard">My URLs</Link>, visitors

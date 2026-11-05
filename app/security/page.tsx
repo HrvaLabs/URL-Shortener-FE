@@ -65,7 +65,8 @@ export default function SecurityPage() {
           <li>
             The destination page of some of those links, and of links made, repointed or turned back on from an
             account, is opened once to see whether it asks for a password or card details. If it does, an admin checks
-            the link, and the link can be held until then; visitors are told the link is being checked.
+            the link, and the link can be held until then; visitors are told the link is being checked. For links
+            from an account, the page isn&apos;t opened when hrva.cc already trusts the destination&apos;s domain.
           </li>
           <li>
             On links from an account, a sign-in page on one of the most-visited sites in the{" "}

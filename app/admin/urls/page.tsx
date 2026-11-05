@@ -716,7 +716,7 @@ function UrlStatus({ url }: { url: UrlResponse }) {
         )}
         {url.warningPage && <Badge variant="warning" title="Visitors see the destination first" className="whitespace-nowrap">Warning page</Badge>}
       </div>
-      {url.status === "BLOCKED" && url.blockReason && (
+      {(url.status === "BLOCKED" || url.status === "CHECKING") && url.blockReason && (
         <p className="mt-1 min-w-24 text-xs text-muted-foreground">{blockReasonLabels[url.blockReason] ?? url.blockReason}</p>
       )}
       {url.suspiciousReasons && url.suspiciousReasons.length > 0 && (

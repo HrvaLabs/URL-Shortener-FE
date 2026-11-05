@@ -85,9 +85,9 @@ const fields = [
 ]
 
 const errors = [
-  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; custom aliases are turned off; or the API key is expired or revoked, or belongs to an inactive account." },
+  { status: "400", text: "The link was refused, for example because a safety check blocked the destination; a field is invalid; custom aliases are turned off; the API key is expired or revoked, or belongs to an inactive account; or active: true was sent for a link that is being checked (status CHECKING), with the detail This link is being checked. It comes back on its own if it looks fine." },
   { status: "401", text: "Nobody is signed in, on an endpoint that needs a signed-in account." },
-  { status: "403", text: "You're signed in, or used a key, but the account isn't allowed to do this, for example the link isn't yours or its destination can't change yet (see Editing a link)." },
+  { status: "403", text: "You're signed in, or used a key, but the account isn't allowed to do this, for example the link isn't yours or its destination can't change yet (see Editing a link). A new longUrl for a link that is being checked always gets this, with the missing code LINK_NOT_BEING_CHECKED." },
   { status: "404", text: "The API key or the link doesn't exist." },
   { status: "409", text: "The custom alias is already taken; a link that used all its clicks is turned back on before its visit limit is raised or removed; an expired link is turned back on with PATCH .../activate before its expiry is changed; or another active link already uses its short URL." },
   { status: "429", text: "Too many requests in a short time, for example: You've created a lot of links in a short time. Try again in an hour. The Retry-After header says how many seconds are left until the limit resets." },
@@ -150,7 +150,7 @@ const shortLinkAnswers = [
   { status: "302", text: "Found: the Location header is the destination." },
   { status: "200", text: "A warning page that shows the destination first, for some links made without an account." },
   { status: "404", text: "There's no link with this name." },
-  { status: "410", text: "The link is gone: hrva.cc blocked it, it expired, it reached its visit limit, or its owner turned it off." },
+  { status: "410", text: "The link is gone: hrva.cc blocked it or is checking it, it expired, it reached its visit limit, or its owner turned it off." },
   { status: "503", text: "hrva.cc can't reach its database or its cache for a moment. The Retry-After header says how many seconds to wait before trying again." },
 ]
 
@@ -208,7 +208,8 @@ export default function DevelopersPage() {
           <code>Location</code> header points to the link&apos;s peek URL,{" "}
           <code className="[overflow-wrap:anywhere]">https://hrva.cc/api/v1/urls/&#123;short&#125;/peek</code>.{" "}
           <code>status</code> is <code>ACTIVE</code>, <code>LIMIT_REACHED</code>, <code>EXPIRED</code>, <code>BLOCKED</code>,{" "}
-          <code>CHECKING</code> (held for review) or <code>DEACTIVATED</code>.
+          <code>CHECKING</code> (Being checked, see <Link href="/help/links#being-checked">links that are being checked</Link>) or{" "}
+          <code>DEACTIVATED</code>.
         </p>
       </div>
       <CodeBlock label="Response" code={responseExample} copyLabel="response example" mono />

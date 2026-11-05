@@ -551,7 +551,7 @@ function FeatureGrid() {
           <Link href="/help/links#edit" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             editing links after you make them
           </Link>
-          , two-factor sign-in, Google Safe Browsing checks of every destination when the link is made and every night, a blocklist check on every click, a warning page before links made without an account that look risky or are being checked,{" "}
+          , two-factor sign-in, Google Safe Browsing checks of every destination when the link is made and every night, a blocklist check on every click, a warning page before links made without an account that look risky or are being checked, a check of new and changed links for pages that ask for a password or card details,{" "}
           <Link href="/help/install-app" className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             an app you can install
           </Link>{" "}

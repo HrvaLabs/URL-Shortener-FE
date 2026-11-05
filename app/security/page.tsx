@@ -63,8 +63,14 @@ export default function SecurityPage() {
             button and a way to report the link.
           </li>
           <li>
-            Some of those links lead to a page that asks for a password or card details. Such links can be held, and
-            don&apos;t open until an admin has checked them; visitors are told the link is being checked.
+            The destination page of some of those links, and of links made, repointed or turned back on from an
+            account, is opened once to see whether it asks for a password or card details. If it does, an admin checks
+            the link, and the link can be held until then; visitors are told the link is being checked.
+          </li>
+          <li>
+            On links from an account, a sign-in page on one of the most-visited sites in the{" "}
+            <a href="https://tranco-list.eu/" target="_blank" rel="noopener noreferrer">Tranco list</a> doesn&apos;t
+            count. hrva.cc downloads the list to its own server and sends Tranco nothing about you or your links.
           </li>
           <li>The buttons on bio pages are short links, and get the same checks.</li>
           <li>

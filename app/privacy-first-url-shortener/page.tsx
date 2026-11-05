@@ -124,8 +124,8 @@ export default function PrivacyFirstPage() {
         <p>
           Every new link and a nightly rescan go through Google Safe Browsing and several blocklists, and every click is
           checked against the blocklists that block outright. When a link made without an account opens the warning page,
-          hrva.cc&apos;s server reads the destination page once and holds the link for review if it asks for sign-in or
-          card details. Anyone can <Link href="/report">report a link</Link> to a person. How that works, and what it still misses, is in{" "}
+          and when a link from an account is made, repointed or turned back on, hrva.cc&apos;s server reads the destination
+          page once. If it asks for sign-in or card details, the link goes to review and can be held until then. Anyone can <Link href="/report">report a link</Link> to a person. How that works, and what it still misses, is in{" "}
           <Link href="/blog/how-hrva-cc-stops-phishing-links">How hrva.cc stops phishing links</Link>.
         </p>
         <p>

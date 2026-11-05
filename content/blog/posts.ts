@@ -19,7 +19,7 @@ export const blogPosts: BlogPost[] = [
     slug: "how-hrva-cc-stops-phishing-links",
     title: "How hrva.cc stops phishing links",
     date: "2026-10-22",
-    updated: "2026-11-01",
+    updated: "2026-11-05",
     excerpt:
       "In September, scam links imitating Njuškalo and Jófogás got past Google Safe Browsing and every other check they were run against. Here's what hrva.cc checks now, what it still can't catch, and how you can help.",
     author: "Karlo Hrvačić",
@@ -91,9 +91,11 @@ export const blogPosts: BlogPost[] = [
           destination, a Continue button and a way to report the link.
         </li>
         <li>
-          <strong>Sign-in forms.</strong> Some of those links lead to a page that asks for a password or card
-          details. Such links can be held, and don't open until a person has checked them. Visitors are told the
-          link is being checked.
+          <strong>Sign-in forms.</strong> hrva.cc's server opens the destination page of some of those links once,
+          and of links made, repointed or turned back on from an account. If the page asks for a password or card
+          details, a person checks the link, and the link can be held until then. Visitors are told the link is
+          being checked. On links from an account, a sign-in page on one of the most-visited sites, such as
+          Google's or Microsoft's own, doesn't count.
         </li>
       </ul>
 

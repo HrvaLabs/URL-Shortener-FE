@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { HelpBreadcrumbs } from "@/components/json-ld"
 import { pageMetadata } from "@/lib/seo"
 
-const description = "How random aliases, editing links, turning them back on, changing where they point, visit limits, query strings and API keys work on hrva.cc."
+const description = "How random aliases, editing links, turning them back on, changing where they point, links being checked, visit limits, query strings and API keys work on hrva.cc."
 
 export const metadata: Metadata = pageMetadata({ title: "Short links and API keys", description, path: "/help/links" })
 
@@ -44,7 +44,8 @@ export default function LinksHelpPage() {
                 An expired link or one that used all its clicks opens in the same form. Give it a later expiry date or
                 none, or a higher visit limit or none, and tick <strong>Turn this link back on when I save</strong>. Turning
                 a link back on runs the same checks as a new link, so a destination they would refuse today keeps the
-                link off. A blocked link can&apos;t be turned back on.
+                link off. A blocked link can&apos;t be turned back on. Neither can a link that is{" "}
+                <a href="#being-checked">being checked</a>; its form says it comes back on its own if it looks fine.
               </p>
 
               <h2 id="destination">Changing where a link points</h2>
@@ -68,6 +69,23 @@ export default function LinksHelpPage() {
                 what is missing under <strong>Why the destination can&apos;t change</strong>; the rest of the link can
                 still be edited. API keys follow the same rules (see the{" "}
                 <Link href="/developers#edit">API quickstart</Link>).
+              </p>
+
+              <h2 id="being-checked">Links that are being checked</h2>
+              <p>
+                When you make a link, change where it points or turn it back on, hrva.cc&apos;s server opens the
+                destination page once. If the page asks for a password, a username or ID number, or a card number, an
+                admin checks the link, and the link can be put on hold until then. A sign-in page on one of the
+                most-visited sites, such as Google&apos;s or Microsoft&apos;s own sign-in after a link to a private
+                document, doesn&apos;t count. If the page can&apos;t be read, the link stays as it is. The
+                destination&apos;s server sees a request from hrva.cc, not from you or your visitors.
+              </p>
+              <p>
+                A link on hold shows <strong>Being checked</strong> in <Link href="/dashboard">My URLs</Link>, visitors
+                are told that it is being checked, and its button on your <Link href="/help/link-in-bio">bio page</Link>{" "}
+                is hidden. Until the check is done, you can&apos;t turn it back on or change where it points, and
+                neither can an API key. If it looks fine, it comes back on by itself. If the admin blocks it, you get
+                the email about a blocked link. Nothing is emailed when a link is put on hold.
               </p>
 
               <h2 id="visit-limits">Visit limits</h2>

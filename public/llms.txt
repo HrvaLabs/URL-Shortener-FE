@@ -29,7 +29,7 @@ Shortening works without an account. A free account adds custom aliases, editing
 ## Guides
 
 - [Help index](https://app.hrva.cc/help): guides to every feature
-- [Short links and API keys](https://app.hrva.cc/help/links): random aliases, editing a link, turning an expired or used-up link back on, changing where a link points and its rules, visit limits, query strings and API keys
+- [Short links and API keys](https://app.hrva.cc/help/links): random aliases, editing a link, turning an expired or used-up link back on, changing where a link points and its rules, links being checked, visit limits, query strings and API keys
 - [Bio pages (link-in-bio)](https://app.hrva.cc/help/link-in-bio): one page with all your links at hrva.cc/@yourname
 - [Campaign tracking (UTM)](https://app.hrva.cc/help/utm): add UTM tags to a short link
 - [Passkeys and security keys](https://app.hrva.cc/help/passkeys): sign in without a password, and two-step verification
